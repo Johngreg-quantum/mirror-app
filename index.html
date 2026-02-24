@@ -1,0 +1,1288 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MIRROR — Speak Like the Screen</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:        #08080d;
+      --surface:   #0f0f18;
+      --surface-2: #16161f;
+      --border:    rgba(255,255,255,0.08);
+      --text:      #e8e8ee;
+      --muted:     #6a6a84;
+      --accent:    #c8a84b;
+      --red:       #e63946;
+      --green:     #06d6a0;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Inter', sans-serif;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* Film grain */
+    body::after {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)' opacity='0.06'/%3E%3C/svg%3E");
+      pointer-events: none;
+      z-index: 9000;
+      opacity: 0.5;
+    }
+
+    /* ─── AUTH SCREEN ─── */
+    .auth-screen {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+
+    .auth-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 48px 40px;
+      width: 100%;
+      max-width: 420px;
+    }
+
+    .auth-logo {
+      font-family: 'Bebas Neue', cursive;
+      font-size: 58px;
+      letter-spacing: 0.22em;
+      line-height: 1;
+      color: var(--text);
+      text-shadow: 0 0 60px rgba(200,168,75,.2);
+    }
+    .auth-logo em { color: var(--accent); font-style: normal; }
+
+    .auth-tagline {
+      font-size: 11px;
+      letter-spacing: 0.35em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-top: 8px;
+      margin-bottom: 36px;
+    }
+
+    .auth-tabs {
+      display: flex;
+      gap: 4px;
+      background: var(--surface-2);
+      border-radius: 10px;
+      padding: 4px;
+      margin-bottom: 28px;
+    }
+
+    .auth-tab-btn {
+      flex: 1;
+      padding: 9px;
+      border: none;
+      border-radius: 7px;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      background: none;
+      color: var(--muted);
+      transition: all .2s;
+      font-family: 'Inter', sans-serif;
+      touch-action: manipulation;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .auth-tab-btn.active {
+      background: var(--surface);
+      color: var(--text);
+      box-shadow: 0 1px 4px rgba(0,0,0,.4);
+    }
+
+    .auth-form { display: grid; gap: 12px; }
+    .auth-form.hidden { display: none; }
+
+    .auth-input {
+      width: 100%;
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 12px 14px;
+      font-size: 14px;
+      color: var(--text);
+      font-family: 'Inter', sans-serif;
+      outline: none;
+      transition: border-color .2s;
+    }
+    .auth-input::placeholder { color: var(--muted); }
+    .auth-input:focus { border-color: rgba(255,255,255,.22); }
+
+    @keyframes shake {
+      0%,100% { transform: translateX(0); }
+      25%      { transform: translateX(-6px); }
+      75%      { transform: translateX(6px); }
+    }
+    .shake { animation: shake .35s ease; }
+
+    .auth-error {
+      font-size: 12px;
+      color: var(--red);
+      min-height: 18px;
+      padding-top: 2px;
+    }
+
+    .auth-submit {
+      width: 100%;
+      padding: 13px;
+      background: var(--accent);
+      color: #000;
+      font-size: 14px;
+      font-weight: 700;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: filter .2s, opacity .2s;
+      letter-spacing: .05em;
+      font-family: 'Inter', sans-serif;
+      margin-top: 4px;
+      touch-action: manipulation;
+      -webkit-tap-highlight-color: transparent;
+      min-height: 44px;
+    }
+    .auth-submit:hover    { filter: brightness(1.14); }
+    .auth-submit:disabled { opacity: .45; pointer-events: none; }
+
+    /* ─── HEADER ─── */
+    header {
+      text-align: center;
+      padding: 72px 20px 52px;
+      position: relative;
+    }
+
+    .logo {
+      font-family: 'Bebas Neue', cursive;
+      font-size: clamp(68px, 14vw, 136px);
+      letter-spacing: 0.22em;
+      line-height: 1;
+      color: var(--text);
+      text-shadow: 0 0 100px rgba(200,168,75,.25);
+    }
+    .logo em { color: var(--accent); font-style: normal; }
+
+    .tagline {
+      margin-top: 14px;
+      font-size: 12px;
+      letter-spacing: 0.42em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    /* ─── USER CHIP ─── */
+    .user-chip {
+      position: absolute;
+      top: 24px;
+      right: 24px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 100px;
+      padding: 7px 14px 7px 10px;
+    }
+    .user-chip svg { color: var(--muted); flex-shrink: 0; }
+    .user-chip-name { font-size: 13px; font-weight: 500; }
+    .btn-logout {
+      font-size: 11px;
+      color: var(--muted);
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-family: 'Inter', sans-serif;
+      transition: color .2s;
+      padding: 0;
+      margin-left: 4px;
+    }
+    .btn-logout:hover { color: var(--red); }
+
+    /* ─── LAYOUT ─── */
+    .container {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 0 24px 80px;
+    }
+
+    .section-label {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      font-size: 10px;
+      letter-spacing: 0.34em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 24px;
+    }
+    .section-label::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--border);
+    }
+
+    /* ─── SCENE CARDS ─── */
+    .scenes-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(310px, 1fr));
+      gap: 18px;
+      margin-bottom: 72px;
+    }
+
+    .scene-card {
+      --c: var(--accent);
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 28px;
+      cursor: pointer;
+      position: relative;
+      overflow: hidden;
+      transition: transform .28s ease, border-color .28s ease, box-shadow .28s ease;
+    }
+    .scene-card::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(ellipse at top left, var(--c) 0%, transparent 65%);
+      opacity: .05;
+      transition: opacity .28s;
+    }
+    .scene-card:hover {
+      transform: translateY(-5px);
+      border-color: var(--c);
+      box-shadow: 0 24px 64px rgba(0,0,0,.55), 0 0 0 1px var(--c);
+    }
+    .scene-card:hover::before { opacity: .13; }
+
+    .card-top   { display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; }
+    .movie-year { font-size: 11px; color: var(--muted); }
+
+    .badge {
+      font-size: 9px; font-weight: 700; letter-spacing: .18em; text-transform: uppercase;
+      padding: 4px 11px; border-radius: 100px; border: 1px solid currentColor;
+    }
+    .badge.beginner     { color: var(--green); background: rgba(6,214,160,.08);  border-color: rgba(6,214,160,.3); }
+    .badge.intermediate { color: var(--accent); background: rgba(200,168,75,.08); border-color: rgba(200,168,75,.3); }
+    .badge.advanced     { color: var(--red);    background: rgba(230,57,70,.08);  border-color: rgba(230,57,70,.3); }
+
+    .card-movie { font-family: 'Bebas Neue', cursive; font-size: 30px; letter-spacing: .1em; color: var(--c); margin-bottom: 12px; line-height: 1.1; }
+    .card-quote { font-size: 15px; font-style: italic; color: var(--text); line-height: 1.55; margin-bottom: 22px; }
+    .card-foot  { display: flex; justify-content: space-between; align-items: center; }
+    .card-actor { font-size: 12px; color: var(--muted); }
+    .card-cta   { display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 500; color: var(--c); letter-spacing: .04em; }
+
+    /* ─── MODAL ─── */
+    .overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,.82);
+      backdrop-filter: blur(10px);
+      z-index: 500;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .3s;
+    }
+    .overlay.open { opacity: 1; pointer-events: all; }
+
+    .modal {
+      --mc: var(--accent);
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      width: 100%;
+      max-width: 700px;
+      max-height: 92vh;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+      overscroll-behavior: contain;
+      transform: translateY(22px) scale(.98);
+      transition: transform .3s;
+      scrollbar-width: thin;
+      scrollbar-color: var(--border) transparent;
+    }
+    .overlay.open .modal { transform: translateY(0) scale(1); }
+
+    .modal-head { display: flex; justify-content: space-between; align-items: flex-start; padding: 26px 28px 0; }
+    .modal-year { font-size: 11px; color: var(--muted); margin-bottom: 4px; }
+    .modal-title { font-family: 'Bebas Neue', cursive; font-size: 34px; letter-spacing: .1em; color: var(--mc); }
+
+    .btn-close {
+      background: none; border: none; color: var(--muted);
+      font-size: 26px; line-height: 1; cursor: pointer; padding: 2px 6px;
+      transition: color .2s; flex-shrink: 0;
+    }
+    .btn-close:hover { color: var(--text); }
+
+    .video-wrap {
+      margin: 20px 28px;
+      border-radius: 10px;
+      overflow: hidden;
+      aspect-ratio: 16/9;
+      background: #000;
+      position: relative;
+    }
+    .video-wrap iframe { width: 100%; height: 100%; border: none; }
+
+    .video-placeholder {
+      position: absolute; inset: 0;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      gap: 10px; color: var(--muted); font-size: 13px;
+    }
+    .video-placeholder svg { opacity: .35; }
+
+    .target-quote {
+      margin: 0 28px 22px;
+      padding: 14px 18px;
+      background: var(--surface-2);
+      border-left: 3px solid var(--mc);
+      border-radius: 0 10px 10px 0;
+      font-size: 15px; font-style: italic; line-height: 1.55;
+    }
+    .target-quote small {
+      display: block; font-style: normal; font-size: 9px;
+      letter-spacing: .2em; text-transform: uppercase; color: var(--muted); margin-bottom: 6px;
+    }
+
+    /* ─── RECORDING ─── */
+    .rec-section { padding: 0 28px 28px; }
+
+    .rec-controls { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+
+    .btn {
+      display: inline-flex; align-items: center; gap: 7px;
+      padding: 11px 22px; border-radius: 8px; font-size: 13px; font-weight: 500;
+      cursor: pointer; border: none; transition: all .2s; letter-spacing: .03em; white-space: nowrap;
+      touch-action: manipulation; -webkit-tap-highlight-color: transparent;
+    }
+    .btn:disabled { opacity: .3; pointer-events: none; }
+
+    .btn-record   { background: var(--red); color: #fff; }
+    .btn-record:hover { background: #f55; }
+    .btn-stop     { background: #252530; color: var(--text); }
+    .btn-stop:hover { background: #303040; }
+    .btn-playback { background: var(--surface-2); color: var(--text); border: 1px solid var(--border); }
+    .btn-playback:hover { background: #222; }
+    .btn-analyze  { background: var(--mc); color: #000; font-weight: 700; margin-left: auto; }
+    .btn-analyze:hover { filter: brightness(1.18); }
+
+    .rec-indicator { display: none; align-items: center; gap: 8px; font-size: 12px; color: var(--red); }
+    .rec-indicator.on { display: flex; }
+    .rec-dot { width: 8px; height: 8px; background: var(--red); border-radius: 50%; animation: pulse 1s ease-in-out infinite; }
+
+    @keyframes pulse { 0%,100% { opacity: 1; transform: scale(1); } 50% { opacity: .3; transform: scale(.8); } }
+
+    .spinner {
+      display: none; width: 14px; height: 14px;
+      border: 2px solid rgba(0,0,0,.25); border-top-color: #000;
+      border-radius: 50%; animation: spin .65s linear infinite;
+    }
+    .spinner.on { display: inline-block; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ─── SCORE PANEL ─── */
+    .score-panel { display: none; margin-top: 22px; padding: 24px; background: var(--surface-2); border-radius: 14px; }
+    .score-panel.on { display: block; }
+    .score-top  { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 16px; }
+    .score-lbl  { font-size: 9px; letter-spacing: .25em; text-transform: uppercase; color: var(--muted); margin-bottom: 6px; }
+    .score-num  { font-family: 'Bebas Neue', cursive; font-size: 62px; line-height: 1; color: var(--score-color, var(--accent)); }
+    .score-num sup { font-size: 28px; opacity: .7; }
+    .score-msg  { font-size: 14px; font-weight: 600; color: var(--score-color, var(--accent)); text-align: right; }
+    .score-bar-track { height: 5px; background: var(--border); border-radius: 100px; overflow: hidden; margin-bottom: 22px; }
+    .score-bar-fill  { height: 100%; width: 0; border-radius: 100px; background: var(--score-color, var(--accent)); transition: width 1.1s cubic-bezier(.22,1,.36,1); }
+
+    .compare     { display: grid; gap: 12px; }
+    .compare-row { display: grid; grid-template-columns: 64px 1fr; gap: 12px; align-items: start; }
+    .compare-lbl { font-size: 9px; font-weight: 700; letter-spacing: .18em; text-transform: uppercase; color: var(--muted); padding-top: 3px; }
+    .compare-val { font-size: 14px; line-height: 1.55; }
+    .compare-val.dim { color: var(--muted); font-style: italic; }
+
+    /* ─── LEADERBOARD ─── */
+    .lb-tabs { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 20px; }
+
+    .lb-tab {
+      padding: 8px 18px; border-radius: 100px; font-size: 12px; font-weight: 500;
+      cursor: pointer; border: 1px solid var(--border); background: var(--surface);
+      color: var(--muted); transition: all .2s; white-space: nowrap;
+    }
+    .lb-tab:hover { color: var(--text); border-color: rgba(255,255,255,.2); }
+    .lb-tab.active { background: var(--tab-color, var(--accent)); border-color: var(--tab-color, var(--accent)); color: #000; font-weight: 700; }
+
+    .lb-panel        { display: none; }
+    .lb-panel.active { display: block; }
+
+    .lb-table { width: 100%; border-collapse: collapse; }
+    .lb-table th {
+      font-size: 9px; letter-spacing: .2em; text-transform: uppercase;
+      color: var(--muted); text-align: left; padding: 12px 14px;
+      border-bottom: 1px solid var(--border);
+    }
+    .lb-table td { padding: 14px 14px; font-size: 13px; border-bottom: 1px solid rgba(255,255,255,.04); vertical-align: middle; }
+    .lb-table tr:hover td { background: var(--surface-2); }
+
+    .chip { display: inline-block; padding: 3px 11px; border-radius: 100px; font-size: 12px; font-weight: 700; }
+
+    .rank-num        { font-family: 'Bebas Neue', cursive; font-size: 20px; text-align: center; color: var(--muted); }
+    .rank-num.gold   { color: #ffd700; }
+    .rank-num.silver { color: #b8b8b8; }
+    .rank-num.bronze { color: #cd7f32; }
+
+    /* ─── RESPONSIVE ─── */
+    @media (max-width: 580px) {
+
+      /* ── Prevent iOS auto-zoom on input focus ── */
+      .auth-input { font-size: 16px; }
+
+      /* ── Auth card ── */
+      .auth-card { padding: 28px 20px; }
+      .auth-logo { font-size: 46px; }
+      .auth-tagline { margin-bottom: 26px; }
+
+      /* ── Header ── */
+      header { padding: 18px 16px 26px; }
+      .user-chip {
+        top: 16px;
+        right: 16px;
+        padding: 6px 10px 6px 8px;
+        gap: 5px;
+      }
+      .user-chip-name {
+        font-size: 12px;
+        max-width: 80px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      /* ── Layout ── */
+      .container { padding: 0 16px 60px; }
+      .section-label { gap: 10px; margin-bottom: 16px; }
+
+      /* ── Scene cards ── */
+      .scenes-grid {
+        grid-template-columns: 1fr;
+        gap: 12px;
+        margin-bottom: 48px;
+      }
+      .scene-card { padding: 20px; }
+      .card-movie { font-size: 24px; }
+      .card-quote { font-size: 14px; margin-bottom: 16px; }
+
+      /* ── Modal — bottom sheet ── */
+      .overlay {
+        align-items: flex-end;
+        padding: 0;
+      }
+      .modal {
+        border-radius: 20px 20px 0 0;
+        max-height: 94vh;
+        transform: translateY(40px);
+      }
+      .overlay.open .modal { transform: translateY(0); }
+
+      /* Drag handle */
+      .modal::before {
+        content: '';
+        display: block;
+        width: 36px;
+        height: 4px;
+        background: rgba(255,255,255,.13);
+        border-radius: 100px;
+        margin: 14px auto 2px;
+        flex-shrink: 0;
+      }
+
+      .modal-head { padding: 14px 20px 0; }
+      .modal-title { font-size: 26px; }
+      .video-wrap { margin: 12px 20px; }
+      .target-quote {
+        margin: 0 20px 14px;
+        font-size: 14px;
+        padding: 12px 14px;
+      }
+
+      /* ── Recording controls — 2-column grid ── */
+      .rec-section { padding: 0 20px 28px; }
+      .rec-controls {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+      }
+      .rec-controls .btn {
+        width: 100%;
+        justify-content: center;
+        min-height: 44px;
+      }
+      .rec-indicator {
+        grid-column: 1 / -1;
+        justify-content: center;
+        padding: 2px 0;
+      }
+      .btn-analyze { margin-left: 0; }
+
+      /* ── Score panel ── */
+      .score-panel { padding: 18px; margin-top: 16px; }
+      .score-top {
+        flex-direction: column;
+        gap: 6px;
+        align-items: flex-start;
+        margin-bottom: 12px;
+      }
+      .score-msg { text-align: left; }
+      .score-num { font-size: 52px; }
+      .compare-row { grid-template-columns: 54px 1fr; gap: 8px; }
+      .compare-val { font-size: 13px; }
+
+      /* ── Leaderboard tabs — horizontally scrollable ── */
+      .lb-tabs {
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        padding-bottom: 4px;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+        margin-bottom: 16px;
+      }
+      .lb-tabs::-webkit-scrollbar { display: none; }
+      .lb-tab { font-size: 11px; padding: 7px 14px; white-space: nowrap; }
+
+      /* ── Leaderboard table — hide "When" column, tighten padding ── */
+      .lb-table th:last-child,
+      .lb-table td:last-child { display: none; }
+      .lb-table td { padding: 11px 9px; font-size: 12px; }
+      .lb-table th { padding: 9px 9px; font-size: 8px; }
+      .rank-num { font-size: 17px; }
+      .chip { font-size: 11px; padding: 3px 9px; }
+    }
+
+    /* ── iPhone notch / home-bar safe area ── */
+    @supports (padding-bottom: env(safe-area-inset-bottom)) {
+      @media (max-width: 580px) {
+        .modal { padding-bottom: env(safe-area-inset-bottom); }
+        .auth-screen { padding-bottom: max(16px, env(safe-area-inset-bottom)); }
+      }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════════
+     AUTH SCREEN
+══════════════════════════════════════════════ -->
+<div id="authScreen" class="auth-screen">
+  <div class="auth-card">
+    <div class="auth-logo">MIR<em>RO</em>R</div>
+    <p class="auth-tagline">Speak like the screen</p>
+
+    <div class="auth-tabs">
+      <button class="auth-tab-btn active" id="tabLoginBtn">Sign In</button>
+      <button class="auth-tab-btn"        id="tabRegBtn">Register</button>
+    </div>
+
+    <!-- Login form -->
+    <form class="auth-form" id="loginForm">
+      <input class="auth-input" type="email"    id="loginEmail"    placeholder="Email"    required autocomplete="email" />
+      <input class="auth-input" type="password" id="loginPassword" placeholder="Password" required autocomplete="current-password" />
+      <div class="auth-error" id="loginError"></div>
+      <button class="auth-submit" id="loginSubmit" type="submit">Sign In</button>
+    </form>
+
+    <!-- Register form -->
+    <form class="auth-form hidden" id="registerForm">
+      <input class="auth-input" type="text"     id="regUsername" placeholder="Username (min 2 chars)"    required maxlength="30" autocomplete="username" />
+      <input class="auth-input" type="email"    id="regEmail"    placeholder="Email"                     required               autocomplete="email" />
+      <input class="auth-input" type="password" id="regPassword" placeholder="Password (min 6 chars)"    required               autocomplete="new-password" />
+      <input class="auth-input" type="password" id="regConfirm"  placeholder="Confirm password"          required               autocomplete="new-password" />
+      <div class="auth-error" id="registerError"></div>
+      <button class="auth-submit" id="registerSubmit" type="submit">Create Account</button>
+    </form>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     APP SCREEN
+══════════════════════════════════════════════ -->
+<div id="appScreen" style="display:none">
+
+  <header>
+    <div class="logo">MIR<em>RO</em>R</div>
+    <p class="tagline">Speak like the screen &bull; AI-powered language learning</p>
+    <div class="user-chip" id="userChip">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/>
+      </svg>
+      <span class="user-chip-name" id="userChipName"></span>
+      <button class="btn-logout" id="btnLogout">Logout</button>
+    </div>
+  </header>
+
+  <div class="container">
+    <p class="section-label">Choose a scene</p>
+    <div class="scenes-grid" id="scenesGrid"></div>
+
+    <p class="section-label">Top 10 per scene</p>
+    <div class="lb-tabs"  id="lbTabs"></div>
+    <div id="lbPanels"></div>
+  </div>
+
+</div>
+
+<!-- ══════════════════════════════════════════════
+     MODAL (outside both screens so it overlays correctly)
+══════════════════════════════════════════════ -->
+<div class="overlay" id="overlay">
+  <div class="modal" id="modal">
+
+    <div class="modal-head">
+      <div>
+        <div class="modal-year"  id="mYear"></div>
+        <div class="modal-title" id="mTitle"></div>
+      </div>
+      <button class="btn-close" id="btnClose" aria-label="Close">&times;</button>
+    </div>
+
+    <div class="video-wrap">
+      <iframe id="videoFrame"
+        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+        allowfullscreen></iframe>
+      <div class="video-placeholder" id="videoPlaceholder" style="display:none">
+        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2">
+          <rect x="2" y="4" width="20" height="16" rx="3"/><path d="M10 9l5 3-5 3V9z"/>
+        </svg>
+        <span>Add your YouTube clip ID in index.html → YOUTUBE_IDS</span>
+      </div>
+    </div>
+
+    <div class="target-quote">
+      <small>Your target line</small>
+      <span id="mQuote"></span>
+    </div>
+
+    <div class="rec-section">
+      <div class="rec-controls">
+        <button class="btn btn-record"   id="btnRecord">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="9"/></svg>
+          Record
+        </button>
+        <button class="btn btn-stop"     id="btnStop" disabled>
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><rect x="4" y="4" width="16" height="16" rx="2"/></svg>
+          Stop
+        </button>
+        <div class="rec-indicator" id="recInd">
+          <div class="rec-dot"></div>
+          <span id="recTime">0:00</span>
+        </div>
+        <button class="btn btn-playback" id="btnPlay"    disabled>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+          Playback
+        </button>
+        <button class="btn btn-analyze"  id="btnAnalyze" disabled>
+          <span class="spinner" id="spinner"></span>
+          <span id="analyzeLabel">Analyze</span>
+        </button>
+      </div>
+
+      <div class="score-panel" id="scorePanel">
+        <div class="score-top">
+          <div>
+            <div class="score-lbl">Sync Score</div>
+            <div class="score-num"><span id="scoreVal">0</span><sup>%</sup></div>
+          </div>
+          <div class="score-msg" id="scoreMsg"></div>
+        </div>
+        <div class="score-bar-track">
+          <div class="score-bar-fill" id="scoreBar"></div>
+        </div>
+        <div class="compare">
+          <div class="compare-row">
+            <span class="compare-lbl">You said</span>
+            <span class="compare-val"     id="cmpYou"></span>
+          </div>
+          <div class="compare-row">
+            <span class="compare-lbl">Original</span>
+            <span class="compare-val dim" id="cmpOrig"></span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════════════════
+// CONFIG
+// ══════════════════════════════════════════════
+const YOUTUBE_IDS = {
+  fight_club:         'h0Rbkj_l4D4',
+  back_to_the_future: 'G3AfIvJBcGo',
+  forrest_gump:       'egkrxkiUnoo',
+  the_matrix:         'fhrNgXJ__n8',
+  seven:              'lHpHxLZReiI',
+};
+
+const CARD_COLORS = {
+  fight_club:         '#e63946',
+  back_to_the_future: '#4895ef',
+  forrest_gump:       '#f4a261',
+  the_matrix:         '#06d6a0',
+  seven:              '#ffd166',
+};
+
+const API = 'http://localhost:8000';
+
+// ══════════════════════════════════════════════
+// STATE
+// ══════════════════════════════════════════════
+let authToken   = localStorage.getItem('mirror_token') || null;
+let authUser    = null;
+
+let scenes      = {};
+let activeScene = null;
+let activeLbTab = null;
+
+let mediaRecorder = null;
+let audioChunks   = [];
+let audioBlob     = null;
+let audioEl       = null;
+let micStream     = null;
+let timerInterval = null;
+let recSecs       = 0;
+
+// ══════════════════════════════════════════════
+// BOOT
+// ══════════════════════════════════════════════
+(async () => {
+  if (authToken) {
+    const ok = await verifyToken();
+    if (ok) {
+      showApp();
+      await Promise.all([loadScenes(), loadScores()]);
+      return;
+    }
+  }
+  showAuthScreen();
+})();
+
+// ══════════════════════════════════════════════
+// AUTH — state helpers
+// ══════════════════════════════════════════════
+async function verifyToken() {
+  try {
+    const r = await fetch(`${API}/api/auth/me`, {
+      headers: { Authorization: `Bearer ${authToken}` },
+    });
+    if (!r.ok) throw new Error();
+    authUser = await r.json();
+    return true;
+  } catch {
+    clearAuth();
+    return false;
+  }
+}
+
+function showAuthScreen() {
+  document.getElementById('authScreen').style.display = '';
+  document.getElementById('appScreen').style.display  = 'none';
+}
+
+function showApp() {
+  document.getElementById('authScreen').style.display = 'none';
+  document.getElementById('appScreen').style.display  = '';
+  document.getElementById('userChipName').textContent = authUser.username;
+}
+
+function clearAuth() {
+  authToken = null;
+  authUser  = null;
+  localStorage.removeItem('mirror_token');
+}
+
+function logout() {
+  clearAuth();
+  scenes      = {};
+  activeLbTab = null;
+  showAuthScreen();
+}
+
+document.getElementById('btnLogout').addEventListener('click', logout);
+
+// ══════════════════════════════════════════════
+// AUTH — tab switching
+// ══════════════════════════════════════════════
+document.getElementById('tabLoginBtn').addEventListener('click', () => switchAuthTab('login'));
+document.getElementById('tabRegBtn').addEventListener('click',   () => switchAuthTab('register'));
+
+function switchAuthTab(tab) {
+  const isLogin = tab === 'login';
+  document.getElementById('tabLoginBtn').classList.toggle('active',  isLogin);
+  document.getElementById('tabRegBtn').classList.toggle('active',   !isLogin);
+  document.getElementById('loginForm').classList.toggle('hidden',   !isLogin);
+  document.getElementById('registerForm').classList.toggle('hidden', isLogin);
+  document.getElementById('loginError').textContent    = '';
+  document.getElementById('registerError').textContent = '';
+}
+
+// ══════════════════════════════════════════════
+// AUTH — login
+// ══════════════════════════════════════════════
+document.getElementById('loginForm').addEventListener('submit', async e => {
+  e.preventDefault();
+  const email    = document.getElementById('loginEmail').value.trim();
+  const password = document.getElementById('loginPassword').value;
+  const errEl    = document.getElementById('loginError');
+  const btn      = document.getElementById('loginSubmit');
+
+  errEl.textContent = '';
+  btn.disabled      = true;
+  btn.textContent   = 'Signing in\u2026';
+
+  try {
+    const r    = await fetch(`${API}/api/auth/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password }),
+    });
+    const data = await r.json();
+    if (!r.ok) throw new Error(data.detail || 'Login failed');
+
+    authToken = data.access_token;
+    authUser  = { username: data.username };
+    localStorage.setItem('mirror_token', authToken);
+    showApp();
+    await Promise.all([loadScenes(), loadScores()]);
+  } catch (err) {
+    errEl.textContent = err.message;
+  } finally {
+    btn.disabled    = false;
+    btn.textContent = 'Sign In';
+  }
+});
+
+// ══════════════════════════════════════════════
+// AUTH — register
+// ══════════════════════════════════════════════
+document.getElementById('registerForm').addEventListener('submit', async e => {
+  e.preventDefault();
+  const username = document.getElementById('regUsername').value.trim();
+  const email    = document.getElementById('regEmail').value.trim();
+  const password = document.getElementById('regPassword').value;
+  const confirm  = document.getElementById('regConfirm').value;
+  const errEl    = document.getElementById('registerError');
+  const btn      = document.getElementById('registerSubmit');
+
+  errEl.textContent = '';
+
+  if (password !== confirm) {
+    errEl.textContent = 'Passwords do not match';
+    const el = document.getElementById('regConfirm');
+    el.classList.add('shake');
+    setTimeout(() => el.classList.remove('shake'), 400);
+    return;
+  }
+
+  btn.disabled    = true;
+  btn.textContent = 'Creating account\u2026';
+
+  try {
+    const r    = await fetch(`${API}/api/auth/register`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username, email, password }),
+    });
+    const data = await r.json();
+    if (!r.ok) throw new Error(data.detail || 'Registration failed');
+
+    authToken = data.access_token;
+    authUser  = { username: data.username };
+    localStorage.setItem('mirror_token', authToken);
+    showApp();
+    await Promise.all([loadScenes(), loadScores()]);
+  } catch (err) {
+    errEl.textContent = err.message;
+  } finally {
+    btn.disabled    = false;
+    btn.textContent = 'Create Account';
+  }
+});
+
+// ══════════════════════════════════════════════
+// SCENES
+// ══════════════════════════════════════════════
+async function loadScenes() {
+  try {
+    const r = await fetch(`${API}/api/scenes`);
+    scenes  = await r.json();
+  } catch {
+    scenes = {
+      fight_club:         { movie: 'Fight Club',         quote: 'You know what a duvet is?',              year: 1999, difficulty: 'Intermediate', actor: 'Brad Pitt'          },
+      back_to_the_future: { movie: 'Back to the Future', quote: "Where we're going, we don't need roads.", year: 1985, difficulty: 'Advanced',     actor: 'Christopher Lloyd' },
+      forrest_gump:       { movie: 'Forrest Gump',       quote: "You never know what you're gonna get.",   year: 1994, difficulty: 'Advanced',     actor: 'Tom Hanks'          },
+      the_matrix:         { movie: 'The Matrix',         quote: 'I know kung fu.',                         year: 1999, difficulty: 'Beginner',     actor: 'Keanu Reeves'       },
+      seven:              { movie: 'Se7en',              quote: "What's in the box?",                      year: 1995, difficulty: 'Beginner',     actor: 'Brad Pitt'          },
+    };
+  }
+  renderCards();
+}
+
+function renderCards() {
+  const grid = document.getElementById('scenesGrid');
+  grid.innerHTML = '';
+  for (const [id, s] of Object.entries(scenes)) grid.appendChild(makeCard(id, s));
+}
+
+function makeCard(id, s) {
+  const color = CARD_COLORS[id] || '#c8a84b';
+  const el    = document.createElement('div');
+  el.className = 'scene-card';
+  el.style.setProperty('--c', color);
+  el.innerHTML = `
+    <div class="card-top">
+      <span class="movie-year">${s.year}</span>
+      <span class="badge ${s.difficulty.toLowerCase()}">${s.difficulty}</span>
+    </div>
+    <div class="card-movie">${s.movie}</div>
+    <div class="card-quote">&ldquo;${s.quote}&rdquo;</div>
+    <div class="card-foot">
+      <span class="card-actor">${s.actor}</span>
+      <span class="card-cta">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+        Open Scene
+      </span>
+    </div>`;
+  el.addEventListener('click', () => openModal(id, s));
+  return el;
+}
+
+// ══════════════════════════════════════════════
+// MODAL
+// ══════════════════════════════════════════════
+function openModal(id, s) {
+  activeScene = id;
+  const color = CARD_COLORS[id] || '#c8a84b';
+
+  document.getElementById('modal').style.setProperty('--mc', color);
+  document.getElementById('mYear').textContent  = s.year;
+  document.getElementById('mTitle').textContent = s.movie;
+  document.getElementById('mTitle').style.color = color;
+  document.getElementById('mQuote').textContent = `\u201c${s.quote}\u201d`;
+  document.querySelector('.target-quote').style.borderLeftColor = color;
+  document.getElementById('btnAnalyze').style.background = color;
+
+  const ytId = YOUTUBE_IDS[id];
+  const frame = document.getElementById('videoFrame');
+  const ph    = document.getElementById('videoPlaceholder');
+  if (ytId) {
+    frame.src = `https://www.youtube.com/embed/${ytId}`;
+    frame.style.display = '';
+    ph.style.display    = 'none';
+  } else {
+    frame.src           = '';
+    frame.style.display = 'none';
+    ph.style.display    = 'flex';
+  }
+
+  resetRec();
+  document.getElementById('overlay').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeModal() {
+  document.getElementById('overlay').classList.remove('open');
+  document.body.style.overflow = '';
+  stopRecordingCleanup();
+  document.getElementById('videoFrame').src = '';
+  activeScene = null;
+}
+
+document.getElementById('btnClose').addEventListener('click', closeModal);
+document.getElementById('overlay').addEventListener('click', e => {
+  if (e.target === document.getElementById('overlay')) closeModal();
+});
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+
+// ══════════════════════════════════════════════
+// RECORDING
+// ══════════════════════════════════════════════
+function resetRec() {
+  stopRecordingCleanup();
+  audioBlob = null; audioChunks = [];
+  if (audioEl) { audioEl.pause(); audioEl = null; }
+
+  setBtn('btnRecord',  false, btnRecordHTML());
+  setBtn('btnStop',    true);
+  setBtn('btnPlay',    true, btnPlayHTML());
+  setBtn('btnAnalyze', true);
+  document.getElementById('recInd').classList.remove('on');
+  document.getElementById('recTime').textContent = '0:00';
+  document.getElementById('scorePanel').classList.remove('on');
+  document.getElementById('analyzeLabel').textContent = 'Analyze';
+  document.getElementById('spinner').classList.remove('on');
+}
+
+function stopRecordingCleanup() {
+  if (mediaRecorder && mediaRecorder.state !== 'inactive') mediaRecorder.stop();
+  if (micStream) { micStream.getTracks().forEach(t => t.stop()); micStream = null; }
+  clearInterval(timerInterval);
+}
+
+document.getElementById('btnRecord').addEventListener('click', startRec);
+document.getElementById('btnStop').addEventListener('click', stopRec);
+document.getElementById('btnPlay').addEventListener('click', togglePlayback);
+document.getElementById('btnAnalyze').addEventListener('click', analyze);
+
+async function startRec() {
+  try {
+    micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+  } catch {
+    alert('Microphone access denied. Please allow microphone access and try again.');
+    return;
+  }
+
+  audioChunks   = [];
+  mediaRecorder = new MediaRecorder(micStream);
+  mediaRecorder.ondataavailable = e => { if (e.data.size > 0) audioChunks.push(e.data); };
+  mediaRecorder.onstop = () => {
+    audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+    setBtn('btnPlay',    false, btnPlayHTML());
+    setBtn('btnAnalyze', false);
+    micStream.getTracks().forEach(t => t.stop());
+    micStream = null;
+  };
+
+  mediaRecorder.start(100);
+  setBtn('btnRecord', true);
+  setBtn('btnStop',   false);
+  document.getElementById('recInd').classList.add('on');
+
+  recSecs = 0;
+  timerInterval = setInterval(() => {
+    recSecs++;
+    const m = Math.floor(recSecs / 60), s = recSecs % 60;
+    document.getElementById('recTime').textContent = `${m}:${s.toString().padStart(2,'0')}`;
+    if (recSecs >= 30) stopRec();
+  }, 1000);
+}
+
+function stopRec() {
+  if (mediaRecorder && mediaRecorder.state !== 'inactive') mediaRecorder.stop();
+  clearInterval(timerInterval);
+  setBtn('btnStop', true);
+  document.getElementById('recInd').classList.remove('on');
+}
+
+function togglePlayback() {
+  if (!audioBlob) return;
+  if (audioEl && !audioEl.paused) {
+    audioEl.pause(); audioEl = null;
+    setBtn('btnPlay', false, btnPlayHTML());
+    return;
+  }
+  audioEl = new Audio(URL.createObjectURL(audioBlob));
+  audioEl.play();
+  audioEl.onended = () => { audioEl = null; setBtn('btnPlay', false, btnPlayHTML()); };
+  setBtn('btnPlay', false, btnStopPlayHTML());
+}
+
+async function analyze() {
+  if (!audioBlob || !activeScene) return;
+
+  setBtn('btnAnalyze', true);
+  document.getElementById('spinner').classList.add('on');
+  document.getElementById('analyzeLabel').textContent = 'Analyzing\u2026';
+  document.getElementById('scorePanel').classList.remove('on');
+
+  const form = new FormData();
+  form.append('scene_id', activeScene);
+  form.append('audio', audioBlob, 'recording.webm');
+
+  try {
+    const res = await fetch(`${API}/api/submit`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${authToken}` },
+      body: form,
+    });
+
+    // Session expired mid-use — send back to login
+    if (res.status === 401) {
+      clearAuth();
+      closeModal();
+      showAuthScreen();
+      return;
+    }
+
+    if (!res.ok) {
+      const e = await res.json().catch(() => ({ detail: 'Server error' }));
+      throw new Error(e.detail);
+    }
+
+    const data = await res.json();
+    showScore(data);
+    activeLbTab = activeScene;
+    loadScores();
+  } catch (err) {
+    alert(`Error: ${err.message}`);
+  } finally {
+    document.getElementById('spinner').classList.remove('on');
+    document.getElementById('analyzeLabel').textContent = 'Analyze';
+    setBtn('btnAnalyze', false);
+  }
+}
+
+// ══════════════════════════════════════════════
+// SCORE DISPLAY
+// ══════════════════════════════════════════════
+function showScore(data) {
+  const pct = data.sync_score;
+  let color, msg;
+  if      (pct >= 85) { color = '#06d6a0'; msg = 'Outstanding! \uD83C\uDFAC'; }
+  else if (pct >= 65) { color = '#ffd166'; msg = 'Great take!'; }
+  else if (pct >= 40) { color = '#f4a261'; msg = 'Keep practicing'; }
+  else                { color = '#e63946'; msg = 'Try again'; }
+
+  const panel = document.getElementById('scorePanel');
+  panel.style.setProperty('--score-color', color);
+  document.getElementById('scoreMsg').textContent  = msg;
+  document.getElementById('cmpYou').textContent    = `\u201c${data.transcription}\u201d`;
+  document.getElementById('cmpOrig').textContent   = `\u201c${data.expected}\u201d`;
+  panel.classList.add('on');
+
+  animateNum(document.getElementById('scoreVal'), 0, pct, 900);
+  requestAnimationFrame(() => {
+    const bar = document.getElementById('scoreBar');
+    bar.style.background = color;
+    requestAnimationFrame(() => { bar.style.width = `${pct}%`; });
+  });
+}
+
+function animateNum(el, from, to, ms) {
+  const start = performance.now();
+  const tick = now => {
+    const t = Math.min((now - start) / ms, 1);
+    el.textContent = Math.round(from + (to - from) * (1 - Math.pow(1 - t, 3)));
+    if (t < 1) requestAnimationFrame(tick);
+  };
+  requestAnimationFrame(tick);
+}
+
+// ══════════════════════════════════════════════
+// LEADERBOARD
+// ══════════════════════════════════════════════
+async function loadScores() {
+  try {
+    const r    = await fetch(`${API}/api/leaderboard`);
+    const data = await r.json();
+    renderLeaderboard(data);
+  } catch { /* silent when API offline */ }
+}
+
+function renderLeaderboard(data) {
+  const tabsEl   = document.getElementById('lbTabs');
+  const panelsEl = document.getElementById('lbPanels');
+  const sceneIds = Object.keys(scenes).length ? Object.keys(scenes) : Object.keys(CARD_COLORS);
+
+  if (!activeLbTab || !sceneIds.includes(activeLbTab)) activeLbTab = sceneIds[0];
+
+  tabsEl.innerHTML = panelsEl.innerHTML = '';
+
+  for (const sid of sceneIds) {
+    const s      = scenes[sid] || {};
+    const color  = CARD_COLORS[sid] || '#c8a84b';
+    const rows   = data[sid] || [];
+    const active = sid === activeLbTab;
+
+    const tab = document.createElement('button');
+    tab.className = 'lb-tab' + (active ? ' active' : '');
+    tab.textContent = s.movie || sid;
+    tab.style.setProperty('--tab-color', color);
+    tab.addEventListener('click', () => switchTab(sid));
+    tabsEl.appendChild(tab);
+
+    const panel = document.createElement('div');
+    panel.className = 'lb-panel' + (active ? ' active' : '');
+    panel.id = `lb-panel-${sid}`;
+    panel.innerHTML = buildPanelHTML(rows);
+    panelsEl.appendChild(panel);
+  }
+}
+
+function switchTab(sid) {
+  activeLbTab = sid;
+  const ids = Object.keys(scenes).length ? Object.keys(scenes) : Object.keys(CARD_COLORS);
+  document.querySelectorAll('.lb-tab').forEach((t, i)  => t.classList.toggle('active', ids[i] === sid));
+  document.querySelectorAll('.lb-panel').forEach(p => p.classList.toggle('active', p.id === `lb-panel-${sid}`));
+}
+
+function buildPanelHTML(rows) {
+  if (!rows.length)
+    return `<div style="color:var(--muted);text-align:center;padding:36px 14px;font-size:13px">No scores yet — be the first!</div>`;
+
+  const MEDAL = ['', '🥇', '🥈', '🥉'];
+  const RCLS  = ['', 'gold', 'silver', 'bronze'];
+
+  const trs = rows.map((s, i) => {
+    const rank  = i + 1;
+    const c     = s.sync_score >= 85 ? '#06d6a0' : s.sync_score >= 65 ? '#ffd166' : '#e63946';
+    const name  = s.username
+      ? `<strong>${s.username}</strong>`
+      : `<span style="color:var(--muted)">\u2014</span>`;
+    return `<tr>
+      <td class="rank-num ${rank <= 3 ? RCLS[rank] : ''}" style="width:52px">${rank <= 3 ? MEDAL[rank] : rank}</td>
+      <td>${name}</td>
+      <td style="width:90px"><span class="chip" style="background:${c}18;color:${c}">${s.sync_score}%</span></td>
+      <td style="color:var(--muted);white-space:nowrap;width:90px">${timeAgo(s.created_at)}</td>
+    </tr>`;
+  }).join('');
+
+  return `<table class="lb-table">
+    <thead><tr>
+      <th style="width:52px">Rank</th><th>Name</th>
+      <th style="width:90px">Score</th><th style="width:90px">When</th>
+    </tr></thead>
+    <tbody>${trs}</tbody>
+  </table>`;
+}
+
+// ══════════════════════════════════════════════
+// HELPERS
+// ══════════════════════════════════════════════
+function timeAgo(str) {
+  if (!str) return '\u2014';
+  const diff = Math.floor((Date.now() - new Date(str)) / 1000);
+  if (diff <    60) return 'just now';
+  if (diff <  3600) return `${Math.floor(diff / 60)}m ago`;
+  if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
+  return new Date(str).toLocaleDateString();
+}
+
+function setBtn(id, disabled, html) {
+  const el = document.getElementById(id);
+  el.disabled = disabled;
+  if (html !== undefined) el.innerHTML = html;
+}
+
+function btnRecordHTML()   { return `<svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="9"/></svg> Record`; }
+function btnPlayHTML()     { return `<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg> Playback`; }
+function btnStopPlayHTML() { return `<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg> Stop`; }
+</script>
+</body>
+</html>
