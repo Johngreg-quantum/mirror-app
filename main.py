@@ -34,6 +34,33 @@ SECRET    = os.getenv("JWT_SECRET", "change-me-to-a-long-random-string-in-produc
 ALGORITHM = "HS256"
 TOKEN_TTL = 30  # days
 
+# ---------------------------------------------------------------------------
+# Database backend — PostgreSQL when DATABASE_URL is set, SQLite otherwise
+#
+# Render's free PostgreSQL addon supplies DATABASE_URL as "postgres://…".
+# psycopg2 requires the "postgresql://" scheme, so we normalise it here.
+# ---------------------------------------------------------------------------
+
+_raw_db_url  = os.getenv("DATABASE_URL", "")
+DATABASE_URL = _raw_db_url.replace("postgres://", "postgresql://", 1) if _raw_db_url else ""
+USE_PG       = bool(DATABASE_URL)
+
+if USE_PG:
+    import psycopg2
+    PH              = "%s"                   # PostgreSQL parameter placeholder
+    _IntegrityError = psycopg2.IntegrityError
+else:
+    PH              = "?"                    # SQLite parameter placeholder
+    _IntegrityError = sqlite3.IntegrityError
+
+
+def get_conn():
+    """Return a fresh database connection for the configured backend."""
+    if USE_PG:
+        return psycopg2.connect(DATABASE_URL)
+    return sqlite3.connect(DB_PATH)
+
+
 pwd_ctx = CryptContext(schemes=["bcrypt"], deprecated="auto")
 bearer  = HTTPBearer(auto_error=False)
 
@@ -67,42 +94,68 @@ SCENES = {
 
 
 # ---------------------------------------------------------------------------
-# Database
+# Database initialisation
 # ---------------------------------------------------------------------------
 
 def init_db():
-    conn = sqlite3.connect(DB_PATH)
+    conn = get_conn()
+    cur  = conn.cursor()
 
-    conn.execute("""
-        CREATE TABLE IF NOT EXISTS users (
-            id            INTEGER PRIMARY KEY AUTOINCREMENT,
-            username      TEXT    NOT NULL UNIQUE,
-            email         TEXT    NOT NULL UNIQUE,
-            password_hash TEXT    NOT NULL,
-            created_at    TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-        )
-    """)
-
-    conn.execute("""
-        CREATE TABLE IF NOT EXISTS scores (
-            id            INTEGER PRIMARY KEY AUTOINCREMENT,
-            scene_id      TEXT NOT NULL,
-            movie         TEXT NOT NULL,
-            quote         TEXT NOT NULL,
-            transcription TEXT,
-            sync_score    REAL,
-            username      TEXT    DEFAULT '',
-            user_id       INTEGER,
-            created_at    TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-        )
-    """)
-
-    # Non-destructive migrations for pre-existing scores table
-    for col, dfn in [("username", "TEXT DEFAULT ''"), ("user_id", "INTEGER")]:
-        try:
-            conn.execute(f"ALTER TABLE scores ADD COLUMN {col} {dfn}")
-        except sqlite3.OperationalError:
-            pass  # column already exists
+    if USE_PG:
+        # PostgreSQL: SERIAL primary key, %s placeholders.
+        # CREATE TABLE IF NOT EXISTS is idempotent, so re-deploys are safe.
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS users (
+                id            SERIAL PRIMARY KEY,
+                username      TEXT    NOT NULL UNIQUE,
+                email         TEXT    NOT NULL UNIQUE,
+                password_hash TEXT    NOT NULL,
+                created_at    TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS scores (
+                id            SERIAL PRIMARY KEY,
+                scene_id      TEXT NOT NULL,
+                movie         TEXT NOT NULL,
+                quote         TEXT NOT NULL,
+                transcription TEXT,
+                sync_score    REAL,
+                username      TEXT    DEFAULT '',
+                user_id       INTEGER,
+                created_at    TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
+    else:
+        # SQLite: AUTOINCREMENT primary key, ? placeholders.
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS users (
+                id            INTEGER PRIMARY KEY AUTOINCREMENT,
+                username      TEXT    NOT NULL UNIQUE,
+                email         TEXT    NOT NULL UNIQUE,
+                password_hash TEXT    NOT NULL,
+                created_at    TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS scores (
+                id            INTEGER PRIMARY KEY AUTOINCREMENT,
+                scene_id      TEXT NOT NULL,
+                movie         TEXT NOT NULL,
+                quote         TEXT NOT NULL,
+                transcription TEXT,
+                sync_score    REAL,
+                username      TEXT    DEFAULT '',
+                user_id       INTEGER,
+                created_at    TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
+        # Non-destructive migrations for pre-existing SQLite scores tables
+        for col, dfn in [("username", "TEXT DEFAULT ''"), ("user_id", "INTEGER")]:
+            try:
+                cur.execute(f"ALTER TABLE scores ADD COLUMN {col} {dfn}")
+            except sqlite3.OperationalError:
+                pass  # column already exists
 
     conn.commit()
     conn.close()
@@ -191,15 +244,24 @@ async def register(req: RegisterRequest):
     if "@" not in email:
         raise HTTPException(400, "Invalid email address")
 
-    conn = sqlite3.connect(DB_PATH)
+    conn = get_conn()
+    cur  = conn.cursor()
     try:
-        conn.execute(
-            "INSERT INTO users (username, email, password_hash) VALUES (?, ?, ?)",
-            (username, email, hash_pw(req.password)),
-        )
+        if USE_PG:
+            # RETURNING id is the PostgreSQL way to get the new row's id
+            cur.execute(
+                f"INSERT INTO users (username, email, password_hash) VALUES ({PH}, {PH}, {PH}) RETURNING id",
+                (username, email, hash_pw(req.password)),
+            )
+            user_id = cur.fetchone()[0]
+        else:
+            cur.execute(
+                f"INSERT INTO users (username, email, password_hash) VALUES ({PH}, {PH}, {PH})",
+                (username, email, hash_pw(req.password)),
+            )
+            user_id = cur.lastrowid
         conn.commit()
-        user_id = conn.execute("SELECT last_insert_rowid()").fetchone()[0]
-    except sqlite3.IntegrityError:
+    except _IntegrityError:
         raise HTTPException(400, "Email or username already taken")
     finally:
         conn.close()
@@ -209,11 +271,13 @@ async def register(req: RegisterRequest):
 
 @app.post("/api/auth/login")
 async def login(req: LoginRequest):
-    conn = sqlite3.connect(DB_PATH)
-    row  = conn.execute(
-        "SELECT id, username, password_hash FROM users WHERE email = ?",
+    conn = get_conn()
+    cur  = conn.cursor()
+    cur.execute(
+        f"SELECT id, username, password_hash FROM users WHERE email = {PH}",
         (req.email.lower().strip(),),
-    ).fetchone()
+    )
+    row = cur.fetchone()
     conn.close()
 
     if not row or not verify_pw(req.password, row[2]):
@@ -270,10 +334,11 @@ async def submit_recording(
 
     score = sync_score(expected_quote, transcription)
 
-    conn = sqlite3.connect(DB_PATH)
-    conn.execute(
-        "INSERT INTO scores (scene_id, movie, quote, transcription, sync_score, username, user_id) "
-        "VALUES (?, ?, ?, ?, ?, ?, ?)",
+    conn = get_conn()
+    cur  = conn.cursor()
+    cur.execute(
+        f"INSERT INTO scores (scene_id, movie, quote, transcription, sync_score, username, user_id) "
+        f"VALUES ({PH}, {PH}, {PH}, {PH}, {PH}, {PH}, {PH})",
         (scene_id, scene["movie"], expected_quote, transcription, score, user["username"], user["id"]),
     )
     conn.commit()
@@ -285,17 +350,24 @@ async def submit_recording(
 @app.get("/api/leaderboard")
 async def get_leaderboard():
     """Top 10 per scene ordered by sync_score desc."""
-    conn   = sqlite3.connect(DB_PATH)
+    conn   = get_conn()
+    cur    = conn.cursor()
     result = {}
     for sid in SCENES:
-        rows = conn.execute(
-            "SELECT id, scene_id, movie, quote, transcription, sync_score, username, created_at "
-            "FROM scores WHERE scene_id = ? ORDER BY sync_score DESC LIMIT 10",
+        cur.execute(
+            f"SELECT id, scene_id, movie, quote, transcription, sync_score, username, created_at "
+            f"FROM scores WHERE scene_id = {PH} ORDER BY sync_score DESC LIMIT 10",
             (sid,),
-        ).fetchall()
+        )
+        rows = cur.fetchall()
         result[sid] = [
-            {"id": r[0], "scene_id": r[1], "movie": r[2], "quote": r[3],
-             "transcription": r[4], "sync_score": r[5], "username": r[6] or "", "created_at": r[7]}
+            {
+                "id": r[0], "scene_id": r[1], "movie": r[2], "quote": r[3],
+                "transcription": r[4], "sync_score": r[5], "username": r[6] or "",
+                # PostgreSQL returns datetime objects; SQLite returns strings.
+                # Both serialise correctly via FastAPI's JSON encoder.
+                "created_at": r[7].isoformat() if hasattr(r[7], "isoformat") else r[7],
+            }
             for r in rows
         ]
     conn.close()
