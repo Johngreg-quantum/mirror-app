@@ -28,7 +28,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-client    = openai.OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 DB_PATH   = "mirror.db"
 SECRET    = os.getenv("JWT_SECRET", "change-me-to-a-long-random-string-in-production")
 ALGORITHM = "HS256"
@@ -59,6 +58,16 @@ def get_conn():
     if USE_PG:
         return psycopg2.connect(DATABASE_URL)
     return sqlite3.connect(DB_PATH)
+
+
+def get_openai_client() -> openai.OpenAI:
+    """Create the OpenAI client on first use so a missing API key doesn't
+    crash the process at import time — it only fails when a recording is
+    actually submitted."""
+    api_key = os.getenv("OPENAI_API_KEY")
+    if not api_key:
+        raise HTTPException(500, "OPENAI_API_KEY environment variable is not set")
+    return openai.OpenAI(api_key=api_key)
 
 
 pwd_ctx = CryptContext(schemes=["bcrypt"], deprecated="auto")
@@ -161,7 +170,12 @@ def init_db():
     conn.close()
 
 
-init_db()
+@app.on_event("startup")
+async def startup():
+    """Run DB initialisation when uvicorn is ready, not at import time.
+    Errors here appear in the Render log with a full traceback instead of
+    killing the process silently during module load."""
+    init_db()
 
 
 # ---------------------------------------------------------------------------
@@ -324,7 +338,7 @@ async def submit_recording(
 
     try:
         with open(tmp_path, "rb") as f:
-            transcript = client.audio.transcriptions.create(model="whisper-1", file=f)
+            transcript = get_openai_client().audio.transcriptions.create(model="whisper-1", file=f)
         transcription = transcript.text
     except Exception as e:
         raise HTTPException(500, f"Transcription failed: {e}")
