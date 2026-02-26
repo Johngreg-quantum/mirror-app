@@ -45,18 +45,41 @@ DATABASE_URL = _raw_db_url.replace("postgres://", "postgresql://", 1) if _raw_db
 USE_PG       = bool(DATABASE_URL)
 
 if USE_PG:
-    import psycopg2
-    PH              = "%s"                   # PostgreSQL parameter placeholder
-    _IntegrityError = psycopg2.IntegrityError
+    import ssl
+    import pg8000.dbapi
+    PH              = "%s"                      # PostgreSQL parameter placeholder
+    _IntegrityError = pg8000.dbapi.IntegrityError
 else:
-    PH              = "?"                    # SQLite parameter placeholder
+    PH              = "?"                       # SQLite parameter placeholder
     _IntegrityError = sqlite3.IntegrityError
+
+
+def _pg_params(url: str) -> dict:
+    """Parse a postgres:// or postgresql:// URL into pg8000.dbapi.connect kwargs.
+    pg8000 does not accept a connection string — it requires keyword arguments.
+    Handles ?sslmode=require that Render adds to external connection URLs."""
+    from urllib.parse import urlparse, parse_qs
+    p  = urlparse(url)
+    qs = parse_qs(p.query)
+    params: dict = {
+        "host":     p.hostname,
+        "port":     p.port or 5432,
+        "database": p.path.lstrip("/"),
+        "user":     p.username,
+        "password": p.password,
+    }
+    if qs.get("sslmode", [""])[0] == "require":
+        ctx = ssl.create_default_context()
+        ctx.check_hostname = False
+        ctx.verify_mode    = ssl.CERT_NONE
+        params["ssl_context"] = ctx
+    return params
 
 
 def get_conn():
     """Return a fresh database connection for the configured backend."""
     if USE_PG:
-        return psycopg2.connect(DATABASE_URL)
+        return pg8000.dbapi.connect(**_pg_params(DATABASE_URL))
     return sqlite3.connect(DB_PATH)
 
 
