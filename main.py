@@ -124,6 +124,15 @@ SCENES = {
     },
 }
 
+# Level unlock rules — must be kept in sync with LEVEL_MAP in index.html.
+# Each level lists which scene IDs belong to it and what minimum sync_score
+# (%) a user needs on any scene from the *previous* level to unlock it.
+LEVELS = [
+    {"level": 1, "scenes": ["the_matrix", "seven"],                "unlock_score": 0},
+    {"level": 2, "scenes": ["fight_club"],                         "unlock_score": 60},
+    {"level": 3, "scenes": ["back_to_the_future", "forrest_gump"], "unlock_score": 70},
+]
+
 
 # ---------------------------------------------------------------------------
 # Database initialisation
@@ -335,6 +344,53 @@ async def me(user: dict = Depends(current_user)):
 @app.get("/api/scenes")
 async def get_scenes():
     return SCENES
+
+
+@app.get("/api/progress")
+async def get_progress(user: dict = Depends(current_user)):
+    """Return the authenticated user's level, best scores per scene, and
+    progress toward the next unlock threshold."""
+    conn = get_conn()
+    cur  = conn.cursor()
+    cur.execute(
+        f"SELECT scene_id, MAX(sync_score) FROM scores WHERE user_id = {PH} GROUP BY scene_id",
+        (user["id"],),
+    )
+    best: dict[str, float] = {row[0]: float(row[1] or 0) for row in cur.fetchall()}
+    conn.close()
+
+    # Walk levels in order; each requires a qualifying score on the previous
+    # level's scenes.  Break as soon as a threshold isn't met so levels can't
+    # be skipped.
+    current_level = 1
+    for lvl in LEVELS[1:]:
+        prev_scenes  = next(l["scenes"] for l in LEVELS if l["level"] == lvl["level"] - 1)
+        best_on_prev = max((best.get(s, 0.0) for s in prev_scenes), default=0.0)
+        if best_on_prev >= lvl["unlock_score"]:
+            current_level = lvl["level"]
+        else:
+            break
+
+    unlocked = [s for lvl in LEVELS if lvl["level"] <= current_level for s in lvl["scenes"]]
+
+    # Progress info for the bar displayed below the level badge
+    next_lvl_def = next((l for l in LEVELS if l["level"] == current_level + 1), None)
+    next_level   = None
+    if next_lvl_def:
+        curr_scenes  = next(l["scenes"] for l in LEVELS if l["level"] == current_level)
+        best_on_curr = max((best.get(s, 0.0) for s in curr_scenes), default=0.0)
+        next_level   = {
+            "level":          next_lvl_def["level"],
+            "required_score": next_lvl_def["unlock_score"],
+            "best_score":     round(best_on_curr, 1),
+        }
+
+    return {
+        "level":           current_level,
+        "best_scores":     best,
+        "unlocked_scenes": unlocked,
+        "next_level":      next_level,
+    }
 
 
 @app.post("/api/submit")

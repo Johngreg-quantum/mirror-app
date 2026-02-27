@@ -447,6 +447,84 @@
     .rank-num.silver { color: #b8b8b8; }
     .rank-num.bronze { color: #cd7f32; }
 
+    /* ─── LEVEL PROGRESS BAR ─── */
+    .level-bar {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 18px 24px;
+      margin-bottom: 32px;
+    }
+    .level-col {
+      flex-shrink: 0;
+      text-align: center;
+      padding-right: 20px;
+      border-right: 1px solid var(--border);
+    }
+    .level-lbl {
+      font-size: 9px; letter-spacing: .28em; text-transform: uppercase;
+      color: var(--muted); margin-bottom: 2px;
+    }
+    .level-num {
+      font-family: 'Bebas Neue', cursive;
+      font-size: 52px; line-height: 1; color: var(--accent);
+    }
+    .level-details { flex: 1; }
+    .level-next-text {
+      font-size: 12px; color: var(--muted);
+      margin-bottom: 10px; line-height: 1.55;
+    }
+    .level-next-text strong { color: var(--text); }
+    .level-track {
+      height: 4px; background: var(--border);
+      border-radius: 100px; overflow: hidden; margin-bottom: 7px;
+    }
+    .level-fill {
+      height: 100%; width: 0; background: var(--accent);
+      border-radius: 100px; transition: width 1s cubic-bezier(.22,1,.36,1);
+    }
+    .level-score-text { font-size: 11px; color: var(--muted); }
+    .level-score-text strong { color: var(--text); }
+    .level-maxed { font-size: 13px; color: var(--green); font-weight: 500; }
+
+    /* ─── LOCKED SCENE CARDS ─── */
+    .scene-card.locked { cursor: default; opacity: 0.52; }
+    .scene-card.locked:hover { transform: none; border-color: var(--border); box-shadow: none; }
+    .scene-card.locked::before { opacity: 0 !important; }
+    .lock-overlay {
+      position: absolute; inset: 0;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center; gap: 10px;
+      background: rgba(8,8,13,.74); backdrop-filter: blur(2px);
+      border-radius: 14px; z-index: 10; color: var(--muted);
+    }
+    .lock-overlay span {
+      font-size: 10px; font-weight: 700;
+      letter-spacing: .18em; text-transform: uppercase;
+    }
+
+    /* ─── LEVEL-UP TOAST ─── */
+    .level-up-toast {
+      position: fixed; bottom: 32px; left: 50%;
+      transform: translateX(-50%) translateY(24px);
+      background: var(--surface);
+      border: 1px solid var(--accent);
+      border-radius: 14px; padding: 18px 36px;
+      text-align: center; z-index: 9999;
+      opacity: 0; pointer-events: none;
+      transition: opacity .35s, transform .35s;
+      box-shadow: 0 20px 60px rgba(0,0,0,.6), 0 0 0 1px var(--accent);
+    }
+    .level-up-toast.on { opacity: 1; transform: translateX(-50%) translateY(0); }
+    .level-up-title {
+      font-family: 'Bebas Neue', cursive;
+      font-size: 30px; letter-spacing: .1em; color: var(--accent);
+    }
+    .level-up-sub { font-size: 12px; color: var(--muted); margin-top: 4px; }
+
     /* ─── RESPONSIVE ─── */
     @media (max-width: 580px) {
 
@@ -572,6 +650,12 @@
       .lb-table th { padding: 9px 9px; font-size: 8px; }
       .rank-num { font-size: 17px; }
       .chip { font-size: 11px; padding: 3px 9px; }
+
+      .level-bar { padding: 14px 16px; gap: 12px; margin-bottom: 20px; }
+      .level-col { padding-right: 12px; }
+      .level-num { font-size: 38px; }
+      .level-next-text { font-size: 11px; }
+      .level-up-toast { padding: 14px 24px; bottom: 20px; width: calc(100% - 32px); }
     }
 
     /* ── iPhone notch / home-bar safe area ── */
@@ -636,6 +720,14 @@
   </header>
 
   <div class="container">
+    <div class="level-bar">
+      <div class="level-col">
+        <div class="level-lbl">Level</div>
+        <div class="level-num" id="levelNum">1</div>
+      </div>
+      <div class="level-details" id="levelDetails"></div>
+    </div>
+
     <p class="section-label">Choose a scene</p>
     <div class="scenes-grid" id="scenesGrid"></div>
 
@@ -748,6 +840,14 @@ const CARD_COLORS = {
   seven:              '#ffd166',
 };
 
+// Which level each scene belongs to — keep in sync with LEVELS in main.py
+const LEVEL_MAP = {
+  the_matrix: 1, seven: 1,
+  fight_club: 2,
+  back_to_the_future: 3, forrest_gump: 3,
+};
+const LEVEL_NAMES = { 1: 'Beginner', 2: 'Intermediate', 3: 'Advanced' };
+
 const API = 'https://mirror-app-z8wr.onrender.com';
 
 // ══════════════════════════════════════════════
@@ -759,6 +859,13 @@ let authUser    = null;
 let scenes      = {};
 let activeScene = null;
 let activeLbTab = null;
+
+let userProgress = {           // safe Level-1 defaults until API responds
+  level: 1,
+  best_scores: {},
+  unlocked_scenes: ['the_matrix', 'seven'],
+  next_level: { level: 2, required_score: 60, best_score: 0 },
+};
 
 let mediaRecorder = null;
 let audioChunks   = [];
@@ -776,6 +883,7 @@ let recSecs       = 0;
     const ok = await verifyToken();
     if (ok) {
       showApp();
+      await loadProgress();
       await Promise.all([loadScenes(), loadScores()]);
       return;
     }
@@ -869,6 +977,7 @@ document.getElementById('loginForm').addEventListener('submit', async e => {
     authUser  = { username: data.username };
     localStorage.setItem('mirror_token', authToken);
     showApp();
+    await loadProgress();
     await Promise.all([loadScenes(), loadScores()]);
   } catch (err) {
     errEl.textContent = err.message;
@@ -916,6 +1025,7 @@ document.getElementById('registerForm').addEventListener('submit', async e => {
     authUser  = { username: data.username };
     localStorage.setItem('mirror_token', authToken);
     showApp();
+    await loadProgress();
     await Promise.all([loadScenes(), loadScores()]);
   } catch (err) {
     errEl.textContent = err.message;
@@ -951,11 +1061,20 @@ function renderCards() {
 }
 
 function makeCard(id, s) {
-  const color = CARD_COLORS[id] || '#c8a84b';
-  const el    = document.createElement('div');
-  el.className = 'scene-card';
+  const locked = !userProgress.unlocked_scenes.includes(id);
+  const color  = locked ? 'var(--muted)' : (CARD_COLORS[id] || '#c8a84b');
+  const el     = document.createElement('div');
+  el.className = 'scene-card' + (locked ? ' locked' : '');
   el.style.setProperty('--c', color);
   el.innerHTML = `
+    ${locked ? `
+    <div class="lock-overlay">
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="3" y="11" width="18" height="11" rx="2"/>
+        <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+      </svg>
+      <span>Level ${LEVEL_MAP[id]} Required</span>
+    </div>` : ''}
     <div class="card-top">
       <span class="movie-year">${s.year}</span>
       <span class="badge ${s.difficulty.toLowerCase()}">${s.difficulty}</span>
@@ -966,11 +1085,70 @@ function makeCard(id, s) {
       <span class="card-actor">${s.actor}</span>
       <span class="card-cta">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
-        Open Scene
+        ${locked ? 'Locked' : 'Open Scene'}
       </span>
     </div>`;
-  el.addEventListener('click', () => openModal(id, s));
+  if (!locked) el.addEventListener('click', () => openModal(id, s));
   return el;
+}
+
+// ══════════════════════════════════════════════
+// LEVEL SYSTEM
+// ══════════════════════════════════════════════
+async function loadProgress() {
+  try {
+    const r = await fetch(`${API}/api/progress`, {
+      headers: { Authorization: `Bearer ${authToken}` },
+    });
+    if (r.ok) userProgress = await r.json();
+  } catch { /* keep defaults so offline dev still works */ }
+  renderLevelBar();
+}
+
+function renderLevelBar() {
+  document.getElementById('levelNum').textContent = userProgress.level;
+  const det = document.getElementById('levelDetails');
+  const nl  = userProgress.next_level;
+
+  if (!nl) {
+    det.innerHTML = `<span class="level-maxed">&#127916; All scenes unlocked — you've reached the top level</span>`;
+    return;
+  }
+
+  const pct = nl.required_score > 0
+    ? Math.min(100, (nl.best_score / nl.required_score) * 100)
+    : 100;
+
+  det.innerHTML = `
+    <div class="level-next-text">
+      Score <strong>${nl.required_score}%</strong> on a
+      <strong>${LEVEL_NAMES[userProgress.level]}</strong> scene to unlock
+      <strong>Level ${nl.level}</strong>
+    </div>
+    <div class="level-track"><div class="level-fill" id="lvlFill"></div></div>
+    <div class="level-score-text">
+      Best: <strong>${nl.best_score}%</strong> &nbsp;/&nbsp; ${nl.required_score}% needed
+    </div>`;
+
+  // Two rAF ticks so the transition fires after the element is painted
+  requestAnimationFrame(() => requestAnimationFrame(() => {
+    const fill = document.getElementById('lvlFill');
+    if (fill) fill.style.width = `${pct}%`;
+  }));
+}
+
+function showLevelUp(newLevel) {
+  const t = document.createElement('div');
+  t.className = 'level-up-toast';
+  t.innerHTML = `
+    <div class="level-up-title">Level ${newLevel} Unlocked!</div>
+    <div class="level-up-sub">New scenes are now available</div>`;
+  document.body.appendChild(t);
+  requestAnimationFrame(() => requestAnimationFrame(() => t.classList.add('on')));
+  setTimeout(() => {
+    t.classList.remove('on');
+    setTimeout(() => t.remove(), 400);
+  }, 3200);
 }
 
 // ══════════════════════════════════════════════
@@ -1135,10 +1313,13 @@ async function analyze() {
       throw new Error(e.detail);
     }
 
-    const data = await res.json();
+    const data      = await res.json();
+    const prevLevel = userProgress.level;
     showScore(data);
     activeLbTab = activeScene;
-    loadScores();
+    await Promise.all([loadScores(), loadProgress()]);
+    renderCards();
+    if (userProgress.level > prevLevel) showLevelUp(userProgress.level);
   } catch (err) {
     alert(`Error: ${err.message}`);
   } finally {
