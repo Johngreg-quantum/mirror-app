@@ -447,6 +447,107 @@
     .rank-num.silver { color: #b8b8b8; }
     .rank-num.bronze { color: #cd7f32; }
 
+    /* ─── ONBOARDING ─── */
+    @keyframes onb-rise {
+      from { opacity: 0; transform: translateY(20px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .onboard-screen {
+      position: fixed;
+      inset: 0;
+      background: radial-gradient(ellipse at 50% 15%, rgba(200,168,75,.07) 0%, transparent 55%), var(--bg);
+      z-index: 8000;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      opacity: 0;
+      transition: opacity .55s ease;
+    }
+    .onboard-screen.visible { opacity: 1; }
+    .onboard-screen.out     { opacity: 0; pointer-events: none; }
+
+    .onboard-inner {
+      max-width: 740px;
+      width: 100%;
+      text-align: center;
+    }
+
+    .onboard-logo {
+      font-family: 'Bebas Neue', cursive;
+      font-size: clamp(64px, 14vw, 118px);
+      letter-spacing: 0.22em;
+      line-height: 1;
+      color: var(--text);
+      text-shadow: 0 0 100px rgba(200,168,75,.28);
+      animation: onb-rise .7s ease both;
+    }
+    .onboard-logo em { color: var(--accent); font-style: normal; }
+
+    .onboard-tagline {
+      font-size: clamp(14px, 2vw, 17px);
+      font-weight: 300;
+      font-style: italic;
+      color: var(--muted);
+      line-height: 1.7;
+      margin: 18px auto 52px;
+      max-width: 500px;
+      animation: onb-rise .7s .18s ease both;
+    }
+
+    .onboard-steps {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+      margin-bottom: 44px;
+    }
+
+    .onboard-step {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 28px 22px 24px;
+      text-align: center;
+      opacity: 0;
+      transform: translateY(22px);
+      transition: opacity .5s ease, transform .5s ease;
+    }
+    .onboard-step.in { opacity: 1; transform: translateY(0); }
+
+    .step-icon {
+      width: 52px; height: 52px;
+      border-radius: 14px;
+      display: flex; align-items: center; justify-content: center;
+      margin: 0 auto 14px;
+    }
+    .step-icon.watch  { background: rgba(72,149,239,.1);  color: #4895ef; border: 1px solid rgba(72,149,239,.22); }
+    .step-icon.record { background: rgba(230,57,70,.1);   color: var(--red); border: 1px solid rgba(230,57,70,.22); }
+    .step-icon.unlock { background: rgba(200,168,75,.1);  color: var(--accent); border: 1px solid rgba(200,168,75,.22); }
+
+    .step-num {
+      font-size: 9px; font-weight: 700;
+      letter-spacing: .28em; text-transform: uppercase;
+      color: var(--muted); margin-bottom: 8px;
+    }
+    .step-title {
+      font-size: 15px; font-weight: 600;
+      color: var(--text); margin-bottom: 8px;
+    }
+    .step-desc { font-size: 12px; color: var(--muted); line-height: 1.6; }
+
+    .onboard-cta {
+      display: inline-flex; align-items: center; gap: 10px;
+      background: var(--accent); color: #000;
+      font-size: 15px; font-weight: 700; letter-spacing: .06em;
+      padding: 15px 44px; border: none; border-radius: 10px;
+      cursor: pointer; font-family: 'Inter', sans-serif;
+      transition: filter .2s, transform .2s;
+      touch-action: manipulation; -webkit-tap-highlight-color: transparent;
+      animation: onb-rise .5s .6s ease both;
+    }
+    .onboard-cta:hover { filter: brightness(1.14); transform: translateY(-2px); }
+
     /* ─── LEVEL PROGRESS BAR ─── */
     .level-bar {
       display: flex;
@@ -656,6 +757,19 @@
       .level-num { font-size: 38px; }
       .level-next-text { font-size: 11px; }
       .level-up-toast { padding: 14px 24px; bottom: 20px; width: calc(100% - 32px); }
+
+      .onboard-tagline { margin-bottom: 36px; }
+      .onboard-steps {
+        grid-template-columns: 1fr;
+        gap: 10px;
+        margin-bottom: 32px;
+      }
+      .onboard-step {
+        display: flex; align-items: center;
+        gap: 16px; padding: 16px 18px; text-align: left;
+      }
+      .step-icon { flex-shrink: 0; margin: 0; width: 44px; height: 44px; }
+      .onboard-cta { width: 100%; justify-content: center; padding: 15px; }
     }
 
     /* ── iPhone notch / home-bar safe area ── */
@@ -816,6 +930,72 @@
         </div>
       </div>
     </div>
+
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     ONBOARDING (shown once after first registration)
+══════════════════════════════════════════════ -->
+<div id="onboardScreen" class="onboard-screen">
+  <div class="onboard-inner">
+
+    <div class="onboard-logo">MIR<em>RO</em>R</div>
+    <p class="onboard-tagline">
+      Act the scene. Speak the lines.<br>
+      Learn real English from real movie moments.
+    </p>
+
+    <div class="onboard-steps">
+
+      <div class="onboard-step">
+        <div class="step-icon watch">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M8 5v14l11-7z"/>
+          </svg>
+        </div>
+        <div>
+          <div class="step-num">Step 01</div>
+          <div class="step-title">Watch the Scene</div>
+          <div class="step-desc">Pick a movie moment and watch the clip to hear how it sounds</div>
+        </div>
+      </div>
+
+      <div class="onboard-step">
+        <div class="step-icon record">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="9" y="2" width="6" height="11" rx="3"/>
+            <path d="M5 10a7 7 0 0 0 14 0"/>
+            <line x1="12" y1="19" x2="12" y2="22"/>
+          </svg>
+        </div>
+        <div>
+          <div class="step-num">Step 02</div>
+          <div class="step-title">Record Your Line</div>
+          <div class="step-desc">Hit record and say the line out loud — exactly like the actor</div>
+        </div>
+      </div>
+
+      <div class="onboard-step">
+        <div class="step-icon unlock">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="11" width="18" height="11" rx="2"/>
+            <path d="M7 11V7a5 5 0 0 1 9.9-1"/>
+          </svg>
+        </div>
+        <div>
+          <div class="step-num">Step 03</div>
+          <div class="step-title">Unlock New Levels</div>
+          <div class="step-desc">Score high enough to access harder scenes and new actors</div>
+        </div>
+      </div>
+
+    </div>
+
+    <button class="onboard-cta" id="btnStartActing">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+      Start Acting
+    </button>
 
   </div>
 </div>
@@ -1025,6 +1205,7 @@ document.getElementById('registerForm').addEventListener('submit', async e => {
     authUser  = { username: data.username };
     localStorage.setItem('mirror_token', authToken);
     showApp();
+    maybeShowOnboarding();         // shows once, dismissed forever via localStorage
     await loadProgress();
     await Promise.all([loadScenes(), loadScores()]);
   } catch (err) {
@@ -1464,6 +1645,30 @@ function setBtn(id, disabled, html) {
 function btnRecordHTML()   { return `<svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="9"/></svg> Record`; }
 function btnPlayHTML()     { return `<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg> Playback`; }
 function btnStopPlayHTML() { return `<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg> Stop`; }
+
+// ══════════════════════════════════════════════
+// ONBOARDING
+// ══════════════════════════════════════════════
+function maybeShowOnboarding() {
+  if (localStorage.getItem('mirror_onboarded')) return;
+
+  const screen = document.getElementById('onboardScreen');
+  screen.style.display = 'flex';
+  // Trigger fade-in after display change paints
+  requestAnimationFrame(() => requestAnimationFrame(() => screen.classList.add('visible')));
+
+  // Stagger-animate each step card
+  screen.querySelectorAll('.onboard-step').forEach((step, i) => {
+    setTimeout(() => step.classList.add('in'), 420 + i * 160);
+  });
+}
+
+document.getElementById('btnStartActing').addEventListener('click', () => {
+  localStorage.setItem('mirror_onboarded', '1');
+  const screen = document.getElementById('onboardScreen');
+  screen.classList.add('out');
+  setTimeout(() => screen.remove(), 580);
+});
 </script>
 </body>
 </html>
