@@ -1442,11 +1442,13 @@ async function startRec() {
     return;
   }
 
-  audioChunks   = [];
-  mediaRecorder = new MediaRecorder(micStream);
+  audioChunks = [];
+  const mimeType = getSupportedMimeType();
+  mediaRecorder = new MediaRecorder(micStream, mimeType ? { mimeType } : {});
   mediaRecorder.ondataavailable = e => { if (e.data.size > 0) audioChunks.push(e.data); };
   mediaRecorder.onstop = () => {
-    audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+    const blobType = mediaRecorder.mimeType || mimeType || 'audio/webm';
+    audioBlob = new Blob(audioChunks, { type: blobType });
     setBtn('btnPlay',    false, btnPlayHTML());
     setBtn('btnAnalyze', false);
     micStream.getTracks().forEach(t => t.stop());
@@ -1497,7 +1499,8 @@ async function analyze() {
 
   const form = new FormData();
   form.append('scene_id', activeScene);
-  form.append('audio', audioBlob, 'recording.webm');
+  const ext = audioBlob.type.includes('mp4') ? 'mp4' : audioBlob.type.includes('ogg') ? 'ogg' : 'webm';
+  form.append('audio', audioBlob, `recording.${ext}`);
 
   try {
     const res = await fetch(`${API}/api/submit`, {
@@ -1652,6 +1655,20 @@ function buildPanelHTML(rows) {
 // ══════════════════════════════════════════════
 // HELPERS
 // ══════════════════════════════════════════════
+function getSupportedMimeType() {
+  const candidates = [
+    'audio/webm;codecs=opus',
+    'audio/webm',
+    'audio/mp4',
+    'audio/ogg;codecs=opus',
+    'audio/ogg',
+  ];
+  for (const type of candidates) {
+    if (typeof MediaRecorder !== 'undefined' && MediaRecorder.isTypeSupported(type)) return type;
+  }
+  return '';
+}
+
 function timeAgo(str) {
   if (!str) return '\u2014';
   const diff = Math.floor((Date.now() - new Date(str)) / 1000);
