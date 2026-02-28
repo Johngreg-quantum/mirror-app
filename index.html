@@ -281,6 +281,7 @@
     .badge.beginner     { color: var(--green); background: rgba(6,214,160,.08);  border-color: rgba(6,214,160,.3); }
     .badge.intermediate { color: var(--accent); background: rgba(200,168,75,.08); border-color: rgba(200,168,75,.3); }
     .badge.advanced     { color: var(--red);    background: rgba(230,57,70,.08);  border-color: rgba(230,57,70,.3); }
+    .badge.mature       { color: #ff6b35;       background: rgba(255,107,53,.08); border-color: rgba(255,107,53,.3); }
 
     .card-movie { font-family: 'Bebas Neue', cursive; font-size: 30px; letter-spacing: .1em; color: var(--c); margin-bottom: 12px; line-height: 1.1; }
     .card-quote { font-size: 15px; font-style: italic; color: var(--text); line-height: 1.55; margin-bottom: 22px; }
@@ -1010,6 +1011,13 @@ const YOUTUBE_IDS = {
   forrest_gump:       'egkrxkiUnoo',
   the_matrix:         'fhrNgXJ__n8',
   seven:              'lHpHxLZReiI',
+  heat:               '1zvgrhn9el4?start=1',
+  avengers:           'EcLfyxzV4lI?start=38',
+  taken:              '',
+  titanic:            'sRkrvgy-feU?start=121',
+  basic_instinct:     'qFzd2UVFAMg?start=57',
+  sixth_sense:        'RoYEEjtDYKw?start=232',
+  terminator:         'Lj5bciUc1G0?start=76',
 };
 
 const CARD_COLORS = {
@@ -1018,13 +1026,20 @@ const CARD_COLORS = {
   forrest_gump:       '#f4a261',
   the_matrix:         '#06d6a0',
   seven:              '#ffd166',
+  heat:               '#ff6b35',
+  avengers:           '#a855f7',
+  taken:              '#3b82f6',
+  titanic:            '#06b6d4',
+  basic_instinct:     '#f43f5e',
+  sixth_sense:        '#8b5cf6',
+  terminator:         '#ef4444',
 };
 
 // Which level each scene belongs to — keep in sync with LEVELS in main.py
 const LEVEL_MAP = {
-  the_matrix: 1, seven: 1,
-  fight_club: 2,
-  back_to_the_future: 3, forrest_gump: 3,
+  the_matrix: 1, seven: 1, avengers: 1, titanic: 1, terminator: 1,
+  fight_club: 2, taken: 2, sixth_sense: 2,
+  back_to_the_future: 3, forrest_gump: 3, heat: 3, basic_instinct: 3,
 };
 const LEVEL_NAMES = { 1: 'Beginner', 2: 'Intermediate', 3: 'Advanced' };
 
@@ -1043,7 +1058,7 @@ let activeLbTab = null;
 let userProgress = {           // safe Level-1 defaults until API responds
   level: 1,
   best_scores: {},
-  unlocked_scenes: ['the_matrix', 'seven'],
+  unlocked_scenes: ['the_matrix', 'seven', 'avengers', 'titanic', 'terminator'],
   next_level: { level: 2, required_score: 60, best_score: 0 },
 };
 
@@ -1225,11 +1240,18 @@ async function loadScenes() {
     scenes  = await r.json();
   } catch {
     scenes = {
-      fight_club:         { movie: 'Fight Club',         quote: 'You know what a duvet is?',              year: 1999, difficulty: 'Intermediate', actor: 'Brad Pitt'          },
-      back_to_the_future: { movie: 'Back to the Future', quote: "Where we're going, we don't need roads.", year: 1985, difficulty: 'Advanced',     actor: 'Christopher Lloyd' },
-      forrest_gump:       { movie: 'Forrest Gump',       quote: "You never know what you're gonna get.",   year: 1994, difficulty: 'Advanced',     actor: 'Tom Hanks'          },
-      the_matrix:         { movie: 'The Matrix',         quote: 'I know kung fu.',                         year: 1999, difficulty: 'Beginner',     actor: 'Keanu Reeves'       },
-      seven:              { movie: 'Se7en',              quote: "What's in the box?",                      year: 1995, difficulty: 'Beginner',     actor: 'Brad Pitt'          },
+      fight_club:         { movie: 'Fight Club',         quote: 'You know what a duvet is?',               year: 1999, difficulty: 'Intermediate', actor: 'Brad Pitt'             },
+      back_to_the_future: { movie: 'Back to the Future', quote: "Where we're going, we don't need roads.",  year: 1985, difficulty: 'Advanced',     actor: 'Christopher Lloyd'    },
+      forrest_gump:       { movie: 'Forrest Gump',       quote: "You never know what you're gonna get.",    year: 1994, difficulty: 'Advanced',     actor: 'Tom Hanks'             },
+      the_matrix:         { movie: 'The Matrix',         quote: 'I know kung fu.',                          year: 1999, difficulty: 'Beginner',     actor: 'Keanu Reeves'          },
+      seven:              { movie: 'Se7en',               quote: "What's in the box?",                      year: 1995, difficulty: 'Beginner',     actor: 'Brad Pitt'             },
+      heat:               { movie: 'Heat',               quote: 'Stop talking okay Slick',                  year: 1995, difficulty: 'Advanced',     actor: 'Al Pacino'             },
+      avengers:           { movie: 'Avengers',           quote: 'Hulk... Smash',                            year: 2012, difficulty: 'Beginner',     actor: 'Mark Ruffalo'          },
+      taken:              { movie: 'Taken',              quote: 'I will find you and I will kill you',       year: 2008, difficulty: 'Intermediate', actor: 'Liam Neeson'           },
+      titanic:            { movie: 'Titanic',            quote: "I'm flying Jack!",                         year: 1997, difficulty: 'Beginner',     actor: 'Kate Winslet'          },
+      basic_instinct:     { movie: 'Basic Instinct',    quote: "No I'm an amateur",                        year: 1992, difficulty: 'Advanced',     actor: 'Sharon Stone', mature: true },
+      sixth_sense:        { movie: 'The Sixth Sense',   quote: 'I see dead people',                        year: 1999, difficulty: 'Intermediate', actor: 'Haley Joel Osment'     },
+      terminator:         { movie: 'The Terminator',    quote: "I'll be back",                             year: 1984, difficulty: 'Beginner',     actor: 'Arnold Schwarzenegger' },
     };
   }
   renderCards();
@@ -1258,7 +1280,10 @@ function makeCard(id, s) {
     </div>` : ''}
     <div class="card-top">
       <span class="movie-year">${s.year}</span>
-      <span class="badge ${s.difficulty.toLowerCase()}">${s.difficulty}</span>
+      <div style="display:flex;gap:6px;align-items:center">
+        ${s.mature ? '<span class="badge mature">18+</span>' : ''}
+        <span class="badge ${s.difficulty.toLowerCase()}">${s.difficulty}</span>
+      </div>
     </div>
     <div class="card-movie">${s.movie}</div>
     <div class="card-quote">&ldquo;${s.quote}&rdquo;</div>

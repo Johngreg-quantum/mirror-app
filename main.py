@@ -104,7 +104,7 @@ SCENES = {
     },
     "back_to_the_future": {
         "movie": "Back to the Future",
-        "quote": "Where we're going, we don't need roads.",
+        "quote": "Roads Where we're going, we don't need roads.",
         "year": 1985, "difficulty": "Advanced", "actor": "Christopher Lloyd",
     },
     "forrest_gump": {
@@ -122,15 +122,50 @@ SCENES = {
         "quote": "What's in the box?",
         "year": 1995, "difficulty": "Beginner", "actor": "Brad Pitt",
     },
+    "heat": {
+        "movie": "Heat",
+        "quote": "Stop talking okay Slick",
+        "year": 1995, "difficulty": "Advanced", "actor": "Al Pacino",
+    },
+    "avengers": {
+        "movie": "Avengers",
+        "quote": "Hulk... Smash",
+        "year": 2012, "difficulty": "Beginner", "actor": "Mark Ruffalo",
+    },
+    "taken": {
+        "movie": "Taken",
+        "quote": "I will find you and I will kill you",
+        "year": 2008, "difficulty": "Intermediate", "actor": "Liam Neeson",
+    },
+    "titanic": {
+        "movie": "Titanic",
+        "quote": "I'm flying Jack!",
+        "year": 1997, "difficulty": "Beginner", "actor": "Kate Winslet",
+    },
+    "basic_instinct": {
+        "movie": "Basic Instinct",
+        "quote": "No I'm an amateur",
+        "year": 1992, "difficulty": "Advanced", "actor": "Sharon Stone", "mature": True,
+    },
+    "sixth_sense": {
+        "movie": "The Sixth Sense",
+        "quote": "I see dead people",
+        "year": 1999, "difficulty": "Intermediate", "actor": "Haley Joel Osment",
+    },
+    "terminator": {
+        "movie": "The Terminator",
+        "quote": "I'll be back",
+        "year": 1984, "difficulty": "Beginner", "actor": "Arnold Schwarzenegger",
+    },
 }
 
 # Level unlock rules — must be kept in sync with LEVEL_MAP in index.html.
 # Each level lists which scene IDs belong to it and what minimum sync_score
 # (%) a user needs on any scene from the *previous* level to unlock it.
 LEVELS = [
-    {"level": 1, "scenes": ["the_matrix", "seven"],                "unlock_score": 0},
-    {"level": 2, "scenes": ["fight_club"],                         "unlock_score": 60},
-    {"level": 3, "scenes": ["back_to_the_future", "forrest_gump"], "unlock_score": 70},
+    {"level": 1, "scenes": ["the_matrix", "seven", "avengers", "titanic", "terminator"],     "unlock_score": 0},
+    {"level": 2, "scenes": ["fight_club", "taken", "sixth_sense"],                           "unlock_score": 60},
+    {"level": 3, "scenes": ["back_to_the_future", "forrest_gump", "heat", "basic_instinct"], "unlock_score": 70},
 ]
 
 
