@@ -248,6 +248,47 @@ LEVELS = [
     {"level": 3, "scenes": ["back_to_the_future", "forrest_gump", "heat", "basic_instinct"], "unlock_score": 70},
 ]
 
+# ---------------------------------------------------------------------------
+# Division / rank system
+# ---------------------------------------------------------------------------
+DIVISIONS = [
+    {"name": "Bronze",   "min": 0,     "max": 499,   "color": "#cd7f32"},
+    {"name": "Silver",   "min": 500,   "max": 1999,  "color": "#b8b8b8"},
+    {"name": "Gold",     "min": 2000,  "max": 4999,  "color": "#c9a84c"},
+    {"name": "Diamond",  "min": 5000,  "max": 9999,  "color": "#67e8f9"},
+    {"name": "Director", "min": 10000, "max": None,  "color": "#c9a84c"},
+]
+
+def get_division(points: int) -> dict:
+    for d in reversed(DIVISIONS):
+        if points >= d["min"]:
+            return d
+    return DIVISIONS[0]
+
+def get_next_division(points: int) -> Optional[dict]:
+    for d in DIVISIONS:
+        if d["min"] > points:
+            return d
+    return None  # already at max rank
+
+# ---------------------------------------------------------------------------
+# Spanish translations — unlocked after 3+ attempts with 70%+ best score
+# ---------------------------------------------------------------------------
+SCENE_TRANSLATIONS = {
+    "fight_club":         "¿Sabes lo que es un edredón?",
+    "back_to_the_future": "Caminos. A donde vamos no necesitamos caminos.",
+    "forrest_gump":       "Nunca sabes lo que te va a tocar.",
+    "the_matrix":         "Sé kung fu.",
+    "seven":              "¿Qué hay en la caja?",
+    "heat":               "Para de hablar, ¿vale, listo?",
+    "avengers":           "¡Hulk... aplasta!",
+    "taken":              "Te voy a encontrar y te voy a matar.",
+    "titanic":            "¡Estoy volando, Jack!",
+    "basic_instinct":     "No, soy una aficionada.",
+    "sixth_sense":        "Veo gente muerta.",
+    "terminator":         "Volveré.",
+}
+
 
 # ---------------------------------------------------------------------------
 # Database initialisation
@@ -312,6 +353,17 @@ def init_db():
                 cur.execute(f"ALTER TABLE scores ADD COLUMN {col} {dfn}")
             except sqlite3.OperationalError:
                 pass  # column already exists
+        # Non-destructive migration for users.points
+        try:
+            cur.execute("ALTER TABLE users ADD COLUMN points INTEGER DEFAULT 0")
+        except sqlite3.OperationalError:
+            pass  # column already exists
+
+    if USE_PG:
+        # Non-destructive migration for users.points (PostgreSQL)
+        cur.execute("""
+            ALTER TABLE users ADD COLUMN IF NOT EXISTS points INTEGER DEFAULT 0
+        """)
 
     conn.commit()
     conn.close()
@@ -374,6 +426,22 @@ def normalize(text: str) -> str:
 def sync_score(expected: str, transcribed: str) -> float:
     ratio = difflib.SequenceMatcher(None, normalize(expected), normalize(transcribed)).ratio()
     return round(ratio * 100, 1)
+
+
+def calc_points(score: float, is_first_attempt: bool) -> int:
+    """Return points earned for a single submission."""
+    pts = 0
+    if is_first_attempt:
+        pts += 10
+    if score >= 100:
+        pts += 100
+    elif score >= 95:
+        pts += 75
+    elif score >= 85:
+        pts += 50
+    elif score >= 70:
+        pts += 25
+    return pts
 
 
 # ---------------------------------------------------------------------------
@@ -602,39 +670,130 @@ async def submit_recording(
 
     conn = get_conn()
     cur  = conn.cursor()
+
+    # Check if this is the user's first attempt on this scene (before inserting)
+    cur.execute(
+        f"SELECT COUNT(*) FROM scores WHERE user_id = {PH} AND scene_id = {PH}",
+        (user["id"], scene_id),
+    )
+    attempt_count = cur.fetchone()[0]
+    is_first_attempt = attempt_count == 0
+
+    # Insert the new score
     cur.execute(
         f"INSERT INTO scores (scene_id, movie, quote, transcription, sync_score, username, user_id) "
         f"VALUES ({PH}, {PH}, {PH}, {PH}, {PH}, {PH}, {PH})",
         (scene_id, scene["movie"], expected_quote, transcription, score, user["username"], user["id"]),
     )
+
+    # Award points
+    pts_earned = calc_points(score, is_first_attempt)
+    if pts_earned > 0:
+        cur.execute(
+            f"UPDATE users SET points = points + {PH} WHERE id = {PH}",
+            (pts_earned, user["id"]),
+        )
+
+    # Fetch updated total points
+    cur.execute(f"SELECT points FROM users WHERE id = {PH}", (user["id"],))
+    total_points = cur.fetchone()[0] or 0
+
+    # Check translation unlock: 3+ attempts AND best score >= 70%
+    cur.execute(
+        f"SELECT COUNT(*), MAX(sync_score) FROM scores WHERE user_id = {PH} AND scene_id = {PH}",
+        (user["id"], scene_id),
+    )
+    row = cur.fetchone()
+    total_attempts = row[0]
+    best_score_scene = float(row[1] or 0)
+    translation_unlocked = total_attempts >= 3 and best_score_scene >= 70
+
     conn.commit()
     conn.close()
 
-    return {"transcription": transcription, "expected": expected_quote, "sync_score": score, "scene": scene}
+    division = get_division(total_points)
+    return {
+        "transcription":        transcription,
+        "expected":             expected_quote,
+        "sync_score":           score,
+        "scene":                scene,
+        "points_earned":        pts_earned,
+        "total_points":         total_points,
+        "division":             division,
+        "is_perfect":           score >= 100,
+        "is_first_attempt":     is_first_attempt,
+        "translation_unlocked": translation_unlocked,
+        "translation":          SCENE_TRANSLATIONS.get(scene_id) if translation_unlocked else None,
+    }
 
 
 @app.get("/api/leaderboard")
 async def get_leaderboard():
-    """Top 10 per scene ordered by sync_score desc."""
+    """Top 10 per scene ordered by sync_score desc, with user points and division."""
     conn   = get_conn()
     cur    = conn.cursor()
     result = {}
     for sid in SCENES:
         cur.execute(
-            f"SELECT id, scene_id, movie, quote, transcription, sync_score, username, created_at "
-            f"FROM scores WHERE scene_id = {PH} ORDER BY sync_score DESC LIMIT 10",
+            f"SELECT s.id, s.scene_id, s.movie, s.quote, s.transcription, s.sync_score, "
+            f"s.username, s.created_at, COALESCE(u.points, 0) "
+            f"FROM scores s LEFT JOIN users u ON s.user_id = u.id "
+            f"WHERE s.scene_id = {PH} ORDER BY s.sync_score DESC LIMIT 10",
             (sid,),
         )
         rows = cur.fetchall()
-        result[sid] = [
-            {
+        result[sid] = []
+        for r in rows:
+            pts = int(r[8]) if r[8] is not None else 0
+            div = get_division(pts)
+            result[sid].append({
                 "id": r[0], "scene_id": r[1], "movie": r[2], "quote": r[3],
                 "transcription": r[4], "sync_score": r[5], "username": r[6] or "",
-                # PostgreSQL returns datetime objects; SQLite returns strings.
-                # Both serialise correctly via FastAPI's JSON encoder.
                 "created_at": r[7].isoformat() if hasattr(r[7], "isoformat") else r[7],
-            }
-            for r in rows
-        ]
+                "user_points": pts,
+                "division": div,
+            })
     conn.close()
     return result
+
+
+@app.get("/api/profile")
+async def get_profile(user: dict = Depends(current_user)):
+    """Return the authenticated user's points, division, and scene stats."""
+    conn = get_conn()
+    cur  = conn.cursor()
+
+    cur.execute(f"SELECT points FROM users WHERE id = {PH}", (user["id"],))
+    row = cur.fetchone()
+    total_points = int(row[0]) if row and row[0] else 0
+
+    # Per-scene stats: attempt count + best score
+    cur.execute(
+        f"SELECT scene_id, COUNT(*), MAX(sync_score) "
+        f"FROM scores WHERE user_id = {PH} GROUP BY scene_id",
+        (user["id"],),
+    )
+    scene_rows = cur.fetchall()
+    conn.close()
+
+    scene_stats = {}
+    translations_unlocked = []
+    for r in scene_rows:
+        sid, attempts, best = r[0], int(r[1]), float(r[2] or 0)
+        scene_stats[sid] = {"attempts": attempts, "best_score": round(best, 1)}
+        if attempts >= 3 and best >= 70:
+            translations_unlocked.append(sid)
+
+    division      = get_division(total_points)
+    next_div      = get_next_division(total_points)
+    pts_to_next   = (next_div["min"] - total_points) if next_div else 0
+
+    return {
+        "username":             user["username"],
+        "total_points":         total_points,
+        "division":             division,
+        "next_division":        next_div,
+        "points_to_next":       pts_to_next,
+        "scene_stats":          scene_stats,
+        "translations_unlocked": translations_unlocked,
+    }

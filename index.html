@@ -1281,6 +1281,67 @@ header {
     .auth-screen { padding-bottom: max(16px, env(safe-area-inset-bottom)); }
   }
 }
+
+/* ─── GAMIFICATION ─── */
+.div-dot {
+  display: inline-block; width: 8px; height: 8px; border-radius: 50%;
+  flex-shrink: 0; margin-left: 2px;
+}
+@keyframes pts-pop {
+  from { opacity: 0; transform: scale(.88) translateY(6px); }
+  to   { opacity: 1; transform: scale(1)  translateY(0); }
+}
+.perfect-badge {
+  display: none; margin-top: 10px; padding: 9px 14px; border-radius: 8px;
+  background: linear-gradient(135deg, rgba(201,168,76,.15), rgba(201,168,76,.06));
+  border: 1px solid rgba(201,168,76,.4);
+  text-align: center; font-size: 13px; color: var(--gold); font-weight: 600;
+  animation: pts-pop .45s .1s cubic-bezier(0.34,1.56,0.64,1) both;
+}
+.perfect-badge.on { display: block; }
+.pts-earned {
+  display: none; margin-top: 12px; padding: 13px 16px; border-radius: 10px;
+  border: 1px solid rgba(201,168,76,.3); background: rgba(201,168,76,.07);
+  animation: pts-pop .4s cubic-bezier(0.34,1.56,0.64,1) both;
+}
+.pts-earned.on { display: flex; align-items: center; gap: 12px; }
+.pts-earned-left { flex: 1; }
+.pts-earned-amount { font-family: 'Bebas Neue', cursive; font-size: 26px; color: var(--gold); line-height: 1; }
+.pts-earned-amount span { font-size: 13px; opacity: .7; }
+.pts-earned-label { font-size: 10px; color: var(--muted); letter-spacing: .1em; text-transform: uppercase; margin-top: 2px; }
+.pts-total { font-size: 11px; color: var(--muted); text-align: right; }
+.pts-total strong { display: block; font-size: 17px; color: var(--text); font-weight: 600; }
+.div-badge {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 3px 9px; border-radius: 100px;
+  font-size: 10px; font-weight: 700; letter-spacing: .05em; vertical-align: middle;
+}
+.trans-reveal {
+  display: none; margin-top: 14px; padding: 15px 16px; border-radius: 10px;
+  border: 1px solid rgba(103,232,249,.3); background: rgba(103,232,249,.05);
+  animation: pts-pop .4s .15s cubic-bezier(0.34,1.56,0.64,1) both;
+}
+.trans-reveal.on { display: block; }
+.trans-reveal-label { font-size: 9px; letter-spacing: .22em; text-transform: uppercase; color: #67e8f9; margin-bottom: 8px; }
+.trans-text { font-family: 'Cormorant Garamond', serif; font-size: 18px; font-style: italic; color: var(--text); line-height: 1.5; }
+.trans-earn { font-size: 11px; color: var(--muted); margin-top: 6px; }
+.div-card {
+  margin-bottom: 18px; padding: 16px 18px; border-radius: 12px;
+  border: 1px solid var(--border); background: var(--surface-2);
+  display: none; align-items: center; gap: 14px;
+}
+.div-card.on { display: flex; }
+.div-card-badge {
+  width: 46px; height: 46px; border-radius: 50%; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'Bebas Neue', cursive; font-size: 12px; letter-spacing: .1em;
+  border: 2px solid currentColor;
+}
+.div-card-info { flex: 1; }
+.div-card-name { font-family: 'Bebas Neue', cursive; font-size: 20px; letter-spacing: .08em; }
+.div-card-pts { font-size: 12px; color: var(--muted); margin-top: 2px; }
+.div-card-next { font-size: 11px; color: var(--muted); text-align: right; }
+.div-card-next strong { display: block; font-size: 15px; color: var(--text); font-weight: 600; }
   </style>
 </head>
 <body>
@@ -1589,6 +1650,7 @@ header {
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
         <circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/>
       </svg>
+      <span class="div-dot" id="divDot" title="Bronze"></span>
       <span class="user-chip-name" id="userChipName"></span>
       <button class="btn-logout" id="btnLogout">Logout</button>
     </div>
@@ -1681,6 +1743,17 @@ header {
         <div class="score-bar-track">
           <div class="score-bar-fill" id="scoreBar"></div>
         </div>
+        <div class="perfect-badge" id="perfectBadge">&#11088; Perfect Score! You nailed every word.</div>
+        <div class="pts-earned" id="ptsEarned">
+          <div class="pts-earned-left">
+            <div class="pts-earned-amount">+<span id="ptsAmount">0</span> <span>pts</span></div>
+            <div class="pts-earned-label">Points Earned</div>
+          </div>
+          <div class="pts-total">
+            <strong id="ptsTotalVal">0</strong>
+            Total Points
+          </div>
+        </div>
         <div class="phon-section" id="phonSection" style="display:none">
           <div class="phon-label">Word Breakdown</div>
           <div class="phon-words" id="phonWords"></div>
@@ -1714,6 +1787,11 @@ header {
               Hear Yourself
             </button>
           </div>
+        </div>
+        <div class="trans-reveal" id="transReveal">
+          <div class="trans-reveal-label">&#127758; Spanish Translation Unlocked</div>
+          <div class="trans-text" id="transText"></div>
+          <div class="trans-earn">You earned this translation!</div>
         </div>
       </div>
     </div>
@@ -1794,6 +1872,15 @@ header {
 
     <div class="progress-modal-body">
 
+      <div class="div-card" id="divCard">
+        <div class="div-card-badge" id="divCardBadge"></div>
+        <div class="div-card-info">
+          <div class="div-card-name" id="divCardName"></div>
+          <div class="div-card-pts" id="divCardPts"></div>
+        </div>
+        <div class="div-card-next" id="divCardNext"></div>
+      </div>
+
       <div class="prog-stats-row">
         <div class="prog-circle-wrap">
           <div id="progCircle">
@@ -1870,6 +1957,21 @@ const LEVEL_MAP = {
   back_to_the_future: 3, forrest_gump: 3, heat: 3, basic_instinct: 3,
 };
 const LEVEL_NAMES = { 1: 'Beginner', 2: 'Intermediate', 3: 'Advanced' };
+
+const DIVISIONS = [
+  { name: 'Bronze',   min: 0,     max: 499,   color: '#cd7f32' },
+  { name: 'Silver',   min: 500,   max: 1999,  color: '#b8b8b8' },
+  { name: 'Gold',     min: 2000,  max: 4999,  color: '#c9a84c' },
+  { name: 'Diamond',  min: 5000,  max: 9999,  color: '#67e8f9' },
+  { name: 'Director', min: 10000, max: null,  color: '#c9a84c' },
+];
+
+function getDivision(points) {
+  for (let i = DIVISIONS.length - 1; i >= 0; i--) {
+    if (points >= DIVISIONS[i].min) return DIVISIONS[i];
+  }
+  return DIVISIONS[0];
+}
 
 const API = 'https://mirror-app-z8wr.onrender.com';
 
@@ -1948,6 +2050,14 @@ function showApp() {
   document.getElementById('authScreen').style.display = 'none';
   document.getElementById('appScreen').style.display  = '';
   document.getElementById('userChipName').textContent = authUser.username;
+  updateDivDot(0);  // default Bronze until profile loads
+}
+
+function updateDivDot(points) {
+  const d   = getDivision(points);
+  const dot = document.getElementById('divDot');
+  dot.style.background = d.color;
+  dot.title = d.name;
 }
 
 function clearAuth() {
@@ -2290,6 +2400,9 @@ function resetRec() {
   document.getElementById('scorePanel').classList.remove('on');
   document.getElementById('pbCompare').classList.remove('on');
   document.getElementById('phonSection').style.display = 'none';
+  document.getElementById('perfectBadge').classList.remove('on');
+  document.getElementById('ptsEarned').classList.remove('on');
+  document.getElementById('transReveal').classList.remove('on');
   document.getElementById('analyzeLabel').textContent = 'Analyze';
   document.getElementById('spinner').classList.remove('on');
   stopWaveform();
@@ -2430,6 +2543,7 @@ function showScore(data) {
   document.getElementById('cmpOrig').textContent   = `\u201c${data.expected}\u201d`;
   panel.classList.add('on');
   renderPhonemeBreakdown(data.expected, data.transcription);
+  showPointsEarned(data);
 
   // Show playback compare buttons
   const pbCompare = document.getElementById('pbCompare');
@@ -2453,6 +2567,22 @@ function animateNum(el, from, to, ms) {
     if (t < 1) requestAnimationFrame(tick);
   };
   requestAnimationFrame(tick);
+}
+
+function showPointsEarned(data) {
+  if (data.is_perfect) {
+    document.getElementById('perfectBadge').classList.add('on');
+  }
+  if (data.points_earned > 0 || data.total_points !== undefined) {
+    document.getElementById('ptsAmount').textContent  = data.points_earned || 0;
+    document.getElementById('ptsTotalVal').textContent = data.total_points  || 0;
+    document.getElementById('ptsEarned').classList.add('on');
+    if (data.division) updateDivDot(data.total_points || 0);
+  }
+  if (data.translation_unlocked && data.translation) {
+    document.getElementById('transText').textContent = data.translation;
+    document.getElementById('transReveal').classList.add('on');
+  }
 }
 
 // ══════════════════════════════════════════════
@@ -2513,21 +2643,30 @@ function buildPanelHTML(rows) {
   const trs = rows.map((s, i) => {
     const rank  = i + 1;
     const c     = s.sync_score >= 85 ? '#06d6a0' : s.sync_score >= 65 ? '#ffd166' : '#e63946';
+    const div   = s.division || getDivision(s.user_points || 0);
+    const badge = s.username
+      ? `<span class="div-badge" style="background:${div.color}18;color:${div.color}">${div.name}</span>`
+      : '';
     const name  = s.username
-      ? `<strong>${s.username}</strong>`
+      ? `<strong>${s.username}</strong> ${badge}`
       : `<span style="color:var(--muted)">\u2014</span>`;
+    const pts = s.user_points
+      ? `<span style="color:var(--muted);font-size:11px">${s.user_points}pts</span>`
+      : '—';
     return `<tr>
       <td class="rank-num ${rank <= 3 ? RCLS[rank] : ''}" style="width:52px">${rank <= 3 ? MEDAL[rank] : rank}</td>
       <td>${name}</td>
       <td style="width:90px"><span class="chip" style="background:${c}18;color:${c}">${s.sync_score}%</span></td>
-      <td style="color:var(--muted);white-space:nowrap;width:90px">${timeAgo(s.created_at)}</td>
+      <td style="width:72px;text-align:right">${pts}</td>
+      <td style="color:var(--muted);white-space:nowrap;width:80px">${timeAgo(s.created_at)}</td>
     </tr>`;
   }).join('');
 
   return `<table class="lb-table">
     <thead><tr>
       <th style="width:52px">Rank</th><th>Name</th>
-      <th style="width:90px">Score</th><th style="width:90px">When</th>
+      <th style="width:90px">Score</th><th style="width:72px;text-align:right">Points</th>
+      <th style="width:80px">When</th>
     </tr></thead>
     <tbody>${trs}</tbody>
   </table>`;
@@ -2803,15 +2942,44 @@ function closeProgressDashboard() {
 
 async function loadHistory() {
   document.getElementById('historyList').innerHTML = `<div class="history-empty">Loading\u2026</div>`;
+  const headers = { Authorization: `Bearer ${authToken}` };
   try {
-    const r = await fetch(`${API}/api/history`, {
-      headers: { Authorization: `Bearer ${authToken}` },
-    });
-    if (!r.ok) throw new Error();
-    const data = await r.json();
+    const [histRes, profRes] = await Promise.all([
+      fetch(`${API}/api/history`, { headers }),
+      fetch(`${API}/api/profile`, { headers }),
+    ]);
+    if (!histRes.ok) throw new Error();
+    const data = await histRes.json();
     renderProgressDashboard(data);
+    if (profRes.ok) {
+      const prof = await profRes.json();
+      renderDivCard(prof);
+      updateDivDot(prof.total_points || 0);
+    }
   } catch {
     document.getElementById('historyList').innerHTML = `<div class="history-empty">Could not load history</div>`;
+  }
+}
+
+function renderDivCard(prof) {
+  const card = document.getElementById('divCard');
+  if (!prof || !prof.division) { card.classList.remove('on'); return; }
+  card.classList.add('on');
+  const d     = prof.division;
+  const badge = document.getElementById('divCardBadge');
+  badge.textContent       = d.name.slice(0, 3).toUpperCase();
+  badge.style.color       = d.color;
+  badge.style.borderColor = d.color;
+  badge.style.background  = d.color + '18';
+  const nameEl = document.getElementById('divCardName');
+  nameEl.textContent  = d.name;
+  nameEl.style.color  = d.color;
+  document.getElementById('divCardPts').textContent = `${prof.total_points} total points`;
+  const nextEl = document.getElementById('divCardNext');
+  if (prof.next_division) {
+    nextEl.innerHTML = `<strong>${prof.points_to_next}</strong>pts to ${prof.next_division.name}`;
+  } else {
+    nextEl.innerHTML = `<strong>MAX</strong>rank achieved`;
   }
 }
 
