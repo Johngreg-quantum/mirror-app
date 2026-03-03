@@ -861,6 +861,45 @@ header {
 .compare-val { font-size: 14px; line-height: 1.55; }
 .compare-val.dim { color: var(--muted); font-style: italic; }
 
+/* ─── WAVEFORM ─── */
+.waveform-wrap {
+  display: none;
+  align-items: flex-end; justify-content: center;
+  gap: 3px; height: 52px; margin: 14px 0 0;
+  padding: 4px 0;
+}
+.waveform-wrap.on { display: flex; }
+.waveform-bar {
+  width: 4px; border-radius: 3px;
+  background: var(--red);
+  height: 3px;
+  transition: height 0.06s ease;
+  flex-shrink: 0;
+}
+
+/* ─── PHONEME BREAKDOWN ─── */
+.phon-section { margin-bottom: 18px; }
+.phon-label {
+  font-size: 9px; letter-spacing: .25em; text-transform: uppercase;
+  color: var(--muted); margin-bottom: 10px;
+}
+.phon-words { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
+.phon-word {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 17px; font-style: italic; line-height: 1;
+  padding: 5px 11px; border-radius: 7px;
+  border: 1px solid transparent;
+}
+.phon-word.good  { color: #06d6a0; background: rgba(6,214,160,.1);  border-color: rgba(6,214,160,.28); }
+.phon-word.close { color: #ffd166; background: rgba(255,209,102,.1); border-color: rgba(255,209,102,.28); }
+.phon-word.miss  { color: #e63946; background: rgba(230,57,70,.1);   border-color: rgba(230,57,70,.28); }
+.phon-legend { display: flex; gap: 14px; }
+.phon-legend-item { display: flex; align-items: center; gap: 5px; font-size: 10px; color: var(--muted); }
+.phon-legend-dot { width: 7px; height: 7px; border-radius: 50%; }
+.phon-legend-dot.good  { background: #06d6a0; }
+.phon-legend-dot.close { background: #ffd166; }
+.phon-legend-dot.miss  { background: #e63946; }
+
 /* ─── LEADERBOARD ─── */
 .lb-tabs { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 20px; }
 .lb-tab {
@@ -1629,6 +1668,8 @@ header {
         </button>
       </div>
 
+      <div class="waveform-wrap" id="waveformWrap"></div>
+
       <div class="score-panel" id="scorePanel">
         <div class="score-top">
           <div>
@@ -1639,6 +1680,15 @@ header {
         </div>
         <div class="score-bar-track">
           <div class="score-bar-fill" id="scoreBar"></div>
+        </div>
+        <div class="phon-section" id="phonSection" style="display:none">
+          <div class="phon-label">Word Breakdown</div>
+          <div class="phon-words" id="phonWords"></div>
+          <div class="phon-legend">
+            <span class="phon-legend-item"><span class="phon-legend-dot good"></span>Matched</span>
+            <span class="phon-legend-item"><span class="phon-legend-dot close"></span>Close</span>
+            <span class="phon-legend-item"><span class="phon-legend-dot miss"></span>Missed</span>
+          </div>
         </div>
         <div class="compare">
           <div class="compare-row">
@@ -1847,6 +1897,11 @@ let audioEl       = null;
 let micStream     = null;
 let timerInterval = null;
 let recSecs       = 0;
+
+let waveAudioCtx   = null;
+let waveAnalyser   = null;
+let waveAnimFrame  = null;
+const WAVE_BARS    = 30;
 
 // ══════════════════════════════════════════════
 // BOOT
@@ -2234,14 +2289,17 @@ function resetRec() {
   document.getElementById('recTime').textContent = '0:00';
   document.getElementById('scorePanel').classList.remove('on');
   document.getElementById('pbCompare').classList.remove('on');
+  document.getElementById('phonSection').style.display = 'none';
   document.getElementById('analyzeLabel').textContent = 'Analyze';
   document.getElementById('spinner').classList.remove('on');
+  stopWaveform();
 }
 
 function stopRecordingCleanup() {
   if (mediaRecorder && mediaRecorder.state !== 'inactive') mediaRecorder.stop();
   if (micStream) { micStream.getTracks().forEach(t => t.stop()); micStream = null; }
   clearInterval(timerInterval);
+  stopWaveform();
 }
 
 document.getElementById('btnRecord').addEventListener('click', startRec);
@@ -2271,6 +2329,7 @@ async function startRec() {
   };
 
   mediaRecorder.start(100);
+  startWaveform(micStream);
   setBtn('btnRecord', true);
   setBtn('btnStop',   false);
   document.getElementById('recInd').classList.add('on');
@@ -2287,6 +2346,7 @@ async function startRec() {
 function stopRec() {
   if (mediaRecorder && mediaRecorder.state !== 'inactive') mediaRecorder.stop();
   clearInterval(timerInterval);
+  stopWaveform();
   setBtn('btnStop', true);
   document.getElementById('recInd').classList.remove('on');
 }
@@ -2369,6 +2429,7 @@ function showScore(data) {
   document.getElementById('cmpYou').textContent    = `\u201c${data.transcription}\u201d`;
   document.getElementById('cmpOrig').textContent   = `\u201c${data.expected}\u201d`;
   panel.classList.add('on');
+  renderPhonemeBreakdown(data.expected, data.transcription);
 
   // Show playback compare buttons
   const pbCompare = document.getElementById('pbCompare');
@@ -2584,6 +2645,141 @@ const fadeObserver = new IntersectionObserver(entries => {
   });
 }, { threshold: 0.1 });
 document.querySelectorAll('.fade-up').forEach(el => fadeObserver.observe(el));
+
+// ══════════════════════════════════════════════
+// WAVEFORM VISUALIZATION
+// ══════════════════════════════════════════════
+function startWaveform(stream) {
+  stopWaveform(); // clear any previous instance
+
+  // Build bars
+  const wrap = document.getElementById('waveformWrap');
+  wrap.innerHTML = '';
+  for (let i = 0; i < WAVE_BARS; i++) {
+    const b = document.createElement('div');
+    b.className = 'waveform-bar';
+    wrap.appendChild(b);
+  }
+  wrap.classList.add('on');
+
+  try {
+    waveAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    const source = waveAudioCtx.createMediaStreamSource(stream);
+    waveAnalyser = waveAudioCtx.createAnalyser();
+    waveAnalyser.fftSize = 64; // 32 frequency bins
+    waveAnalyser.smoothingTimeConstant = 0.7;
+    source.connect(waveAnalyser);
+
+    const data = new Uint8Array(waveAnalyser.frequencyBinCount);
+    const bars = wrap.querySelectorAll('.waveform-bar');
+    const step = Math.max(1, Math.floor(data.length / WAVE_BARS));
+
+    // Mirror effect: bars are symmetrical around the center
+    function draw() {
+      waveAnimFrame = requestAnimationFrame(draw);
+      waveAnalyser.getByteFrequencyData(data);
+      bars.forEach((bar, i) => {
+        // Map bar index to a frequency bin, mirrored left↔right
+        const half  = Math.floor(WAVE_BARS / 2);
+        const binIdx = i < half ? i : WAVE_BARS - 1 - i;
+        const val  = data[binIdx * step] || 0;
+        const h    = Math.max(3, Math.round((val / 255) * 44));
+        bar.style.height = `${h}px`;
+      });
+    }
+    draw();
+  } catch {
+    // AudioContext unsupported — bars just stay flat, no crash
+  }
+}
+
+function stopWaveform() {
+  if (waveAnimFrame) { cancelAnimationFrame(waveAnimFrame); waveAnimFrame = null; }
+  if (waveAnalyser)  { try { waveAnalyser.disconnect(); } catch {} waveAnalyser = null; }
+  if (waveAudioCtx)  { try { waveAudioCtx.close(); }     catch {} waveAudioCtx = null; }
+  const wrap = document.getElementById('waveformWrap');
+  if (wrap) {
+    wrap.classList.remove('on');
+    wrap.querySelectorAll('.waveform-bar').forEach(b => { b.style.height = '3px'; });
+  }
+}
+
+// ══════════════════════════════════════════════
+// PHONEME BREAKDOWN
+// ══════════════════════════════════════════════
+function renderPhonemeBreakdown(expected, transcribed) {
+  const section = document.getElementById('phonSection');
+  const wordsEl = document.getElementById('phonWords');
+
+  const tokens = wordBreakdown(expected, transcribed);
+  if (!tokens.length) { section.style.display = 'none'; return; }
+
+  wordsEl.innerHTML = tokens.map(({ word, status }) =>
+    `<span class="phon-word ${status}">${word}</span>`
+  ).join('');
+  section.style.display = '';
+}
+
+// Returns [{word, status:'good'|'close'|'miss'}, …] for each word in expected
+function wordBreakdown(expected, transcribed) {
+  // Strip only punctuation that's not apostrophes, split into display tokens
+  const expTokens = expected.split(/\s+/).filter(Boolean);
+  const trnWords  = normalizeText(transcribed).split(/\s+/).filter(Boolean);
+
+  const used = new Array(trnWords.length).fill(false);
+
+  return expTokens.map(token => {
+    const norm = normalizeText(token);
+    if (!norm) return { word: token, status: 'good' };
+
+    let bestSim = 0, bestIdx = -1;
+    trnWords.forEach((tw, i) => {
+      if (used[i]) return;
+      const sim = charSeqRatio(norm, tw);
+      if (sim > bestSim) { bestSim = sim; bestIdx = i; }
+    });
+
+    let status;
+    if (bestIdx >= 0 && bestSim >= 0.9) {
+      used[bestIdx] = true;
+      status = 'good';
+    } else if (bestIdx >= 0 && bestSim >= 0.55) {
+      used[bestIdx] = true;
+      status = 'close';
+    } else {
+      status = 'miss';
+    }
+    return { word: token, status };
+  });
+}
+
+// Normalise: lowercase, strip non-word chars except apostrophes
+function normalizeText(s) {
+  return s.toLowerCase().replace(/[^\w'\s]/g, '').replace(/\s+/g, ' ').trim();
+}
+
+// Character-level sequence similarity ratio (mirrors Python's SequenceMatcher)
+function charSeqRatio(a, b) {
+  if (a === b) return 1;
+  if (!a || !b) return 0;
+  const m = lcsLength(a, b);
+  return (2 * m) / (a.length + b.length);
+}
+
+function lcsLength(a, b) {
+  // Standard DP — fine for short words (≤30 chars each)
+  const prev = new Uint16Array(b.length + 1);
+  let result = 0;
+  for (let i = 0; i < a.length; i++) {
+    const curr = new Uint16Array(b.length + 1);
+    for (let j = 0; j < b.length; j++) {
+      curr[j + 1] = a[i] === b[j] ? prev[j] + 1 : Math.max(curr[j], prev[j + 1]);
+      if (curr[j + 1] > result) result = curr[j + 1];
+    }
+    prev.set(curr);
+  }
+  return result;
+}
 
 // ══════════════════════════════════════════════
 // PROGRESS DASHBOARD
