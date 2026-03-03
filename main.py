@@ -428,6 +428,49 @@ async def get_progress(user: dict = Depends(current_user)):
     }
 
 
+@app.get("/api/history")
+async def get_history(user: dict = Depends(current_user)):
+    """Return the authenticated user's score history and aggregate stats."""
+    conn = get_conn()
+    cur  = conn.cursor()
+    cur.execute(
+        f"SELECT id, scene_id, movie, sync_score, created_at "
+        f"FROM scores WHERE user_id = {PH} ORDER BY created_at DESC LIMIT 100",
+        (user["id"],),
+    )
+    rows = cur.fetchall()
+    conn.close()
+
+    history = [
+        {
+            "id":         r[0],
+            "scene_id":   r[1],
+            "movie":      r[2],
+            "sync_score": float(r[3]) if r[3] is not None else 0.0,
+            "created_at": r[4].isoformat() if hasattr(r[4], "isoformat") else r[4],
+        }
+        for r in rows
+    ]
+
+    scores = [h["sync_score"] for h in history]
+    avg_score     = round(sum(scores) / len(scores), 1) if scores else 0
+    best_score    = round(max(scores), 1)               if scores else 0
+    first_score   = history[-1]["sync_score"]           if history else 0
+    improvement   = round(best_score - first_score, 1)  if history else 0
+    unique_scenes = len({h["scene_id"] for h in history})
+
+    return {
+        "history": history,
+        "stats": {
+            "avg_score":      avg_score,
+            "best_score":     best_score,
+            "total_attempts": len(history),
+            "unique_scenes":  unique_scenes,
+            "improvement":    improvement,
+        },
+    }
+
+
 @app.post("/api/submit")
 async def submit_recording(
     scene_id: str = Form(...),

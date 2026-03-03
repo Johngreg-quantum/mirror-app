@@ -1092,6 +1092,149 @@ header {
   .onboard-cta { width: 100%; justify-content: center; padding: 15px; }
 }
 
+/* ═══════════════════════════════════════════════
+   PROGRESS DASHBOARD
+═══════════════════════════════════════════════ */
+.progress-overlay {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,.88);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  z-index: 8000;
+  display: flex; align-items: center; justify-content: center;
+  padding: 24px;
+  opacity: 0; pointer-events: none;
+  transition: opacity 0.3s;
+}
+.progress-overlay.open { opacity: 1; pointer-events: all; }
+
+.progress-modal {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  width: 100%; max-width: 680px;
+  max-height: 90vh; overflow-y: auto;
+  transform: translateY(22px) scale(.98);
+  transition: transform 0.3s;
+  scrollbar-width: thin; scrollbar-color: var(--border) transparent;
+}
+.progress-overlay.open .progress-modal { transform: translateY(0) scale(1); }
+
+.progress-modal-head {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 28px 32px 24px;
+  border-bottom: 1px solid var(--border);
+  position: sticky; top: 0;
+  background: var(--surface); z-index: 10;
+  border-radius: 20px 20px 0 0;
+}
+.progress-modal-title {
+  font-family: 'Bebas Neue', cursive;
+  font-size: 28px; letter-spacing: 0.12em; color: var(--text);
+}
+.progress-modal-title em { color: var(--gold); font-style: normal; }
+.progress-modal-body { padding: 28px 32px 32px; }
+
+.prog-stats-row {
+  display: grid;
+  grid-template-columns: 160px 1fr;
+  gap: 24px; margin-bottom: 32px;
+  align-items: center;
+}
+.prog-circle-wrap { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+.prog-circle-wrap svg { display: block; }
+.prog-circle-lbl {
+  font-size: 9px; letter-spacing: 0.24em; text-transform: uppercase;
+  color: var(--muted); text-align: center;
+}
+
+.prog-stat-cards { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+.prog-stat-card {
+  background: var(--surface-2); border: 1px solid var(--border);
+  border-radius: 12px; padding: 16px 18px;
+}
+.prog-stat-val {
+  font-family: 'Bebas Neue', cursive;
+  font-size: 36px; line-height: 1; letter-spacing: 0.04em;
+  color: var(--gold); margin-bottom: 4px;
+}
+.prog-stat-val.green { color: var(--green); }
+.prog-stat-val.red   { color: var(--red); }
+.prog-stat-lbl { font-size: 9px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--muted); }
+
+.history-section-label {
+  font-size: 9px; font-weight: 700; letter-spacing: 0.3em; text-transform: uppercase;
+  color: var(--muted); padding-bottom: 10px;
+  border-bottom: 1px solid var(--border); margin-bottom: 12px;
+}
+.history-list { display: flex; flex-direction: column; gap: 6px; }
+.history-item {
+  display: flex; align-items: center; gap: 12px;
+  background: var(--surface-2); border: 1px solid var(--border);
+  border-radius: 10px; padding: 12px 16px;
+  transition: border-color 0.2s;
+}
+.history-item.improved { border-color: rgba(6,214,160,.3); }
+.history-movie {
+  flex: 1; font-size: 13px; font-weight: 500; color: var(--text);
+  min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.history-date { font-size: 11px; color: var(--muted); flex-shrink: 0; }
+.history-score { font-family: 'Bebas Neue', cursive; font-size: 20px; line-height: 1; flex-shrink: 0; }
+.history-improved-badge {
+  font-size: 9px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase;
+  color: var(--green); background: rgba(6,214,160,.1); border: 1px solid rgba(6,214,160,.25);
+  border-radius: 100px; padding: 3px 9px; flex-shrink: 0;
+}
+.history-empty { text-align: center; color: var(--muted); padding: 36px 0; font-size: 13px; font-style: italic; }
+
+/* My Progress button in app header */
+.btn-my-progress {
+  position: absolute; top: 24px; left: 24px;
+  display: flex; align-items: center; gap: 7px;
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 100px; padding: 7px 14px 7px 12px;
+  font-size: 12px; font-weight: 500; color: var(--text);
+  cursor: none; font-family: 'DM Sans', sans-serif;
+  transition: all 0.2s;
+}
+.btn-my-progress:hover { border-color: var(--gold); color: var(--gold); }
+.btn-my-progress svg { color: var(--gold); flex-shrink: 0; }
+
+/* Playback compare in score panel */
+.pb-compare { display: none; margin-top: 18px; padding-top: 16px; border-top: 1px solid var(--border); }
+.pb-compare.on { display: block; }
+.pb-lbl { font-size: 9px; letter-spacing: 0.24em; text-transform: uppercase; color: var(--muted); margin-bottom: 10px; }
+.pb-btns { display: flex; gap: 10px; flex-wrap: wrap; }
+.btn-hear {
+  display: inline-flex; align-items: center; gap: 7px;
+  padding: 10px 18px; border-radius: 8px;
+  font-size: 12px; font-weight: 500; cursor: none;
+  border: 1px solid var(--border); background: var(--surface);
+  color: var(--text); transition: all .2s;
+  font-family: 'DM Sans', sans-serif;
+  touch-action: manipulation; -webkit-tap-highlight-color: transparent;
+}
+.btn-hear:hover { border-color: rgba(255,255,255,.25); background: rgba(255,255,255,.05); }
+.btn-hear:disabled { opacity: .3; pointer-events: none; }
+.btn-hear-actor { border-color: rgba(201,168,76,.3); color: var(--gold); }
+.btn-hear-actor:hover { border-color: var(--gold); background: rgba(201,168,76,.08); }
+.btn-hear-self  { border-color: rgba(72,149,239,.3); color: #4895ef; }
+.btn-hear-self:hover  { border-color: #4895ef; background: rgba(72,149,239,.08); }
+
+@media (max-width: 580px) {
+  .btn-my-progress { top: 16px; left: 16px; padding: 6px 10px 6px 8px; font-size: 11px; }
+  .progress-modal-head { padding: 20px 20px 16px; }
+  .progress-modal-body { padding: 20px; }
+  .prog-stats-row { grid-template-columns: 1fr; }
+  .prog-circle-wrap { flex-direction: row; gap: 20px; align-items: center; }
+  .prog-stat-cards { grid-template-columns: 1fr 1fr; }
+  .history-item { padding: 10px 12px; }
+  .history-movie { font-size: 12px; }
+  .pb-btns { flex-direction: column; }
+  .btn-hear { justify-content: center; }
+}
+
 @supports (padding-bottom: env(safe-area-inset-bottom)) {
   @media (max-width: 580px) {
     .modal { padding-bottom: env(safe-area-inset-bottom); }
@@ -1395,6 +1538,12 @@ header {
 <div id="appScreen" style="display:none">
 
   <header>
+    <button class="btn-my-progress" id="btnMyProgress">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M18 20V10M12 20V4M6 20v-6"/>
+      </svg>
+      My Progress
+    </button>
     <div class="logo">MIR<em>RO</em>R</div>
     <p class="tagline">Speak like the screen &bull; AI-powered language learning</p>
     <div class="user-chip" id="userChip">
@@ -1501,6 +1650,21 @@ header {
             <span class="compare-val dim" id="cmpOrig"></span>
           </div>
         </div>
+        <div class="pb-compare" id="pbCompare">
+          <div class="pb-lbl">Compare Voices</div>
+          <div class="pb-btns">
+            <button class="btn-hear btn-hear-actor" id="btnHearActor">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+              Hear the Actor
+            </button>
+            <button class="btn-hear btn-hear-self" id="btnHearSelf">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="9" y="2" width="6" height="11" rx="3"/><path d="M5 10a7 7 0 0 0 14 0"/><line x1="12" y1="19" x2="12" y2="22"/>
+              </svg>
+              Hear Yourself
+            </button>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -1564,6 +1728,54 @@ header {
       Start Acting
     </button>
 
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     PROGRESS DASHBOARD
+══════════════════════════════════════════════ -->
+<div class="progress-overlay" id="progressOverlay">
+  <div class="progress-modal">
+
+    <div class="progress-modal-head">
+      <div class="progress-modal-title">My <em>Progress</em></div>
+      <button class="btn-close" id="btnProgressClose" aria-label="Close">&times;</button>
+    </div>
+
+    <div class="progress-modal-body">
+
+      <div class="prog-stats-row">
+        <div class="prog-circle-wrap">
+          <div id="progCircle">
+            <svg width="140" height="140" viewBox="0 0 120 120">
+              <circle cx="60" cy="60" r="48" fill="none" stroke="rgba(255,255,255,0.07)" stroke-width="10"/>
+              <text x="60" y="65" text-anchor="middle" fill="var(--muted)" font-family="'Bebas Neue',cursive" font-size="28">—</text>
+            </svg>
+          </div>
+          <div class="prog-circle-lbl">Average Score</div>
+        </div>
+        <div class="prog-stat-cards">
+          <div class="prog-stat-card">
+            <div class="prog-stat-val" id="progBest">—</div>
+            <div class="prog-stat-lbl">Best Score</div>
+          </div>
+          <div class="prog-stat-card">
+            <div class="prog-stat-val" id="progScenes">—</div>
+            <div class="prog-stat-lbl">Scenes Tried</div>
+          </div>
+          <div class="prog-stat-card">
+            <div class="prog-stat-val" id="progImprovement">—</div>
+            <div class="prog-stat-lbl">Improvement</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="history-section-label" id="historyLabel">Score History</div>
+      <div class="history-list" id="historyList">
+        <div class="history-empty">Loading…</div>
+      </div>
+
+    </div>
   </div>
 </div>
 
@@ -1999,6 +2211,8 @@ document.addEventListener('keydown', e => {
   if (e.key !== 'Escape') return;
   if (document.getElementById('authModalOverlay').classList.contains('open')) {
     closeAuthModal();
+  } else if (document.getElementById('progressOverlay').classList.contains('open')) {
+    closeProgressDashboard();
   } else {
     closeModal();
   }
@@ -2019,6 +2233,7 @@ function resetRec() {
   document.getElementById('recInd').classList.remove('on');
   document.getElementById('recTime').textContent = '0:00';
   document.getElementById('scorePanel').classList.remove('on');
+  document.getElementById('pbCompare').classList.remove('on');
   document.getElementById('analyzeLabel').textContent = 'Analyze';
   document.getElementById('spinner').classList.remove('on');
 }
@@ -2154,6 +2369,12 @@ function showScore(data) {
   document.getElementById('cmpYou').textContent    = `\u201c${data.transcription}\u201d`;
   document.getElementById('cmpOrig').textContent   = `\u201c${data.expected}\u201d`;
   panel.classList.add('on');
+
+  // Show playback compare buttons
+  const pbCompare = document.getElementById('pbCompare');
+  pbCompare.classList.add('on');
+  const hasYt = !!(YOUTUBE_IDS[activeScene]);
+  document.getElementById('btnHearActor').disabled = !hasYt;
 
   animateNum(document.getElementById('scoreVal'), 0, pct, 900);
   requestAnimationFrame(() => {
@@ -2363,6 +2584,134 @@ const fadeObserver = new IntersectionObserver(entries => {
   });
 }, { threshold: 0.1 });
 document.querySelectorAll('.fade-up').forEach(el => fadeObserver.observe(el));
+
+// ══════════════════════════════════════════════
+// PROGRESS DASHBOARD
+// ══════════════════════════════════════════════
+document.getElementById('btnMyProgress').addEventListener('click', openProgressDashboard);
+document.getElementById('btnProgressClose').addEventListener('click', closeProgressDashboard);
+document.getElementById('progressOverlay').addEventListener('click', e => {
+  if (e.target === document.getElementById('progressOverlay')) closeProgressDashboard();
+});
+
+function openProgressDashboard() {
+  document.getElementById('progressOverlay').classList.add('open');
+  document.body.style.overflow = 'hidden';
+  loadHistory();
+}
+
+function closeProgressDashboard() {
+  document.getElementById('progressOverlay').classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+async function loadHistory() {
+  document.getElementById('historyList').innerHTML = `<div class="history-empty">Loading\u2026</div>`;
+  try {
+    const r = await fetch(`${API}/api/history`, {
+      headers: { Authorization: `Bearer ${authToken}` },
+    });
+    if (!r.ok) throw new Error();
+    const data = await r.json();
+    renderProgressDashboard(data);
+  } catch {
+    document.getElementById('historyList').innerHTML = `<div class="history-empty">Could not load history</div>`;
+  }
+}
+
+function renderProgressDashboard({ history, stats }) {
+  // Circular avg score
+  const avg = stats.avg_score || 0;
+  const circleColor = avg >= 70 ? 'var(--green)' : avg >= 40 ? 'var(--gold)' : 'var(--red)';
+  document.getElementById('progCircle').innerHTML = buildCircleSVG(avg, circleColor);
+
+  // Stat cards
+  document.getElementById('progBest').innerHTML =
+    stats.best_score > 0 ? `${stats.best_score}<sup style="font-size:16px;opacity:.6">%</sup>` : '—';
+  document.getElementById('progScenes').textContent = stats.unique_scenes || 0;
+
+  const impEl   = document.getElementById('progImprovement');
+  const impSign = stats.improvement > 0 ? '+' : '';
+  impEl.innerHTML = `${impSign}${stats.improvement}<sup style="font-size:16px;opacity:.6">%</sup>`;
+  impEl.className = `prog-stat-val${stats.improvement > 0 ? ' green' : stats.improvement < 0 ? ' red' : ''}`;
+
+  // History label with count
+  document.getElementById('historyLabel').textContent =
+    `Score History  —  ${stats.total_attempts} recording${stats.total_attempts !== 1 ? 's' : ''}`;
+
+  // History list
+  const listEl = document.getElementById('historyList');
+  if (!history.length) {
+    listEl.innerHTML = `<div class="history-empty">No recordings yet — start acting!</div>`;
+    return;
+  }
+
+  const improved = computeImprovedIds(history);
+  listEl.innerHTML = history.map(h => {
+    const c    = h.sync_score >= 85 ? '#06d6a0' : h.sync_score >= 65 ? '#ffd166' : h.sync_score >= 40 ? '#f4a261' : '#e63946';
+    const date = h.created_at ? new Date(h.created_at).toLocaleDateString() : '—';
+    const isUp = improved.has(h.id);
+    return `<div class="history-item${isUp ? ' improved' : ''}">
+      <span class="history-movie">${h.movie}</span>
+      <span class="history-date">${date}</span>
+      <span class="history-score" style="color:${c}">${h.sync_score}<sup style="font-size:11px;opacity:.7">%</sup></span>
+      ${isUp ? '<span class="history-improved-badge">\u2191 Improved</span>' : ''}
+    </div>`;
+  }).join('');
+}
+
+function buildCircleSVG(pct, color) {
+  const r = 48, cx = 60;
+  const circ   = 2 * Math.PI * r;
+  const offset = circ * (1 - Math.min(pct, 100) / 100);
+  return `<svg width="140" height="140" viewBox="0 0 120 120">
+    <circle cx="${cx}" cy="${cx}" r="${r}" fill="none" stroke="rgba(255,255,255,0.07)" stroke-width="10"/>
+    <circle cx="${cx}" cy="${cx}" r="${r}" fill="none" stroke="${color}" stroke-width="10"
+      stroke-dasharray="${circ.toFixed(1)}" stroke-dashoffset="${offset.toFixed(1)}"
+      stroke-linecap="round" transform="rotate(-90 ${cx} ${cx})"/>
+    <text x="${cx}" y="${cx + 10}" text-anchor="middle" fill="${color}"
+      font-family="'Bebas Neue',cursive" font-size="30" dominant-baseline="middle">${Math.round(pct)}</text>
+  </svg>`;
+}
+
+function computeImprovedIds(history) {
+  // history is newest-first; mark an entry if its score beats the previous attempt on the same scene
+  const improved = new Set();
+  for (let i = 0; i < history.length; i++) {
+    for (let j = i + 1; j < history.length; j++) {
+      if (history[j].scene_id === history[i].scene_id) {
+        if (history[i].sync_score > history[j].sync_score) improved.add(history[i].id);
+        break;
+      }
+    }
+  }
+  return improved;
+}
+
+// ══════════════════════════════════════════════
+// PLAYBACK COMPARE — Hear the Actor / Hear Yourself
+// ══════════════════════════════════════════════
+document.getElementById('btnHearActor').addEventListener('click', hearActor);
+document.getElementById('btnHearSelf').addEventListener('click',  hearSelf);
+
+function hearActor() {
+  const ytRaw = YOUTUBE_IDS[activeScene];
+  if (!ytRaw) return;
+  const videoId    = ytRaw.split('?')[0];
+  const startMatch = ytRaw.match(/start=(\d+)/);
+  const start      = startMatch ? parseInt(startMatch[1]) : 0;
+  const frame      = document.getElementById('videoFrame');
+  frame.src = `https://www.youtube.com/embed/${videoId}?autoplay=1&start=${start}`;
+  frame.style.display = '';
+  document.getElementById('videoPlaceholder').style.display = 'none';
+  document.getElementById('modal').scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function hearSelf() {
+  if (!audioBlob) return;
+  const audio = new Audio(URL.createObjectURL(audioBlob));
+  audio.play();
+}
 </script>
 </body>
 </html>
