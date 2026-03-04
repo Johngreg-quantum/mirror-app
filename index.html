@@ -865,16 +865,24 @@ header {
 .waveform-wrap {
   display: none;
   align-items: flex-end; justify-content: center;
-  gap: 3px; height: 52px; margin: 14px 0 0;
+  gap: 3px; height: 56px; margin: 14px 0 0;
   padding: 4px 0;
 }
 .waveform-wrap.on { display: flex; }
 .waveform-bar {
   width: 4px; border-radius: 3px;
-  background: var(--red);
+  background: var(--gold);
   height: 3px;
-  transition: height 0.06s ease;
   flex-shrink: 0;
+}
+/* Animation only plays when recording (.on class is present on the wrap).
+   Each bar gets a randomised --wh (max height), duration, and delay via JS. */
+@keyframes wave-dance {
+  0%, 100% { height: 3px; opacity: 0.5; }
+  50%       { height: var(--wh, 20px); opacity: 1; }
+}
+.waveform-wrap.on .waveform-bar {
+  animation: wave-dance var(--wd, 0.8s) ease-in-out var(--wdl, 0s) infinite;
 }
 
 /* ─── PHONEME BREAKDOWN ─── */
@@ -2047,7 +2055,7 @@ let recSecs       = 0;
 let waveAudioCtx   = null;
 let waveAnalyser   = null;
 let waveAnimFrame  = null;
-const WAVE_BARS    = 30;
+const WAVE_BARS    = 48;
 
 // ══════════════════════════════════════════════
 // BOOT
@@ -2486,7 +2494,7 @@ async function startRec() {
   };
 
   mediaRecorder.start(100);
-  startWaveform(micStream);
+  startWaveform();
   setBtn('btnRecord', true);
   setBtn('btnStop',   false);
   document.getElementById('recInd').classList.add('on');
@@ -2832,48 +2840,32 @@ document.querySelectorAll('.fade-up').forEach(el => fadeObserver.observe(el));
 // ══════════════════════════════════════════════
 // WAVEFORM VISUALIZATION
 // ══════════════════════════════════════════════
-function startWaveform(stream) {
-  stopWaveform(); // clear any previous instance
+function startWaveform() {
+  stopWaveform();
 
-  // Build bars
   const wrap = document.getElementById('waveformWrap');
   wrap.innerHTML = '';
+
+  // Build 48 bars, each with randomised max-height, duration, and delay
+  // assigned as CSS custom properties so the keyframe animation varies per bar.
   for (let i = 0; i < WAVE_BARS; i++) {
     const b = document.createElement('div');
     b.className = 'waveform-bar';
+    // --wh  : peak height  6 – 48 px  (centre bars taller for a natural arch)
+    const centre  = (WAVE_BARS - 1) / 2;
+    const dist    = Math.abs(i - centre) / centre;          // 0 at centre, 1 at edges
+    const maxH    = Math.round(48 - dist * 28 + Math.random() * 10);  // 20–48 px
+    // --wd  : animation duration  0.45 – 1.1 s
+    const dur     = (0.45 + Math.random() * 0.65).toFixed(2);
+    // --wdl : negative delay staggers bars so they don't all peak at once
+    const delay   = (-Math.random()).toFixed(2);
+    b.style.setProperty('--wh',  `${maxH}px`);
+    b.style.setProperty('--wd',  `${dur}s`);
+    b.style.setProperty('--wdl', `${delay}s`);
     wrap.appendChild(b);
   }
+
   wrap.classList.add('on');
-
-  try {
-    waveAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    const source = waveAudioCtx.createMediaStreamSource(stream);
-    waveAnalyser = waveAudioCtx.createAnalyser();
-    waveAnalyser.fftSize = 64; // 32 frequency bins
-    waveAnalyser.smoothingTimeConstant = 0.7;
-    source.connect(waveAnalyser);
-
-    const data = new Uint8Array(waveAnalyser.frequencyBinCount);
-    const bars = wrap.querySelectorAll('.waveform-bar');
-    const step = Math.max(1, Math.floor(data.length / WAVE_BARS));
-
-    // Mirror effect: bars are symmetrical around the center
-    function draw() {
-      waveAnimFrame = requestAnimationFrame(draw);
-      waveAnalyser.getByteFrequencyData(data);
-      bars.forEach((bar, i) => {
-        // Map bar index to a frequency bin, mirrored left↔right
-        const half  = Math.floor(WAVE_BARS / 2);
-        const binIdx = i < half ? i : WAVE_BARS - 1 - i;
-        const val  = data[binIdx * step] || 0;
-        const h    = Math.max(3, Math.round((val / 255) * 44));
-        bar.style.height = `${h}px`;
-      });
-    }
-    draw();
-  } catch {
-    // AudioContext unsupported — bars just stay flat, no crash
-  }
 }
 
 function stopWaveform() {
@@ -2881,10 +2873,7 @@ function stopWaveform() {
   if (waveAnalyser)  { try { waveAnalyser.disconnect(); } catch {} waveAnalyser = null; }
   if (waveAudioCtx)  { try { waveAudioCtx.close(); }     catch {} waveAudioCtx = null; }
   const wrap = document.getElementById('waveformWrap');
-  if (wrap) {
-    wrap.classList.remove('on');
-    wrap.querySelectorAll('.waveform-bar').forEach(b => { b.style.height = '3px'; });
-  }
+  if (wrap) wrap.classList.remove('on');
 }
 
 // ══════════════════════════════════════════════
