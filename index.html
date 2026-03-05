@@ -1568,6 +1568,93 @@ header {
   touch-action: manipulation; -webkit-tap-highlight-color: transparent;
 }
 .btn-try-again:hover { color: var(--text); border-color: rgba(255,255,255,.2); background: rgba(255,255,255,.04); }
+
+/* ══════════════════════════════════════════════
+   CHALLENGE SYSTEM
+══════════════════════════════════════════════ */
+/* ── Challenge button in score panel ── */
+.btn-challenge {
+  display: flex; align-items: center; justify-content: center; gap: 7px;
+  width: 100%; margin-top: 10px; padding: 11px 16px;
+  background: transparent; border: 1px solid rgba(201,168,76,.4);
+  color: var(--gold); border-radius: 10px; cursor: pointer;
+  font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 500;
+  transition: background .2s, border-color .2s;
+  touch-action: manipulation; -webkit-tap-highlight-color: transparent;
+}
+.btn-challenge:hover { background: rgba(201,168,76,.1); border-color: var(--gold); }
+
+/* ── Share panel ── */
+.challenge-share { display: none; margin-top: 12px; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 16px; }
+.challenge-share.on { display: block; }
+.chlg-share-title { font-size: 10px; letter-spacing: .15em; text-transform: uppercase; color: var(--muted); margin-bottom: 10px; }
+.chlg-link-row { display: flex; gap: 8px; margin-bottom: 10px; }
+.chlg-link-input {
+  flex: 1; min-width: 0;
+  background: var(--surface-2); border: 1px solid var(--border); border-radius: 8px;
+  padding: 8px 10px; color: var(--muted); font-size: 11px; font-family: monospace;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.btn-copy-link {
+  padding: 8px 12px; background: var(--surface-2); border: 1px solid var(--border);
+  border-radius: 8px; color: var(--text); font-size: 12px; cursor: pointer;
+  white-space: nowrap; transition: background .2s;
+}
+.btn-copy-link:hover { background: rgba(255,255,255,.08); }
+.btn-whatsapp {
+  width: 100%; padding: 10px; background: #25d366; border: none; border-radius: 8px;
+  color: #fff; font-size: 13px; font-weight: 600; cursor: pointer;
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  transition: opacity .2s;
+}
+.btn-whatsapp:hover { opacity: .9; }
+
+/* ── Challenge result (won / lost) ── */
+.challenge-result { display: none; margin-top: 14px; border-radius: 14px; padding: 22px; text-align: center; border: 2px solid transparent; }
+.challenge-result.won { display: block; background: rgba(6,214,160,.07); border-color: var(--green); animation: chlg-pop .5s cubic-bezier(.175,.885,.32,1.275); }
+.challenge-result.lost { display: block; background: rgba(244,162,97,.05); border-color: rgba(244,162,97,.35); animation: chlg-pop .4s ease-out; }
+@keyframes chlg-pop { 0%{transform:scale(.8);opacity:0} 100%{transform:scale(1);opacity:1} }
+.chlg-result-icon { font-size: 38px; margin-bottom: 6px; }
+.chlg-result-title { font-family: 'Bebas Neue', cursive; font-size: 30px; letter-spacing: .08em; margin-bottom: 4px; }
+.challenge-result.won  .chlg-result-title { color: var(--green); }
+.challenge-result.lost .chlg-result-title { color: #f4a261; }
+.chlg-result-sub { font-size: 12px; color: var(--muted); }
+
+/* ── Full-page challenge screen ── */
+#challengeScreen {
+  display: none; min-height: 100vh;
+  align-items: center; justify-content: center;
+  padding: 32px 20px; background: var(--bg);
+}
+#challengeScreen.on { display: flex; }
+.chlg-inner { max-width: 440px; width: 100%; text-align: center; }
+.chlg-logo { font-family: 'Bebas Neue', cursive; font-size: 30px; letter-spacing: .25em; color: var(--gold); margin-bottom: 8px; }
+.chlg-logo em { color: var(--text); font-style: normal; }
+.chlg-vs { font-size: 11px; letter-spacing: .2em; text-transform: uppercase; color: var(--muted); margin-bottom: 28px; }
+.chlg-card {
+  background: var(--surface); border: 1px solid var(--border); border-radius: 20px;
+  padding: 36px 28px; margin-bottom: 24px; position: relative; overflow: hidden;
+}
+.chlg-card::before {
+  content: ''; position: absolute; inset: 0;
+  background: linear-gradient(135deg, rgba(201,168,76,.08) 0%, transparent 60%);
+  pointer-events: none;
+}
+.chlg-challenger { font-family: 'Bebas Neue', cursive; font-size: 26px; color: var(--gold); letter-spacing: .06em; }
+.chlg-text { color: var(--muted); font-size: 13px; margin: 3px 0; }
+.chlg-score-big { font-family: 'Bebas Neue', cursive; font-size: 80px; line-height: 1; color: var(--text); margin: 6px 0; }
+.chlg-score-big sup { font-size: 32px; }
+.chlg-movie { font-family: 'Cormorant Garamond', serif; font-size: 20px; font-style: italic; color: var(--text); margin-bottom: 12px; }
+.chlg-beat { font-size: 15px; color: var(--text); font-weight: 600; }
+.btn-accept {
+  width: 100%; padding: 16px; background: var(--gold); color: #000;
+  font-family: 'Bebas Neue', cursive; font-size: 18px; letter-spacing: .1em;
+  border: none; border-radius: 12px; cursor: pointer; margin-bottom: 12px;
+  transition: opacity .2s; touch-action: manipulation;
+}
+.btn-accept:hover { opacity: .85; }
+.chlg-auth-note { font-size: 12px; color: var(--muted); margin-top: 4px; }
+.chlg-auth-note a { color: var(--gold); cursor: pointer; text-decoration: none; }
   </style>
 </head>
 <body>
@@ -2081,9 +2168,41 @@ header {
           </svg>
           Try Again
         </button>
+        <button class="btn-challenge" id="btnChallenge">&#9876; Challenge a Friend</button>
+        <div class="challenge-share" id="challengeShare">
+          <div class="chlg-share-title">Share your challenge</div>
+          <div class="chlg-link-row">
+            <div class="chlg-link-input" id="chlgLinkInput"></div>
+            <button class="btn-copy-link" id="btnCopyLink">Copy</button>
+          </div>
+          <button class="btn-whatsapp" id="btnWhatsapp">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.11.549 4.09 1.508 5.813L.057 23.25l5.594-1.467A11.95 11.95 0 0 0 12 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.818a9.818 9.818 0 0 1-5.007-1.372l-.36-.213-3.32.871.887-3.237-.234-.373A9.793 9.793 0 0 1 2.182 12c0-5.42 4.398-9.818 9.818-9.818 5.421 0 9.818 4.398 9.818 9.818 0 5.421-4.397 9.818-9.818 9.818z"/></svg>
+            Share on WhatsApp
+          </button>
+        </div>
+        <div class="challenge-result" id="challengeResult"></div>
       </div>
     </div>
 
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     CHALLENGE SCREEN (shown when opening /challenge/[id])
+══════════════════════════════════════════════ -->
+<div id="challengeScreen">
+  <div class="chlg-inner">
+    <div class="chlg-logo">MIR<em>RO</em>R</div>
+    <div class="chlg-vs">&#9876; You&rsquo;ve been challenged</div>
+    <div class="chlg-card">
+      <div class="chlg-challenger" id="chlgChallenger"></div>
+      <div class="chlg-text">scored</div>
+      <div class="chlg-score-big"><span id="chlgScoreVal">0</span><sup>%</sup></div>
+      <div class="chlg-movie" id="chlgMovie"></div>
+      <div class="chlg-beat">Can you beat it?</div>
+    </div>
+    <button class="btn-accept" id="btnAcceptChallenge">&#9876; Accept Challenge</button>
+    <p class="chlg-auth-note" id="chlgAuthNote"></p>
   </div>
 </div>
 
@@ -2302,6 +2421,9 @@ let ytPlayer      = null;
 let ytApiReady    = false;
 let ytEndInterval = null;
 
+let challengeCtx    = null;  // { score_to_beat } when scoring for a challenge
+let activeChallenge = null;  // full challenge object when on challenge screen
+
 window.onYouTubeIframeAPIReady = function() { ytApiReady = true; };
 
 let mediaRecorder = null;
@@ -2321,6 +2443,12 @@ const WAVE_BARS    = 48;
 // BOOT
 // ══════════════════════════════════════════════
 (async () => {
+  // Check if we're on a challenge URL first
+  const pathParts = window.location.pathname.split('/').filter(Boolean);
+  if (pathParts[0] === 'challenge' && pathParts[1]) {
+    await loadChallengePage(pathParts[1]);
+    return;
+  }
   if (authToken) {
     const ok = await verifyToken();
     if (ok) {
@@ -2351,16 +2479,17 @@ async function verifyToken() {
 }
 
 function showAuthScreen() {
-  document.getElementById('authScreen').style.display = '';
-  document.getElementById('appScreen').style.display  = 'none';
-  // Close auth modal if open
+  document.getElementById('authScreen').style.display     = '';
+  document.getElementById('appScreen').style.display      = 'none';
+  document.getElementById('challengeScreen').classList.remove('on');
   document.getElementById('authModalOverlay').classList.remove('open');
   document.body.style.overflow = '';
 }
 
 function showApp() {
-  document.getElementById('authScreen').style.display = 'none';
-  document.getElementById('appScreen').style.display  = '';
+  document.getElementById('authScreen').style.display     = 'none';
+  document.getElementById('appScreen').style.display      = '';
+  document.getElementById('challengeScreen').classList.remove('on');
   document.getElementById('userChipName').textContent = authUser.username;
   updateDivDot(0);  // default Bronze until profile loads
 }
@@ -2457,6 +2586,7 @@ document.getElementById('loginForm').addEventListener('submit', async e => {
     showApp();
     await loadProgress();
     await Promise.all([loadScenes(), loadScores(), loadDaily(), loadStreakCard()]);
+    if (activeChallenge) enterChallengeFromAuth();
   } catch (err) {
     errEl.textContent = err.message;
   } finally {
@@ -2503,9 +2633,10 @@ document.getElementById('registerForm').addEventListener('submit', async e => {
     authUser  = { username: data.username };
     localStorage.setItem('mirror_token', authToken);
     showApp();
-    maybeShowOnboarding();
+    if (!activeChallenge) maybeShowOnboarding();
     await loadProgress();
     await Promise.all([loadScenes(), loadScores(), loadDaily(), loadStreakCard()]);
+    if (activeChallenge) enterChallengeFromAuth();
   } catch (err) {
     errEl.textContent = err.message;
   } finally {
@@ -2849,6 +2980,8 @@ function resetRec() {
   const ex = ptsPanel.querySelector('.pts-extra');
   if (ex) ex.innerHTML = '';
   document.getElementById('transReveal').classList.remove('on');
+  document.getElementById('challengeShare').classList.remove('on');
+  document.getElementById('challengeResult').className = 'challenge-result';
   document.getElementById('analyzeLabel').textContent = 'Analyze';
   document.getElementById('spinner').classList.remove('on');
   stopWaveform();
@@ -3003,6 +3136,11 @@ function showScore(data) {
     bar.style.background = color;
     requestAnimationFrame(() => { bar.style.width = `${pct}%`; });
   });
+
+  if (challengeCtx) {
+    showChallengeResult(pct, challengeCtx.score_to_beat);
+    challengeCtx = null;
+  }
 }
 
 function animateNum(el, from, to, ms) {
@@ -3675,6 +3813,111 @@ document.getElementById('btnReplayLine').addEventListener('click', () => {
   hideReplayLine();
   if (ytPlayer) { ytPlayer.seekTo(startSec, true); ytPlayer.playVideo(); }
 });
+
+// ══════════════════════════════════════════════
+// FRIEND CHALLENGE
+// ══════════════════════════════════════════════
+async function loadChallengePage(cid) {
+  try {
+    const r = await fetch(`${API}/api/challenge/${cid}`);
+    if (!r.ok) { showAuthScreen(); return; }
+    activeChallenge = await r.json();
+    document.getElementById('chlgChallenger').textContent = activeChallenge.challenger_username;
+    document.getElementById('chlgScoreVal').textContent   = Math.round(activeChallenge.score_to_beat);
+    document.getElementById('chlgMovie').textContent      = activeChallenge.scene.movie || '';
+    const noteEl = document.getElementById('chlgAuthNote');
+    if (authToken) {
+      const ok = await verifyToken();
+      if (ok) {
+        noteEl.textContent = `Playing as ${authUser.username}`;
+      } else {
+        noteEl.innerHTML = `<a id="chlgLoginLink">Log in</a> to record your score`;
+        document.getElementById('chlgLoginLink').addEventListener('click', showAuthFromChallenge);
+      }
+    } else {
+      noteEl.innerHTML = `<a id="chlgLoginLink">Log in or register</a> to record your score`;
+      document.getElementById('chlgLoginLink').addEventListener('click', showAuthFromChallenge);
+    }
+    document.getElementById('challengeScreen').classList.add('on');
+    document.getElementById('authScreen').style.display = 'none';
+    document.getElementById('appScreen').style.display  = 'none';
+  } catch {
+    showAuthScreen();
+  }
+}
+
+function showAuthFromChallenge() {
+  document.getElementById('challengeScreen').classList.remove('on');
+  showAuthScreen();
+  openAuthModal('login');
+}
+
+function enterChallengeFromAuth() {
+  if (!activeChallenge) return;
+  challengeCtx = { score_to_beat: activeChallenge.score_to_beat };
+  closeAuthModal();
+  const sid = activeChallenge.scene_id;
+  const s   = scenes[sid] || activeChallenge.scene;
+  if (s) openModal(sid, s);
+}
+
+document.getElementById('btnAcceptChallenge').addEventListener('click', () => {
+  if (!activeChallenge) return;
+  if (authToken && authUser) {
+    enterChallengeFromAuth();
+  } else {
+    showAuthFromChallenge();
+  }
+});
+
+document.getElementById('btnChallenge').addEventListener('click', createChallenge);
+
+async function createChallenge() {
+  if (!authToken || !activeScene) return;
+  const score = parseFloat(document.getElementById('scoreVal').textContent) || 0;
+  setBtn('btnChallenge', true, '&#9876; Generating\u2026');
+  try {
+    const r = await fetch(`${API}/api/challenge`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${authToken}` },
+      body: JSON.stringify({ scene_id: activeScene, score }),
+    });
+    if (!r.ok) throw new Error('Failed');
+    const data = await r.json();
+    const movie = scenes[activeScene]?.movie || 'MIRROR';
+    const msg   = `I scored ${score}% on ${movie} in MIRROR! Can you beat it? ${data.url}`;
+    document.getElementById('chlgLinkInput').textContent = data.url;
+    document.getElementById('btnCopyLink').onclick = () => {
+      navigator.clipboard.writeText(data.url).then(() => {
+        document.getElementById('btnCopyLink').textContent = '\u2713 Copied!';
+        setTimeout(() => { document.getElementById('btnCopyLink').textContent = 'Copy'; }, 2000);
+      });
+    };
+    document.getElementById('btnWhatsapp').onclick = () => {
+      window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(msg)}`, '_blank');
+    };
+    document.getElementById('challengeShare').classList.add('on');
+  } catch {
+    alert('Could not create challenge link. Please try again.');
+  } finally {
+    setBtn('btnChallenge', false, '&#9876; Challenge a Friend');
+  }
+}
+
+function showChallengeResult(score, scoreToBeat) {
+  const el  = document.getElementById('challengeResult');
+  const won = score > scoreToBeat;
+  el.className = 'challenge-result ' + (won ? 'won' : 'lost');
+  if (won) {
+    el.innerHTML = `<div class="chlg-result-icon">\uD83C\uDFC6</div>
+      <div class="chlg-result-title">YOU WON!</div>
+      <div class="chlg-result-sub">You scored ${score}% vs ${scoreToBeat}% \u2014 challenge beaten!</div>`;
+  } else {
+    el.innerHTML = `<div class="chlg-result-icon">\uD83D\uDE24</div>
+      <div class="chlg-result-title">So Close!</div>
+      <div class="chlg-result-sub">You scored ${score}% — need ${scoreToBeat}% to win. Try again!</div>`;
+  }
+}
 </script>
 </body>
 </html>

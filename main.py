@@ -1,6 +1,7 @@
 import os
 import re
 import time
+import uuid
 import sqlite3
 import difflib
 import hashlib
@@ -385,6 +386,29 @@ def init_db():
             ("last_daily", "TEXT"),
         ]:
             cur.execute(f"ALTER TABLE users ADD COLUMN IF NOT EXISTS {col} {dfn}")
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS challenges (
+                id                  SERIAL PRIMARY KEY,
+                challenge_id        TEXT NOT NULL UNIQUE,
+                challenger_username TEXT NOT NULL,
+                challenger_user_id  INTEGER,
+                scene_id            TEXT NOT NULL,
+                score_to_beat       REAL NOT NULL,
+                created_at          TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
+    else:
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS challenges (
+                id                  INTEGER PRIMARY KEY AUTOINCREMENT,
+                challenge_id        TEXT NOT NULL UNIQUE,
+                challenger_username TEXT NOT NULL,
+                challenger_user_id  INTEGER,
+                scene_id            TEXT NOT NULL,
+                score_to_beat       REAL NOT NULL,
+                created_at          TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
 
     conn.commit()
     conn.close()
@@ -471,6 +495,16 @@ def calc_points(score: float, is_first_attempt: bool) -> int:
 
 @app.get("/", response_class=HTMLResponse)
 async def read_root():
+    try:
+        with open("index.html", "r", encoding="utf-8") as f:
+            return f.read()
+    except FileNotFoundError:
+        return HTMLResponse("<h1>index.html not found</h1>", status_code=404)
+
+
+@app.get("/challenge/{challenge_id}", response_class=HTMLResponse)
+async def challenge_page(challenge_id: str):
+    """Serve the SPA for challenge links so the JS can read the path and render the challenge screen."""
     try:
         with open("index.html", "r", encoding="utf-8") as f:
             return f.read()
@@ -799,6 +833,59 @@ async def submit_recording(
         "daily_bonus":          daily_bonus,
         "daily_already_done":   daily_already_done,
         "streak":               new_streak,
+    }
+
+
+class ChallengeRequest(BaseModel):
+    scene_id: str  = Field(..., max_length=50)
+    score:    float = Field(..., ge=0, le=100)
+
+
+@app.post("/api/challenge")
+async def create_challenge(req: ChallengeRequest, user: dict = Depends(current_user)):
+    """Create a shareable challenge link for the authenticated user's score."""
+    if req.scene_id not in SCENES:
+        raise HTTPException(400, "Invalid scene_id")
+    cid  = uuid.uuid4().hex[:16]   # 16-char hex, URL-safe and short enough to share
+    conn = get_conn()
+    cur  = conn.cursor()
+    cur.execute(
+        f"INSERT INTO challenges (challenge_id, challenger_username, challenger_user_id, scene_id, score_to_beat) "
+        f"VALUES ({PH}, {PH}, {PH}, {PH}, {PH})",
+        (cid, user["username"], user["id"], req.scene_id, round(req.score, 1)),
+    )
+    conn.commit()
+    conn.close()
+    return {
+        "challenge_id": cid,
+        "url": f"https://mirror-app-z8wr.onrender.com/challenge/{cid}",
+    }
+
+
+@app.get("/api/challenge/{challenge_id}")
+async def get_challenge(challenge_id: str):
+    """Return challenge metadata (public — no auth required)."""
+    if not re.match(r'^[a-f0-9]{16}$', challenge_id):
+        raise HTTPException(400, "Invalid challenge ID")
+    conn = get_conn()
+    cur  = conn.cursor()
+    cur.execute(
+        f"SELECT challenge_id, challenger_username, scene_id, score_to_beat, created_at "
+        f"FROM challenges WHERE challenge_id = {PH}",
+        (challenge_id,),
+    )
+    row = conn.cursor().fetchone() if False else cur.fetchone()
+    conn.close()
+    if not row:
+        raise HTTPException(404, "Challenge not found")
+    sid = row[2]
+    return {
+        "challenge_id":         row[0],
+        "challenger_username":  row[1],
+        "scene_id":             sid,
+        "score_to_beat":        float(row[3]),
+        "scene":                SCENES.get(sid, {}),
+        "created_at":           row[4].isoformat() if hasattr(row[4], "isoformat") else row[4],
     }
 
 
