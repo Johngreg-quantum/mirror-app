@@ -2027,6 +2027,261 @@ header {
 .chlg-auth-note { font-size: 12px; color: var(--muted); margin-top: 4px; }
 .chlg-auth-note a { color: var(--gold); cursor: pointer; text-decoration: none; }
 
+/* ═══════════════════════════════════════════════
+   LEVEL COLLECTION CARDS (App Screen)
+═══════════════════════════════════════════════ */
+.collection-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  margin-bottom: 40px;
+}
+
+.collection-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  overflow: hidden;
+  cursor: pointer;
+  transition: transform 0.35s cubic-bezier(0.23,1,0.32,1), border-color 0.35s, box-shadow 0.35s;
+}
+.collection-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 20px 60px rgba(0,0,0,0.45);
+}
+
+/* ── Coverflow Poster Area ── */
+.coverflow {
+  position: relative;
+  height: 260px;
+  overflow: hidden;
+  background: linear-gradient(135deg, rgba(255,255,255,0.02) 0%, var(--bg) 100%);
+}
+.coverflow-track {
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  align-items: center;
+  perspective: 900px;
+  width: 580px; height: 220px;
+}
+.coverflow-poster {
+  position: absolute;
+  width: 120px; height: 175px;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 8px 28px rgba(0,0,0,0.5);
+  transition: all 0.5s cubic-bezier(0.23,1,0.32,1);
+  border: 1px solid rgba(255,255,255,0.08);
+}
+.coverflow-poster img,
+.coverflow-poster-placeholder {
+  width: 100%; height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.coverflow-poster-overlay {
+  position: absolute; inset: 0;
+  background: linear-gradient(to bottom, transparent 40%, rgba(0,0,0,0.7) 100%);
+}
+.coverflow-label {
+  position: absolute;
+  bottom: 8px; left: 8px; right: 8px;
+  font-family: 'Bebas Neue', cursive;
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  color: rgba(255,255,255,0.8);
+  text-shadow: 0 1px 4px rgba(0,0,0,0.7);
+  line-height: 1.2;
+}
+
+/* Positions */
+.coverflow-pos--far-left {
+  left: 5px; top: 50%;
+  transform: translateY(-50%) rotateY(18deg) scale(0.72);
+  opacity: 0.4; z-index: 1;
+}
+.coverflow-pos--left {
+  left: 100px; top: 50%;
+  transform: translateY(-50%) rotateY(10deg) scale(0.85);
+  opacity: 0.65; z-index: 2;
+}
+.coverflow-pos--center {
+  left: 50%; top: 50%;
+  transform: translate(-50%, -50%) scale(1);
+  opacity: 1; z-index: 5;
+  width: 135px; height: 195px;
+  border-radius: 10px;
+  box-shadow: 0 14px 42px rgba(0,0,0,0.65);
+  border: 1px solid rgba(255,255,255,0.15);
+}
+.coverflow-pos--center .coverflow-label {
+  font-size: 13px;
+}
+.coverflow-pos--right {
+  right: 100px; left: auto; top: 50%;
+  transform: translateY(-50%) rotateY(-10deg) scale(0.85);
+  opacity: 0.65; z-index: 2;
+}
+.coverflow-pos--far-right {
+  right: 5px; left: auto; top: 50%;
+  transform: translateY(-50%) rotateY(-18deg) scale(0.72);
+  opacity: 0.4; z-index: 1;
+}
+
+/* Solo poster for Level 3 */
+.coverflow--single { height: 200px; }
+.coverflow-pos--solo {
+  width: 150px; height: 210px;
+}
+
+/* Bottom fade */
+.coverflow-fade-bottom {
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  height: 50px;
+  background: linear-gradient(to top, var(--surface), transparent);
+  z-index: 8;
+}
+
+/* Top accent line */
+.coverflow-accent {
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 2px; z-index: 10;
+}
+.coverflow-accent--beg { background: linear-gradient(90deg, transparent, rgba(6,214,160,0.5), transparent); }
+.coverflow-accent--int { background: linear-gradient(90deg, transparent, rgba(201,168,76,0.5), transparent); }
+.coverflow-accent--adv { background: linear-gradient(90deg, transparent, rgba(230,57,70,0.5), transparent); }
+
+/* Hover lift on posters */
+.collection-card:hover .coverflow-pos--center {
+  box-shadow: 0 18px 52px rgba(0,0,0,0.75);
+}
+
+/* Card hover color accents */
+.collection-card--beg:hover { border-color: rgba(6,214,160,0.22); }
+.collection-card--int:hover { border-color: rgba(201,168,76,0.22); }
+.collection-card--adv:hover { border-color: rgba(230,57,70,0.18); }
+
+/* ── Card Info Area ── */
+.collection-info {
+  padding: 24px 28px 28px;
+}
+.collection-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+.collection-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.collection-num {
+  font-family: 'Bebas Neue', cursive;
+  font-size: 48px;
+  line-height: 1;
+  opacity: 0.15;
+}
+.collection-badge {
+  display: inline-block;
+  font-size: 11px; font-weight: 700;
+  letter-spacing: 0.15em; text-transform: uppercase;
+  padding: 4px 12px; border-radius: 4px;
+  border: 1px solid; margin-bottom: 5px;
+}
+.collection-badge--beg { color: var(--green); background: rgba(6,214,160,0.1); border-color: rgba(6,214,160,0.25); }
+.collection-badge--int { color: var(--gold);  background: rgba(201,168,76,0.1); border-color: rgba(201,168,76,0.25); }
+.collection-badge--adv { color: var(--red);   background: rgba(230,57,70,0.1);  border-color: rgba(230,57,70,0.2); }
+
+.collection-title {
+  font-family: 'Bebas Neue', cursive;
+  font-size: 32px; letter-spacing: 0.08em;
+  color: var(--text); margin: 0; line-height: 1;
+}
+.collection-right { text-align: right; }
+.collection-scenes-count {
+  display: flex; align-items: center; gap: 5px;
+  font-size: 12px; color: rgba(255,255,255,0.3);
+  justify-content: flex-end;
+}
+.collection-status {
+  display: flex; align-items: center; gap: 4px;
+  font-size: 11px; color: rgba(255,255,255,0.3);
+  margin-top: 4px; justify-content: flex-end;
+}
+.collection-status--open { color: var(--green); }
+
+.collection-desc {
+  font-size: 13px; color: var(--muted);
+  line-height: 1.6; margin: 0 0 18px;
+}
+
+/* Movie name pills */
+.collection-movies {
+  display: flex; gap: 8px; flex-wrap: wrap;
+  margin-bottom: 20px;
+}
+.collection-pill {
+  font-size: 10px; color: rgba(255,255,255,0.35);
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.06);
+  padding: 4px 10px; border-radius: 100px;
+}
+
+/* CTA Button */
+.collection-cta {
+  display: flex; align-items: center; justify-content: center;
+  gap: 8px; width: 100%; padding: 13px;
+  border: none; border-radius: 8px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 12px; font-weight: 600;
+  letter-spacing: 0.8px; text-transform: uppercase;
+  cursor: pointer; transition: all 0.3s ease;
+}
+.collection-cta svg { transition: transform 0.3s ease; }
+.collection-card:hover .collection-cta svg:last-child { transform: translateX(3px); }
+
+.collection-cta--beg {
+  background: rgba(6,214,160,0.1); color: var(--green);
+  border: 1px solid rgba(6,214,160,0.2);
+}
+.collection-card--beg:hover .collection-cta--beg { background: rgba(6,214,160,0.18); }
+
+.collection-cta--int {
+  background: rgba(201,168,76,0.1); color: var(--gold);
+  border: 1px solid rgba(201,168,76,0.2);
+  opacity: 0.7;
+}
+.collection-card--int:hover .collection-cta--int { background: rgba(201,168,76,0.18); }
+
+.collection-cta--adv {
+  background: rgba(230,57,70,0.1); color: var(--red);
+  border: 1px solid rgba(230,57,70,0.18);
+  opacity: 0.7;
+}
+.collection-card--adv:hover .collection-cta--adv { background: rgba(230,57,70,0.18); }
+
+/* ── Responsive ── */
+@media (max-width: 580px) {
+  .coverflow { height: 200px; }
+  .coverflow-track { width: 380px; height: 170px; }
+  .coverflow-poster { width: 90px; height: 140px; }
+  .coverflow-pos--center { width: 105px; height: 155px; }
+  .coverflow-pos--far-left { left: 0; }
+  .coverflow-pos--left { left: 60px; }
+  .coverflow-pos--right { right: 60px; }
+  .coverflow-pos--far-right { right: 0; }
+  .collection-info { padding: 18px 20px 22px; }
+  .collection-header { flex-direction: column; gap: 10px; }
+  .collection-right { text-align: left; display: flex; gap: 14px; align-items: center; }
+  .collection-scenes-count { justify-content: flex-start; }
+  .collection-status { margin-top: 0; justify-content: flex-start; }
+}
+
 /* ── CINEMATIC LEVEL CARDS ── */
 .clv-section { padding: 120px 0 80px; background: var(--bg); }
 .clv-grid {
@@ -2657,8 +2912,204 @@ header {
 
     </div>
 
-    <p class="section-label">Choose a scene</p>
-    <div id="scenesGrid">
+    <p class="section-label">Choose your level</p>
+
+    <!-- Collection Cards -->
+    <div class="collection-grid">
+
+      <!-- ═══ LEVEL 1 — BEGINNER ═══ -->
+      <div class="collection-card collection-card--beg" onclick="openLevelPanel(1)">
+
+        <!-- Poster Coverflow -->
+        <div class="coverflow">
+          <div class="coverflow-track">
+            <div class="coverflow-poster coverflow-pos--far-left">
+              <img src="/static/posters/fight_club.jpg" alt="Fight Club" loading="lazy">
+              <div class="coverflow-poster-overlay"></div>
+              <span class="coverflow-label">Fight Club</span>
+            </div>
+            <div class="coverflow-poster coverflow-pos--left">
+              <img src="/static/posters/back_to_the_future.jpg" alt="Back to the Future" loading="lazy">
+              <div class="coverflow-poster-overlay"></div>
+              <span class="coverflow-label">Back to the Future</span>
+            </div>
+            <div class="coverflow-poster coverflow-pos--center">
+              <img src="/static/posters/forrest_gump.jpg" alt="Forrest Gump" loading="lazy">
+              <div class="coverflow-poster-overlay"></div>
+              <span class="coverflow-label">Forrest Gump</span>
+            </div>
+            <div class="coverflow-poster coverflow-pos--right">
+              <img src="/static/posters/the_matrix.jpg" alt="The Matrix" loading="lazy">
+              <div class="coverflow-poster-overlay"></div>
+              <span class="coverflow-label">The Matrix</span>
+            </div>
+            <div class="coverflow-poster coverflow-pos--far-right">
+              <img src="/static/posters/seven.jpg" alt="Se7en" loading="lazy">
+              <div class="coverflow-poster-overlay"></div>
+              <span class="coverflow-label">Se7en</span>
+            </div>
+          </div>
+          <div class="coverflow-fade-bottom"></div>
+          <div class="coverflow-accent coverflow-accent--beg"></div>
+        </div>
+
+        <!-- Card Info -->
+        <div class="collection-info">
+          <div class="collection-header">
+            <div class="collection-left">
+              <span class="collection-num" style="color:var(--green)">01</span>
+              <div>
+                <span class="collection-badge collection-badge--beg">Beginner</span>
+                <h3 class="collection-title">LEVEL 1</h3>
+              </div>
+            </div>
+            <div class="collection-right">
+              <div class="collection-scenes-count">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="20" rx="3"/><polygon points="10 8 16 12 10 16 10 8"/></svg>
+                <strong style="color:var(--green)">5</strong> scenes
+              </div>
+              <div class="collection-status collection-status--open">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 11V7a5 5 0 0 1 10 0v4"/><rect x="3" y="11" width="18" height="11" rx="2"/></svg>
+                Open
+              </div>
+            </div>
+          </div>
+          <p class="collection-desc">Short, clear lines from iconic movies. Build confidence speaking on camera with simple, memorable scenes.</p>
+          <div class="collection-movies">
+            <span class="collection-pill">Fight Club</span>
+            <span class="collection-pill">Back to the Future</span>
+            <span class="collection-pill">Forrest Gump</span>
+            <span class="collection-pill">The Matrix</span>
+            <span class="collection-pill">Se7en</span>
+          </div>
+          <button class="collection-cta collection-cta--beg">
+            Explore Level
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- ═══ LEVEL 2 — INTERMEDIATE ═══ -->
+      <div class="collection-card collection-card--int" onclick="openLevelPanel(2)">
+
+        <div class="coverflow">
+          <div class="coverflow-track">
+            <div class="coverflow-poster coverflow-pos--far-left">
+              <img src="/static/posters/Heat.jpg" alt="Heat" loading="lazy">
+              <div class="coverflow-poster-overlay"></div>
+              <span class="coverflow-label">Heat</span>
+            </div>
+            <div class="coverflow-poster coverflow-pos--left">
+              <img src="/static/posters/avengers.jpg" alt="The Avengers" loading="lazy">
+              <div class="coverflow-poster-overlay"></div>
+              <span class="coverflow-label">The Avengers</span>
+            </div>
+            <div class="coverflow-poster coverflow-pos--center">
+              <img src="/static/posters/Titanic.jpg" alt="Titanic" loading="lazy">
+              <div class="coverflow-poster-overlay"></div>
+              <span class="coverflow-label">Titanic</span>
+            </div>
+            <div class="coverflow-poster coverflow-pos--right">
+              <img src="/static/posters/sixth_sense.jpg" alt="The Sixth Sense" loading="lazy">
+              <div class="coverflow-poster-overlay"></div>
+              <span class="coverflow-label">The Sixth Sense</span>
+            </div>
+            <div class="coverflow-poster coverflow-pos--far-right">
+              <img src="/static/posters/terminator.jpg" alt="The Terminator" loading="lazy">
+              <div class="coverflow-poster-overlay"></div>
+              <span class="coverflow-label">The Terminator</span>
+            </div>
+          </div>
+          <div class="coverflow-fade-bottom"></div>
+          <div class="coverflow-accent coverflow-accent--int"></div>
+        </div>
+
+        <div class="collection-info">
+          <div class="collection-header">
+            <div class="collection-left">
+              <span class="collection-num" style="color:var(--gold)">02</span>
+              <div>
+                <span class="collection-badge collection-badge--int">Intermediate</span>
+                <h3 class="collection-title">LEVEL 2</h3>
+              </div>
+            </div>
+            <div class="collection-right">
+              <div class="collection-scenes-count">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="20" rx="3"/><polygon points="10 8 16 12 10 16 10 8"/></svg>
+                <strong style="color:var(--gold)">6</strong> scenes
+              </div>
+              <div class="collection-status">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                <span id="collLock2">Unlock at 60%</span>
+              </div>
+            </div>
+          </div>
+          <p class="collection-desc">Longer phrases where rhythm and emotion start to matter. Nuanced delivery from cinema's best.</p>
+          <div class="collection-movies">
+            <span class="collection-pill">Heat</span>
+            <span class="collection-pill">The Avengers</span>
+            <span class="collection-pill">Titanic</span>
+            <span class="collection-pill">Basic Instinct</span>
+            <span class="collection-pill">The Sixth Sense</span>
+            <span class="collection-pill">The Terminator</span>
+          </div>
+          <button class="collection-cta collection-cta--int">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+            <span id="collCtaText2">Locked</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- ═══ LEVEL 3 — ADVANCED ═══ -->
+      <div class="collection-card collection-card--adv" onclick="openLevelPanel(3)">
+
+        <div class="coverflow coverflow--single">
+          <div class="coverflow-track">
+            <div class="coverflow-poster coverflow-pos--center coverflow-pos--solo">
+              <div class="coverflow-poster-placeholder" style="background:linear-gradient(150deg,#3b82f6,#152e5e)"></div>
+              <div class="coverflow-poster-overlay"></div>
+              <span class="coverflow-label">Taken</span>
+            </div>
+          </div>
+          <div class="coverflow-fade-bottom"></div>
+          <div class="coverflow-accent coverflow-accent--adv"></div>
+        </div>
+
+        <div class="collection-info">
+          <div class="collection-header">
+            <div class="collection-left">
+              <span class="collection-num" style="color:var(--red)">03</span>
+              <div>
+                <span class="collection-badge collection-badge--adv">Advanced</span>
+                <h3 class="collection-title">LEVEL 3</h3>
+              </div>
+            </div>
+            <div class="collection-right">
+              <div class="collection-scenes-count">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="20" rx="3"/><polygon points="10 8 16 12 10 16 10 8"/></svg>
+                <strong style="color:var(--red)">1</strong> scene
+              </div>
+              <div class="collection-status">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                <span id="collLock3">Unlock at 70%</span>
+              </div>
+            </div>
+          </div>
+          <p class="collection-desc">Accent precision and raw delivery. The real challenge begins here.</p>
+          <div class="collection-movies">
+            <span class="collection-pill">Taken</span>
+          </div>
+          <button class="collection-cta collection-cta--adv">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+            <span id="collCtaText3">Locked</span>
+          </button>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Hidden grids — JS still populates these, they must remain in DOM -->
+    <div id="scenesGrid" style="display:none">
       <div class="level-group" id="groupBeginner">
         <div class="level-group-header">
           <span class="level-group-title beginner">Beginner</span>
