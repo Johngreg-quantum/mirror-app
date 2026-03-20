@@ -34,6 +34,8 @@ _ALLOWED_ORIGINS = [
     "https://mirror-app-z8wr.onrender.com",
     "http://localhost:8000",
     "http://127.0.0.1:8000",
+    "http://localhost:3000",
+    "http://localhost:3001",
 ]
 
 app.add_middleware(
@@ -186,7 +188,7 @@ bearer  = HTTPBearer(auto_error=False)
 SCENES = {
     "fight_club": {
         "movie": "Fight Club",
-        "quote": "You know what a duvet is? It's a blanket. Just a blanket.",
+        "quote": "You know what a duvet is? Comforter. It's a blanket. Just a blanket.",
         "year": 1999, "difficulty": "Beginner", "actor": "Brad Pitt",
     },
     "back_to_the_future": {
@@ -211,7 +213,7 @@ SCENES = {
     },
     "heat": {
         "movie": "Heat",
-        "quote": "You guys always work together? All the time. Real tight crew, huh? Stop talking, okay Slick.",
+        "quote": "You guys always work together? All the time. Real tight crew, huh? Real tight. Stop talking, okay Slick.",
         "year": 1995, "difficulty": "Intermediate", "actor": "Al Pacino",
     },
     "avengers": {
@@ -226,7 +228,7 @@ SCENES = {
     },
     "titanic": {
         "movie": "Titanic",
-        "quote": "Give me your hands. Now close your eyes. Do you trust me?",
+        "quote": "Give me your hands. Now close your eyes. Go on. Step up. Now hold on to the railing. Keep your eyes closed, don't peek. Step up onto the rail. Hold on, hold on. Keep your eyes closed. Do you trust me?",
         "year": 1997, "difficulty": "Intermediate", "actor": "Leonardo DiCaprio",
     },
     "basic_instinct": {
@@ -241,7 +243,7 @@ SCENES = {
     },
     "terminator": {
         "movie": "The Terminator",
-        "quote": "I'll be back",
+        "quote": "I am a friend of Sarah Connor. I was told that she's here. Could I see her please? Where is she? I'll be back.",
         "year": 1984, "difficulty": "Intermediate", "actor": "Arnold Schwarzenegger",
     },
 }
@@ -290,10 +292,10 @@ SCENE_TRANSLATIONS = {
     "heat":               "¿Siempre trabajan juntos? Todo el tiempo. Un equipo muy unido, ¿eh? Para de hablar, ¿vale, listo?",
     "avengers":           "Cualquier cosa que salga más de tres bloques, la haces regresar o la conviertes en ceniza. Mejor agárrate, Legolas.",
     "taken":              "Te voy a encontrar y te voy a matar.",
-    "titanic":            "Dame tus manos. Ahora cierra los ojos. ¿Confías en mí?",
+    "titanic":            "Dame tus manos. Ahora cierra los ojos. Vamos. Sube. Ahora agárrate de la barandilla. Mantén los ojos cerrados, no espíes. Sube a la barandilla. Agárrate, agárrate. Mantén los ojos cerrados. ¿Confías en mí?",
     "basic_instinct":     "¿Eres profesional? No, soy una aficionada.",
     "sixth_sense":        "Quiero contarte mi secreto ahora. Veo gente muerta. Caminando como personas normales.",
-    "terminator":         "Volveré.",
+    "terminator":         "Soy amigo de Sarah Connor. Me dijeron que está aquí. ¿Podría verla, por favor? ¿Dónde está? Volveré.",
 }
 
 
