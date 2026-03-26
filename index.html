@@ -2801,7 +2801,7 @@ header {
             <div class="collection-right">
               <div class="collection-scenes-count">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="20" rx="3"/><polygon points="10 8 16 12 10 16 10 8"/></svg>
-                <strong style="color:var(--green)">5</strong> scenes
+                <strong style="color:var(--green)">13</strong> scenes
               </div>
               <div class="collection-status collection-status--open">
                 <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 11V7a5 5 0 0 1 10 0v4"/><rect x="3" y="11" width="18" height="11" rx="2"/></svg>
@@ -2816,6 +2816,14 @@ header {
             <span class="collection-pill">Forrest Gump</span>
             <span class="collection-pill">The Matrix</span>
             <span class="collection-pill">Se7en</span>
+            <span class="collection-pill">Home Alone</span>
+            <span class="collection-pill">Pursuit of Happyness</span>
+            <span class="collection-pill">Jerry Maguire</span>
+            <span class="collection-pill">Cast Away</span>
+            <span class="collection-pill">The Social Network</span>
+            <span class="collection-pill">Devil Wears Prada</span>
+            <span class="collection-pill">Apollo 13</span>
+            <span class="collection-pill">Top Gun</span>
           </div>
           <button class="collection-cta collection-cta--beg">
             Explore Level
@@ -3309,6 +3317,14 @@ const YOUTUBE_IDS = {
   basic_instinct:     'qFzd2UVFAMg',
   sixth_sense:        'RoYEEjtDYKw',
   terminator:         'Lj5bciUc1G0',
+  home_alone:            'izS1AVNd9Kk',
+  pursuit_of_happyness:  '5GYP-HSmtFY',
+  jerry_maguire:         'cR9FMrck4gw',
+  cast_away:             'KFGk1vS7y7k',
+  social_network:        '-Koj9hvcBMk',
+  devil_wears_prada:     'E4Y-RbEV42E',
+  apollo_13:             'YwG4F-16Tno',
+  top_gun:               '4PzpztFJZP8',
 };
 
 const SCENE_TIMES = {
@@ -3324,6 +3340,14 @@ const SCENE_TIMES = {
   basic_instinct:     { start: 53,  end: 87  },
   sixth_sense:        { start: 220, end: 275 },
   terminator:         { start: 68,  end: 97  },
+  home_alone:            { start: 5,   end: 17  },
+  pursuit_of_happyness:  { start: 59,  end: 82  },
+  jerry_maguire:         { start: 147, end: 173 },
+  cast_away:             { start: 0,   end: 19  },
+  social_network:        { start: 37,  end: 46  },
+  devil_wears_prada:     { start: 27,  end: 43  },
+  apollo_13:             { start: 39,  end: 47  },
+  top_gun:               { start: 0,   end: 9   },
 };
 
 const CARD_COLORS = {
@@ -3339,6 +3363,14 @@ const CARD_COLORS = {
   basic_instinct:     '#f43f5e',
   sixth_sense:        '#8b5cf6',
   terminator:         '#ef4444',
+  home_alone:            '#d4a843',
+  pursuit_of_happyness:  '#e8a035',
+  jerry_maguire:         '#c75050',
+  cast_away:             '#8b7355',
+  social_network:        '#3b5998',
+  devil_wears_prada:     '#cc2233',
+  apollo_13:             '#4682b4',
+  top_gun:               '#b8860b',
 };
 
 const POSTER_IMAGES = {
@@ -3354,11 +3386,21 @@ const POSTER_IMAGES = {
   sixth_sense:        '/static/posters/sixth_sense.jpg',
   terminator:         '/static/posters/terminator.jpg',
   taken:              '',
+  home_alone:            '/static/posters/home_alone.jpg',
+  pursuit_of_happyness:  '/static/posters/pursuit_of_happyness.jpg',
+  jerry_maguire:         '/static/posters/jerry_maguire.jpg',
+  cast_away:             '/static/posters/cast_away.jpg',
+  social_network:        '/static/posters/social_network.jpg',
+  devil_wears_prada:     '/static/posters/devil_wears_prada.jpg',
+  apollo_13:             '/static/posters/apollo_13.jpg',
+  top_gun:               '/static/posters/top_gun.jpg',
 };
 
 // Which level each scene belongs to — keep in sync with LEVELS in main.py
 const LEVEL_MAP = {
   fight_club: 1, back_to_the_future: 1, forrest_gump: 1, the_matrix: 1, seven: 1,
+  home_alone: 1, pursuit_of_happyness: 1, jerry_maguire: 1, cast_away: 1,
+  social_network: 1, devil_wears_prada: 1, apollo_13: 1, top_gun: 1,
   heat: 2, avengers: 2, titanic: 2, basic_instinct: 2, sixth_sense: 2, terminator: 2,
   taken: 3,
 };
@@ -3394,7 +3436,7 @@ let activeLbTab = null;
 let userProgress = {
   level: 1,
   best_scores: {},
-  unlocked_scenes: ['fight_club', 'back_to_the_future', 'forrest_gump', 'the_matrix', 'seven'],
+  unlocked_scenes: ['fight_club', 'back_to_the_future', 'forrest_gump', 'the_matrix', 'seven', 'home_alone', 'pursuit_of_happyness', 'jerry_maguire', 'cast_away', 'social_network', 'devil_wears_prada', 'apollo_13', 'top_gun'],
   next_level: { level: 2, required_score: 60, best_score: 0 },
 };
 
@@ -3650,6 +3692,14 @@ async function loadScenes() {
       basic_instinct:     { movie: 'Basic Instinct',    quote: "What are you, a pro? No, I'm an amateur.",                                                                          year: 1992, difficulty: 'Intermediate',  actor: 'Sharon Stone', mature: true },
       sixth_sense:        { movie: 'The Sixth Sense',   quote: 'I want to tell you my secret now. I see dead people. Walking around like regular people.',                          year: 1999, difficulty: 'Intermediate',  actor: 'Haley Joel Osment'     },
       terminator:         { movie: 'The Terminator',    quote: "I am a friend of Sarah Connor. I was told that she's here. Could I see her please? Where is she? I'll be back.",                                                                                                       year: 1984, difficulty: 'Intermediate',  actor: 'Arnold Schwarzenegger' },
+      home_alone:           { movie: 'Home Alone',                quote: "I made my family disappear.",                                            year: 1990, difficulty: 'Beginner', actor: 'Macaulay Culkin'     },
+      pursuit_of_happyness: { movie: 'The Pursuit of Happyness',  quote: "You got a dream, you gotta protect it.",                                 year: 2006, difficulty: 'Beginner', actor: 'Will Smith'           },
+      jerry_maguire:        { movie: 'Jerry Maguire',             quote: "You had me at hello.",                                                   year: 1996, difficulty: 'Beginner', actor: 'Ren\u00e9e Zellweger' },
+      cast_away:            { movie: 'Cast Away',                 quote: "I know you. I know you. So are we okay?",                                year: 2000, difficulty: 'Beginner', actor: 'Tom Hanks'            },
+      social_network:       { movie: 'The Social Network',        quote: "I deserve some recognition.",                                            year: 2010, difficulty: 'Beginner', actor: 'Jesse Eisenberg'      },
+      devil_wears_prada:    { movie: 'The Devil Wears Prada',     quote: "She needs skirts from Calvin Klein.",                                    year: 2006, difficulty: 'Beginner', actor: 'Meryl Streep'         },
+      apollo_13:            { movie: 'Apollo 13',                 quote: "Houston, we have a problem.",                                            year: 1995, difficulty: 'Beginner', actor: 'Tom Hanks'            },
+      top_gun:              { movie: 'Top Gun',                   quote: "I feel the need... the need for speed.",                                 year: 1986, difficulty: 'Beginner', actor: 'Tom Cruise'           },
     };
   }
   renderCards();
@@ -4983,6 +5033,7 @@ function showChallengeResult(score, scoreToBeat) {
 // ══════════════════════════════════════════════
 const SCENE_ID_MAP = [
   'fight_club', 'back_to_the_future', 'forrest_gump', 'the_matrix', 'seven',
+  'home_alone', 'pursuit_of_happyness', 'jerry_maguire', 'cast_away', 'social_network', 'devil_wears_prada', 'apollo_13', 'top_gun',
   'heat', 'avengers', 'titanic', 'basic_instinct', 'sixth_sense', 'terminator',
 ];
 
@@ -4990,7 +5041,7 @@ const CLV_LEVELS = [
   {
     level: 1, label: 'Beginner', cls: 'beg', unlock: 0,
     desc: 'Short, clear lines. Get comfortable speaking on camera.',
-    scenes: ['fight_club', 'back_to_the_future', 'forrest_gump', 'the_matrix', 'seven'],
+    scenes: ['fight_club', 'back_to_the_future', 'forrest_gump', 'the_matrix', 'seven', 'home_alone', 'pursuit_of_happyness', 'jerry_maguire', 'cast_away', 'social_network', 'devil_wears_prada', 'apollo_13', 'top_gun'],
   },
   {
     level: 2, label: 'Intermediate', cls: 'int', unlock: 60,
@@ -5006,7 +5057,7 @@ const CLV_LEVELS = [
 
 function updateLevelCardStats() {
   const best     = (userProgress && userProgress.best_scores) ? userProgress.best_scores : {};
-  const unlocked = (userProgress && userProgress.unlocked_scenes) ? userProgress.unlocked_scenes : ['fight_club','back_to_the_future','forrest_gump','the_matrix','seven'];
+  const unlocked = (userProgress && userProgress.unlocked_scenes) ? userProgress.unlocked_scenes : ['fight_club','back_to_the_future','forrest_gump','the_matrix','seven','home_alone','pursuit_of_happyness','jerry_maguire','cast_away','social_network','devil_wears_prada','apollo_13','top_gun'];
   CLV_LEVELS.forEach(lv => {
     const scores = lv.scenes.map(sid => best[sid]).filter(v => v > 0);
     const avg    = scores.length ? Math.round(scores.reduce((a, b) => a + b, 0) / scores.length) : 0;
@@ -5035,7 +5086,7 @@ function openLevelPanel(level) {
   if (numEl) numEl.textContent = String(lv.level).padStart(2, '0');
 
   const best     = (userProgress && userProgress.best_scores)      ? userProgress.best_scores      : {};
-  const unlocked = (userProgress && userProgress.unlocked_scenes)  ? userProgress.unlocked_scenes  : ['fight_club','back_to_the_future','forrest_gump','the_matrix','seven'];
+  const unlocked = (userProgress && userProgress.unlocked_scenes)  ? userProgress.unlocked_scenes  : ['fight_club','back_to_the_future','forrest_gump','the_matrix','seven','home_alone','pursuit_of_happyness','jerry_maguire','cast_away','social_network','devil_wears_prada','apollo_13','top_gun'];
 
   // Scene count
   const countEl = document.getElementById('clvPanelCount');

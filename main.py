@@ -246,13 +246,53 @@ SCENES = {
         "quote": "I am a friend of Sarah Connor. I was told that she's here. Could I see her please? Where is she? I'll be back.",
         "year": 1984, "difficulty": "Intermediate", "actor": "Arnold Schwarzenegger",
     },
+    "home_alone": {
+        "movie": "Home Alone",
+        "quote": "I made my family disappear.",
+        "year": 1990, "difficulty": "Beginner", "actor": "Macaulay Culkin",
+    },
+    "pursuit_of_happyness": {
+        "movie": "The Pursuit of Happyness",
+        "quote": "You got a dream, you gotta protect it.",
+        "year": 2006, "difficulty": "Beginner", "actor": "Will Smith",
+    },
+    "jerry_maguire": {
+        "movie": "Jerry Maguire",
+        "quote": "You had me at hello.",
+        "year": 1996, "difficulty": "Beginner", "actor": "Ren\u00e9e Zellweger",
+    },
+    "cast_away": {
+        "movie": "Cast Away",
+        "quote": "I know you. I know you. So are we okay?",
+        "year": 2000, "difficulty": "Beginner", "actor": "Tom Hanks",
+    },
+    "social_network": {
+        "movie": "The Social Network",
+        "quote": "I deserve some recognition.",
+        "year": 2010, "difficulty": "Beginner", "actor": "Jesse Eisenberg",
+    },
+    "devil_wears_prada": {
+        "movie": "The Devil Wears Prada",
+        "quote": "She needs skirts from Calvin Klein.",
+        "year": 2006, "difficulty": "Beginner", "actor": "Meryl Streep",
+    },
+    "apollo_13": {
+        "movie": "Apollo 13",
+        "quote": "Houston, we have a problem.",
+        "year": 1995, "difficulty": "Beginner", "actor": "Tom Hanks",
+    },
+    "top_gun": {
+        "movie": "Top Gun",
+        "quote": "I feel the need... the need for speed.",
+        "year": 1986, "difficulty": "Beginner", "actor": "Tom Cruise",
+    },
 }
 
 # Level unlock rules — must be kept in sync with LEVEL_MAP in index.html.
 # Each level lists which scene IDs belong to it and what minimum sync_score
 # (%) a user needs on any scene from the *previous* level to unlock it.
 LEVELS = [
-    {"level": 1, "scenes": ["fight_club", "back_to_the_future", "forrest_gump", "the_matrix", "seven"],             "unlock_score": 0},
+    {"level": 1, "scenes": ["fight_club", "back_to_the_future", "forrest_gump", "the_matrix", "seven", "home_alone", "pursuit_of_happyness", "jerry_maguire", "cast_away", "social_network", "devil_wears_prada", "apollo_13", "top_gun"], "unlock_score": 0},
     {"level": 2, "scenes": ["heat", "avengers", "titanic", "basic_instinct", "sixth_sense", "terminator"],          "unlock_score": 60},
     {"level": 3, "scenes": ["taken"],                                                                                "unlock_score": 70},
 ]
@@ -296,6 +336,14 @@ SCENE_TRANSLATIONS = {
     "basic_instinct":     "¿Eres profesional? No, soy una aficionada.",
     "sixth_sense":        "Quiero contarte mi secreto ahora. Veo gente muerta. Caminando como personas normales.",
     "terminator":         "Soy amigo de Sarah Connor. Me dijeron que está aquí. ¿Podría verla, por favor? ¿Dónde está? Volveré.",
+    "home_alone":         "Hice desaparecer a mi familia.",
+    "pursuit_of_happyness": "Tienes un sueño, tienes que protegerlo.",
+    "jerry_maguire":      "Me tuviste en hola.",
+    "cast_away":          "Te conozco. Te conozco. ¿Entonces estamos bien?",
+    "social_network":     "Merezco algo de reconocimiento.",
+    "devil_wears_prada":  "Ella necesita faldas de Calvin Klein.",
+    "apollo_13":          "Houston, tenemos un problema.",
+    "top_gun":            "Siento la necesidad... la necesidad de velocidad.",
 }
 
 
