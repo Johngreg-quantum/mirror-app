@@ -286,13 +286,38 @@ SCENES = {
         "quote": "I feel the need... the need for speed.",
         "year": 1986, "difficulty": "Beginner", "actor": "Tom Cruise",
     },
+    "clueless": {
+        "movie": "Clueless",
+        "quote": "Why don't you just tell me what you want?",
+        "year": 1995, "difficulty": "Beginner", "actor": "Alicia Silverstone",
+    },
+    "men_in_black": {
+        "movie": "Men in Black",
+        "quote": "What's up? He's coming, he's coming because I failed and now he'll kill me too.",
+        "year": 1997, "difficulty": "Beginner", "actor": "Will Smith",
+    },
+    "mrs_doubtfire": {
+        "movie": "Mrs. Doubtfire",
+        "quote": "Could you make me a woman? Honey, I'm so happy! Oh, come in. I knew you'd understand.",
+        "year": 1993, "difficulty": "Beginner", "actor": "Robin Williams",
+    },
+    "fifth_element": {
+        "movie": "The Fifth Element",
+        "quote": "Leeloo Dallas multipass. Yeah, multipass, she knows it's a multipass.",
+        "year": 1997, "difficulty": "Beginner", "actor": "Milla Jovovich",
+    },
+    "mystic_river": {
+        "movie": "Mystic River",
+        "quote": "When was the last time you saw Dave? That was twenty-five years ago, going up this street, in the back of that car.",
+        "year": 2003, "difficulty": "Beginner", "actor": "Sean Penn",
+    },
 }
 
 # Level unlock rules — must be kept in sync with LEVEL_MAP in index.html.
 # Each level lists which scene IDs belong to it and what minimum sync_score
 # (%) a user needs on any scene from the *previous* level to unlock it.
 LEVELS = [
-    {"level": 1, "scenes": ["fight_club", "back_to_the_future", "forrest_gump", "the_matrix", "seven", "home_alone", "pursuit_of_happyness", "jerry_maguire", "cast_away", "social_network", "devil_wears_prada", "apollo_13", "top_gun"], "unlock_score": 0},
+    {"level": 1, "scenes": ["fight_club", "back_to_the_future", "forrest_gump", "the_matrix", "seven", "home_alone", "pursuit_of_happyness", "jerry_maguire", "cast_away", "social_network", "devil_wears_prada", "apollo_13", "top_gun", "clueless", "men_in_black", "mrs_doubtfire", "fifth_element", "mystic_river"], "unlock_score": 0},
     {"level": 2, "scenes": ["heat", "avengers", "titanic", "basic_instinct", "sixth_sense", "terminator"],          "unlock_score": 60},
     {"level": 3, "scenes": ["taken"],                                                                                "unlock_score": 70},
 ]
@@ -344,6 +369,11 @@ SCENE_TRANSLATIONS = {
     "devil_wears_prada":  "Ella necesita faldas de Calvin Klein.",
     "apollo_13":          "Houston, tenemos un problema.",
     "top_gun":            "Siento la necesidad... la necesidad de velocidad.",
+    "clueless":           "¿Por qué no me dices lo que quieres?",
+    "men_in_black":       "¿Qué pasa? Viene, viene porque fallé y ahora me matará a mí también.",
+    "mrs_doubtfire":      "¿Podrías convertirme en mujer? ¡Cariño, estoy tan feliz! Oh, pasa. Sabía que entenderías.",
+    "fifth_element":      "Leeloo Dallas multipase. Sí, multipase, ella sabe que es un multipase.",
+    "mystic_river":       "¿Cuándo fue la última vez que viste a Dave? Eso fue hace veinticinco años, subiendo por esta calle, en la parte de atrás de ese coche.",
 }
 
 
