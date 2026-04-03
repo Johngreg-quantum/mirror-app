@@ -4086,20 +4086,41 @@ document.getElementById('btnAnalyze').addEventListener('click', analyze);
 async function startRec() {
   try {
     micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
-  } catch {
-    alert('Microphone access denied. Please allow microphone access and try again.');
+  } catch (err) {
+    if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
+      alert('Microphone access denied. Please allow microphone access in your browser settings and try again.');
+    } else if (err.name === 'NotFoundError' || err.name === 'DevicesNotFoundError') {
+      alert('No microphone found. Please connect a microphone and try again.');
+    } else if (err.name === 'NotReadableError' || err.name === 'TrackStartError') {
+      alert('Microphone is in use by another application. Please close other apps using the mic and try again.');
+    } else {
+      alert(`Could not access microphone: ${err.message}`);
+    }
     return;
   }
 
   audioChunks = [];
+  audioBlob = null;
   const mimeType = getSupportedMimeType();
   mediaRecorder = new MediaRecorder(micStream, mimeType ? { mimeType } : {});
   mediaRecorder.ondataavailable = e => { if (e.data.size > 0) audioChunks.push(e.data); };
   mediaRecorder.onstop = () => {
     const blobType = mediaRecorder.mimeType || mimeType || 'audio/webm';
     audioBlob = new Blob(audioChunks, { type: blobType });
+    console.log('[Mirror] Recording stopped. Blob size:', audioBlob.size, 'type:', audioBlob.type, 'chunks:', audioChunks.length);
+    if (audioBlob.size === 0) {
+      alert('No audio was captured — the recording was empty. Please try again and speak clearly into your microphone.');
+      audioBlob = null;
+      setBtn('btnRecord',  false, btnRecordHTML());
+      setBtn('btnPlay',    true,  btnPlayHTML());
+      setBtn('btnAnalyze', true);
+      micStream.getTracks().forEach(t => t.stop());
+      micStream = null;
+      return;
+    }
     setBtn('btnPlay',    false, btnPlayHTML());
     setBtn('btnAnalyze', false);
+    setBtn('btnRecord',  false, btnRecordHTML());
     micStream.getTracks().forEach(t => t.stop());
     micStream = null;
   };
@@ -4143,7 +4164,15 @@ function togglePlayback() {
 async function analyze() {
   if (!audioBlob || !activeScene) return;
 
+  // Guard against uploading an empty blob
+  console.log('[Mirror] Uploading blob — size:', audioBlob.size, 'type:', audioBlob.type);
+  if (audioBlob.size === 0) {
+    alert('Error: No audio was recorded. Please record again before analyzing.');
+    return;
+  }
+
   setBtn('btnAnalyze', true);
+  setBtn('btnRecord',  true);
   document.getElementById('spinner').classList.add('on');
   document.getElementById('analyzeLabel').textContent = 'Analyzing\u2026';
   document.getElementById('scorePanel').classList.remove('on');
@@ -4185,6 +4214,7 @@ async function analyze() {
     document.getElementById('spinner').classList.remove('on');
     document.getElementById('analyzeLabel').textContent = 'Analyze';
     setBtn('btnAnalyze', false);
+    setBtn('btnRecord',  false, btnRecordHTML());
   }
 }
 

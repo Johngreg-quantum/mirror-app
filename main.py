@@ -5,7 +5,10 @@ import uuid
 import sqlite3
 import difflib
 import hashlib
+import logging
 import tempfile
+
+logger = logging.getLogger(__name__)
 from collections import defaultdict, deque
 from datetime import datetime, timedelta, timezone, date
 from typing import Optional
@@ -800,8 +803,13 @@ async def submit_recording(
 
     # Validate and read audio
     audio_bytes = await audio.read()
+    logger.info(
+        "[submit] user_id=%s scene_id=%r filename=%r content_type=%r size=%d",
+        user["id"], scene_id, audio.filename, audio.content_type, len(audio_bytes),
+    )
     if not audio_bytes:
-        raise HTTPException(400, "Empty audio file")
+        logger.warning("[submit] Rejected empty upload from user_id=%s", user["id"])
+        raise HTTPException(400, "Empty audio file — please record again and ensure your microphone is working")
     if len(audio_bytes) > _MAX_AUDIO_BYTES:
         raise HTTPException(413, "Audio file too large — maximum 10 MB")
 
