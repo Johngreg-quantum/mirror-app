@@ -3,25 +3,17 @@
 // ══════════════════════════════════════════════
 // Scene content and UI metadata are loaded from /api/scene-config so the
 // frontend reads the same shared scene records as the backend.
+// Stable frontend constants are loaded from /static/app-config.js.
 
-const LEVEL_NAMES = { 1: 'Beginner', 2: 'Intermediate', 3: 'Advanced' };
-const LEVEL_UI_META = {
-  1: { label: 'Beginner', cls: 'beg', desc: 'Short, clear lines. Get comfortable speaking on camera.' },
-  2: { label: 'Intermediate', cls: 'int', desc: 'Longer phrases, rhythm, and emotion start to matter.' },
-  3: { label: 'Advanced', cls: 'adv', desc: 'Accent precision and raw delivery. The real challenge begins.' },
-};
+const FRONTEND_CONFIG = window.MIRROR_FRONTEND_CONFIG || {};
+const LEVEL_NAMES = FRONTEND_CONFIG.LEVEL_NAMES;
+const LEVEL_UI_META = FRONTEND_CONFIG.LEVEL_UI_META;
+const DIVISIONS = FRONTEND_CONFIG.DIVISIONS;
+const WAVE_BARS = FRONTEND_CONFIG.WAVE_BARS;
 
 let LEVEL_MAP = {};
 let CLV_LEVELS = [];
 let DEFAULT_UNLOCKED_SCENES = [];
-
-const DIVISIONS = [
-  { name: 'Bronze',   min: 0,     max: 499,   color: '#cd7f32' },
-  { name: 'Silver',   min: 500,   max: 1999,  color: '#b8b8b8' },
-  { name: 'Gold',     min: 2000,  max: 4999,  color: '#c9a84c' },
-  { name: 'Diamond',  min: 5000,  max: 9999,  color: '#67e8f9' },
-  { name: 'Director', min: 10000, max: null,  color: '#c9a84c' },
-];
 
 function getDivision(points) {
   for (let i = DIVISIONS.length - 1; i >= 0; i--) {
@@ -178,7 +170,6 @@ let recSecs       = 0;
 let waveAudioCtx   = null;
 let waveAnalyser   = null;
 let waveAnimFrame  = null;
-const WAVE_BARS    = 48;
 
 // ══════════════════════════════════════════════
 // BOOT
