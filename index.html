@@ -3309,128 +3309,19 @@ header {
 // ══════════════════════════════════════════════
 // CONFIG
 // ══════════════════════════════════════════════
-const YOUTUBE_IDS = {
-  fight_club:         'h0Rbkj_l4D4',
-  back_to_the_future: 'G3AfIvJBcGo',
-  forrest_gump:       'egkrxkiUnoo',
-  the_matrix:         'fhrNgXJ__n8',
-  seven:              'lHpHxLZReiI',
-  heat:               '1zvgrhn9el4',
-  avengers:           'EcLfyxzV4lI',
-  taken:              '',
-  titanic:            'sRkrvgy-feU',
-  basic_instinct:     'qFzd2UVFAMg',
-  sixth_sense:        'RoYEEjtDYKw',
-  terminator:         'Lj5bciUc1G0',
-  home_alone:            'izS1AVNd9Kk',
-  pursuit_of_happyness:  '5GYP-HSmtFY',
-  jerry_maguire:         'cR9FMrck4gw',
-  cast_away:             'KFGk1vS7y7k',
-  social_network:        '-Koj9hvcBMk',
-  devil_wears_prada:     'E4Y-RbEV42E',
-  apollo_13:             'YwG4F-16Tno',
-  top_gun:               '4PzpztFJZP8',
-  clueless:        'HkwbTNsCUU8',
-  men_in_black:    'bXmo6M2k4Ws',
-  mrs_doubtfire:   '7hsAbjmNpKU',
-  fifth_element:   'EuX1dXokscI',
-  mystic_river:    '9KLTw2D6cD4',
-};
+// Scene content and UI metadata are loaded from /api/scene-config so the
+// frontend reads the same shared scene records as the backend.
 
-const SCENE_TIMES = {
-  fight_club:         { start: 0,   end: 6   },
-  back_to_the_future: { start: 9,   end: 19  },
-  forrest_gump:       { start: 24,  end: 57  },
-  the_matrix:         { start: 20,  end: 31  },
-  seven:              { start: 0,   end: 6   },
-  heat:               { start: 0,   end: 18  },
-  avengers:           { start: 15,  end: 27  },
-  taken:              { start: 211, end: 249 },
-  titanic:            { start: 51,  end: 125 },
-  basic_instinct:     { start: 53,  end: 87  },
-  sixth_sense:        { start: 220, end: 275 },
-  terminator:         { start: 68,  end: 97  },
-  home_alone:            { start: 5,   end: 17  },
-  pursuit_of_happyness:  { start: 59,  end: 82  },
-  jerry_maguire:         { start: 147, end: 173 },
-  cast_away:             { start: 0,   end: 19  },
-  social_network:        { start: 37,  end: 46  },
-  devil_wears_prada:     { start: 27,  end: 43  },
-  apollo_13:             { start: 39,  end: 47  },
-  top_gun:               { start: 0,   end: 9   },
-  clueless:        { start: 58,  end: 76  },
-  men_in_black:    { start: 139, end: 147 },
-  mrs_doubtfire:   { start: 1,   end: 10  },
-  fifth_element:   { start: 1,   end: 15  },
-  mystic_river:    { start: 1,   end: 45  },
-};
-
-const CARD_COLORS = {
-  fight_club:         '#e63946',
-  back_to_the_future: '#4895ef',
-  forrest_gump:       '#f4a261',
-  the_matrix:         '#06d6a0',
-  seven:              '#ffd166',
-  heat:               '#ff6b35',
-  avengers:           '#a855f7',
-  taken:              '#3b82f6',
-  titanic:            '#06b6d4',
-  basic_instinct:     '#f43f5e',
-  sixth_sense:        '#8b5cf6',
-  terminator:         '#ef4444',
-  home_alone:            '#d4a843',
-  pursuit_of_happyness:  '#e8a035',
-  jerry_maguire:         '#c75050',
-  cast_away:             '#8b7355',
-  social_network:        '#3b5998',
-  devil_wears_prada:     '#cc2233',
-  apollo_13:             '#4682b4',
-  top_gun:               '#b8860b',
-  clueless:        '#f0c040',
-  men_in_black:    '#1a1a4e',
-  mrs_doubtfire:   '#e07b39',
-  fifth_element:   '#6b5ce7',
-  mystic_river:    '#5a7d8c',
-};
-
-const POSTER_IMAGES = {
-  fight_club:         '/static/posters/fight_club.jpg',
-  back_to_the_future: '/static/posters/back_to_the_future.jpg',
-  forrest_gump:       '/static/posters/forrest_gump.jpg',
-  the_matrix:         '/static/posters/the_matrix.jpg',
-  seven:              '/static/posters/seven.jpg',
-  heat:               '/static/posters/heat.jpg',
-  avengers:           '/static/posters/avengers.jpg',
-  titanic:            '/static/posters/titanic.jpg',
-  basic_instinct:     '/static/posters/basic_instinct.jpg',
-  sixth_sense:        '/static/posters/sixth_sense.jpg',
-  terminator:         '/static/posters/terminator.jpg',
-  taken:              '',
-  home_alone:            '/static/posters/home_alone.jpg',
-  pursuit_of_happyness:  '/static/posters/pursuit_of_happyness.jpg',
-  jerry_maguire:         '/static/posters/jerry_maguire.jpg',
-  cast_away:             '/static/posters/cast_away.jpg',
-  social_network:        '/static/posters/social_network.jpg',
-  devil_wears_prada:     '/static/posters/devil_wears_prada.jpg',
-  apollo_13:             '/static/posters/apollo_13.jpg',
-  top_gun:               '/static/posters/top_gun.jpg',
-  clueless:        '/static/posters/clueless.jpg',
-  men_in_black:    '/static/posters/men_in_black.jpg',
-  mrs_doubtfire:   '/static/posters/mrs_doubtfire.jpg',
-  fifth_element:   '/static/posters/fifth_element.jpg',
-  mystic_river:    '/static/posters/mystic_river.jpg',
-};
-
-// Which level each scene belongs to — keep in sync with LEVELS in main.py
-const LEVEL_MAP = {
-  fight_club: 1, back_to_the_future: 1, forrest_gump: 1, the_matrix: 1, seven: 1,
-  home_alone: 1, pursuit_of_happyness: 1, jerry_maguire: 1, cast_away: 1,
-  social_network: 1, devil_wears_prada: 1, apollo_13: 1, top_gun: 1,
-  clueless: 1, men_in_black: 1, mrs_doubtfire: 1, fifth_element: 1, mystic_river: 1,
-  heat: 2, avengers: 2, titanic: 2, basic_instinct: 2, sixth_sense: 2, terminator: 2,
-  taken: 3,
-};
 const LEVEL_NAMES = { 1: 'Beginner', 2: 'Intermediate', 3: 'Advanced' };
+const LEVEL_UI_META = {
+  1: { label: 'Beginner', cls: 'beg', desc: 'Short, clear lines. Get comfortable speaking on camera.' },
+  2: { label: 'Intermediate', cls: 'int', desc: 'Longer phrases, rhythm, and emotion start to matter.' },
+  3: { label: 'Advanced', cls: 'adv', desc: 'Accent precision and raw delivery. The real challenge begins.' },
+};
+
+let LEVEL_MAP = {};
+let CLV_LEVELS = [];
+let DEFAULT_UNLOCKED_SCENES = [];
 
 const DIVISIONS = [
   { name: 'Bronze',   min: 0,     max: 499,   color: '#cd7f32' },
@@ -3455,6 +3346,80 @@ function resolveAppUrl(path) {
   return new URL(path, window.location.origin).toString();
 }
 
+function applySceneConfig(config) {
+  scenes = (config && config.scenes) ? config.scenes : {};
+  const levels = Array.isArray(config && config.levels) ? config.levels : [];
+  LEVEL_MAP = {};
+  CLV_LEVELS = levels.map(lv => {
+    const sceneIds = Array.isArray(lv.scenes) ? lv.scenes.slice() : [];
+    const meta = LEVEL_UI_META[lv.level] || {};
+    sceneIds.forEach(sid => { LEVEL_MAP[sid] = lv.level; });
+    return {
+      level: lv.level,
+      label: meta.label || `Level ${lv.level}`,
+      cls: meta.cls || '',
+      unlock: lv.unlock_score,
+      desc: meta.desc || '',
+      scenes: sceneIds,
+    };
+  });
+  DEFAULT_UNLOCKED_SCENES = CLV_LEVELS.length ? CLV_LEVELS[0].scenes.slice() : [];
+  if (!userProgress.unlocked_scenes || !userProgress.unlocked_scenes.length) {
+    userProgress.unlocked_scenes = DEFAULT_UNLOCKED_SCENES.slice();
+  }
+}
+
+let sceneConfigPromise = null;
+
+function ensureSceneConfig() {
+  if (!sceneConfigPromise) {
+    sceneConfigPromise = (async () => {
+      const r = await fetch(`${API}/api/scene-config`);
+      if (!r.ok) throw new Error('Failed to load scene config');
+      const data = await r.json();
+      applySceneConfig(data);
+      return data;
+    })().catch(err => {
+      sceneConfigPromise = null;
+      throw err;
+    });
+  }
+  return sceneConfigPromise;
+}
+
+function getDefaultUnlockedScenes() {
+  return DEFAULT_UNLOCKED_SCENES.slice();
+}
+
+function getSceneUiMeta(sceneId) {
+  const scene = scenes[sceneId];
+  const meta = scene && scene.ui;
+  return (meta && typeof meta === 'object' && !Array.isArray(meta)) ? meta : {};
+}
+
+function getSceneColor(sceneId, fallback = '#c9a84c') {
+  const color = getSceneUiMeta(sceneId).card_color;
+  return (typeof color === 'string' && color.trim()) ? color : fallback;
+}
+
+function getSceneYouTubeId(sceneId) {
+  const ytId = getSceneUiMeta(sceneId).youtube_id;
+  return (typeof ytId === 'string') ? ytId.trim() : '';
+}
+
+function getSceneTimes(sceneId) {
+  const meta = getSceneUiMeta(sceneId);
+  const start = Number(meta.clip_start);
+  const end = Number(meta.clip_end);
+  if (Number.isFinite(start) && Number.isFinite(end)) return { start, end };
+  return null;
+}
+
+function getScenePoster(sceneId) {
+  const poster = getSceneUiMeta(sceneId).poster_image;
+  return (typeof poster === 'string') ? poster : '';
+}
+
 // ══════════════════════════════════════════════
 // STATE
 // ══════════════════════════════════════════════
@@ -3468,7 +3433,7 @@ let activeLbTab = null;
 let userProgress = {
   level: 1,
   best_scores: {},
-  unlocked_scenes: ['fight_club', 'back_to_the_future', 'forrest_gump', 'the_matrix', 'seven', 'home_alone', 'pursuit_of_happyness', 'jerry_maguire', 'cast_away', 'social_network', 'devil_wears_prada', 'apollo_13', 'top_gun'],
+  unlocked_scenes: [],
   next_level: { level: 2, required_score: 60, best_score: 0 },
 };
 
@@ -3501,6 +3466,7 @@ const WAVE_BARS    = 48;
 // BOOT
 // ══════════════════════════════════════════════
 (async () => {
+  sceneConfigPromise = ensureSceneConfig();
   // Check if we're on a challenge URL first
   const pathParts = window.location.pathname.split('/').filter(Boolean);
   if (pathParts[0] === 'challenge' && pathParts[1]) {
@@ -3708,38 +3674,12 @@ document.getElementById('registerForm').addEventListener('submit', async e => {
 // ══════════════════════════════════════════════
 async function loadScenes() {
   try {
-    const r = await fetch(`${API}/api/scenes`);
-    scenes  = await r.json();
+    await ensureSceneConfig();
   } catch {
-    scenes = {
-      fight_club:         { movie: 'Fight Club',         quote: "You know what a duvet is? Comforter. It's a blanket. Just a blanket.",                                                          year: 1999, difficulty: 'Beginner',      actor: 'Brad Pitt'             },
-      back_to_the_future: { movie: 'Back to the Future', quote: "Roads! Where we're going we don't need roads!",                                                                    year: 1985, difficulty: 'Beginner',      actor: 'Christopher Lloyd'    },
-      forrest_gump:       { movie: 'Forrest Gump',       quote: "My mom always said life was like a box of chocolates. You never know what you're gonna get.",                       year: 1994, difficulty: 'Beginner',      actor: 'Tom Hanks'             },
-      the_matrix:         { movie: 'The Matrix',         quote: 'I know kung fu. Show me.',                                                                                          year: 1999, difficulty: 'Beginner',      actor: 'Keanu Reeves'          },
-      seven:              { movie: 'Se7en',               quote: 'Put the gun down. I saw you with the box. What was in the box?',                                                   year: 1995, difficulty: 'Beginner',      actor: 'Brad Pitt'             },
-      heat:               { movie: 'Heat',               quote: 'You guys always work together? All the time. Real tight crew, huh? Real tight. Stop talking, okay Slick.',                     year: 1995, difficulty: 'Intermediate',  actor: 'Al Pacino'             },
-      avengers:           { movie: 'The Avengers',       quote: 'Anything gets more than three blocks out, you turn it back or you turn it to ash. Better clench up, Legolas.',     year: 2012, difficulty: 'Intermediate',  actor: 'Robert Downey Jr.'     },
-      taken:              { movie: 'Taken',              quote: 'I will find you and I will kill you',                                                                               year: 2008, difficulty: 'Advanced',      actor: 'Liam Neeson'           },
-      titanic:            { movie: 'Titanic',            quote: "Give me your hands. Now close your eyes. Go on. Step up. Now hold on to the railing. Keep your eyes closed, don't peek. Step up onto the rail. Hold on, hold on. Keep your eyes closed. Do you trust me?",                                                         year: 1997, difficulty: 'Intermediate',  actor: 'Leonardo DiCaprio'     },
-      basic_instinct:     { movie: 'Basic Instinct',    quote: "What are you, a pro? No, I'm an amateur.",                                                                          year: 1992, difficulty: 'Intermediate',  actor: 'Sharon Stone', mature: true },
-      sixth_sense:        { movie: 'The Sixth Sense',   quote: 'I want to tell you my secret now. I see dead people. Walking around like regular people.',                          year: 1999, difficulty: 'Intermediate',  actor: 'Haley Joel Osment'     },
-      terminator:         { movie: 'The Terminator',    quote: "I am a friend of Sarah Connor. I was told that she's here. Could I see her please? Where is she? I'll be back.",                                                                                                       year: 1984, difficulty: 'Intermediate',  actor: 'Arnold Schwarzenegger' },
-      home_alone:           { movie: 'Home Alone',                quote: "I made my family disappear.",                                            year: 1990, difficulty: 'Beginner', actor: 'Macaulay Culkin'     },
-      pursuit_of_happyness: { movie: 'The Pursuit of Happyness',  quote: "You got a dream, you gotta protect it.",                                 year: 2006, difficulty: 'Beginner', actor: 'Will Smith'           },
-      jerry_maguire:        { movie: 'Jerry Maguire',             quote: "You had me at hello.",                                                   year: 1996, difficulty: 'Beginner', actor: 'Ren\u00e9e Zellweger' },
-      cast_away:            { movie: 'Cast Away',                 quote: "I know you. I know you. So are we okay?",                                year: 2000, difficulty: 'Beginner', actor: 'Tom Hanks'            },
-      social_network:       { movie: 'The Social Network',        quote: "I deserve some recognition.",                                            year: 2010, difficulty: 'Beginner', actor: 'Jesse Eisenberg'      },
-      devil_wears_prada:    { movie: 'The Devil Wears Prada',     quote: "She needs skirts from Calvin Klein.",                                    year: 2006, difficulty: 'Beginner', actor: 'Meryl Streep'         },
-      apollo_13:            { movie: 'Apollo 13',                 quote: "Houston, we have a problem.",                                            year: 1995, difficulty: 'Beginner', actor: 'Tom Hanks'            },
-      top_gun:              { movie: 'Top Gun',                   quote: "I feel the need... the need for speed.",                                 year: 1986, difficulty: 'Beginner', actor: 'Tom Cruise'           },
-      clueless:        { movie: 'Clueless',           quote: "Why don't you just tell me what you want?",                                                                              year: 1995, difficulty: 'Beginner', actor: 'Alicia Silverstone' },
-      men_in_black:    { movie: 'Men in Black',       quote: "What's up? He's coming, he's coming because I failed and now he'll kill me too.",                                         year: 1997, difficulty: 'Beginner', actor: 'Will Smith'          },
-      mrs_doubtfire:   { movie: 'Mrs. Doubtfire',     quote: "Could you make me a woman? Honey, I'm so happy! Oh, come in. I knew you'd understand.",                                  year: 1993, difficulty: 'Beginner', actor: 'Robin Williams'      },
-      fifth_element:   { movie: 'The Fifth Element',  quote: "Leeloo Dallas multipass. Yeah, multipass, she knows it's a multipass.",                                                   year: 1997, difficulty: 'Beginner', actor: 'Milla Jovovich'      },
-      mystic_river:    { movie: 'Mystic River',       quote: "When was the last time you saw Dave? That was twenty-five years ago, going up this street, in the back of that car.",      year: 2003, difficulty: 'Beginner', actor: 'Sean Penn'            },
-    };
+    return;
   }
   renderCards();
+  updateLevelCardStats();
 }
 
 function renderCards() {
@@ -3767,7 +3707,7 @@ function renderCards() {
 function makeCard(id, s) {
   const locked  = !userProgress.unlocked_scenes.includes(id);
   const isDaily = dailyChallenge && dailyChallenge.scene_id === id;
-  const color   = locked ? 'var(--muted)' : (CARD_COLORS[id] || '#c9a84c');
+  const color   = locked ? 'var(--muted)' : getSceneColor(id);
   const pb      = !locked && userProgress.best_scores[id];
   const el      = document.createElement('div');
   el.className  = 'scene-card' + (locked ? ' locked' : '') + (isDaily ? ' daily' : '');
@@ -3972,7 +3912,7 @@ function showLevelUp(newLevel) {
 // ══════════════════════════════════════════════
 function openModal(id, s) {
   activeScene = id;
-  const color = CARD_COLORS[id] || '#c9a84c';
+  const color = getSceneColor(id);
 
   document.getElementById('modal').style.setProperty('--mc', color);
   document.getElementById('mYear').textContent  = s.year;
@@ -3982,14 +3922,14 @@ function openModal(id, s) {
   document.querySelector('.target-quote').style.borderLeftColor = color;
   document.getElementById('btnAnalyze').style.background = color;
 
-  const ytRaw    = YOUTUBE_IDS[id];
+  const ytRaw    = getSceneYouTubeId(id);
   const frameDiv = document.getElementById('videoFrame');
   const ph       = document.getElementById('videoPlaceholder');
   stopEndCheck();
   hideReplayLine();
   if (ytRaw) {
     const videoId  = ytRaw.split('?')[0];
-    const times    = SCENE_TIMES[id];
+    const times    = getSceneTimes(id);
     const startSec = times ? times.start : 0;
     frameDiv.style.display = '';
     ph.style.display = 'none';
@@ -4247,7 +4187,7 @@ function showScore(data) {
   // Show playback compare buttons
   const pbCompare = document.getElementById('pbCompare');
   pbCompare.classList.add('on');
-  const hasYt = !!(YOUTUBE_IDS[activeScene]);
+  const hasYt = !!getSceneYouTubeId(activeScene);
   document.getElementById('btnHearActor').disabled = !hasYt;
 
   animateNum(document.getElementById('scoreVal'), 0, pct, 900);
@@ -4336,7 +4276,9 @@ function showPointsEarned(data) {
 // ══════════════════════════════════════════════
 async function loadScores() {
   try {
+    await ensureSceneConfig();
     const r    = await fetch(`${API}/api/leaderboard`);
+    if (!r.ok) return;
     const data = await r.json();
     renderLeaderboard(data);
   } catch { /* silent when API offline */ }
@@ -4345,15 +4287,16 @@ async function loadScores() {
 function renderLeaderboard(data) {
   const tabsEl   = document.getElementById('lbTabs');
   const panelsEl = document.getElementById('lbPanels');
-  const sceneIds = Object.keys(scenes).length ? Object.keys(scenes) : Object.keys(CARD_COLORS);
+  const sceneIds = Object.keys(scenes);
+
+  tabsEl.innerHTML = panelsEl.innerHTML = '';
+  if (!sceneIds.length) return;
 
   if (!activeLbTab || !sceneIds.includes(activeLbTab)) activeLbTab = sceneIds[0];
 
-  tabsEl.innerHTML = panelsEl.innerHTML = '';
-
   for (const sid of sceneIds) {
     const s      = scenes[sid] || {};
-    const color  = CARD_COLORS[sid] || '#c9a84c';
+    const color  = getSceneColor(sid);
     const rows   = data[sid] || [];
     const active = sid === activeLbTab;
 
@@ -4374,7 +4317,7 @@ function renderLeaderboard(data) {
 
 function switchTab(sid) {
   activeLbTab = sid;
-  const ids = Object.keys(scenes).length ? Object.keys(scenes) : Object.keys(CARD_COLORS);
+  const ids = Object.keys(scenes);
   document.querySelectorAll('.lb-tab').forEach((t, i)  => t.classList.toggle('active', ids[i] === sid));
   document.querySelectorAll('.lb-panel').forEach(p => p.classList.toggle('active', p.id === `lb-panel-${sid}`));
 }
@@ -4846,7 +4789,7 @@ function renderPersonalBests(history) {
   const sorted = Object.entries(best).sort(([, a], [, b]) => b - a);
   pbEl.innerHTML = sorted.map(([sid, score], idx) => {
     const movie    = scenes[sid]?.movie || sid;
-    const color    = CARD_COLORS[sid] || 'var(--gold)';
+    const color    = getSceneColor(sid, 'var(--gold)');
     const latest   = latestByScene[sid];
     const prev     = prevByScene[sid];
     // Show ↑ if the most recent attempt is better than the one before it
@@ -4911,10 +4854,10 @@ document.getElementById('btnTryAgain').addEventListener('click', () => {
 });
 
 function hearActor() {
-  const ytRaw = YOUTUBE_IDS[activeScene];
+  const ytRaw = getSceneYouTubeId(activeScene);
   if (!ytRaw) return;
   const videoId  = ytRaw.split('?')[0];
-  const times    = SCENE_TIMES[activeScene];
+  const times    = getSceneTimes(activeScene);
   const startSec = times ? times.start : 0;
   hideReplayLine();
   if (ytPlayer) {
@@ -4959,7 +4902,7 @@ function onYTStateChange(e) {
 
 function startEndCheck() {
   stopEndCheck();
-  const times = SCENE_TIMES[activeScene];
+  const times = getSceneTimes(activeScene);
   if (!times || !ytPlayer) return;
   ytEndInterval = setInterval(() => {
     if (!ytPlayer) return stopEndCheck();
@@ -4984,7 +4927,7 @@ function hideReplayLine() {
 }
 
 document.getElementById('btnReplayLine').addEventListener('click', () => {
-  const times = SCENE_TIMES[activeScene];
+  const times = getSceneTimes(activeScene);
   const startSec = times ? times.start : 0;
   hideReplayLine();
   if (ytPlayer) { ytPlayer.seekTo(startSec, true); ytPlayer.playVideo(); }
@@ -5099,33 +5042,9 @@ function showChallengeResult(score, scoreToBeat) {
 // ══════════════════════════════════════════════
 // CINEMATIC LEVEL CARDS
 // ══════════════════════════════════════════════
-const SCENE_ID_MAP = [
-  'fight_club', 'back_to_the_future', 'forrest_gump', 'the_matrix', 'seven',
-  'home_alone', 'pursuit_of_happyness', 'jerry_maguire', 'cast_away', 'social_network', 'devil_wears_prada', 'apollo_13', 'top_gun',
-  'heat', 'avengers', 'titanic', 'basic_instinct', 'sixth_sense', 'terminator',
-];
-
-const CLV_LEVELS = [
-  {
-    level: 1, label: 'Beginner', cls: 'beg', unlock: 0,
-    desc: 'Short, clear lines. Get comfortable speaking on camera.',
-    scenes: ['fight_club', 'back_to_the_future', 'forrest_gump', 'the_matrix', 'seven', 'home_alone', 'pursuit_of_happyness', 'jerry_maguire', 'cast_away', 'social_network', 'devil_wears_prada', 'apollo_13', 'top_gun', 'clueless', 'men_in_black', 'mrs_doubtfire', 'fifth_element', 'mystic_river'],
-  },
-  {
-    level: 2, label: 'Intermediate', cls: 'int', unlock: 60,
-    desc: 'Longer phrases, rhythm, and emotion start to matter.',
-    scenes: ['heat', 'avengers', 'titanic', 'basic_instinct', 'sixth_sense', 'terminator'],
-  },
-  {
-    level: 3, label: 'Advanced', cls: 'adv', unlock: 70,
-    desc: 'Accent precision and raw delivery. The real challenge begins.',
-    scenes: ['taken'],
-  },
-];
-
 function updateLevelCardStats() {
   const best     = (userProgress && userProgress.best_scores) ? userProgress.best_scores : {};
-  const unlocked = (userProgress && userProgress.unlocked_scenes) ? userProgress.unlocked_scenes : ['fight_club','back_to_the_future','forrest_gump','the_matrix','seven','home_alone','pursuit_of_happyness','jerry_maguire','cast_away','social_network','devil_wears_prada','apollo_13','top_gun','clueless','men_in_black','mrs_doubtfire','fifth_element','mystic_river'];
+  const unlocked = (userProgress && userProgress.unlocked_scenes && userProgress.unlocked_scenes.length) ? userProgress.unlocked_scenes : getDefaultUnlockedScenes();
   CLV_LEVELS.forEach(lv => {
     const scores = lv.scenes.map(sid => best[sid]).filter(v => v > 0);
     const avg    = scores.length ? Math.round(scores.reduce((a, b) => a + b, 0) / scores.length) : 0;
@@ -5140,7 +5059,12 @@ function updateLevelCardStats() {
   });
 }
 
-function openLevelPanel(level) {
+async function openLevelPanel(level) {
+  try {
+    await ensureSceneConfig();
+  } catch {
+    return;
+  }
   const lv = CLV_LEVELS.find(l => l.level === level);
   if (!lv) return;
   const badgeEl = document.getElementById('clvPanelBadge');
@@ -5154,7 +5078,7 @@ function openLevelPanel(level) {
   if (numEl) numEl.textContent = String(lv.level).padStart(2, '0');
 
   const best     = (userProgress && userProgress.best_scores)      ? userProgress.best_scores      : {};
-  const unlocked = (userProgress && userProgress.unlocked_scenes)  ? userProgress.unlocked_scenes  : ['fight_club','back_to_the_future','forrest_gump','the_matrix','seven','home_alone','pursuit_of_happyness','jerry_maguire','cast_away','social_network','devil_wears_prada','apollo_13','top_gun','clueless','men_in_black','mrs_doubtfire','fifth_element','mystic_river'];
+  const unlocked = (userProgress && userProgress.unlocked_scenes && userProgress.unlocked_scenes.length) ? userProgress.unlocked_scenes : getDefaultUnlockedScenes();
 
   // Scene count
   const countEl = document.getElementById('clvPanelCount');
@@ -5172,8 +5096,8 @@ function openLevelPanel(level) {
     var pb     = best[sid] ? Math.round(best[sid]) : null;
     var locked = !unlocked.includes(sid);
     var quote  = s.quote ? s.quote.slice(0, 55) + (s.quote.length > 55 ? '\u2026' : '') : '';
-    var color  = CARD_COLORS[sid] || '#C9A84C';
-    var poster = (typeof POSTER_IMAGES !== 'undefined' && POSTER_IMAGES[sid]) ? POSTER_IMAGES[sid] : '';
+    var color  = getSceneColor(sid);
+    var poster = getScenePoster(sid);
     var posterHTML = poster
       ? '<img src="' + poster + '" alt="' + (s.movie || sid) + '" loading="lazy">'
       : '<div class="sc-poster-ph" style="background:linear-gradient(150deg,' + color + ',#111)"></div>';

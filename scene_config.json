@@ -1,0 +1,425 @@
+{
+  "scenes": {
+    "fight_club": {
+      "movie": "Fight Club",
+      "quote": "You know what a duvet is? Comforter. It's a blanket. Just a blanket.",
+      "year": 1999,
+      "difficulty": "Beginner",
+      "actor": "Brad Pitt",
+      "translation": "¿Sabes lo que es un edredón? Es una manta. Solo una manta.",
+      "ui": {
+        "youtube_id": "h0Rbkj_l4D4",
+        "clip_start": 0,
+        "clip_end": 6,
+        "card_color": "#e63946",
+        "poster_image": "/static/posters/fight_club.jpg"
+      }
+    },
+    "back_to_the_future": {
+      "movie": "Back to the Future",
+      "quote": "Roads! Where we're going we don't need roads!",
+      "year": 1985,
+      "difficulty": "Beginner",
+      "actor": "Christopher Lloyd",
+      "translation": "¡Caminos! A donde vamos no necesitamos caminos.",
+      "ui": {
+        "youtube_id": "G3AfIvJBcGo",
+        "clip_start": 9,
+        "clip_end": 19,
+        "card_color": "#4895ef",
+        "poster_image": "/static/posters/back_to_the_future.jpg"
+      }
+    },
+    "forrest_gump": {
+      "movie": "Forrest Gump",
+      "quote": "My mom always said life was like a box of chocolates. You never know what you're gonna get.",
+      "year": 1994,
+      "difficulty": "Beginner",
+      "actor": "Tom Hanks",
+      "translation": "Mi mamá siempre decía que la vida era como una caja de chocolates. Nunca sabes lo que te va a tocar.",
+      "ui": {
+        "youtube_id": "egkrxkiUnoo",
+        "clip_start": 24,
+        "clip_end": 57,
+        "card_color": "#f4a261",
+        "poster_image": "/static/posters/forrest_gump.jpg"
+      }
+    },
+    "the_matrix": {
+      "movie": "The Matrix",
+      "quote": "I know kung fu. Show me.",
+      "year": 1999,
+      "difficulty": "Beginner",
+      "actor": "Keanu Reeves",
+      "translation": "Sé kung fu. Muéstrame.",
+      "ui": {
+        "youtube_id": "fhrNgXJ__n8",
+        "clip_start": 20,
+        "clip_end": 31,
+        "card_color": "#06d6a0",
+        "poster_image": "/static/posters/the_matrix.jpg"
+      }
+    },
+    "seven": {
+      "movie": "Se7en",
+      "quote": "Put the gun down. I saw you with the box. What was in the box?",
+      "year": 1995,
+      "difficulty": "Beginner",
+      "actor": "Brad Pitt",
+      "translation": "Suelta el arma. Te vi con la caja. ¿Qué había en la caja?",
+      "ui": {
+        "youtube_id": "lHpHxLZReiI",
+        "clip_start": 0,
+        "clip_end": 6,
+        "card_color": "#ffd166",
+        "poster_image": "/static/posters/seven.jpg"
+      }
+    },
+    "heat": {
+      "movie": "Heat",
+      "quote": "You guys always work together? All the time. Real tight crew, huh? Real tight. Stop talking, okay Slick.",
+      "year": 1995,
+      "difficulty": "Intermediate",
+      "actor": "Al Pacino",
+      "translation": "¿Siempre trabajan juntos? Todo el tiempo. Un equipo muy unido, ¿eh? Para de hablar, ¿vale, listo?",
+      "ui": {
+        "youtube_id": "1zvgrhn9el4",
+        "clip_start": 0,
+        "clip_end": 18,
+        "card_color": "#ff6b35",
+        "poster_image": "/static/posters/heat.jpg"
+      }
+    },
+    "avengers": {
+      "movie": "The Avengers",
+      "quote": "Anything gets more than three blocks out, you turn it back or you turn it to ash. Better clench up, Legolas.",
+      "year": 2012,
+      "difficulty": "Intermediate",
+      "actor": "Robert Downey Jr.",
+      "translation": "Cualquier cosa que salga más de tres bloques, la haces regresar o la conviertes en ceniza. Mejor agárrate, Legolas.",
+      "ui": {
+        "youtube_id": "EcLfyxzV4lI",
+        "clip_start": 15,
+        "clip_end": 27,
+        "card_color": "#a855f7",
+        "poster_image": "/static/posters/avengers.jpg"
+      }
+    },
+    "taken": {
+      "movie": "Taken",
+      "quote": "I will find you and I will kill you",
+      "year": 2008,
+      "difficulty": "Advanced",
+      "actor": "Liam Neeson",
+      "translation": "Te voy a encontrar y te voy a matar.",
+      "ui": {
+        "youtube_id": "",
+        "clip_start": 211,
+        "clip_end": 249,
+        "card_color": "#3b82f6",
+        "poster_image": ""
+      }
+    },
+    "titanic": {
+      "movie": "Titanic",
+      "quote": "Give me your hands. Now close your eyes. Go on. Step up. Now hold on to the railing. Keep your eyes closed, don't peek. Step up onto the rail. Hold on, hold on. Keep your eyes closed. Do you trust me?",
+      "year": 1997,
+      "difficulty": "Intermediate",
+      "actor": "Leonardo DiCaprio",
+      "translation": "Dame tus manos. Ahora cierra los ojos. Vamos. Sube. Ahora agárrate de la barandilla. Mantén los ojos cerrados, no espíes. Sube a la barandilla. Agárrate, agárrate. Mantén los ojos cerrados. ¿Confías en mí?",
+      "ui": {
+        "youtube_id": "sRkrvgy-feU",
+        "clip_start": 51,
+        "clip_end": 125,
+        "card_color": "#06b6d4",
+        "poster_image": "/static/posters/titanic.jpg"
+      }
+    },
+    "basic_instinct": {
+      "movie": "Basic Instinct",
+      "quote": "What are you, a pro? No, I'm an amateur.",
+      "year": 1992,
+      "difficulty": "Intermediate",
+      "actor": "Sharon Stone",
+      "mature": true,
+      "translation": "¿Eres profesional? No, soy una aficionada.",
+      "ui": {
+        "youtube_id": "qFzd2UVFAMg",
+        "clip_start": 53,
+        "clip_end": 87,
+        "card_color": "#f43f5e",
+        "poster_image": "/static/posters/basic_instinct.jpg"
+      }
+    },
+    "sixth_sense": {
+      "movie": "The Sixth Sense",
+      "quote": "I want to tell you my secret now. I see dead people. Walking around like regular people.",
+      "year": 1999,
+      "difficulty": "Intermediate",
+      "actor": "Haley Joel Osment",
+      "translation": "Quiero contarte mi secreto ahora. Veo gente muerta. Caminando como personas normales.",
+      "ui": {
+        "youtube_id": "RoYEEjtDYKw",
+        "clip_start": 220,
+        "clip_end": 275,
+        "card_color": "#8b5cf6",
+        "poster_image": "/static/posters/sixth_sense.jpg"
+      }
+    },
+    "terminator": {
+      "movie": "The Terminator",
+      "quote": "I am a friend of Sarah Connor. I was told that she's here. Could I see her please? Where is she? I'll be back.",
+      "year": 1984,
+      "difficulty": "Intermediate",
+      "actor": "Arnold Schwarzenegger",
+      "translation": "Soy amigo de Sarah Connor. Me dijeron que está aquí. ¿Podría verla, por favor? ¿Dónde está? Volveré.",
+      "ui": {
+        "youtube_id": "Lj5bciUc1G0",
+        "clip_start": 68,
+        "clip_end": 97,
+        "card_color": "#ef4444",
+        "poster_image": "/static/posters/terminator.jpg"
+      }
+    },
+    "home_alone": {
+      "movie": "Home Alone",
+      "quote": "I made my family disappear.",
+      "year": 1990,
+      "difficulty": "Beginner",
+      "actor": "Macaulay Culkin",
+      "translation": "Hice desaparecer a mi familia.",
+      "ui": {
+        "youtube_id": "izS1AVNd9Kk",
+        "clip_start": 5,
+        "clip_end": 17,
+        "card_color": "#d4a843",
+        "poster_image": "/static/posters/home_alone.jpg"
+      }
+    },
+    "pursuit_of_happyness": {
+      "movie": "The Pursuit of Happyness",
+      "quote": "You got a dream, you gotta protect it.",
+      "year": 2006,
+      "difficulty": "Beginner",
+      "actor": "Will Smith",
+      "translation": "Tienes un sueño, tienes que protegerlo.",
+      "ui": {
+        "youtube_id": "5GYP-HSmtFY",
+        "clip_start": 59,
+        "clip_end": 82,
+        "card_color": "#e8a035",
+        "poster_image": "/static/posters/pursuit_of_happyness.jpg"
+      }
+    },
+    "jerry_maguire": {
+      "movie": "Jerry Maguire",
+      "quote": "You had me at hello.",
+      "year": 1996,
+      "difficulty": "Beginner",
+      "actor": "Renée Zellweger",
+      "translation": "Me tuviste en hola.",
+      "ui": {
+        "youtube_id": "cR9FMrck4gw",
+        "clip_start": 147,
+        "clip_end": 173,
+        "card_color": "#c75050",
+        "poster_image": "/static/posters/jerry_maguire.jpg"
+      }
+    },
+    "cast_away": {
+      "movie": "Cast Away",
+      "quote": "I know you. I know you. So are we okay?",
+      "year": 2000,
+      "difficulty": "Beginner",
+      "actor": "Tom Hanks",
+      "translation": "Te conozco. Te conozco. ¿Entonces estamos bien?",
+      "ui": {
+        "youtube_id": "KFGk1vS7y7k",
+        "clip_start": 0,
+        "clip_end": 19,
+        "card_color": "#8b7355",
+        "poster_image": "/static/posters/cast_away.jpg"
+      }
+    },
+    "social_network": {
+      "movie": "The Social Network",
+      "quote": "I deserve some recognition.",
+      "year": 2010,
+      "difficulty": "Beginner",
+      "actor": "Jesse Eisenberg",
+      "translation": "Merezco algo de reconocimiento.",
+      "ui": {
+        "youtube_id": "-Koj9hvcBMk",
+        "clip_start": 37,
+        "clip_end": 46,
+        "card_color": "#3b5998",
+        "poster_image": "/static/posters/social_network.jpg"
+      }
+    },
+    "devil_wears_prada": {
+      "movie": "The Devil Wears Prada",
+      "quote": "She needs skirts from Calvin Klein.",
+      "year": 2006,
+      "difficulty": "Beginner",
+      "actor": "Meryl Streep",
+      "translation": "Ella necesita faldas de Calvin Klein.",
+      "ui": {
+        "youtube_id": "E4Y-RbEV42E",
+        "clip_start": 27,
+        "clip_end": 43,
+        "card_color": "#cc2233",
+        "poster_image": "/static/posters/devil_wears_prada.jpg"
+      }
+    },
+    "apollo_13": {
+      "movie": "Apollo 13",
+      "quote": "Houston, we have a problem.",
+      "year": 1995,
+      "difficulty": "Beginner",
+      "actor": "Tom Hanks",
+      "translation": "Houston, tenemos un problema.",
+      "ui": {
+        "youtube_id": "YwG4F-16Tno",
+        "clip_start": 39,
+        "clip_end": 47,
+        "card_color": "#4682b4",
+        "poster_image": "/static/posters/apollo_13.jpg"
+      }
+    },
+    "top_gun": {
+      "movie": "Top Gun",
+      "quote": "I feel the need... the need for speed.",
+      "year": 1986,
+      "difficulty": "Beginner",
+      "actor": "Tom Cruise",
+      "translation": "Siento la necesidad... la necesidad de velocidad.",
+      "ui": {
+        "youtube_id": "4PzpztFJZP8",
+        "clip_start": 0,
+        "clip_end": 9,
+        "card_color": "#b8860b",
+        "poster_image": "/static/posters/top_gun.jpg"
+      }
+    },
+    "clueless": {
+      "movie": "Clueless",
+      "quote": "Why don't you just tell me what you want?",
+      "year": 1995,
+      "difficulty": "Beginner",
+      "actor": "Alicia Silverstone",
+      "translation": "¿Por qué no me dices lo que quieres?",
+      "ui": {
+        "youtube_id": "HkwbTNsCUU8",
+        "clip_start": 58,
+        "clip_end": 76,
+        "card_color": "#f0c040",
+        "poster_image": "/static/posters/clueless.jpg"
+      }
+    },
+    "men_in_black": {
+      "movie": "Men in Black",
+      "quote": "What's up? He's coming, he's coming because I failed and now he'll kill me too.",
+      "year": 1997,
+      "difficulty": "Beginner",
+      "actor": "Will Smith",
+      "translation": "¿Qué pasa? Viene, viene porque fallé y ahora me matará a mí también.",
+      "ui": {
+        "youtube_id": "bXmo6M2k4Ws",
+        "clip_start": 139,
+        "clip_end": 147,
+        "card_color": "#1a1a4e",
+        "poster_image": "/static/posters/men_in_black.jpg"
+      }
+    },
+    "mrs_doubtfire": {
+      "movie": "Mrs. Doubtfire",
+      "quote": "Could you make me a woman? Honey, I'm so happy! Oh, come in. I knew you'd understand.",
+      "year": 1993,
+      "difficulty": "Beginner",
+      "actor": "Robin Williams",
+      "translation": "¿Podrías convertirme en mujer? ¡Cariño, estoy tan feliz! Oh, pasa. Sabía que entenderías.",
+      "ui": {
+        "youtube_id": "7hsAbjmNpKU",
+        "clip_start": 1,
+        "clip_end": 10,
+        "card_color": "#e07b39",
+        "poster_image": "/static/posters/mrs_doubtfire.jpg"
+      }
+    },
+    "fifth_element": {
+      "movie": "The Fifth Element",
+      "quote": "Leeloo Dallas multipass. Yeah, multipass, she knows it's a multipass.",
+      "year": 1997,
+      "difficulty": "Beginner",
+      "actor": "Milla Jovovich",
+      "translation": "Leeloo Dallas multipase. Sí, multipase, ella sabe que es un multipase.",
+      "ui": {
+        "youtube_id": "EuX1dXokscI",
+        "clip_start": 1,
+        "clip_end": 15,
+        "card_color": "#6b5ce7",
+        "poster_image": "/static/posters/fifth_element.jpg"
+      }
+    },
+    "mystic_river": {
+      "movie": "Mystic River",
+      "quote": "When was the last time you saw Dave? That was twenty-five years ago, going up this street, in the back of that car.",
+      "year": 2003,
+      "difficulty": "Beginner",
+      "actor": "Sean Penn",
+      "translation": "¿Cuándo fue la última vez que viste a Dave? Eso fue hace veinticinco años, subiendo por esta calle, en la parte de atrás de ese coche.",
+      "ui": {
+        "youtube_id": "9KLTw2D6cD4",
+        "clip_start": 1,
+        "clip_end": 45,
+        "card_color": "#5a7d8c",
+        "poster_image": "/static/posters/mystic_river.jpg"
+      }
+    }
+  },
+  "levels": [
+    {
+      "level": 1,
+      "scenes": [
+        "fight_club",
+        "back_to_the_future",
+        "forrest_gump",
+        "the_matrix",
+        "seven",
+        "home_alone",
+        "pursuit_of_happyness",
+        "jerry_maguire",
+        "cast_away",
+        "social_network",
+        "devil_wears_prada",
+        "apollo_13",
+        "top_gun",
+        "clueless",
+        "men_in_black",
+        "mrs_doubtfire",
+        "fifth_element",
+        "mystic_river"
+      ],
+      "unlock_score": 0
+    },
+    {
+      "level": 2,
+      "scenes": [
+        "heat",
+        "avengers",
+        "titanic",
+        "basic_instinct",
+        "sixth_sense",
+        "terminator"
+      ],
+      "unlock_score": 60
+    },
+    {
+      "level": 3,
+      "scenes": [
+        "taken"
+      ],
+      "unlock_score": 70
+    }
+  ]
+}

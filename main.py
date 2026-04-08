@@ -1,4 +1,5 @@
 import os
+import json
 import re
 import time
 import uuid
@@ -52,6 +53,7 @@ app.add_middleware(
 _APP_DIR = os.path.dirname(os.path.abspath(__file__))
 _STATIC_DIR = os.path.join(_APP_DIR, "static")
 _INDEX_HTML_PATH = os.path.join(_APP_DIR, "index.html")
+_SCENE_CONFIG_PATH = os.path.join(_APP_DIR, "scene_config.json")
 if os.path.isdir(_STATIC_DIR):
     app.mount("/static", StaticFiles(directory=_STATIC_DIR), name="static")
 
@@ -198,142 +200,32 @@ def get_openai_client() -> openai.OpenAI:
 pwd_ctx = CryptContext(schemes=["bcrypt"], deprecated="auto")
 bearer  = HTTPBearer(auto_error=False)
 
-SCENES = {
-    "fight_club": {
-        "movie": "Fight Club",
-        "quote": "You know what a duvet is? Comforter. It's a blanket. Just a blanket.",
-        "year": 1999, "difficulty": "Beginner", "actor": "Brad Pitt",
-    },
-    "back_to_the_future": {
-        "movie": "Back to the Future",
-        "quote": "Roads! Where we're going we don't need roads!",
-        "year": 1985, "difficulty": "Beginner", "actor": "Christopher Lloyd",
-    },
-    "forrest_gump": {
-        "movie": "Forrest Gump",
-        "quote": "My mom always said life was like a box of chocolates. You never know what you're gonna get.",
-        "year": 1994, "difficulty": "Beginner", "actor": "Tom Hanks",
-    },
-    "the_matrix": {
-        "movie": "The Matrix",
-        "quote": "I know kung fu. Show me.",
-        "year": 1999, "difficulty": "Beginner", "actor": "Keanu Reeves",
-    },
-    "seven": {
-        "movie": "Se7en",
-        "quote": "Put the gun down. I saw you with the box. What was in the box?",
-        "year": 1995, "difficulty": "Beginner", "actor": "Brad Pitt",
-    },
-    "heat": {
-        "movie": "Heat",
-        "quote": "You guys always work together? All the time. Real tight crew, huh? Real tight. Stop talking, okay Slick.",
-        "year": 1995, "difficulty": "Intermediate", "actor": "Al Pacino",
-    },
-    "avengers": {
-        "movie": "The Avengers",
-        "quote": "Anything gets more than three blocks out, you turn it back or you turn it to ash. Better clench up, Legolas.",
-        "year": 2012, "difficulty": "Intermediate", "actor": "Robert Downey Jr.",
-    },
-    "taken": {
-        "movie": "Taken",
-        "quote": "I will find you and I will kill you",
-        "year": 2008, "difficulty": "Advanced", "actor": "Liam Neeson",
-    },
-    "titanic": {
-        "movie": "Titanic",
-        "quote": "Give me your hands. Now close your eyes. Go on. Step up. Now hold on to the railing. Keep your eyes closed, don't peek. Step up onto the rail. Hold on, hold on. Keep your eyes closed. Do you trust me?",
-        "year": 1997, "difficulty": "Intermediate", "actor": "Leonardo DiCaprio",
-    },
-    "basic_instinct": {
-        "movie": "Basic Instinct",
-        "quote": "What are you, a pro? No, I'm an amateur.",
-        "year": 1992, "difficulty": "Intermediate", "actor": "Sharon Stone", "mature": True,
-    },
-    "sixth_sense": {
-        "movie": "The Sixth Sense",
-        "quote": "I want to tell you my secret now. I see dead people. Walking around like regular people.",
-        "year": 1999, "difficulty": "Intermediate", "actor": "Haley Joel Osment",
-    },
-    "terminator": {
-        "movie": "The Terminator",
-        "quote": "I am a friend of Sarah Connor. I was told that she's here. Could I see her please? Where is she? I'll be back.",
-        "year": 1984, "difficulty": "Intermediate", "actor": "Arnold Schwarzenegger",
-    },
-    "home_alone": {
-        "movie": "Home Alone",
-        "quote": "I made my family disappear.",
-        "year": 1990, "difficulty": "Beginner", "actor": "Macaulay Culkin",
-    },
-    "pursuit_of_happyness": {
-        "movie": "The Pursuit of Happyness",
-        "quote": "You got a dream, you gotta protect it.",
-        "year": 2006, "difficulty": "Beginner", "actor": "Will Smith",
-    },
-    "jerry_maguire": {
-        "movie": "Jerry Maguire",
-        "quote": "You had me at hello.",
-        "year": 1996, "difficulty": "Beginner", "actor": "Ren\u00e9e Zellweger",
-    },
-    "cast_away": {
-        "movie": "Cast Away",
-        "quote": "I know you. I know you. So are we okay?",
-        "year": 2000, "difficulty": "Beginner", "actor": "Tom Hanks",
-    },
-    "social_network": {
-        "movie": "The Social Network",
-        "quote": "I deserve some recognition.",
-        "year": 2010, "difficulty": "Beginner", "actor": "Jesse Eisenberg",
-    },
-    "devil_wears_prada": {
-        "movie": "The Devil Wears Prada",
-        "quote": "She needs skirts from Calvin Klein.",
-        "year": 2006, "difficulty": "Beginner", "actor": "Meryl Streep",
-    },
-    "apollo_13": {
-        "movie": "Apollo 13",
-        "quote": "Houston, we have a problem.",
-        "year": 1995, "difficulty": "Beginner", "actor": "Tom Hanks",
-    },
-    "top_gun": {
-        "movie": "Top Gun",
-        "quote": "I feel the need... the need for speed.",
-        "year": 1986, "difficulty": "Beginner", "actor": "Tom Cruise",
-    },
-    "clueless": {
-        "movie": "Clueless",
-        "quote": "Why don't you just tell me what you want?",
-        "year": 1995, "difficulty": "Beginner", "actor": "Alicia Silverstone",
-    },
-    "men_in_black": {
-        "movie": "Men in Black",
-        "quote": "What's up? He's coming, he's coming because I failed and now he'll kill me too.",
-        "year": 1997, "difficulty": "Beginner", "actor": "Will Smith",
-    },
-    "mrs_doubtfire": {
-        "movie": "Mrs. Doubtfire",
-        "quote": "Could you make me a woman? Honey, I'm so happy! Oh, come in. I knew you'd understand.",
-        "year": 1993, "difficulty": "Beginner", "actor": "Robin Williams",
-    },
-    "fifth_element": {
-        "movie": "The Fifth Element",
-        "quote": "Leeloo Dallas multipass. Yeah, multipass, she knows it's a multipass.",
-        "year": 1997, "difficulty": "Beginner", "actor": "Milla Jovovich",
-    },
-    "mystic_river": {
-        "movie": "Mystic River",
-        "quote": "When was the last time you saw Dave? That was twenty-five years ago, going up this street, in the back of that car.",
-        "year": 2003, "difficulty": "Beginner", "actor": "Sean Penn",
-    },
-}
+def _load_scene_config() -> dict:
+    with open(_SCENE_CONFIG_PATH, "r", encoding="utf-8") as f:
+        data = json.load(f)
+    scenes = data.get("scenes")
+    levels = data.get("levels")
+    if not isinstance(scenes, dict) or not isinstance(levels, list):
+        raise RuntimeError("scene_config.json must contain 'scenes' and 'levels'")
+    return data
 
-# Level unlock rules — must be kept in sync with LEVEL_MAP in index.html.
-# Each level lists which scene IDs belong to it and what minimum sync_score
-# (%) a user needs on any scene from the *previous* level to unlock it.
-LEVELS = [
-    {"level": 1, "scenes": ["fight_club", "back_to_the_future", "forrest_gump", "the_matrix", "seven", "home_alone", "pursuit_of_happyness", "jerry_maguire", "cast_away", "social_network", "devil_wears_prada", "apollo_13", "top_gun", "clueless", "men_in_black", "mrs_doubtfire", "fifth_element", "mystic_river"], "unlock_score": 0},
-    {"level": 2, "scenes": ["heat", "avengers", "titanic", "basic_instinct", "sixth_sense", "terminator"],          "unlock_score": 60},
-    {"level": 3, "scenes": ["taken"],                                                                                "unlock_score": 70},
-]
+
+def _build_public_scene_config(config: dict) -> dict:
+    public_scenes = {}
+    for scene_id, scene in config["scenes"].items():
+        public_scene = dict(scene)
+        public_scene.pop("translation", None)
+        public_scenes[scene_id] = public_scene
+    public_config = dict(config)
+    public_config["scenes"] = public_scenes
+    return public_config
+
+
+_SCENE_CONFIG = _load_scene_config()
+_PUBLIC_SCENE_CONFIG = _build_public_scene_config(_SCENE_CONFIG)
+SCENES = _SCENE_CONFIG["scenes"]
+PUBLIC_SCENES = _PUBLIC_SCENE_CONFIG["scenes"]
+LEVELS = _SCENE_CONFIG["levels"]
 
 # ---------------------------------------------------------------------------
 # Division / rank system
@@ -357,38 +249,6 @@ def get_next_division(points: int) -> Optional[dict]:
         if d["min"] > points:
             return d
     return None  # already at max rank
-
-# ---------------------------------------------------------------------------
-# Spanish translations — unlocked after 3+ attempts with 70%+ best score
-# ---------------------------------------------------------------------------
-SCENE_TRANSLATIONS = {
-    "fight_club":         "¿Sabes lo que es un edredón? Es una manta. Solo una manta.",
-    "back_to_the_future": "¡Caminos! A donde vamos no necesitamos caminos.",
-    "forrest_gump":       "Mi mamá siempre decía que la vida era como una caja de chocolates. Nunca sabes lo que te va a tocar.",
-    "the_matrix":         "Sé kung fu. Muéstrame.",
-    "seven":              "Suelta el arma. Te vi con la caja. ¿Qué había en la caja?",
-    "heat":               "¿Siempre trabajan juntos? Todo el tiempo. Un equipo muy unido, ¿eh? Para de hablar, ¿vale, listo?",
-    "avengers":           "Cualquier cosa que salga más de tres bloques, la haces regresar o la conviertes en ceniza. Mejor agárrate, Legolas.",
-    "taken":              "Te voy a encontrar y te voy a matar.",
-    "titanic":            "Dame tus manos. Ahora cierra los ojos. Vamos. Sube. Ahora agárrate de la barandilla. Mantén los ojos cerrados, no espíes. Sube a la barandilla. Agárrate, agárrate. Mantén los ojos cerrados. ¿Confías en mí?",
-    "basic_instinct":     "¿Eres profesional? No, soy una aficionada.",
-    "sixth_sense":        "Quiero contarte mi secreto ahora. Veo gente muerta. Caminando como personas normales.",
-    "terminator":         "Soy amigo de Sarah Connor. Me dijeron que está aquí. ¿Podría verla, por favor? ¿Dónde está? Volveré.",
-    "home_alone":         "Hice desaparecer a mi familia.",
-    "pursuit_of_happyness": "Tienes un sueño, tienes que protegerlo.",
-    "jerry_maguire":      "Me tuviste en hola.",
-    "cast_away":          "Te conozco. Te conozco. ¿Entonces estamos bien?",
-    "social_network":     "Merezco algo de reconocimiento.",
-    "devil_wears_prada":  "Ella necesita faldas de Calvin Klein.",
-    "apollo_13":          "Houston, tenemos un problema.",
-    "top_gun":            "Siento la necesidad... la necesidad de velocidad.",
-    "clueless":           "¿Por qué no me dices lo que quieres?",
-    "men_in_black":       "¿Qué pasa? Viene, viene porque fallé y ahora me matará a mí también.",
-    "mrs_doubtfire":      "¿Podrías convertirme en mujer? ¡Cariño, estoy tan feliz! Oh, pasa. Sabía que entenderías.",
-    "fifth_element":      "Leeloo Dallas multipase. Sí, multipase, ella sabe que es un multipase.",
-    "mystic_river":       "¿Cuándo fue la última vez que viste a Dave? Eso fue hace veinticinco años, subiendo por esta calle, en la parte de atrás de ese coche.",
-}
-
 
 # ---------------------------------------------------------------------------
 # Daily challenge — deterministic scene selection from UTC date
@@ -679,7 +539,12 @@ async def me(user: dict = Depends(current_user)):
 
 @app.get("/api/scenes")
 async def get_scenes():
-    return SCENES
+    return PUBLIC_SCENES
+
+
+@app.get("/api/scene-config")
+async def get_scene_config():
+    return _PUBLIC_SCENE_CONFIG
 
 
 @app.get("/api/progress")
@@ -783,7 +648,7 @@ async def get_daily():
     secs_left = int((midnight - now).total_seconds())
     return {
         "scene_id":       sid,
-        "scene":          SCENES[sid],
+        "scene":          PUBLIC_SCENES[sid],
         "date":           today,
         "bonus_multiplier": 2,
         "secs_until_reset": secs_left,
@@ -927,14 +792,14 @@ async def submit_recording(
         "transcription":        transcription,
         "expected":             expected_quote,
         "sync_score":           score,
-        "scene":                scene,
+        "scene":                PUBLIC_SCENES[scene_id],
         "points_earned":        pts_earned,
         "total_points":         total_points,
         "division":             division,
         "is_perfect":           score >= 100,
         "is_first_attempt":     is_first_attempt,
         "translation_unlocked": translation_unlocked,
-        "translation":          SCENE_TRANSLATIONS.get(scene_id) if translation_unlocked else None,
+        "translation":          scene.get("translation") if translation_unlocked else None,
         "is_daily":             is_daily,
         "daily_bonus":          daily_bonus,
         "daily_already_done":   daily_already_done,
@@ -992,7 +857,7 @@ async def get_challenge(challenge_id: str):
         "challenger_username":  row[1],
         "scene_id":             sid,
         "score_to_beat":        float(row[3]),
-        "scene":                SCENES.get(sid, {}),
+        "scene":                PUBLIC_SCENES.get(sid, {}),
         "created_at":           row[4].isoformat() if hasattr(row[4], "isoformat") else row[4],
     }
 
