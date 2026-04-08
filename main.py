@@ -49,7 +49,9 @@ app.add_middleware(
     allow_headers=["Authorization", "Content-Type"],
 )
 
-_STATIC_DIR = os.path.join(os.path.dirname(__file__), "static")
+_APP_DIR = os.path.dirname(os.path.abspath(__file__))
+_STATIC_DIR = os.path.join(_APP_DIR, "static")
+_INDEX_HTML_PATH = os.path.join(_APP_DIR, "index.html")
 if os.path.isdir(_STATIC_DIR):
     app.mount("/static", StaticFiles(directory=_STATIC_DIR), name="static")
 
@@ -592,7 +594,7 @@ def calc_points(score: float, is_first_attempt: bool) -> int:
 @app.get("/", response_class=HTMLResponse)
 async def read_root():
     try:
-        with open("index.html", "r", encoding="utf-8") as f:
+        with open(_INDEX_HTML_PATH, "r", encoding="utf-8") as f:
             return f.read()
     except FileNotFoundError:
         return HTMLResponse("<h1>index.html not found</h1>", status_code=404)
@@ -602,7 +604,7 @@ async def read_root():
 async def challenge_page(challenge_id: str):
     """Serve the SPA for challenge links so the JS can read the path and render the challenge screen."""
     try:
-        with open("index.html", "r", encoding="utf-8") as f:
+        with open(_INDEX_HTML_PATH, "r", encoding="utf-8") as f:
             return f.read()
     except FileNotFoundError:
         return HTMLResponse("<h1>index.html not found</h1>", status_code=404)
