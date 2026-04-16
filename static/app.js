@@ -4,40 +4,242 @@
 // Scene content and UI metadata are loaded from /api/scene-config so the
 // frontend reads the same shared scene records as the backend.
 // Stable frontend constants are loaded from /static/app-config.js.
+// Pure helper utilities are loaded from /static/app-helpers.js.
+// Pure view builders are loaded from /static/app-view-helpers.js.
+// Render-only feature builders are loaded from /static/app-render-helpers.js.
+// Read-only state derivation helpers are loaded from /static/app-state-helpers.js.
+// Tiny generic DOM guard helpers are loaded from /static/app-dom-helpers.js.
+// Cinematic level panel display helpers are loaded from /static/level-panel-domain.js.
+// Progress dashboard display helpers are loaded from /static/progress-dashboard-domain.js.
+// Scene browser display helpers are loaded from /static/scene-browser-domain.js.
+// Scene modal display helpers are loaded from /static/scene-modal-domain.js.
+// Analyze / score display helpers are loaded from /static/analyze-score-domain.js.
+// Recording / playback display helpers are loaded from /static/recording-playback-domain.js.
+// Auth modal display helpers are loaded from /static/auth-modal-domain.js.
+// Daily challenge display helpers are loaded from /static/daily-challenge-domain.js.
+// Runtime timer / cleanup / YouTube utility helpers are loaded from /static/app-runtime-utils.js.
+// Progress refresh orchestration helpers are loaded from /static/app-progress-orchestration.js.
+// Post-score refresh orchestration helpers are loaded from /static/app-post-score-orchestration.js.
+// Leaderboard orchestration helpers are loaded from /static/app-leaderboard-orchestration.js.
+// Level-panel orchestration helpers are loaded from /static/app-level-panel-orchestration.js.
 
 const FRONTEND_CONFIG = window.MIRROR_FRONTEND_CONFIG || {};
+const APP_HELPERS = window.MIRROR_APP_HELPERS || {};
+const APP_VIEW_HELPERS = window.MIRROR_APP_VIEW_HELPERS || {};
+const APP_RENDER_HELPERS = window.MIRROR_APP_RENDER_HELPERS || {};
+const APP_STATE_HELPERS = window.MIRROR_APP_STATE_HELPERS || {};
+const APP_DOM_HELPERS = window.MIRROR_APP_DOM_HELPERS || {};
+const LEVEL_PANEL_DOMAIN = window.MIRROR_LEVEL_PANEL_DOMAIN || {};
+const PROGRESS_DASHBOARD_DOMAIN = window.MIRROR_PROGRESS_DASHBOARD_DOMAIN || {};
+const SCENE_BROWSER_DOMAIN = window.MIRROR_SCENE_BROWSER_DOMAIN || {};
+const SCENE_MODAL_DOMAIN = window.MIRROR_SCENE_MODAL_DOMAIN || {};
+const ANALYZE_SCORE_DOMAIN = window.MIRROR_ANALYZE_SCORE_DOMAIN || {};
+const RECORDING_PLAYBACK_DOMAIN = window.MIRROR_RECORDING_PLAYBACK_DOMAIN || {};
+const AUTH_MODAL_DOMAIN = window.MIRROR_AUTH_MODAL_DOMAIN || {};
+const DAILY_CHALLENGE_DOMAIN = window.MIRROR_DAILY_CHALLENGE_DOMAIN || {};
+const APP_RUNTIME_UTILS = window.MIRROR_APP_RUNTIME_UTILS || {};
+const APP_PROGRESS_ORCHESTRATION = window.MIRROR_APP_PROGRESS_ORCHESTRATION || {};
+const APP_POST_SCORE_ORCHESTRATION = window.MIRROR_APP_POST_SCORE_ORCHESTRATION || {};
+const APP_LEADERBOARD_ORCHESTRATION = window.MIRROR_APP_LEADERBOARD_ORCHESTRATION || {};
+const APP_LEVEL_PANEL_ORCHESTRATION = window.MIRROR_APP_LEVEL_PANEL_ORCHESTRATION || {};
 const LEVEL_NAMES = FRONTEND_CONFIG.LEVEL_NAMES;
 const LEVEL_UI_META = FRONTEND_CONFIG.LEVEL_UI_META;
-const DIVISIONS = FRONTEND_CONFIG.DIVISIONS;
 const WAVE_BARS = FRONTEND_CONFIG.WAVE_BARS;
+const {
+  buildCircleSVG,
+  formatAvgPb,
+  getDivision,
+  streakMessage,
+  timeAgo,
+} = APP_HELPERS;
+const {
+  buildPanelHTML,
+  btnPlayHTML,
+  btnRecordHTML,
+  btnStopPlayHTML,
+} = APP_VIEW_HELPERS;
+const {
+  buildHistoryItemHTML,
+  buildLevelPanelCountHTML,
+  buildLevelPanelSceneCardHTML,
+  buildPersonalBestItemHTML,
+} = APP_RENDER_HELPERS;
+const {
+  computeImprovedIds,
+  findFirstUnlockedSceneId,
+  getBestScores,
+  getPositiveSceneScores,
+  getUnlockedSceneIds,
+  hasUnlockedScene,
+} = APP_STATE_HELPERS;
+const {
+  setDisplayIfPresent,
+  setHtmlIfPresent,
+  setTextIfPresent,
+} = APP_DOM_HELPERS;
+const {
+  renderLevelPanelDisplay,
+  updateLevelCardStatsDisplay,
+} = LEVEL_PANEL_DOMAIN;
+const {
+  renderDivCardDisplay,
+  renderPersonalBestsDisplay,
+  renderProgressDashboardDisplay,
+} = PROGRESS_DASHBOARD_DOMAIN;
+const {
+  renderLevelBarDisplay,
+  renderSceneCardsDisplay,
+} = SCENE_BROWSER_DOMAIN;
+const {
+  renderSceneModalDisplay,
+} = SCENE_MODAL_DOMAIN;
+const {
+  renderChallengeResultDisplay,
+  renderPhonemeBreakdownDisplay,
+  renderPointsEarnedDisplay,
+  renderScoreDisplay,
+} = ANALYZE_SCORE_DOMAIN;
+const {
+  renderPlaybackActiveDisplay,
+  renderPlaybackStoppedDisplay,
+  renderRecordingActiveDisplay,
+  renderRecordingEmptyDisplay,
+  renderRecordingReadyDisplay,
+  renderRecordingResetDisplay,
+  renderRecordingStoppedDisplay,
+  renderRecordingTimerDisplay,
+  renderReplayLineDisplay,
+} = RECORDING_PLAYBACK_DOMAIN;
+const {
+  renderAuthErrorDisplay,
+  renderAuthSubmitDisplay,
+  renderAuthTabDisplay,
+} = AUTH_MODAL_DOMAIN;
+const {
+  renderDailyCardDisplay,
+  renderDailyCompleteDisplay,
+  renderStreakCardDisplay,
+} = DAILY_CHALLENGE_DOMAIN;
+const {
+  cleanupRecordingRuntime,
+  getSupportedMimeType: getSupportedMimeTypeRuntime,
+  renderWaveformBars,
+  startYouTubeEndCheck,
+  stopWaveformRuntime,
+  stopYouTubeEndCheck,
+} = APP_RUNTIME_UTILS;
+const {
+  refreshLevelBarSurface,
+  refreshLevelCardStatsSurface,
+  refreshSceneCardsSurface,
+} = APP_PROGRESS_ORCHESTRATION;
+const {
+  refreshPostScoreSurfaces,
+} = APP_POST_SCORE_ORCHESTRATION;
+const {
+  renderLeaderboardSurface,
+  switchLeaderboardTabSurface,
+} = APP_LEADERBOARD_ORCHESTRATION;
+const {
+  openLevelPanelSurface,
+} = APP_LEVEL_PANEL_ORCHESTRATION;
 
 let LEVEL_MAP = {};
 let CLV_LEVELS = [];
 let DEFAULT_UNLOCKED_SCENES = [];
 
-function getDivision(points) {
-  for (let i = DIVISIONS.length - 1; i >= 0; i--) {
-    if (points >= DIVISIONS[i].min) return DIVISIONS[i];
-  }
-  return DIVISIONS[0];
-}
-
 const APP_BASE = (window.MIRROR_APP_BASE || '').replace(/\/$/, '');
 const API = APP_BASE;
 
 // ══════════════════════════════════════════════
-// DOM HELPERS
+// SHARED ORCHESTRATION UTILITIES
 // ══════════════════════════════════════════════
+// These helpers fall into three extraction buckets:
+// 1. direct DOM helpers (`el`, `setText`, `show`, `setOn`, ...)
+// 2. pure display/state selectors (`averageScore`, `formatAvgPb`, ...)
+// 3. stateful UI flow helpers (`setOverlayActive`, `handleGlobalEscape`)
 function el(id) {
   return document.getElementById(id);
+}
+
+function setText(id, value) {
+  el(id).textContent = value;
+}
+
+function setHtml(id, value) {
+  el(id).innerHTML = value;
+}
+
+function setDisplay(id, value) {
+  el(id).style.display = value;
+}
+
+function show(id, display = '') {
+  setDisplay(id, display);
+}
+
+function hide(id, display = 'none') {
+  setDisplay(id, display);
+}
+
+function setClassOn(id, className, isOn) {
+  el(id).classList.toggle(className, isOn);
+}
+
+function setOn(id, isOn) {
+  setClassOn(id, 'on', isOn);
 }
 
 function setBodyScrollLocked(locked) {
   document.body.style.overflow = locked ? 'hidden' : '';
 }
 
+function isOverlayOpen(id) {
+  return el(id).classList.contains('open');
+}
+
 function setOverlayOpen(id, isOpen) {
-  el(id).classList.toggle('open', isOpen);
+  setClassOn(id, 'open', isOpen);
+}
+
+function setOverlayActive(id, isOpen) {
+  setOverlayOpen(id, isOpen);
+  setBodyScrollLocked(isOpen);
+}
+
+function setPanelOpen(panelId, backdropId, isOpen) {
+  setClassOn(panelId, 'open', isOpen);
+  setClassOn(backdropId, 'open', isOpen);
+  setBodyScrollLocked(isOpen);
+}
+
+function on(id, eventName, handler) {
+  el(id).addEventListener(eventName, handler);
+}
+
+function onClick(id, handler) {
+  on(id, 'click', handler);
+}
+
+function onSubmit(id, handler) {
+  on(id, 'submit', handler);
+}
+
+function bindBackdropDismiss(id, onClose) {
+  onClick(id, e => {
+    if (e.target === el(id)) onClose();
+  });
+}
+
+function handleGlobalEscape() {
+  // Modal close priority is intentional: auth > progress > scene modal.
+  if (isOverlayOpen('authModalOverlay')) {
+    closeAuthModal();
+  } else if (isOverlayOpen('progressOverlay')) {
+    closeProgressDashboard();
+  } else {
+    closeModal();
+  }
 }
 
 function resolveAppUrl(path) {
@@ -133,6 +335,20 @@ function getScenePlaybackMeta(sceneId) {
 // ══════════════════════════════════════════════
 // STATE
 // ══════════════════════════════════════════════
+// Shared cross-domain state map:
+// - `scenes`, `LEVEL_MAP`, `CLV_LEVELS`: cards, level browser, level panel, modal, leaderboard
+// - `userProgress`: cards, level bar, level panel, score UI, progress dashboard
+// - `dailyChallenge`: daily card, scene cards, modal badge, challenge-style UI copy
+// - `activeScene`: modal, recording/playback, analyze/score, replay controls
+// - `challengeCtx` / `activeChallenge`: challenge page entry + post-score result rendering
+// - `ytPlayer` / `ytApiReady`: modal playback, replay line, hear-actor controls
+// Remaining core ownership points:
+// - session entry owns auth/challenge routing and the first app data fan-out
+// - scene entry owns gating between app scenes, auth signup, and modal opening
+// - modal/recording/analyze own activeScene, media handles, timers, and submit flow
+// - challenge owns accept/auth handoff and post-score result context
+// - daily countdown owns reset timing and daily/streak reloads
+// Adapter wrappers below delegate display/refresh work but should not own state.
 let authToken   = localStorage.getItem('mirror_token') || null;
 let authUser    = null;
 
@@ -172,8 +388,14 @@ let waveAnalyser   = null;
 let waveAnimFrame  = null;
 
 // ══════════════════════════════════════════════
-// BOOT
+// APP BOOTSTRAP / SESSION ENTRY
 // ══════════════════════════════════════════════
+// Boot is the main domain router today:
+// auth landing, normal app entry, and challenge-page entry all start here.
+// Coupling note: authenticated entry fans out into progress, scenes, leaderboard,
+// daily challenge, and streak loading before optional challenge handoff.
+// Ownership point: do not extract casually; route order affects challenge URLs,
+// token validation, onboarding timing, and authenticated app startup.
 (async () => {
   sceneConfigPromise = ensureSceneConfig();
   // Check if we're on a challenge URL first
@@ -193,8 +415,10 @@ let waveAnimFrame  = null;
 })();
 
 // ══════════════════════════════════════════════
-// AUTH — state helpers
+// AUTH ORCHESTRATION — session state
 // ══════════════════════════════════════════════
+// Owns token verification, app/auth screen switching, and the authenticated
+// startup sequence. Challenge entry can resume here after login/register.
 async function verifyToken() {
   try {
     const r = await fetch(`${API}/api/auth/me`, {
@@ -210,18 +434,18 @@ async function verifyToken() {
 }
 
 function showAuthScreen() {
-  el('authScreen').style.display = '';
-  el('appScreen').style.display = 'none';
-  el('challengeScreen').classList.remove('on');
+  show('authScreen');
+  hide('appScreen');
+  setOn('challengeScreen', false);
   setOverlayOpen('authModalOverlay', false);
   setBodyScrollLocked(false);
 }
 
 function showApp() {
-  el('authScreen').style.display = 'none';
-  el('appScreen').style.display = '';
-  el('challengeScreen').classList.remove('on');
-  el('userChipName').textContent = authUser.username;
+  hide('authScreen');
+  show('appScreen');
+  setOn('challengeScreen', false);
+  setText('userChipName', authUser.username);
   updateDivDot(0);  // default Bronze until profile loads
 }
 
@@ -246,6 +470,8 @@ function logout() {
 }
 
 async function enterAuthenticatedApp(options = {}) {
+  // Ownership point: session entry fan-out. This coordinates auth UI, optional
+  // onboarding, progress, scenes, scores, daily, streak, and challenge resume.
   const { showOnboarding = false } = options;
   showApp();
   if (showOnboarding && !activeChallenge) maybeShowOnboarding();
@@ -254,62 +480,73 @@ async function enterAuthenticatedApp(options = {}) {
   if (activeChallenge) enterChallengeFromAuth();
 }
 
-el('btnLogout').addEventListener('click', logout);
+onClick('btnLogout', logout);
 
 // ══════════════════════════════════════════════
-// AUTH — modal open / close
+// AUTH ORCHESTRATION — modal open / close
 // ══════════════════════════════════════════════
 function openAuthModal(tab) {
   switchAuthTab(tab || 'login');
-  setOverlayOpen('authModalOverlay', true);
-  setBodyScrollLocked(true);
+  setOverlayActive('authModalOverlay', true);
 }
 
 function closeAuthModal() {
-  setOverlayOpen('authModalOverlay', false);
-  setBodyScrollLocked(false);
+  setOverlayActive('authModalOverlay', false);
 }
 
-el('authModalClose').addEventListener('click', closeAuthModal);
-el('authModalOverlay').addEventListener('click', e => {
-  if (e.target === el('authModalOverlay')) closeAuthModal();
-});
+onClick('authModalClose', closeAuthModal);
+bindBackdropDismiss('authModalOverlay', closeAuthModal);
 
-el('navLoginBtn').addEventListener('click',     () => openAuthModal('login'));
-el('navRegisterBtn').addEventListener('click',  () => openAuthModal('register'));
-el('heroStartBtn').addEventListener('click',    () => openAuthModal('register'));
-el('pricingFreeBtn').addEventListener('click',  () => openAuthModal('register'));
-el('pricingProBtn').addEventListener('click',   () => openAuthModal('register'));
+onClick('navLoginBtn',     () => openAuthModal('login'));
+onClick('navRegisterBtn',  () => openAuthModal('register'));
+onClick('heroStartBtn',    () => openAuthModal('register'));
+onClick('pricingFreeBtn',  () => openAuthModal('register'));
+onClick('pricingProBtn',   () => openAuthModal('register'));
 
 // ══════════════════════════════════════════════
-// AUTH — tab switching
+// AUTH ORCHESTRATION — tab switching
 // ══════════════════════════════════════════════
-el('tabLoginBtn').addEventListener('click', () => switchAuthTab('login'));
-el('tabRegBtn').addEventListener('click',   () => switchAuthTab('register'));
+onClick('tabLoginBtn', () => switchAuthTab('login'));
+onClick('tabRegBtn',   () => switchAuthTab('register'));
+
+function getAuthModalDisplayRefs() {
+  return {
+    loginErrorEl: el('loginError'),
+    loginForm: el('loginForm'),
+    loginSubmitBtn: el('loginSubmit'),
+    loginTabBtn: el('tabLoginBtn'),
+    registerErrorEl: el('registerError'),
+    registerForm: el('registerForm'),
+    registerSubmitBtn: el('registerSubmit'),
+    registerTabBtn: el('tabRegBtn'),
+  };
+}
 
 function switchAuthTab(tab) {
   const isLogin = tab === 'login';
-  el('tabLoginBtn').classList.toggle('active',  isLogin);
-  el('tabRegBtn').classList.toggle('active',   !isLogin);
-  el('loginForm').classList.toggle('hidden',   !isLogin);
-  el('registerForm').classList.toggle('hidden', isLogin);
-  el('loginError').textContent    = '';
-  el('registerError').textContent = '';
+  renderAuthTabDisplay({
+    isLogin: isLogin,
+    refs: getAuthModalDisplayRefs(),
+  });
 }
 
 // ══════════════════════════════════════════════
-// AUTH — login
+// AUTH ORCHESTRATION — login
 // ══════════════════════════════════════════════
-el('loginForm').addEventListener('submit', async e => {
+onSubmit('loginForm', async e => {
   e.preventDefault();
   const email    = el('loginEmail').value.trim();
   const password = el('loginPassword').value;
-  const errEl    = el('loginError');
-  const btn      = el('loginSubmit');
 
-  errEl.textContent = '';
-  btn.disabled      = true;
-  btn.textContent   = 'Signing in\u2026';
+  renderAuthErrorDisplay({
+    message: '',
+    refs: { errorEl: el('loginError') },
+  });
+  renderAuthSubmitDisplay({
+    disabled: true,
+    refs: { buttonEl: el('loginSubmit') },
+    text: 'Signing in\u2026',
+  });
 
   try {
     const r    = await fetch(`${API}/api/auth/login`, {
@@ -325,37 +562,50 @@ el('loginForm').addEventListener('submit', async e => {
     localStorage.setItem('mirror_token', authToken);
     await enterAuthenticatedApp();
   } catch (err) {
-    errEl.textContent = err.message;
+    renderAuthErrorDisplay({
+      message: err.message,
+      refs: { errorEl: el('loginError') },
+    });
   } finally {
-    btn.disabled    = false;
-    btn.textContent = 'Sign In';
+    renderAuthSubmitDisplay({
+      disabled: false,
+      refs: { buttonEl: el('loginSubmit') },
+      text: 'Sign In',
+    });
   }
 });
 
 // ══════════════════════════════════════════════
-// AUTH — register
+// AUTH ORCHESTRATION — register
 // ══════════════════════════════════════════════
-el('registerForm').addEventListener('submit', async e => {
+onSubmit('registerForm', async e => {
   e.preventDefault();
   const username = el('regUsername').value.trim();
   const email    = el('regEmail').value.trim();
   const password = el('regPassword').value;
   const confirm  = el('regConfirm').value;
-  const errEl    = el('registerError');
-  const btn      = el('registerSubmit');
 
-  errEl.textContent = '';
+  renderAuthErrorDisplay({
+    message: '',
+    refs: { errorEl: el('registerError') },
+  });
 
   if (password !== confirm) {
-    errEl.textContent = 'Passwords do not match';
+    renderAuthErrorDisplay({
+      message: 'Passwords do not match',
+      refs: { errorEl: el('registerError') },
+    });
     const confirmEl = el('regConfirm');
     confirmEl.classList.add('shake');
     setTimeout(() => confirmEl.classList.remove('shake'), 400);
     return;
   }
 
-  btn.disabled    = true;
-  btn.textContent = 'Creating account\u2026';
+  renderAuthSubmitDisplay({
+    disabled: true,
+    refs: { buttonEl: el('registerSubmit') },
+    text: 'Creating account\u2026',
+  });
 
   try {
     const r    = await fetch(`${API}/api/auth/register`, {
@@ -371,16 +621,25 @@ el('registerForm').addEventListener('submit', async e => {
     localStorage.setItem('mirror_token', authToken);
     await enterAuthenticatedApp({ showOnboarding: true });
   } catch (err) {
-    errEl.textContent = err.message;
+    renderAuthErrorDisplay({
+      message: err.message,
+      refs: { errorEl: el('registerError') },
+    });
   } finally {
-    btn.disabled    = false;
-    btn.textContent = 'Create Account';
+    renderAuthSubmitDisplay({
+      disabled: false,
+      refs: { buttonEl: el('registerSubmit') },
+      text: 'Create Account',
+    });
   }
 });
 
 // ══════════════════════════════════════════════
-// SCENES
+// PROGRESS / LEVEL PANEL ORCHESTRATION — scene browser shell
 // ══════════════════════════════════════════════
+// `renderCards` depends on both scene config and shared `userProgress` unlock state.
+// Coupling note: cards also read `dailyChallenge` for the daily badge and open
+// the scene modal when an unlocked card is selected.
 async function loadScenes() {
   try {
     await ensureSceneConfig();
@@ -392,25 +651,18 @@ async function loadScenes() {
 }
 
 function renderCards() {
-  const grids = {
-    Beginner:     document.getElementById('gridBeginner'),
-    Intermediate: document.getElementById('gridIntermediate'),
-    Advanced:     document.getElementById('gridAdvanced'),
-  };
-  // Clear all grids
-  Object.values(grids).forEach(g => { if (g) g.innerHTML = ''; });
-
-  for (const [id, s] of Object.entries(scenes)) {
-    const target = grids[s.difficulty] || grids.Beginner;
-    target.appendChild(makeCard(id, s));
-  }
-
-  // Show unlock hint on locked level headers
-  const nextLevel = userProgress.next_level;
-  const lockInter = document.getElementById('lockIntermediate');
-  const lockAdv   = document.getElementById('lockAdvanced');
-  if (lockInter) lockInter.textContent = userProgress.level >= 2 ? '' : 'Unlock at 60%';
-  if (lockAdv)   lockAdv.textContent   = userProgress.level >= 3 ? '' : 'Unlock at 70%';
+  refreshSceneCardsSurface({
+    createCardElement: makeCard,
+    grids: {
+      Beginner: document.getElementById('gridBeginner'),
+      Intermediate: document.getElementById('gridIntermediate'),
+      Advanced: document.getElementById('gridAdvanced'),
+    },
+    renderSceneCardsDisplay: renderSceneCardsDisplay,
+    scenes: scenes,
+    setTextIfPresent: setTextIfPresent,
+    userProgress: userProgress,
+  });
 }
 
 function makeCard(id, s) {
@@ -453,8 +705,9 @@ function makeCard(id, s) {
 }
 
 // ══════════════════════════════════════════════
-// LEVEL SYSTEM
+// PROGRESS / LEVEL PANEL ORCHESTRATION — progress state
 // ══════════════════════════════════════════════
+// Progress feeds cards, the level bar, score refresh, and the cinematic level panel.
 async function loadProgress() {
   try {
     const r = await fetch(`${API}/api/progress`, {
@@ -465,6 +718,12 @@ async function loadProgress() {
   renderLevelBar();
 }
 
+// ══════════════════════════════════════════════
+// APP BOOTSTRAP / SESSION ENTRY — daily challenge handoff
+// ══════════════════════════════════════════════
+// This domain couples into scene cards and scene modal through `dailyChallenge.scene_id`.
+// Stateful challenge loading and countdown ownership stay here; display-only
+// daily/streak rendering is delegated to the daily challenge domain.
 async function loadDaily() {
   try {
     const r = await fetch(`${API}/api/daily`);
@@ -477,16 +736,24 @@ async function loadDaily() {
 }
 
 function renderDailyCard(daily) {
-  const s = daily.scene || scenes[daily.scene_id] || {};
-  document.getElementById('dcMovie').textContent = s.movie || daily.scene_id;
-  document.getElementById('dcQuote').textContent = s.quote ? `\u201c${s.quote}\u201d` : '';
-  document.getElementById('dcActor').textContent = s.actor || '';
-  const lvlEl = document.getElementById('dcLevel');
-  lvlEl.textContent = s.difficulty || '';
-  lvlEl.className   = `badge ${(s.difficulty || '').toLowerCase()}`;
-  document.getElementById('dailySection').classList.add('on');
+  renderDailyCardDisplay({
+    daily: daily,
+    refs: {
+      actorEl: el('dcActor'),
+      levelEl: el('dcLevel'),
+      movieEl: el('dcMovie'),
+      quoteEl: el('dcQuote'),
+      sectionEl: el('dailySection'),
+    },
+    scenes: scenes,
+  });
 }
 
+// ══════════════════════════════════════════════
+// TIMER / YOUTUBE / CLEANUP UTILITIES — daily reset timer
+// ══════════════════════════════════════════════
+// Countdown ownership stays in app.js because reset triggers daily and streak reloads.
+// Ownership point: do not extract casually; this timer initiates app data reloads.
 function startDailyCountdown(initialSecs) {
   if (countdownInterval) clearInterval(countdownInterval);
   let secs = initialSecs;
@@ -495,9 +762,10 @@ function startDailyCountdown(initialSecs) {
     const h  = Math.floor(secs / 3600);
     const m  = Math.floor((secs % 3600) / 60);
     const s  = secs % 60;
-    const el = document.getElementById('dcCountdown');
-    if (el) el.textContent =
-      `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+    setTextIfPresent(
+      'dcCountdown',
+      `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`
+    );
     if (secs === 0) { clearInterval(countdownInterval); loadDaily(); loadStreakCard(); return; }
     secs--;
   }
@@ -516,90 +784,48 @@ async function loadStreakCard() {
 }
 
 function renderStreakCard(streak, doneToday) {
-  document.getElementById('streakNumber').textContent = streak;
-
-  // Build 7-day dot indicators (index 0 = today, 6 = 6 days ago)
-  const days = ['Su','Mo','Tu','We','Th','Fr','Sa'];
-  const now  = new Date();
-  const dotRow = document.getElementById('streakDotRow');
-  dotRow.innerHTML = '';
-
-  for (let i = 6; i >= 0; i--) {  // left = oldest, right = today
-    const d = new Date(now);
-    d.setDate(d.getDate() - i);
-    const dayLbl = days[d.getDay()];
-
-    // Is this day "completed"?
-    let completed = false;
-    if (doneToday)  completed = i < streak;
-    else            completed = i >= 1 && i <= streak;
-    const isToday = i === 0;
-
-    const dot = document.createElement('div');
-    dot.className = 'streak-dot-col';
-    const dotInner = document.createElement('div');
-    dotInner.className = 'streak-dot' + (isToday ? ' today' : completed ? ' done' : '');
-    dotInner.textContent = completed ? '\u2714' : (isToday ? '\u2605' : '');
-    const dotLbl = document.createElement('div');
-    dotLbl.className = 'streak-dot-lbl';
-    dotLbl.textContent = dayLbl;
-    dot.appendChild(dotInner);
-    dot.appendChild(dotLbl);
-    dotRow.appendChild(dot);
-  }
-
-  // Milestone message
-  document.getElementById('streakMsg').textContent = streakMessage(streak, doneToday);
-}
-
-function streakMessage(streak, doneToday) {
-  if (streak === 0 && !doneToday) return 'Complete today\u2019s challenge to start your streak!';
-  if (!doneToday && streak > 0)   return `${streak}-day streak \u2014 complete today to keep it going \u2192`;
-  if (streak === 1)  return 'Day 1 done! Come back tomorrow to build your streak.';
-  if (streak < 3)    return `${4 - streak} more day${streak === 3 ? '' : 's'} to your 3-day milestone!`;
-  if (streak < 7)    return `${7 - streak} more day${streak === 6 ? '' : 's'} to your 1-week milestone \uD83D\uDD25`;
-  if (streak === 7)  return 'One full week! Incredible consistency \uD83C\uDF1F';
-  if (streak < 14)   return `${14 - streak} days to your 2-week milestone!`;
-  if (streak < 30)   return `${30 - streak} days to your 1-month milestone!`;
-  return `\uD83C\uDFC6 Legendary ${streak}-day streak! You\u2019re unstoppable.`;
+  renderStreakCardDisplay({
+    streak: streak,
+    doneToday: doneToday,
+    refs: {
+      dotRowEl: el('streakDotRow'),
+      messageEl: el('streakMsg'),
+      numberEl: el('streakNumber'),
+    },
+    days: ['Su','Mo','Tu','We','Th','Fr','Sa'],
+    getNow: function() { return new Date(); },
+    createElement: function(tagName) { return document.createElement(tagName); },
+    getStreakMessage: streakMessage,
+  });
 }
 
 function showDailyComplete(ptsText) {
-  const overlay = document.getElementById('dcCompleteOverlay');
-  if (!overlay) return;
-  document.getElementById('dcCompletePts').textContent = ptsText;
-  overlay.style.display = '';
+  renderDailyCompleteDisplay({
+    ptsText: ptsText,
+    refs: {
+      overlayEl: el('dcCompleteOverlay'),
+      pointsEl: el('dcCompletePts'),
+    },
+  });
 }
 
+// ══════════════════════════════════════════════
+// PROGRESS / LEVEL PANEL ORCHESTRATION — level bar
+// ══════════════════════════════════════════════
+// The level bar lives in the main browser surface, but it is also driven by the
+// same `userProgress` state that powers score UI, cards, and the level panel.
 function renderLevelBar() {
-  document.getElementById('levelNum').textContent = userProgress.level;
-  const det = document.getElementById('levelDetails');
-  const nl  = userProgress.next_level;
-
-  if (!nl) {
-    det.innerHTML = `<span class="level-maxed">&#127916; All scenes unlocked — you've reached the top level</span>`;
-    return;
-  }
-
-  const pct = nl.required_score > 0
-    ? Math.min(100, (nl.best_score / nl.required_score) * 100)
-    : 100;
-
-  det.innerHTML = `
-    <div class="level-next-text">
-      Score <strong>${nl.required_score}%</strong> on a
-      <strong>${LEVEL_NAMES[userProgress.level]}</strong> scene to unlock
-      <strong>Level ${nl.level}</strong>
-    </div>
-    <div class="level-track"><div class="level-fill" id="lvlFill"></div></div>
-    <div class="level-score-text">
-      Best: <strong>${nl.best_score}%</strong> &nbsp;/&nbsp; ${nl.required_score}% needed
-    </div>`;
-
-  requestAnimationFrame(() => requestAnimationFrame(() => {
-    const fill = document.getElementById('lvlFill');
-    if (fill) fill.style.width = `${pct}%`;
-  }));
+  refreshLevelBarSurface({
+    levelNames: LEVEL_NAMES,
+    refs: {
+      detailsEl: el('levelDetails'),
+      levelNumEl: el('levelNum'),
+    },
+    getFillEl: function() { return el('lvlFill'); },
+    renderLevelBarDisplay: renderLevelBarDisplay,
+    requestAnimationFrameFn: function(callback) { requestAnimationFrame(callback); },
+    userProgress: userProgress,
+  });
 }
 
 function showLevelUp(newLevel) {
@@ -617,28 +843,38 @@ function showLevelUp(newLevel) {
 }
 
 // ══════════════════════════════════════════════
-// MODAL
+// SCENE MODAL ORCHESTRATION
 // ══════════════════════════════════════════════
+// Cross-domain coupling: opening a modal primes recording, YouTube playback,
+// daily badge display, and score state; closing it performs recording/media cleanup.
+// Ownership point: do not extract casually; this owns activeScene and starts the
+// recording/playback/analyze lifecycle for every scene-entry path.
 function openModal(id, s) {
   activeScene = id;
   const color = getSceneColor(id);
   const playback = getScenePlaybackMeta(id);
 
-  el('modal').style.setProperty('--mc', color);
-  el('mYear').textContent  = s.year;
-  el('mTitle').textContent = s.movie;
-  el('mTitle').style.color = color;
-  el('mQuote').textContent = `\u201c${s.quote}\u201d`;
-  document.querySelector('.target-quote').style.borderLeftColor = color;
-  el('btnAnalyze').style.background = color;
+  renderSceneModalDisplay({
+    color: color,
+    hasVideo: !!playback.ytRaw,
+    isDaily: !!(dailyChallenge && id === dailyChallenge.scene_id),
+    refs: {
+      analyzeBtn: el('btnAnalyze'),
+      badgeEl: el('dailyModalBadge'),
+      modalEl: el('modal'),
+      quoteEl: el('mQuote'),
+      targetQuoteEl: document.querySelector('.target-quote'),
+      titleEl: el('mTitle'),
+      videoFrameEl: el('videoFrame'),
+      videoPlaceholderEl: el('videoPlaceholder'),
+      yearEl: el('mYear'),
+    },
+    scene: s,
+  });
 
-  const frameDiv = el('videoFrame');
-  const ph       = el('videoPlaceholder');
   stopEndCheck();
   hideReplayLine();
   if (playback.ytRaw) {
-    frameDiv.style.display = '';
-    ph.style.display = 'none';
     if (ytApiReady) {
       initYTPlayer(playback.videoId, playback.startSec);
     } else {
@@ -650,26 +886,16 @@ function openModal(id, s) {
     }
   } else {
     if (ytPlayer) ytPlayer.stopVideo();
-    frameDiv.style.display = 'none';
-    ph.style.display = 'flex';
-  }
-
-  // Show 2× badge if this is today's daily challenge
-  const badge = el('dailyModalBadge');
-  if (dailyChallenge && id === dailyChallenge.scene_id) {
-    badge.classList.add('on');
-  } else {
-    badge.classList.remove('on');
   }
 
   resetRec();
-  setOverlayOpen('overlay', true);
-  setBodyScrollLocked(true);
+  setOverlayActive('overlay', true);
 }
 
 function closeModal() {
-  setOverlayOpen('overlay', false);
-  setBodyScrollLocked(false);
+  // Ownership point: modal teardown order protects media handles, replay UI,
+  // YouTube state, body scroll, and activeScene reset.
+  setOverlayActive('overlay', false);
   stopRecordingCleanup();
   stopEndCheck();
   hideReplayLine();
@@ -677,65 +903,86 @@ function closeModal() {
   activeScene = null;
 }
 
-el('btnClose').addEventListener('click', closeModal);
-el('overlay').addEventListener('click', e => {
-  if (e.target === el('overlay')) closeModal();
-});
+onClick('btnClose', closeModal);
+bindBackdropDismiss('overlay', closeModal);
 document.addEventListener('keydown', e => {
   if (e.key !== 'Escape') return;
-  if (el('authModalOverlay').classList.contains('open')) {
-    closeAuthModal();
-  } else if (el('progressOverlay').classList.contains('open')) {
-    closeProgressDashboard();
-  } else {
-    closeModal();
-  }
+  handleGlobalEscape();
 });
 
 // ══════════════════════════════════════════════
-// RECORDING
+// RECORDING / PLAYBACK ORCHESTRATION
 // ══════════════════════════════════════════════
+// Reads `activeScene`, owns microphone/audio state, and hands off to analyze once
+// a non-empty recording exists.
+// Ownership point: do not extract casually; this section owns MediaRecorder,
+// mic stream, local audio blob, playback audio, recording timer, and waveform state.
+function getRecordingPlaybackDisplayRefs() {
+  return {
+    analyzeBtn: el('btnAnalyze'),
+    playBtn: el('btnPlay'),
+    recIndicatorEl: el('recInd'),
+    recTimeEl: el('recTime'),
+    recordBtn: el('btnRecord'),
+    replayLineWrapEl: el('replayLineWrap'),
+    stopBtn: el('btnStop'),
+  };
+}
+
 function resetRec() {
+  // Ownership point: reset spans recording, playback, score, PB, points,
+  // transcription, challenge-share, and analyze UI.
   stopRecordingCleanup();
   audioBlob = null; audioChunks = [];
   if (audioEl) { audioEl.pause(); audioEl = null; }
 
-  setBtn('btnRecord',  false, btnRecordHTML());
-  setBtn('btnStop',    true);
-  setBtn('btnPlay',    true, btnPlayHTML());
-  setBtn('btnAnalyze', true);
-  document.getElementById('recInd').classList.remove('on');
-  document.getElementById('recTime').textContent = '0:00';
-  document.getElementById('scorePanel').classList.remove('on');
-  document.getElementById('pbCompare').classList.remove('on');
-  document.getElementById('phonSection').style.display = 'none';
-  document.getElementById('pbBanner').classList.remove('on');
-  document.getElementById('perfectBadge').classList.remove('on');
-  const ptsPanel = document.getElementById('ptsEarned');
-  ptsPanel.classList.remove('on');
+  renderRecordingResetDisplay({
+    helpers: {
+      btnPlayHTML: btnPlayHTML,
+      btnRecordHTML: btnRecordHTML,
+    },
+    refs: getRecordingPlaybackDisplayRefs(),
+  });
+  setOn('scorePanel', false);
+  setOn('pbCompare', false);
+  setDisplay('phonSection', 'none');
+  setOn('pbBanner', false);
+  setOn('perfectBadge', false);
+  const ptsPanel = el('ptsEarned');
+  setOn('ptsEarned', false);
   const ex = ptsPanel.querySelector('.pts-extra');
   if (ex) ex.innerHTML = '';
-  document.getElementById('transReveal').classList.remove('on');
-  document.getElementById('challengeShare').classList.remove('on');
-  document.getElementById('challengeResult').className = 'challenge-result';
-  document.getElementById('analyzeLabel').textContent = 'Analyze';
-  document.getElementById('spinner').classList.remove('on');
+  setOn('transReveal', false);
+  setOn('challengeShare', false);
+  el('challengeResult').className = 'challenge-result';
+  setText('analyzeLabel', 'Analyze');
+  setOn('spinner', false);
   stopWaveform();
 }
 
+// ══════════════════════════════════════════════
+// TIMER / YOUTUBE / CLEANUP UTILITIES — recording cleanup
+// ══════════════════════════════════════════════
+// Shared by modal close, recording reset, and failed/finished recording paths.
 function stopRecordingCleanup() {
-  if (mediaRecorder && mediaRecorder.state !== 'inactive') mediaRecorder.stop();
-  if (micStream) { micStream.getTracks().forEach(t => t.stop()); micStream = null; }
-  clearInterval(timerInterval);
-  stopWaveform();
+  cleanupRecordingRuntime({
+    mediaRecorder: mediaRecorder,
+    micStream: micStream,
+    timerInterval: timerInterval,
+    clearIntervalFn: clearInterval,
+    stopWaveform: stopWaveform,
+  });
+  if (micStream) micStream = null;
 }
 
-el('btnRecord').addEventListener('click', startRec);
-el('btnStop').addEventListener('click', stopRec);
-el('btnPlay').addEventListener('click', togglePlayback);
-el('btnAnalyze').addEventListener('click', analyze);
+onClick('btnRecord', startRec);
+onClick('btnStop', stopRec);
+onClick('btnPlay', togglePlayback);
+onClick('btnAnalyze', analyze);
 
 async function startRec() {
+  // Ownership point: browser permission, MediaRecorder construction, blob
+  // creation, timer start, and empty-recording handling all stay together.
   try {
     micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
   } catch (err) {
@@ -759,75 +1006,110 @@ async function startRec() {
   mediaRecorder.onstop = () => {
     const blobType = mediaRecorder.mimeType || mimeType || 'audio/webm';
     audioBlob = new Blob(audioChunks, { type: blobType });
-    console.log('[Mirror] Recording stopped. Blob size:', audioBlob.size, 'type:', audioBlob.type, 'chunks:', audioChunks.length);
     if (audioBlob.size === 0) {
       alert('No audio was captured — the recording was empty. Please try again and speak clearly into your microphone.');
       audioBlob = null;
-      setBtn('btnRecord',  false, btnRecordHTML());
-      setBtn('btnPlay',    true,  btnPlayHTML());
-      setBtn('btnAnalyze', true);
+      renderRecordingEmptyDisplay({
+        helpers: {
+          btnPlayHTML: btnPlayHTML,
+          btnRecordHTML: btnRecordHTML,
+        },
+        refs: getRecordingPlaybackDisplayRefs(),
+      });
       micStream.getTracks().forEach(t => t.stop());
       micStream = null;
       return;
     }
-    setBtn('btnPlay',    false, btnPlayHTML());
-    setBtn('btnAnalyze', false);
-    setBtn('btnRecord',  false, btnRecordHTML());
+    renderRecordingReadyDisplay({
+      helpers: {
+        btnPlayHTML: btnPlayHTML,
+        btnRecordHTML: btnRecordHTML,
+      },
+      refs: getRecordingPlaybackDisplayRefs(),
+    });
     micStream.getTracks().forEach(t => t.stop());
     micStream = null;
   };
 
   mediaRecorder.start(100);
   startWaveform();
-  setBtn('btnRecord', true);
-  setBtn('btnStop',   false);
-  el('recInd').classList.add('on');
+  renderRecordingActiveDisplay({
+    refs: getRecordingPlaybackDisplayRefs(),
+  });
 
   recSecs = 0;
   timerInterval = setInterval(() => {
     recSecs++;
     const m = Math.floor(recSecs / 60), s = recSecs % 60;
-    el('recTime').textContent = `${m}:${s.toString().padStart(2,'0')}`;
+    renderRecordingTimerDisplay({
+      refs: getRecordingPlaybackDisplayRefs(),
+      text: `${m}:${s.toString().padStart(2,'0')}`,
+    });
     if (recSecs >= 30) stopRec();
   }, 1000);
 }
 
 function stopRec() {
+  // Ownership point: stop order affects MediaRecorder onstop and timer cleanup.
   if (mediaRecorder && mediaRecorder.state !== 'inactive') mediaRecorder.stop();
   clearInterval(timerInterval);
   stopWaveform();
-  setBtn('btnStop', true);
-  el('recInd').classList.remove('on');
+  renderRecordingStoppedDisplay({
+    refs: getRecordingPlaybackDisplayRefs(),
+  });
 }
 
 function togglePlayback() {
+  // Ownership point: playback owns the transient Audio instance and button state.
   if (!audioBlob) return;
   if (audioEl && !audioEl.paused) {
     audioEl.pause(); audioEl = null;
-    setBtn('btnPlay', false, btnPlayHTML());
+    renderPlaybackStoppedDisplay({
+      helpers: {
+        btnPlayHTML: btnPlayHTML,
+      },
+      refs: getRecordingPlaybackDisplayRefs(),
+    });
     return;
   }
   audioEl = new Audio(URL.createObjectURL(audioBlob));
   audioEl.play();
-  audioEl.onended = () => { audioEl = null; setBtn('btnPlay', false, btnPlayHTML()); };
-  setBtn('btnPlay', false, btnStopPlayHTML());
+  audioEl.onended = () => {
+    audioEl = null;
+    renderPlaybackStoppedDisplay({
+      helpers: {
+        btnPlayHTML: btnPlayHTML,
+      },
+      refs: getRecordingPlaybackDisplayRefs(),
+    });
+  };
+  renderPlaybackActiveDisplay({
+    helpers: {
+      btnStopPlayHTML: btnStopPlayHTML,
+    },
+    refs: getRecordingPlaybackDisplayRefs(),
+  });
 }
 
+// ══════════════════════════════════════════════
+// ANALYZE / SCORE ORCHESTRATION — submit recording
+// ══════════════════════════════════════════════
+// Coupling note: a 401 returns control to auth; a successful score refreshes
+// leaderboard/progress/cards and may unlock levels.
+// Ownership point: do not extract casually; submit flow bridges auth expiry,
+// activeScene, audio blob upload, score rendering, and post-score refresh.
 async function analyze() {
   if (!audioBlob || !activeScene) return;
 
   // Guard against uploading an empty blob
-  console.log('[Mirror] Uploading blob — size:', audioBlob.size, 'type:', audioBlob.type);
   if (audioBlob.size === 0) {
     alert('Error: No audio was recorded. Please record again before analyzing.');
     return;
   }
 
-  setBtn('btnAnalyze', true);
+  setAnalyzeUiBusy(true);
   setBtn('btnRecord',  true);
-  el('spinner').classList.add('on');
-  el('analyzeLabel').textContent = 'Analyzing\u2026';
-  el('scorePanel').classList.remove('on');
+  setOn('scorePanel', false);
 
   const form = new FormData();
   form.append('scene_id', activeScene);
@@ -856,55 +1138,55 @@ async function analyze() {
     const data      = await res.json();
     const prevLevel = userProgress.level;
     showScore(data);
-    activeLbTab = activeScene;
-    await Promise.all([loadScores(), loadProgress()]);
-    renderCards();
-    if (userProgress.level > prevLevel) showLevelUp(userProgress.level);
+    await refreshPostScoreSurfaces({
+      activeScene: activeScene,
+      previousLevel: prevLevel,
+      setActiveLeaderboardTab: function(sceneId) { activeLbTab = sceneId; },
+      loadScores: loadScores,
+      loadProgress: loadProgress,
+      renderCards: renderCards,
+      getCurrentLevel: function() { return userProgress.level; },
+      showLevelUp: showLevelUp,
+    });
   } catch (err) {
     alert(`Error: ${err.message}`);
   } finally {
-    el('spinner').classList.remove('on');
-    el('analyzeLabel').textContent = 'Analyze';
-    setBtn('btnAnalyze', false);
+    setAnalyzeUiBusy(false);
     setBtn('btnRecord',  false, btnRecordHTML());
   }
 }
 
 // ══════════════════════════════════════════════
-// SCORE DISPLAY
+// ANALYZE / SCORE ORCHESTRATION — result display
 // ══════════════════════════════════════════════
+// Score rendering updates daily completion display, level/progress state, PB UI,
+// and challenge result UI while leaving points/streak ownership in app state.
 function showScore(data) {
+  // Ownership point: score display is also the handoff for PB UI, points/daily
+  // display, phoneme breakdown, and pending challenge result context.
   const pct = data.sync_score;
-  let color, msg;
-  if      (pct >= 85) { color = '#06d6a0'; msg = 'Outstanding! \uD83C\uDFAC'; }
-  else if (pct >= 65) { color = '#ffd166'; msg = 'Great take!'; }
-  else if (pct >= 40) { color = '#f4a261'; msg = 'Keep practicing'; }
-  else                { color = '#e63946'; msg = 'Try again'; }
-
-  const panel = document.getElementById('scorePanel');
-  panel.style.setProperty('--score-color', color);
-  document.getElementById('scoreMsg').textContent  = msg;
-  document.getElementById('cmpYou').textContent    = `\u201c${data.transcription}\u201d`;
-  document.getElementById('cmpOrig').textContent   = `\u201c${data.expected}\u201d`;
-  panel.classList.add('on');
+  renderScoreDisplay({
+    data: data,
+    hasYt: !!getSceneYouTubeId(activeScene),
+    helpers: {
+      animateNum: animateNum,
+    },
+    refs: {
+      cmpOrigEl: el('cmpOrig'),
+      cmpYouEl: el('cmpYou'),
+      hearActorBtn: el('btnHearActor'),
+      msgEl: el('scoreMsg'),
+      panelEl: el('scorePanel'),
+      pbCompareEl: el('pbCompare'),
+      scoreBarEl: el('scoreBar'),
+      scoreValEl: el('scoreVal'),
+    },
+  });
   renderPhonemeBreakdown(data.expected, data.transcription);
   showPointsEarned(data);
 
-  // Show playback compare buttons
-  const pbCompare = document.getElementById('pbCompare');
-  pbCompare.classList.add('on');
-  const hasYt = !!getSceneYouTubeId(activeScene);
-  document.getElementById('btnHearActor').disabled = !hasYt;
-
-  animateNum(document.getElementById('scoreVal'), 0, pct, 900);
-  requestAnimationFrame(() => {
-    const bar = document.getElementById('scoreBar');
-    bar.style.background = color;
-    requestAnimationFrame(() => { bar.style.width = `${pct}%`; });
-  });
-
   if (data.is_new_pb) {
-    document.getElementById('pbBanner').classList.add('on');
+    setOn('pbBanner', true);
     showPBBlast();
   }
 
@@ -943,32 +1225,19 @@ function animateNum(el, from, to, ms) {
 }
 
 function showPointsEarned(data) {
-  if (data.is_perfect) {
-    document.getElementById('perfectBadge').classList.add('on');
-  }
-  if (data.points_earned > 0 || data.total_points !== undefined) {
-    document.getElementById('ptsAmount').textContent   = data.points_earned || 0;
-    document.getElementById('ptsTotalVal').textContent = data.total_points  || 0;
-    // Annotate daily bonus and streak inside the pts panel
-    const ptsPanel = document.getElementById('ptsEarned');
-    let extra = '';
-    if (data.is_daily && data.daily_bonus > 0) {
-      extra += `<div style="font-size:11px;color:var(--gold);margin-top:4px">&#9733; Daily 2&times; bonus +${data.daily_bonus}pts</div>`;
-    }
-    if (data.is_daily && data.streak > 0 && !data.daily_already_done) {
-      extra += `<div style="font-size:11px;color:#fb923c;margin-top:2px">&#128293; ${data.streak}-day streak!</div>`;
-    }
-    if (extra) {
-      let extraEl = ptsPanel.querySelector('.pts-extra');
-      if (!extraEl) { extraEl = document.createElement('div'); extraEl.className = 'pts-extra'; ptsPanel.appendChild(extraEl); }
-      extraEl.innerHTML = extra;
-    }
-    ptsPanel.classList.add('on');
-    if (data.division) updateDivDot(data.total_points || 0);
-  }
-  if (data.translation_unlocked && data.translation) {
-    document.getElementById('transText').textContent = data.translation;
-    document.getElementById('transReveal').classList.add('on');
+  renderPointsEarnedDisplay({
+    data: data,
+    refs: {
+      perfectBadgeEl: el('perfectBadge'),
+      ptsAmountEl: el('ptsAmount'),
+      ptsPanelEl: el('ptsEarned'),
+      ptsTotalValEl: el('ptsTotalVal'),
+      transRevealEl: el('transReveal'),
+      transTextEl: el('transText'),
+    },
+  });
+  if ((data.points_earned > 0 || data.total_points !== undefined) && data.division) {
+    updateDivDot(data.total_points || 0);
   }
   // Show completion overlay on DC card if daily just completed
   if (data.is_daily && !data.daily_already_done) {
@@ -978,8 +1247,10 @@ function showPointsEarned(data) {
 }
 
 // ══════════════════════════════════════════════
-// LEADERBOARD
+// PROGRESS / LEVEL PANEL ORCHESTRATION — leaderboard
 // ══════════════════════════════════════════════
+// Transition note: leaderboard is mostly display-only, but it shares `scenes` and
+// `activeLbTab` with the scene-browser surface.
 async function loadScores() {
   try {
     await ensureSceneConfig();
@@ -991,109 +1262,42 @@ async function loadScores() {
 }
 
 function renderLeaderboard(data) {
-  const tabsEl   = document.getElementById('lbTabs');
-  const panelsEl = document.getElementById('lbPanels');
-  const sceneIds = Object.keys(scenes);
-
-  tabsEl.innerHTML = panelsEl.innerHTML = '';
-  if (!sceneIds.length) return;
-
-  if (!activeLbTab || !sceneIds.includes(activeLbTab)) activeLbTab = sceneIds[0];
-
-  for (const sid of sceneIds) {
-    const s      = scenes[sid] || {};
-    const color  = getSceneColor(sid);
-    const rows   = data[sid] || [];
-    const active = sid === activeLbTab;
-
-    const tab = document.createElement('button');
-    tab.className = 'lb-tab' + (active ? ' active' : '');
-    tab.textContent = s.movie || sid;
-    tab.style.setProperty('--tab-color', color);
-    tab.addEventListener('click', () => switchTab(sid));
-    tabsEl.appendChild(tab);
-
-    const panel = document.createElement('div');
-    panel.className = 'lb-panel' + (active ? ' active' : '');
-    panel.id = `lb-panel-${sid}`;
-    panel.innerHTML = buildPanelHTML(rows);
-    panelsEl.appendChild(panel);
-  }
+  renderLeaderboardSurface({
+    activeTab: activeLbTab,
+    buildPanelHTML: buildPanelHTML,
+    createElement: function(tagName) { return document.createElement(tagName); },
+    data: data,
+    getSceneColor: getSceneColor,
+    onTabSelected: switchTab,
+    refs: {
+      tabsEl: document.getElementById('lbTabs'),
+      panelsEl: document.getElementById('lbPanels'),
+    },
+    scenes: scenes,
+    setActiveTab: function(sceneId) { activeLbTab = sceneId; },
+  });
 }
 
 function switchTab(sid) {
-  activeLbTab = sid;
-  const ids = Object.keys(scenes);
-  document.querySelectorAll('.lb-tab').forEach((t, i)  => t.classList.toggle('active', ids[i] === sid));
-  document.querySelectorAll('.lb-panel').forEach(p => p.classList.toggle('active', p.id === `lb-panel-${sid}`));
-}
-
-function buildPanelHTML(rows) {
-  if (!rows.length)
-    return `<div style="color:var(--muted);text-align:center;padding:36px 14px;font-size:13px">No scores yet — be the first!</div>`;
-
-  const MEDAL = ['', '🥇', '🥈', '🥉'];
-  const RCLS  = ['', 'gold', 'silver', 'bronze'];
-
-  const trs = rows.map((s, i) => {
-    const rank  = i + 1;
-    const c     = s.sync_score >= 85 ? '#06d6a0' : s.sync_score >= 65 ? '#ffd166' : '#e63946';
-    const div   = s.division || getDivision(s.user_points || 0);
-    const badge = s.username
-      ? `<span class="div-badge" style="background:${div.color}18;color:${div.color}">${div.name}</span>`
-      : '';
-    const streak = s.streak > 0
-      ? ` <span class="streak-badge">&#128293;${s.streak}</span>`
-      : '';
-    const name  = s.username
-      ? `<strong>${s.username}</strong> ${badge}${streak}`
-      : `<span style="color:var(--muted)">\u2014</span>`;
-    const pts = s.user_points
-      ? `<span style="color:var(--muted);font-size:11px">${s.user_points}pts</span>`
-      : '—';
-    return `<tr>
-      <td class="rank-num ${rank <= 3 ? RCLS[rank] : ''}" style="width:52px">${rank <= 3 ? MEDAL[rank] : rank}</td>
-      <td>${name}</td>
-      <td style="width:90px"><span class="chip" style="background:${c}18;color:${c}">${s.sync_score}%</span></td>
-      <td style="width:72px;text-align:right">${pts}</td>
-      <td style="color:var(--muted);white-space:nowrap;width:80px">${timeAgo(s.created_at)}</td>
-    </tr>`;
-  }).join('');
-
-  return `<table class="lb-table">
-    <thead><tr>
-      <th style="width:52px">Rank</th><th>Name</th>
-      <th style="width:90px">Score</th><th style="width:72px;text-align:right">Points</th>
-      <th style="width:80px">When</th>
-    </tr></thead>
-    <tbody>${trs}</tbody>
-  </table>`;
+  switchLeaderboardTabSurface({
+    panels: document.querySelectorAll('.lb-panel'),
+    sceneId: sid,
+    scenes: scenes,
+    setActiveTab: function(sceneId) { activeLbTab = sceneId; },
+    tabs: document.querySelectorAll('.lb-tab'),
+  });
 }
 
 // ══════════════════════════════════════════════
-// HELPERS
+// TIMER / YOUTUBE / CLEANUP UTILITIES — media helpers
 // ══════════════════════════════════════════════
+// Mixed helper bucket:
+// - media capability helpers
+// - button UI state helpers
 function getSupportedMimeType() {
-  const candidates = [
-    'audio/webm;codecs=opus',
-    'audio/webm',
-    'audio/mp4',
-    'audio/ogg;codecs=opus',
-    'audio/ogg',
-  ];
-  for (const type of candidates) {
-    if (typeof MediaRecorder !== 'undefined' && MediaRecorder.isTypeSupported(type)) return type;
-  }
-  return '';
-}
-
-function timeAgo(str) {
-  if (!str) return '\u2014';
-  const diff = Math.floor((Date.now() - new Date(str)) / 1000);
-  if (diff <    60) return 'just now';
-  if (diff <  3600) return `${Math.floor(diff / 60)}m ago`;
-  if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
-  return new Date(str).toLocaleDateString();
+  return getSupportedMimeTypeRuntime(
+    typeof MediaRecorder === 'undefined' ? undefined : MediaRecorder
+  );
 }
 
 function setBtn(id, disabled, html) {
@@ -1102,18 +1306,21 @@ function setBtn(id, disabled, html) {
   if (html !== undefined) el.innerHTML = html;
 }
 
-function btnRecordHTML()   { return `<svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="9"/></svg> Record`; }
-function btnPlayHTML()     { return `<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg> Playback`; }
-function btnStopPlayHTML() { return `<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg> Stop`; }
+function setAnalyzeUiBusy(isBusy) {
+  setBtn('btnAnalyze', isBusy);
+  setOn('spinner', isBusy);
+  setText('analyzeLabel', isBusy ? 'Analyzing\u2026' : 'Analyze');
+}
 
 // ══════════════════════════════════════════════
-// ONBOARDING
+// AUTH ORCHESTRATION — onboarding handoff
 // ══════════════════════════════════════════════
+// This is intentionally left in-place for now; it touches auth/app entry timing.
 function maybeShowOnboarding() {
   if (localStorage.getItem('mirror_onboarded')) return;
 
   const screen = document.getElementById('onboardScreen');
-  screen.style.display = 'flex';
+  show('onboardScreen', 'flex');
   requestAnimationFrame(() => requestAnimationFrame(() => screen.classList.add('visible')));
 
   screen.querySelectorAll('.onboard-step').forEach((step, i) => {
@@ -1121,7 +1328,7 @@ function maybeShowOnboarding() {
   });
 }
 
-el('btnStartActing').addEventListener('click', () => {
+onClick('btnStartActing', () => {
   localStorage.setItem('mirror_onboarded', '1');
   const screen = el('onboardScreen');
   screen.classList.add('out');
@@ -1129,7 +1336,7 @@ el('btnStartActing').addEventListener('click', () => {
 });
 
 // ══════════════════════════════════════════════
-// LANDING PAGE — cursor, nav, scroll animations
+// APP BOOTSTRAP / SESSION ENTRY — landing page chrome
 // ══════════════════════════════════════════════
 
 // Custom cursor
@@ -1184,213 +1391,73 @@ const fadeObserver = new IntersectionObserver(entries => {
 document.querySelectorAll('.fade-up').forEach(el => fadeObserver.observe(el));
 
 // ══════════════════════════════════════════════
-// WAVEFORM VISUALIZATION
+// TIMER / YOUTUBE / CLEANUP UTILITIES — waveform visualization
 // ══════════════════════════════════════════════
+// Recording-only display helper domain.
 function startWaveform() {
   stopWaveform();
 
   const wrap = document.getElementById('waveformWrap');
-  wrap.innerHTML = '';
-
-  // Build 48 bars, each with randomised max-height, duration, and delay
-  // assigned as CSS custom properties so the keyframe animation varies per bar.
-  for (let i = 0; i < WAVE_BARS; i++) {
-    const b = document.createElement('div');
-    b.className = 'waveform-bar';
-    // --wh  : peak height  6 – 48 px  (centre bars taller for a natural arch)
-    const centre  = (WAVE_BARS - 1) / 2;
-    const dist    = Math.abs(i - centre) / centre;          // 0 at centre, 1 at edges
-    const maxH    = Math.round(48 - dist * 28 + Math.random() * 10);  // 20–48 px
-    // --wd  : animation duration  0.45 – 1.1 s
-    const dur     = (0.45 + Math.random() * 0.65).toFixed(2);
-    // --wdl : negative delay staggers bars so they don't all peak at once
-    const delay   = (-Math.random()).toFixed(2);
-    b.style.setProperty('--wh',  `${maxH}px`);
-    b.style.setProperty('--wd',  `${dur}s`);
-    b.style.setProperty('--wdl', `${delay}s`);
-    wrap.appendChild(b);
-  }
-
-  wrap.classList.add('on');
-}
-
-function stopWaveform() {
-  if (waveAnimFrame) { cancelAnimationFrame(waveAnimFrame); waveAnimFrame = null; }
-  if (waveAnalyser)  { try { waveAnalyser.disconnect(); } catch {} waveAnalyser = null; }
-  if (waveAudioCtx)  { try { waveAudioCtx.close(); }     catch {} waveAudioCtx = null; }
-  const wrap = document.getElementById('waveformWrap');
-  if (wrap) wrap.classList.remove('on');
-}
-
-// ══════════════════════════════════════════════
-// PHONEME BREAKDOWN
-// ══════════════════════════════════════════════
-// Spanish mini-dictionary — key is lowercase normalised English word
-const ES_DICT = {
-  // Articles / determiners
-  a:'un', an:'un', the:'el',
-  // Pronouns
-  i:'yo', you:'tú', he:'él', she:'ella', we:'nosotros', they:'ellos', it:'eso',
-  me:'mí', him:'él', her:'ella', us:'nos', them:'ellos',
-  my:'mi', your:'tu', his:'su', our:'nuestro', their:'su',
-  // To be
-  is:'es', are:'son', was:'era', be:'ser', been:'sido',
-  im:'soy',  // "I'm" normalised
-  // Common verbs
-  have:'tener', has:'tiene', had:'había',
-  do:'hacer', does:'hace', did:'hizo', done:'hecho',
-  will:'voy', would:'sería', can:'puedo', could:'podría', shall:'debo',
-  get:'conseguir', got:'conseguí', go:'ir', going:'ir',
-  know:'saber', knew:'sabía',
-  see:'ver', saw:'vi', seen:'visto',
-  find:'encontrar', found:'encontré',
-  kill:'matar', killed:'maté',
-  stop:'parar', talk:'hablar', talking:'hablando',
-  fly:'volar', flying:'volando',
-  need:'necesitar', needs:'necesita',
-  smash:'aplastar',
-  back:'volver',
-  come:'venir',
-  take:'tomar',
-  give:'dar',
-  want:'querer',
-  think:'pensar',
-  look:'mirar',
-  tell:'decir',
-  say:'decir',
-  make:'hacer',
-  // Nouns
-  box:'caja', road:'camino', roads:'caminos',
-  people:'gente', person:'persona',
-  duvet:'edredón',
-  scene:'escena', movie:'película', time:'tiempo',
-  man:'hombre', woman:'mujer', world:'mundo',
-  life:'vida', day:'día', night:'noche',
-  // Adjectives & adverbs
-  dead:'muerto', okay:'bien', ok:'bien',
-  never:'nunca', always:'siempre', now:'ahora',
-  here:'aquí', there:'allí', where:'dónde',
-  not:'no', no:'no', yes:'sí',
-  // Scene-specific words
-  amateur:'aficionada', kung:'kung', fu:'fu',
-  hulk:'hulk', jack:'jack', slick:'listo',
-  // Contractions (normalised — apostrophes stripped)
-  dont:"no", doesnt:"no", wont:"no", cant:"no puedo",
-  were:'íbamos', youre:'eres', ill:'voy a',
-  whats:'qué es', gonna:'va a',
-  // Conjunctions / prepositions
-  and:'y', in:'en', on:'en', at:'en', of:'de',
-  for:'para', to:'a', with:'con', from:'de', about:'sobre',
-  but:'pero', or:'o', that:'eso', this:'esto', what:'qué',
-};
-
-function esTranslate(word) {
-  // Strip punctuation, lowercase
-  const key = word.toLowerCase().replace(/[^a-z']/g, '').replace(/'/g, '');
-  return ES_DICT[key] || 'traducir…';
-}
-
-function renderPhonemeBreakdown(expected, transcribed) {
-  const section = document.getElementById('phonSection');
-  const wordsEl = document.getElementById('phonWords');
-
-  const tokens = wordBreakdown(expected, transcribed);
-  if (!tokens.length) { section.style.display = 'none'; return; }
-
-  wordsEl.innerHTML = tokens.map(({ word, status }) =>
-    `<span class="phon-word ${status}">
-       <span class="phon-inner">
-         <span class="phon-face phon-front">${word}</span>
-         <span class="phon-face phon-back">&#127466;&#127480; ${esTranslate(word)}</span>
-       </span>
-     </span>`
-  ).join('');
-  section.style.display = '';
-}
-
-// Returns [{word, status:'good'|'close'|'miss'}, …] for each word in expected
-function wordBreakdown(expected, transcribed) {
-  // Strip only punctuation that's not apostrophes, split into display tokens
-  const expTokens = expected.split(/\s+/).filter(Boolean);
-  const trnWords  = normalizeText(transcribed).split(/\s+/).filter(Boolean);
-
-  const used = new Array(trnWords.length).fill(false);
-
-  return expTokens.map(token => {
-    const norm = normalizeText(token);
-    if (!norm) return { word: token, status: 'good' };
-
-    let bestSim = 0, bestIdx = -1;
-    trnWords.forEach((tw, i) => {
-      if (used[i]) return;
-      const sim = charSeqRatio(norm, tw);
-      if (sim > bestSim) { bestSim = sim; bestIdx = i; }
-    });
-
-    let status;
-    if (bestIdx >= 0 && bestSim >= 0.9) {
-      used[bestIdx] = true;
-      status = 'good';
-    } else if (bestIdx >= 0 && bestSim >= 0.55) {
-      used[bestIdx] = true;
-      status = 'close';
-    } else {
-      status = 'miss';
-    }
-    return { word: token, status };
+  renderWaveformBars({
+    wrap: wrap,
+    barCount: WAVE_BARS,
+    createElement: function(tagName) { return document.createElement(tagName); },
+    random: Math.random,
   });
 }
 
-// Normalise: lowercase, strip non-word chars except apostrophes
-function normalizeText(s) {
-  return s.toLowerCase().replace(/[^\w'\s]/g, '').replace(/\s+/g, ' ').trim();
-}
-
-// Character-level sequence similarity ratio (mirrors Python's SequenceMatcher)
-function charSeqRatio(a, b) {
-  if (a === b) return 1;
-  if (!a || !b) return 0;
-  const m = lcsLength(a, b);
-  return (2 * m) / (a.length + b.length);
-}
-
-function lcsLength(a, b) {
-  // Standard DP — fine for short words (≤30 chars each)
-  const prev = new Uint16Array(b.length + 1);
-  let result = 0;
-  for (let i = 0; i < a.length; i++) {
-    const curr = new Uint16Array(b.length + 1);
-    for (let j = 0; j < b.length; j++) {
-      curr[j + 1] = a[i] === b[j] ? prev[j] + 1 : Math.max(curr[j], prev[j + 1]);
-      if (curr[j + 1] > result) result = curr[j + 1];
-    }
-    prev.set(curr);
-  }
-  return result;
+function stopWaveform() {
+  stopWaveformRuntime({
+    refs: {
+      animFrame: waveAnimFrame,
+      analyser: waveAnalyser,
+      audioCtx: waveAudioCtx,
+    },
+    cancelAnimationFrameFn: cancelAnimationFrame,
+    wrap: document.getElementById('waveformWrap'),
+  });
+  if (waveAnimFrame) waveAnimFrame = null;
+  if (waveAnalyser) waveAnalyser = null;
+  if (waveAudioCtx) waveAudioCtx = null;
 }
 
 // ══════════════════════════════════════════════
-// PROGRESS DASHBOARD
+// ANALYZE / SCORE ORCHESTRATION — phoneme breakdown
 // ══════════════════════════════════════════════
-el('btnMyProgress').addEventListener('click', openProgressDashboard);
-el('btnProgressClose').addEventListener('click', closeProgressDashboard);
-el('progressOverlay').addEventListener('click', e => {
-  if (e.target === el('progressOverlay')) closeProgressDashboard();
-});
+function renderPhonemeBreakdown(expected, transcribed) {
+  renderPhonemeBreakdownDisplay({
+    expected: expected,
+    helpers: {
+      esTranslate: APP_HELPERS.esTranslate,
+      wordBreakdown: APP_HELPERS.wordBreakdown,
+    },
+    refs: {
+      sectionEl: el('phonSection'),
+      wordsEl: el('phonWords'),
+    },
+    transcribed: transcribed,
+  });
+}
+
+// ══════════════════════════════════════════════
+// PROGRESS / LEVEL PANEL ORCHESTRATION — progress dashboard
+// ══════════════════════════════════════════════
+// Shared-state coupling: reads `userProgress`, historical API data, and division UI state.
+onClick('btnMyProgress', openProgressDashboard);
+onClick('btnProgressClose', closeProgressDashboard);
+bindBackdropDismiss('progressOverlay', closeProgressDashboard);
 
 function openProgressDashboard() {
-  setOverlayOpen('progressOverlay', true);
-  setBodyScrollLocked(true);
+  setOverlayActive('progressOverlay', true);
   loadHistory();
 }
 
 function closeProgressDashboard() {
-  setOverlayOpen('progressOverlay', false);
-  setBodyScrollLocked(false);
+  setOverlayActive('progressOverlay', false);
 }
 
 async function loadHistory() {
-  document.getElementById('historyList').innerHTML = `<div class="history-empty">Loading\u2026</div>`;
+  setHtml('historyList', `<div class="history-empty">Loading\u2026</div>`);
   const headers = { Authorization: `Bearer ${authToken}` };
   try {
     const [histRes, profRes] = await Promise.all([
@@ -1407,154 +1474,73 @@ async function loadHistory() {
       updateDivDot(prof.total_points || 0);
     }
   } catch {
-    document.getElementById('historyList').innerHTML = `<div class="history-empty">Could not load history</div>`;
+    setHtml('historyList', `<div class="history-empty">Could not load history</div>`);
   }
 }
 
 function renderDivCard(prof) {
-  const card = document.getElementById('divCard');
-  if (!prof || !prof.division) { card.classList.remove('on'); return; }
-  card.classList.add('on');
-  const d     = prof.division;
-  const badge = document.getElementById('divCardBadge');
-  badge.textContent       = d.name.slice(0, 3).toUpperCase();
-  badge.style.color       = d.color;
-  badge.style.borderColor = d.color;
-  badge.style.background  = d.color + '18';
-  const nameEl = document.getElementById('divCardName');
-  nameEl.textContent  = d.name;
-  nameEl.style.color  = d.color;
-  const streakTxt = prof.streak > 0
-    ? ` &nbsp;&#128293; ${prof.streak}-day streak`
-    : '';
-  document.getElementById('divCardPts').innerHTML = `${prof.total_points} total points${streakTxt}`;
-  const nextEl = document.getElementById('divCardNext');
-  if (prof.next_division) {
-    nextEl.innerHTML = `<strong>${prof.points_to_next}</strong>pts to ${prof.next_division.name}`;
-  } else {
-    nextEl.innerHTML = `<strong>MAX</strong>rank achieved`;
-  }
+  renderDivCardDisplay({
+    profile: prof,
+    refs: {
+      badge: el('divCardBadge'),
+      card: el('divCard'),
+      nameEl: el('divCardName'),
+      nextEl: el('divCardNext'),
+    },
+    setHtml: setHtml,
+  });
 }
 
 function renderProgressDashboard({ history, stats }) {
-  // Circular avg score
-  const avg = stats.avg_score || 0;
-  const circleColor = avg >= 70 ? 'var(--green)' : avg >= 40 ? 'var(--gold)' : 'var(--red)';
-  document.getElementById('progCircle').innerHTML = buildCircleSVG(avg, circleColor);
-
-  // Stat cards
-  document.getElementById('progBest').innerHTML =
-    stats.best_score > 0 ? `${stats.best_score}<sup style="font-size:16px;opacity:.6">%</sup>` : '—';
-  document.getElementById('progScenes').textContent = stats.unique_scenes || 0;
-
-  const impEl   = document.getElementById('progImprovement');
-  const impSign = stats.improvement > 0 ? '+' : '';
-  impEl.innerHTML = `${impSign}${stats.improvement}<sup style="font-size:16px;opacity:.6">%</sup>`;
-  impEl.className = `prog-stat-val${stats.improvement > 0 ? ' green' : stats.improvement < 0 ? ' red' : ''}`;
-
-  // History label with count
-  document.getElementById('historyLabel').textContent =
-    `Score History  —  ${stats.total_attempts} recording${stats.total_attempts !== 1 ? 's' : ''}`;
-
-  // History list
-  const listEl = document.getElementById('historyList');
-  if (!history.length) {
-    listEl.innerHTML = `<div class="history-empty">No recordings yet — start acting!</div>`;
-    return;
-  }
-
-  const improved = computeImprovedIds(history);
-  listEl.innerHTML = history.map(h => {
-    const c    = h.sync_score >= 85 ? '#06d6a0' : h.sync_score >= 65 ? '#ffd166' : h.sync_score >= 40 ? '#f4a261' : '#e63946';
-    const date = h.created_at ? new Date(h.created_at).toLocaleDateString() : '—';
-    const isUp = improved.has(h.id);
-    return `<div class="history-item${isUp ? ' improved' : ''}">
-      <span class="history-movie">${h.movie}</span>
-      <span class="history-date">${date}</span>
-      <span class="history-score" style="color:${c}">${h.sync_score}<sup style="font-size:11px;opacity:.7">%</sup></span>
-      ${isUp ? '<span class="history-improved-badge">\u2191 Improved</span>' : ''}
-    </div>`;
-  }).join('');
+  renderProgressDashboardDisplay({
+    helpers: {
+      buildCircleSVG: buildCircleSVG,
+      buildHistoryItemHTML: buildHistoryItemHTML,
+      computeImprovedIds: computeImprovedIds,
+    },
+    history: history,
+    refs: {
+      historyListEl: el('historyList'),
+      improvementEl: el('progImprovement'),
+    },
+    setHtml: setHtml,
+    setText: setText,
+    stats: stats,
+  });
 }
 
 function renderPersonalBests(history) {
-  const pbEl = document.getElementById('pbList');
-  const best = userProgress.best_scores;
-  if (!best || !Object.keys(best).length) {
-    pbEl.innerHTML = '<div class="pb-empty">No scores yet \u2014 start recording!</div>';
-    return;
-  }
-
-  // Build latest and second-latest score per scene from history (newest-first order)
-  const latestByScene = {}, prevByScene = {};
-  for (const h of history) {
-    if (!(h.scene_id in latestByScene)) latestByScene[h.scene_id] = h.sync_score;
-    else if (!(h.scene_id in prevByScene)) prevByScene[h.scene_id] = h.sync_score;
-  }
-
-  const sorted = Object.entries(best).sort(([, a], [, b]) => b - a);
-  pbEl.innerHTML = sorted.map(([sid, score], idx) => {
-    const movie    = scenes[sid]?.movie || sid;
-    const color    = getSceneColor(sid, 'var(--gold)');
-    const latest   = latestByScene[sid];
-    const prev     = prevByScene[sid];
-    // Show ↑ if the most recent attempt is better than the one before it
-    const improved = latest !== undefined && prev !== undefined && latest > prev;
-    return `<div class="pb-item">
-      <div class="pb-rank">#${idx + 1}</div>
-      <div class="pb-movie">${movie}</div>
-      ${improved ? '<div class="pb-arrow">&#8593;</div>' : ''}
-      <div class="pb-score" style="color:${color}">${Math.round(score)}<sup>%</sup></div>
-    </div>`;
-  }).join('');
-}
-
-function buildCircleSVG(pct, color) {
-  const r = 48, cx = 60;
-  const circ   = 2 * Math.PI * r;
-  const offset = circ * (1 - Math.min(pct, 100) / 100);
-  return `<svg width="140" height="140" viewBox="0 0 120 120">
-    <circle cx="${cx}" cy="${cx}" r="${r}" fill="none" stroke="rgba(255,255,255,0.07)" stroke-width="10"/>
-    <circle cx="${cx}" cy="${cx}" r="${r}" fill="none" stroke="${color}" stroke-width="10"
-      stroke-dasharray="${circ.toFixed(1)}" stroke-dashoffset="${offset.toFixed(1)}"
-      stroke-linecap="round" transform="rotate(-90 ${cx} ${cx})"/>
-    <text x="${cx}" y="${cx + 10}" text-anchor="middle" fill="${color}"
-      font-family="'Bebas Neue',cursive" font-size="30" dominant-baseline="middle">${Math.round(pct)}</text>
-  </svg>`;
-}
-
-function computeImprovedIds(history) {
-  // history is newest-first; mark an entry if its score beats the previous attempt on the same scene
-  const improved = new Set();
-  for (let i = 0; i < history.length; i++) {
-    for (let j = i + 1; j < history.length; j++) {
-      if (history[j].scene_id === history[i].scene_id) {
-        if (history[i].sync_score > history[j].sync_score) improved.add(history[i].id);
-        break;
-      }
-    }
-  }
-  return improved;
+  renderPersonalBestsDisplay({
+    bestScores: userProgress.best_scores,
+    helpers: {
+      buildPersonalBestItemHTML: buildPersonalBestItemHTML,
+      getSceneColor: getSceneColor,
+    },
+    history: history,
+    pbEl: el('pbList'),
+    scenes: scenes,
+  });
 }
 
 // ══════════════════════════════════════════════
-// PLAYBACK COMPARE — Hear the Actor / Hear Yourself
+// RECORDING / PLAYBACK ORCHESTRATION — compare controls
 // ══════════════════════════════════════════════
-el('dcOpenBtn').addEventListener('click', () => {
+// Same domain as recording/playback; kept separate in-file because it depends on score visibility.
+onClick('dcOpenBtn', () => {
   if (!dailyChallenge) return;
   const s = dailyChallenge.scene || scenes[dailyChallenge.scene_id];
   if (s) openModal(dailyChallenge.scene_id, s);
 });
 
-el('btnHearActor').addEventListener('click', hearActor);
-el('btnHearSelf').addEventListener('click',  hearSelf);
+onClick('btnHearActor', hearActor);
+onClick('btnHearSelf',  hearSelf);
 
 // Flip word cards on tap/click
-el('phonWords').addEventListener('click', e => {
+on('phonWords', 'click', e => {
   const card = e.target.closest('.phon-word');
   if (card) card.classList.toggle('flipped');
 });
-el('btnTryAgain').addEventListener('click', () => {
+onClick('btnTryAgain', () => {
   resetRec();
   el('modal').scrollTo({ top: 0, behavior: 'smooth' });
 });
@@ -1567,8 +1553,8 @@ function hearActor() {
     ytPlayer.seekTo(playback.startSec, true);
     ytPlayer.playVideo();
   } else {
-    el('videoFrame').style.display = '';
-    el('videoPlaceholder').style.display = 'none';
+    show('videoFrame');
+    hide('videoPlaceholder');
     initYTPlayer(playback.videoId, playback.startSec);
   }
   el('modal').scrollTo({ top: 0, behavior: 'smooth' });
@@ -1581,8 +1567,9 @@ function hearSelf() {
 }
 
 // ══════════════════════════════════════════════
-// YOUTUBE PLAYER
+// TIMER / YOUTUBE / CLEANUP UTILITIES — YouTube player
 // ══════════════════════════════════════════════
+// Scene modal + playback shared infrastructure.
 function initYTPlayer(videoId, startSec) {
   if (ytPlayer) {
     ytPlayer.loadVideoById({ videoId, startSeconds: startSec });
@@ -1604,76 +1591,87 @@ function onYTStateChange(e) {
 }
 
 function startEndCheck() {
-  stopEndCheck();
-  const times = getSceneTimes(activeScene);
-  if (!times || !ytPlayer) return;
-  ytEndInterval = setInterval(() => {
-    if (!ytPlayer) return stopEndCheck();
-    if (ytPlayer.getCurrentTime() >= times.end - 1) {
-      ytPlayer.pauseVideo();
-      stopEndCheck();
-      showReplayLine();
-    }
-  }, 250);
+  ytEndInterval = startYouTubeEndCheck({
+    getPlayer: function() { return ytPlayer; },
+    getTimes: function() { return getSceneTimes(activeScene); },
+    onEnded: showReplayLine,
+    setIntervalFn: setInterval,
+    stopCurrent: stopEndCheck,
+  });
 }
 
 function stopEndCheck() {
-  if (ytEndInterval) { clearInterval(ytEndInterval); ytEndInterval = null; }
+  ytEndInterval = stopYouTubeEndCheck({
+    intervalId: ytEndInterval,
+    clearIntervalFn: clearInterval,
+  });
 }
 
 function showReplayLine() {
-  el('replayLineWrap').style.display = 'flex';
+  renderReplayLineDisplay({
+    isVisible: true,
+    refs: getRecordingPlaybackDisplayRefs(),
+  });
 }
 
 function hideReplayLine() {
-  el('replayLineWrap').style.display = 'none';
+  renderReplayLineDisplay({
+    isVisible: false,
+    refs: getRecordingPlaybackDisplayRefs(),
+  });
 }
 
-el('btnReplayLine').addEventListener('click', () => {
+onClick('btnReplayLine', () => {
   const playback = getScenePlaybackMeta(activeScene);
   hideReplayLine();
   if (ytPlayer) { ytPlayer.seekTo(playback.startSec, true); ytPlayer.playVideo(); }
 });
 
 // ══════════════════════════════════════════════
-// FRIEND CHALLENGE
+// CHALLENGE ORCHESTRATION
 // ══════════════════════════════════════════════
+// Left as-is for now; this is one of the higher-coupling domains because it bridges
+// auth entry, modal opening, score display, and share UI.
+// Ownership point: do not extract casually; challenge URL entry, auth handoff,
+// active challenge state, accept flow, and result context are coupled.
 async function loadChallengePage(cid) {
   try {
     const r = await fetch(`${API}/api/challenge/${cid}`);
     if (!r.ok) { showAuthScreen(); return; }
     activeChallenge = await r.json();
-    document.getElementById('chlgChallenger').textContent = activeChallenge.challenger_username;
-    document.getElementById('chlgScoreVal').textContent   = Math.round(activeChallenge.score_to_beat);
-    document.getElementById('chlgMovie').textContent      = activeChallenge.scene.movie || '';
-    const noteEl = document.getElementById('chlgAuthNote');
+    setText('chlgChallenger', activeChallenge.challenger_username);
+    setText('chlgScoreVal', Math.round(activeChallenge.score_to_beat));
+    setText('chlgMovie', activeChallenge.scene.movie || '');
+    const noteEl = el('chlgAuthNote');
     if (authToken) {
       const ok = await verifyToken();
       if (ok) {
         noteEl.textContent = `Playing as ${authUser.username}`;
       } else {
         noteEl.innerHTML = `<a id="chlgLoginLink">Log in</a> to record your score`;
-        document.getElementById('chlgLoginLink').addEventListener('click', showAuthFromChallenge);
+        onClick('chlgLoginLink', showAuthFromChallenge);
       }
     } else {
       noteEl.innerHTML = `<a id="chlgLoginLink">Log in or register</a> to record your score`;
-      document.getElementById('chlgLoginLink').addEventListener('click', showAuthFromChallenge);
+      onClick('chlgLoginLink', showAuthFromChallenge);
     }
-    document.getElementById('challengeScreen').classList.add('on');
-    document.getElementById('authScreen').style.display = 'none';
-    document.getElementById('appScreen').style.display  = 'none';
+    setOn('challengeScreen', true);
+    hide('authScreen');
+    hide('appScreen');
   } catch {
     showAuthScreen();
   }
 }
 
 function showAuthFromChallenge() {
-  document.getElementById('challengeScreen').classList.remove('on');
+  setOn('challengeScreen', false);
   showAuthScreen();
   openAuthModal('login');
 }
 
 function enterChallengeFromAuth() {
+  // Ownership point: challenge accept resumes into scene modal and seeds
+  // challengeCtx for post-score result rendering.
   if (!activeChallenge) return;
   challengeCtx = { score_to_beat: activeChallenge.score_to_beat };
   closeAuthModal();
@@ -1682,7 +1680,7 @@ function enterChallengeFromAuth() {
   if (s) openModal(sid, s);
 }
 
-el('btnAcceptChallenge').addEventListener('click', () => {
+onClick('btnAcceptChallenge', () => {
   if (!activeChallenge) return;
   if (authToken && authUser) {
     enterChallengeFromAuth();
@@ -1691,11 +1689,11 @@ el('btnAcceptChallenge').addEventListener('click', () => {
   }
 });
 
-el('btnChallenge').addEventListener('click', createChallenge);
+onClick('btnChallenge', createChallenge);
 
 async function createChallenge() {
   if (!authToken || !activeScene) return;
-  const score = parseFloat(document.getElementById('scoreVal').textContent) || 0;
+  const score = parseFloat(el('scoreVal').textContent) || 0;
   setBtn('btnChallenge', true, '&#9876; Generating\u2026');
   try {
     const r = await fetch(`${API}/api/challenge`, {
@@ -1708,17 +1706,17 @@ async function createChallenge() {
     const challengeUrl = resolveAppUrl(data.url);
     const movie = scenes[activeScene]?.movie || 'MIRROR';
     const msg   = `I scored ${score}% on ${movie} in MIRROR! Can you beat it? ${challengeUrl}`;
-    document.getElementById('chlgLinkInput').textContent = challengeUrl;
-    document.getElementById('btnCopyLink').onclick = () => {
+    setText('chlgLinkInput', challengeUrl);
+    el('btnCopyLink').onclick = () => {
       navigator.clipboard.writeText(challengeUrl).then(() => {
-        document.getElementById('btnCopyLink').textContent = '\u2713 Copied!';
-        setTimeout(() => { document.getElementById('btnCopyLink').textContent = 'Copy'; }, 2000);
+        setText('btnCopyLink', '\u2713 Copied!');
+        setTimeout(() => { setText('btnCopyLink', 'Copy'); }, 2000);
       });
     };
-    document.getElementById('btnWhatsapp').onclick = () => {
+    el('btnWhatsapp').onclick = () => {
       window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(msg)}`, '_blank');
     };
-    document.getElementById('challengeShare').classList.add('on');
+    setOn('challengeShare', true);
   } catch {
     alert('Could not create challenge link. Please try again.');
   } finally {
@@ -1727,128 +1725,88 @@ async function createChallenge() {
 }
 
 function showChallengeResult(score, scoreToBeat) {
-  const el  = document.getElementById('challengeResult');
-  const won = score > scoreToBeat;
-  el.className = 'challenge-result ' + (won ? 'won' : 'lost');
-  if (won) {
-    el.innerHTML = `<div class="chlg-result-icon">\uD83C\uDFC6</div>
-      <div class="chlg-result-title">YOU WON!</div>
-      <div class="chlg-result-sub">You scored ${score}% vs ${scoreToBeat}% \u2014 challenge beaten!</div>`;
-  } else {
-    el.innerHTML = `<div class="chlg-result-icon">\uD83D\uDE24</div>
-      <div class="chlg-result-title">So Close!</div>
-      <div class="chlg-result-sub">You scored ${score}% — need ${scoreToBeat}% to win. Try again!</div>`;
-  }
+  // Adapter wrapper: display-only result rendering; challengeCtx ownership stays
+  // in showScore/enterChallengeFromAuth.
+  renderChallengeResultDisplay({
+    refs: {
+      resultEl: el('challengeResult'),
+    },
+    score: score,
+    scoreToBeat: scoreToBeat,
+  });
 }
 
 // ══════════════════════════════════════════════
-// CINEMATIC LEVEL CARDS
+// PROGRESS / LEVEL PANEL ORCHESTRATION — cinematic level cards
 // ══════════════════════════════════════════════
+// Cross-domain coupling: this domain mirrors browser-card unlock state and opens scene modals.
 function updateLevelCardStats() {
-  const best     = (userProgress && userProgress.best_scores) ? userProgress.best_scores : {};
-  const unlocked = (userProgress && userProgress.unlocked_scenes && userProgress.unlocked_scenes.length) ? userProgress.unlocked_scenes : getDefaultUnlockedScenes();
-  CLV_LEVELS.forEach(lv => {
-    const scores = lv.scenes.map(sid => best[sid]).filter(v => v > 0);
-    const avg    = scores.length ? Math.round(scores.reduce((a, b) => a + b, 0) / scores.length) : 0;
-    const avgEl  = document.getElementById(`clvPbAvg${lv.level}`);
-    if (avgEl) avgEl.textContent = scores.length ? `Avg PB: ${avg}%` : '';
-    if (lv.level === 1) return; // Level 1 always unlocked
-    const isUnlocked = lv.scenes.some(sid => unlocked.includes(sid));
-    const lockEl = document.getElementById(`clvLock${lv.level}`);
-    const ctaEl  = document.getElementById(`clvCta${lv.level}`);
-    if (lockEl) lockEl.style.display = isUnlocked ? 'none' : '';
-    if (ctaEl)  ctaEl.style.display  = isUnlocked ? ''     : 'none';
+  refreshLevelCardStatsSurface({
+    formatAvgPb: formatAvgPb,
+    getBestScores: getBestScores,
+    getDefaultUnlockedScenes: getDefaultUnlockedScenes,
+    getPositiveSceneScores: getPositiveSceneScores,
+    getUnlockedSceneIds: getUnlockedSceneIds,
+    hasUnlockedScene: hasUnlockedScene,
+    levels: CLV_LEVELS,
+    setDisplayIfPresent: setDisplayIfPresent,
+    setTextIfPresent: setTextIfPresent,
+    updateLevelCardStatsDisplay: updateLevelCardStatsDisplay,
+    userProgress: userProgress,
   });
 }
 
 async function openLevelPanel(level) {
+  // Adapter wrapper: app still owns scene-config readiness and scene-entry
+  // callbacks; panel render/open sequencing is delegated.
   try {
     await ensureSceneConfig();
   } catch {
     return;
   }
-  const lv = CLV_LEVELS.find(l => l.level === level);
-  if (!lv) return;
-  const badgeEl = document.getElementById('clvPanelBadge');
-  badgeEl.textContent = lv.label;
-  badgeEl.className   = 'clv-panel-badge ' + lv.cls;
-  document.getElementById('clvPanelTitle').textContent = 'Level ' + lv.level;
-  document.getElementById('clvPanelSub').textContent   = lv.desc;
-
-  // Set the level number
-  const numEl = document.getElementById('clvPanelNum');
-  if (numEl) numEl.textContent = String(lv.level).padStart(2, '0');
-
-  const best     = (userProgress && userProgress.best_scores)      ? userProgress.best_scores      : {};
-  const unlocked = (userProgress && userProgress.unlocked_scenes && userProgress.unlocked_scenes.length) ? userProgress.unlocked_scenes : getDefaultUnlockedScenes();
-
-  // Scene count
-  const countEl = document.getElementById('clvPanelCount');
-  if (countEl) countEl.innerHTML = '<strong>' + lv.scenes.length + '</strong> scenes';
-
-  // Avg PB
-  const scores = lv.scenes.map(function(sid) { return best[sid]; }).filter(function(v) { return v > 0; });
-  const avg = scores.length ? Math.round(scores.reduce(function(a, b) { return a + b; }, 0) / scores.length) : 0;
-  const avgEl = document.getElementById('clvPanelAvg');
-  if (avgEl) avgEl.textContent = scores.length ? 'Avg PB: ' + avg + '%' : '';
-
-  const list = document.getElementById('clvClipList');
-  list.innerHTML = lv.scenes.map(function(sid) {
-    var s      = (scenes && scenes[sid]) ? scenes[sid] : {};
-    var pb     = best[sid] ? Math.round(best[sid]) : null;
-    var locked = !unlocked.includes(sid);
-    var quote  = s.quote ? s.quote.slice(0, 55) + (s.quote.length > 55 ? '\u2026' : '') : '';
-    var color  = getSceneColor(sid);
-    var poster = getScenePoster(sid);
-    var posterHTML = poster
-      ? '<img src="' + poster + '" alt="' + (s.movie || sid) + '" loading="lazy">'
-      : '<div class="sc-poster-ph" style="background:linear-gradient(150deg,' + color + ',#111)"></div>';
-    var scoreHTML = '';
-    if (locked) {
-      scoreHTML = '<span class="sc-lock-badge"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></span>';
-    } else if (pb) {
-      var scoreColor = pb >= 85 ? '#06d6a0' : pb >= 65 ? '#ffd166' : '#C9A84C';
-      scoreHTML = '<span class="sc-score" style="color:' + scoreColor + ';background:' + scoreColor + '18;border-color:' + scoreColor + '44">' + pb + '%</span>';
-    }
-    return '<div class="sc-card' + (locked ? ' locked' : '') + '"' + (locked ? '' : ' onclick="selectScene(\'' + sid + '\')"') + '>'
-      + '<div class="sc-poster">'
-      + posterHTML
-      + '<div class="sc-poster-overlay"></div>'
-      + (s.year ? '<span class="sc-year">' + s.year + '</span>' : '')
-      + scoreHTML
-      + (locked ? '' : '<div class="sc-play"><svg width="14" height="14" viewBox="0 0 24 24" fill="#fff"><path d="M8 5v14l11-7z"/></svg></div>')
-      + '</div>'
-      + '<div class="sc-info">'
-      + '<div class="sc-accent" style="background:' + color + '"></div>'
-      + '<div class="sc-movie">' + (s.movie || sid) + '</div>'
-      + '<div class="sc-quote">&ldquo;' + quote + '&rdquo;</div>'
-      + '</div>'
-      + '</div>';
-  }).join('');
-
-  var firstScene = lv.scenes.find(function(sid) { return unlocked.includes(sid); });
-  var playBtn    = document.getElementById('clvPanelPlayBtn');
-  if (firstScene) {
-    playBtn.style.display = '';
-    playBtn.onclick = function() { closeLevelPanel(); selectScene(firstScene); };
-  } else {
-    playBtn.style.display = 'none';
-  }
-
-  document.getElementById('clvPanel').classList.add('open');
-  document.getElementById('clvPanelBackdrop').classList.add('open');
-  setBodyScrollLocked(true);
+  openLevelPanelSurface({
+    level: level,
+    levels: CLV_LEVELS,
+    userProgress: userProgress,
+    scenes: scenes,
+    getBestScores: getBestScores,
+    getDefaultUnlockedScenes: getDefaultUnlockedScenes,
+    getUnlockedSceneIds: getUnlockedSceneIds,
+    renderLevelPanelDisplay: renderLevelPanelDisplay,
+    setText: setText,
+    setTextIfPresent: setTextIfPresent,
+    setPanelOpen: setPanelOpen,
+    helpers: {
+      buildLevelPanelCountHTML: buildLevelPanelCountHTML,
+      buildLevelPanelSceneCardHTML: buildLevelPanelSceneCardHTML,
+      findFirstUnlockedSceneId: findFirstUnlockedSceneId,
+      formatAvgPb: formatAvgPb,
+      getPositiveSceneScores: getPositiveSceneScores,
+      getSceneColor: getSceneColor,
+      getScenePoster: getScenePoster,
+      setHtmlIfPresent: setHtmlIfPresent,
+      setTextIfPresent: setTextIfPresent,
+    },
+    refs: {
+      badgeEl: el('clvPanelBadge'),
+      listEl: el('clvClipList'),
+      playBtn: el('clvPanelPlayBtn'),
+      subEl: el('clvPanelSub'),
+      titleEl: el('clvPanelTitle'),
+    },
+    onPlayFirstScene: function(firstScene) { closeLevelPanel(); selectScene(firstScene); },
+  });
 }
 
 function closeLevelPanel() {
-  document.getElementById('clvPanel').classList.remove('open');
-  document.getElementById('clvPanelBackdrop').classList.remove('open');
-  setBodyScrollLocked(false);
+  setPanelOpen('clvPanel', 'clvPanelBackdrop', false);
 }
 
 function selectScene(sid) {
+  // Ownership point: scene-entry gating decides between authenticated app scene
+  // modal opening and logged-out registration. Do not extract casually.
   closeLevelPanel();
-  const appScreen = document.getElementById('appScreen');
+  const appScreen = el('appScreen');
   if (appScreen && appScreen.style.display !== 'none') {
     const s = scenes && scenes[sid];
     if (s) openModal(sid, s);
@@ -1857,6 +1815,184 @@ function selectScene(sid) {
   }
 }
 
-// Hook renderLevelBar to also refresh level card stats after progress loads
-const _clvOrigRLB = renderLevelBar;
-renderLevelBar = function () { _clvOrigRLB(); updateLevelCardStats(); };
+// Hook renderLevelBar to also refresh level card stats after progress loads.
+// Cross-domain coupling to keep in mind for extraction:
+// level-bar updates on the main surface also refresh cinematic level-panel stats.
+const _origRenderLevelBar = renderLevelBar;
+renderLevelBar = function () { _origRenderLevelBar(); updateLevelCardStats(); };
+
+// ══════════════════════════════════════════════
+// APP BOOTSTRAP / SESSION ENTRY — cinematic dashboard hero
+// ══════════════════════════════════════════════
+// Coupling note: this wraps daily loading so the dashboard hero follows the
+// same daily challenge data without owning challenge creation or scoring.
+function renderHeroFeatured() {
+  if (!dailyChallenge) return;
+  const sid = dailyChallenge.scene_id;
+  const s = dailyChallenge.scene || scenes[sid];
+  if (!s) return;
+
+  const poster = getScenePoster(sid);
+  const posterImg = document.getElementById('heroPosterImg');
+  if (posterImg && poster) {
+    posterImg.src = poster;
+    posterImg.alt = s.movie;
+  }
+
+  const titleEl = document.getElementById('heroTitle');
+  if (titleEl) titleEl.textContent = s.movie.toUpperCase();
+
+  const yearEl = document.getElementById('heroYear');
+  if (yearEl) yearEl.textContent = s.year || '';
+
+  const quoteEl = document.getElementById('heroQuote');
+  if (quoteEl) quoteEl.textContent = s.quote || '';
+}
+
+// Hero play button → open recording modal for daily scene
+(function() {
+  const playBtn = document.getElementById('heroPlayBtn');
+  if (playBtn) {
+    playBtn.addEventListener('click', () => {
+      if (!dailyChallenge) return;
+      const s = dailyChallenge.scene || scenes[dailyChallenge.scene_id];
+      if (s) openModal(dailyChallenge.scene_id, s);
+    });
+  }
+})();
+
+// Hook into loadDaily to also render the hero
+const _origLoadDaily = loadDaily;
+loadDaily = async function() {
+  await _origLoadDaily();
+  renderHeroFeatured();
+};
+
+// ══════════════════════════════════════════════
+// PROGRESS / LEVEL PANEL ORCHESTRATION — poster carousel
+// ══════════════════════════════════════════════
+// Coupling note: this wraps scene loading so the carousel follows the same
+// scene config and unlock state as the primary scene browser.
+function renderCarousel() {
+  const track = document.getElementById('carouselTrack');
+  if (!track) return;
+  track.innerHTML = '';
+
+  const unlocked = userProgress.unlocked_scenes || [];
+  const sceneIds = Object.keys(scenes).filter(sid => unlocked.includes(sid));
+
+  sceneIds.forEach(sid => {
+    const s = scenes[sid];
+    if (!s) return;
+    const poster = getScenePoster(sid);
+    const pb = userProgress.best_scores && userProgress.best_scores[sid];
+
+    const card = document.createElement('div');
+    card.className = 'carousel-card';
+    card.innerHTML = `
+      <div class="carousel-poster">
+        ${poster
+          ? `<img src="${poster}" alt="${s.movie}" loading="lazy">`
+          : `<div style="width:100%;height:100%;background:linear-gradient(135deg,${getSceneColor(sid)+'22'},#111)"></div>`
+        }
+        <div class="carousel-poster-overlay"></div>
+      </div>
+      <div class="carousel-card-label">${pb ? `Progress` : `Progress`}</div>
+      <div class="carousel-card-title">${s.movie}</div>
+      <div class="carousel-card-actors">${s.actor || ''}</div>
+    `;
+    card.addEventListener('click', () => openModal(sid, s));
+    track.appendChild(card);
+  });
+}
+
+// Carousel arrow scrolling
+(function() {
+  const wrap = document.querySelector('.carousel-track-wrap');
+  const prevBtn = document.getElementById('carouselPrev');
+  const nextBtn = document.getElementById('carouselNext');
+  if (!wrap || !prevBtn || !nextBtn) return;
+
+  prevBtn.addEventListener('click', () => {
+    wrap.scrollBy({ left: -300, behavior: 'smooth' });
+  });
+  nextBtn.addEventListener('click', () => {
+    wrap.scrollBy({ left: 300, behavior: 'smooth' });
+  });
+})();
+
+// Hook into loadScenes to also render carousel
+const _origLoadScenes = loadScenes;
+loadScenes = async function() {
+  await _origLoadScenes();
+  renderCarousel();
+};
+
+// ══════════════════════════════════════════════
+// ANALYZE / SCORE ORCHESTRATION — weak words dashboard
+// ══════════════════════════════════════════════
+// Coupling note: weak words reads score history after authenticated app entry
+// but does not participate in submit/scoring ownership.
+async function renderWeakWords() {
+  const tbody = document.getElementById('weakWordsBody');
+  if (!tbody) return;
+
+  try {
+    const r = await fetch(`${API}/api/history`, {
+      headers: { Authorization: `Bearer ${authToken}` },
+    });
+    if (!r.ok) return;
+    const data = await r.json();
+    const history = data.history || [];
+    if (!history.length) return;
+
+    // Gather all words from all scenes the user has tried,
+    // looking at latest attempt per scene and comparing expected vs transcribed
+    const wordMisses = {};
+
+    for (const entry of history) {
+      const scene = scenes[entry.scene_id];
+      if (!scene) continue;
+      const expected = (scene.quote || '').toLowerCase().replace(/[^\w\s']/g, '').split(/\s+/).filter(Boolean);
+      // We don't have word-level data from history alone, so score each scene's words
+      // by comparing the scene's sync_score — lower score = weaker words
+      const score = entry.sync_score || 0;
+      for (const word of expected) {
+        if (word.length < 3) continue; // skip tiny words
+        if (!wordMisses[word]) wordMisses[word] = { total: 0, count: 0 };
+        wordMisses[word].total += score;
+        wordMisses[word].count += 1;
+      }
+    }
+
+    // Sort by lowest average score
+    const sorted = Object.entries(wordMisses)
+      .map(([word, data]) => ({
+        word,
+        avg: Math.round(data.total / data.count),
+        count: data.count,
+      }))
+      .sort((a, b) => a.avg - b.avg)
+      .slice(0, 5);
+
+    if (!sorted.length) return;
+
+    tbody.innerHTML = sorted.map(item => `
+      <tr>
+        <td>${item.word}</td>
+        <td>${item.avg}/100
+          <span class="weak-word-bar">
+            <span class="weak-word-bar-fill" style="width:${item.avg}%"></span>
+          </span>
+        </td>
+      </tr>
+    `).join('');
+  } catch { /* silent */ }
+}
+
+// Hook renderWeakWords into the auth entry flow
+const _origEnterAuth = enterAuthenticatedApp;
+enterAuthenticatedApp = async function(options) {
+  await _origEnterAuth(options);
+  renderWeakWords();
+};

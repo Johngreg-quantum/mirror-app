@@ -53,6 +53,7 @@ app.add_middleware(
 _APP_DIR = os.path.dirname(os.path.abspath(__file__))
 _STATIC_DIR = os.path.join(_APP_DIR, "static")
 _INDEX_HTML_PATH = os.path.join(_APP_DIR, "index.html")
+_NEW_SHELL_INDEX_HTML_PATH = os.path.join(_STATIC_DIR, "new-shell", "index.html")
 _SCENE_CONFIG_PATH = os.path.join(_APP_DIR, "scene_config.json")
 if os.path.isdir(_STATIC_DIR):
     app.mount("/static", StaticFiles(directory=_STATIC_DIR), name="static")
@@ -451,23 +452,37 @@ def calc_points(score: float, is_first_attempt: bool) -> int:
 # Routes — frontend
 # ---------------------------------------------------------------------------
 
+def _read_html_file(path: str, missing_title: str):
+    try:
+        with open(path, "r", encoding="utf-8") as f:
+            return f.read()
+    except FileNotFoundError:
+        return HTMLResponse(f"<h1>{missing_title}</h1>", status_code=404)
+
+
 @app.get("/", response_class=HTMLResponse)
-async def read_root():
-    try:
-        with open(_INDEX_HTML_PATH, "r", encoding="utf-8") as f:
-            return f.read()
-    except FileNotFoundError:
-        return HTMLResponse("<h1>index.html not found</h1>", status_code=404)
-
-
+@app.get("/auth", response_class=HTMLResponse)
+@app.get("/levels", response_class=HTMLResponse)
+@app.get("/progress", response_class=HTMLResponse)
+@app.get("/daily", response_class=HTMLResponse)
+@app.get("/scene/{scene_id}", response_class=HTMLResponse)
 @app.get("/challenge/{challenge_id}", response_class=HTMLResponse)
-async def challenge_page(challenge_id: str):
+async def promoted_new_shell_entry(
+    scene_id: Optional[str] = None,
+    challenge_id: Optional[str] = None,
+):
+    return _read_html_file(_NEW_SHELL_INDEX_HTML_PATH, "app index.html not found")
+
+
+@app.get("/legacy", response_class=HTMLResponse)
+async def legacy_app_entry():
+    return _read_html_file(_INDEX_HTML_PATH, "index.html not found")
+
+
+@app.get("/legacy/challenge/{challenge_id}", response_class=HTMLResponse)
+async def legacy_challenge_page(challenge_id: str):
     """Serve the SPA for challenge links so the JS can read the path and render the challenge screen."""
-    try:
-        with open(_INDEX_HTML_PATH, "r", encoding="utf-8") as f:
-            return f.read()
-    except FileNotFoundError:
-        return HTMLResponse("<h1>index.html not found</h1>", status_code=404)
+    return _read_html_file(_INDEX_HTML_PATH, "index.html not found")
 
 
 # ---------------------------------------------------------------------------

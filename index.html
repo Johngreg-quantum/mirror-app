@@ -3,10 +3,11 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>MIRROR — Speak Like the Screen</title>
+  <title>MIRRORSPEAK — Cinematic Language Learning</title>
+  <link rel="icon" href="/static/favicon.svg" type="image/svg+xml" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400;1,600&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400;1,600&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&family=Space+Grotesk:wght@400;500;600;700&family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet" />
   <!-- YouTube IFrame API — loaded early so it's ready when user opens a scene -->
   <script src="https://www.youtube.com/iframe_api"></script>
   <link rel="stylesheet" href="/static/app.css" />
@@ -324,26 +325,90 @@
 ══════════════════════════════════════════════ -->
 <div id="appScreen" style="display:none">
 
-  <header>
-    <button class="btn-my-progress" id="btnMyProgress">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M18 20V10M12 20V4M6 20v-6"/>
-      </svg>
-      My Progress
-    </button>
-    <div class="logo">MIR<em>RO</em>R</div>
-    <p class="tagline">Speak like the screen &bull; AI-powered language learning</p>
-    <div class="user-chip" id="userChip">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/>
-      </svg>
-      <span class="div-dot" id="divDot" title="Bronze"></span>
-      <span class="user-chip-name" id="userChipName"></span>
-      <button class="btn-logout" id="btnLogout">Logout</button>
+  <!-- ── COMPACT NAV BAR ── -->
+  <nav class="app-nav" id="appNav">
+    <div class="app-nav-inner">
+      <a class="app-nav-logo" href="#">MIRROR<em>SPEAK</em></a>
+      <div class="app-nav-right">
+        <button class="btn-my-progress app-nav-progress" id="btnMyProgress">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M18 20V10M12 20V4M6 20v-6"/>
+          </svg>
+          My Progress
+        </button>
+        <div class="user-chip" id="userChip">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/>
+          </svg>
+          <span class="div-dot" id="divDot" title="Bronze"></span>
+          <span class="user-chip-name" id="userChipName"></span>
+          <button class="btn-logout" id="btnLogout">Logout</button>
+        </div>
+      </div>
     </div>
-  </header>
+  </nav>
+
+  <!-- ═══ CINEMATIC FEATURED HERO ═══ -->
+  <section class="hero-featured" id="heroFeatured">
+    <div class="hero-featured-poster" id="heroPoster">
+      <img id="heroPosterImg" src="" alt="" />
+      <div class="hero-featured-gradient"></div>
+    </div>
+
+    <div class="hero-featured-content">
+      <!-- Weak Words Panel (glass overlay) -->
+      <div class="weak-words-panel" id="weakWordsPanel">
+        <div class="weak-words-header">
+          <span class="weak-words-title">WEAK WORDS</span>
+          <button class="weak-words-arrow" id="weakWordsToggle">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+          </button>
+        </div>
+        <table class="weak-words-table">
+          <thead><tr><th>Word</th><th>Last attempt</th></tr></thead>
+          <tbody id="weakWordsBody">
+            <tr><td colspan="2" class="weak-words-empty">No data yet</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Movie Info -->
+      <div class="hero-featured-info">
+        <h1 class="hero-featured-title" id="heroTitle">—</h1>
+        <p class="hero-featured-year" id="heroYear"></p>
+        <div class="hero-featured-quote-wrap">
+          <span class="hero-featured-quote-label">Practice Quote:</span>
+          <p class="hero-featured-quote" id="heroQuote"></p>
+        </div>
+        <!-- Mini Audio Player -->
+        <div class="hero-mini-player" id="heroMiniPlayer">
+          <button class="hero-play-btn" id="heroPlayBtn">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+          </button>
+          <div class="hero-progress-track">
+            <div class="hero-progress-fill" id="heroProgressFill"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Daily + Streak Chips -->
+    <div class="hero-chips">
+      <div class="hero-chip hero-chip--daily" id="heroDailyChip">
+        <span class="hero-chip-icon">&#9733;</span>
+        <span>Daily Challenge</span>
+        <span class="hero-chip-timer" id="dcCountdown">00:00:00</span>
+      </div>
+      <div class="hero-chip hero-chip--streak" id="heroStreakChip">
+        <span class="hero-chip-icon">&#128293;</span>
+        <span class="hero-chip-streak-num" id="streakNumber">0</span>
+        <span>Day Streak</span>
+      </div>
+    </div>
+  </section>
 
   <div class="container">
+    <!-- Level bar (compact) -->
     <div class="level-bar">
       <div class="level-col">
         <div class="level-lbl">Level</div>
@@ -352,260 +417,24 @@
       <div class="level-details" id="levelDetails"></div>
     </div>
 
-    <div class="daily-section" id="dailySection">
-
-      <!-- ── Daily Challenge Card ── -->
-      <div class="dc-card" id="dcCard">
-        <div class="dc-glow"></div>
-        <div class="dc-header">
-          <span class="dc-badge-daily">&#9733; Daily Challenge</span>
-          <span class="dc-badge-2x">2&times; Points</span>
-        </div>
-        <div class="dc-movie" id="dcMovie">—</div>
-        <div class="dc-quote" id="dcQuote"></div>
-        <div class="dc-meta">
-          <span class="dc-actor" id="dcActor"></span>
-          <span class="badge" id="dcLevel"></span>
-        </div>
-        <div class="dc-footer">
-          <div class="dc-timer">
-            <span class="dc-timer-lbl">New challenge in</span>
-            <span class="dc-countdown" id="dcCountdown">00:00:00</span>
-          </div>
-          <button class="dc-open-btn" id="dcOpenBtn">Open Scene &#8594;</button>
-        </div>
-        <!-- shown after user completes today's challenge -->
-        <div class="dc-complete-overlay" id="dcCompleteOverlay" style="display:none">
-          <div class="dc-complete-check">&#10003;</div>
-          <div class="dc-complete-title">Challenge Complete!</div>
-          <div class="dc-complete-pts" id="dcCompletePts"></div>
-        </div>
-      </div>
-
-      <!-- ── Streak Card ── -->
-      <div class="streak-card" id="streakCard">
-        <div class="streak-top">
-          <span class="streak-fire-emoji">&#128293;</span>
-          <div>
-            <div class="streak-number" id="streakNumber">0</div>
-            <div class="streak-unit">Day Streak</div>
-          </div>
-        </div>
-        <div class="streak-dots-wrap">
-          <div class="streak-dot-row" id="streakDotRow"></div>
-        </div>
-        <div class="streak-msg" id="streakMsg">Complete today&rsquo;s challenge to start your streak!</div>
-      </div>
-
-    </div>
-
-    <p class="section-label">Choose your level</p>
-
-    <!-- Collection Cards -->
-    <div class="collection-grid">
-
-      <!-- ═══ LEVEL 1 — BEGINNER ═══ -->
-      <div class="collection-card collection-card--beg" onclick="openLevelPanel(1)">
-
-        <!-- Poster Coverflow -->
-        <div class="coverflow">
-          <div class="coverflow-track">
-            <div class="coverflow-poster coverflow-pos--far-left">
-              <img src="/static/posters/fight_club.jpg" alt="Fight Club" loading="lazy">
-              <div class="coverflow-poster-overlay"></div>
-              <span class="coverflow-label">Fight Club</span>
-            </div>
-            <div class="coverflow-poster coverflow-pos--left">
-              <img src="/static/posters/back_to_the_future.jpg" alt="Back to the Future" loading="lazy">
-              <div class="coverflow-poster-overlay"></div>
-              <span class="coverflow-label">Back to the Future</span>
-            </div>
-            <div class="coverflow-poster coverflow-pos--center">
-              <img src="/static/posters/forrest_gump.jpg" alt="Forrest Gump" loading="lazy">
-              <div class="coverflow-poster-overlay"></div>
-              <span class="coverflow-label">Forrest Gump</span>
-            </div>
-            <div class="coverflow-poster coverflow-pos--right">
-              <img src="/static/posters/the_matrix.jpg" alt="The Matrix" loading="lazy">
-              <div class="coverflow-poster-overlay"></div>
-              <span class="coverflow-label">The Matrix</span>
-            </div>
-            <div class="coverflow-poster coverflow-pos--far-right">
-              <img src="/static/posters/seven.jpg" alt="Se7en" loading="lazy">
-              <div class="coverflow-poster-overlay"></div>
-              <span class="coverflow-label">Se7en</span>
-            </div>
-          </div>
-          <div class="coverflow-fade-bottom"></div>
-          <div class="coverflow-accent coverflow-accent--beg"></div>
-        </div>
-
-        <!-- Card Info -->
-        <div class="collection-info">
-          <div class="collection-header">
-            <div class="collection-left">
-              <span class="collection-num" style="color:var(--green)">01</span>
-              <div>
-                <span class="collection-badge collection-badge--beg">Beginner</span>
-                <h3 class="collection-title">LEVEL 1</h3>
-              </div>
-            </div>
-            <div class="collection-right">
-              <div class="collection-scenes-count">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="20" rx="3"/><polygon points="10 8 16 12 10 16 10 8"/></svg>
-                <strong style="color:var(--green)">20</strong> scenes
-              </div>
-              <div class="collection-status collection-status--open">
-                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 11V7a5 5 0 0 1 10 0v4"/><rect x="3" y="11" width="18" height="11" rx="2"/></svg>
-                Open
-              </div>
-            </div>
-          </div>
-          <p class="collection-desc">Short, clear lines from iconic movies. Build confidence speaking on camera with simple, memorable scenes.</p>
-          <div class="collection-movies">
-            <span class="collection-pill">Fight Club</span>
-            <span class="collection-pill">Back to the Future</span>
-            <span class="collection-pill">Forrest Gump</span>
-            <span class="collection-pill">The Matrix</span>
-            <span class="collection-pill">Se7en</span>
-            <span class="collection-pill">Home Alone</span>
-            <span class="collection-pill">Pursuit of Happyness</span>
-            <span class="collection-pill">Jerry Maguire</span>
-            <span class="collection-pill">Cast Away</span>
-            <span class="collection-pill">The Social Network</span>
-            <span class="collection-pill">Devil Wears Prada</span>
-            <span class="collection-pill">Apollo 13</span>
-            <span class="collection-pill">Top Gun</span>
-            <span class="collection-pill">Clueless</span>
-            <span class="collection-pill">Men in Black</span>
-            <span class="collection-pill">Mrs. Doubtfire</span>
-            <span class="collection-pill">The Fifth Element</span>
-            <span class="collection-pill">Mystic River</span>
-          </div>
-          <button class="collection-cta collection-cta--beg">
-            Explore Level
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+    <!-- ═══ PRACTICE SPECIFIC SCENES — POSTER CAROUSEL ═══ -->
+    <div class="carousel-section">
+      <div class="carousel-header">
+        <p class="carousel-label">PRACTICE SPECIFIC SCENES</p>
+        <div class="carousel-arrows">
+          <button class="carousel-arrow" id="carouselPrev">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+          </button>
+          <button class="carousel-arrow" id="carouselNext">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
           </button>
         </div>
       </div>
-
-      <!-- ═══ LEVEL 2 — INTERMEDIATE ═══ -->
-      <div class="collection-card collection-card--int" onclick="openLevelPanel(2)">
-
-        <div class="coverflow">
-          <div class="coverflow-track">
-            <div class="coverflow-poster coverflow-pos--far-left">
-              <img src="/static/posters/heat.jpg" alt="Heat" loading="lazy">
-              <div class="coverflow-poster-overlay"></div>
-              <span class="coverflow-label">Heat</span>
-            </div>
-            <div class="coverflow-poster coverflow-pos--left">
-              <img src="/static/posters/avengers.jpg" alt="The Avengers" loading="lazy">
-              <div class="coverflow-poster-overlay"></div>
-              <span class="coverflow-label">The Avengers</span>
-            </div>
-            <div class="coverflow-poster coverflow-pos--center">
-              <img src="/static/posters/titanic.jpg" alt="Titanic" loading="lazy">
-              <div class="coverflow-poster-overlay"></div>
-              <span class="coverflow-label">Titanic</span>
-            </div>
-            <div class="coverflow-poster coverflow-pos--right">
-              <img src="/static/posters/sixth_sense.jpg" alt="The Sixth Sense" loading="lazy">
-              <div class="coverflow-poster-overlay"></div>
-              <span class="coverflow-label">The Sixth Sense</span>
-            </div>
-            <div class="coverflow-poster coverflow-pos--far-right">
-              <img src="/static/posters/terminator.jpg" alt="The Terminator" loading="lazy">
-              <div class="coverflow-poster-overlay"></div>
-              <span class="coverflow-label">The Terminator</span>
-            </div>
-          </div>
-          <div class="coverflow-fade-bottom"></div>
-          <div class="coverflow-accent coverflow-accent--int"></div>
-        </div>
-
-        <div class="collection-info">
-          <div class="collection-header">
-            <div class="collection-left">
-              <span class="collection-num" style="color:var(--gold)">02</span>
-              <div>
-                <span class="collection-badge collection-badge--int">Intermediate</span>
-                <h3 class="collection-title">LEVEL 2</h3>
-              </div>
-            </div>
-            <div class="collection-right">
-              <div class="collection-scenes-count">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="20" rx="3"/><polygon points="10 8 16 12 10 16 10 8"/></svg>
-                <strong style="color:var(--gold)">6</strong> scenes
-              </div>
-              <div class="collection-status">
-                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-                <span id="collLock2">Unlock at 60%</span>
-              </div>
-            </div>
-          </div>
-          <p class="collection-desc">Longer phrases where rhythm and emotion start to matter. Nuanced delivery from cinema's best.</p>
-          <div class="collection-movies">
-            <span class="collection-pill">Heat</span>
-            <span class="collection-pill">The Avengers</span>
-            <span class="collection-pill">Titanic</span>
-            <span class="collection-pill">Basic Instinct</span>
-            <span class="collection-pill">The Sixth Sense</span>
-            <span class="collection-pill">The Terminator</span>
-          </div>
-          <button class="collection-cta collection-cta--int">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-            <span id="collCtaText2">Locked</span>
-          </button>
+      <div class="carousel-track-wrap">
+        <div class="carousel-track" id="carouselTrack">
+          <!-- JS populates poster cards here -->
         </div>
       </div>
-
-      <!-- ═══ LEVEL 3 — ADVANCED ═══ -->
-      <div class="collection-card collection-card--adv" onclick="openLevelPanel(3)">
-
-        <div class="coverflow coverflow--single">
-          <div class="coverflow-track">
-            <div class="coverflow-poster coverflow-pos--center coverflow-pos--solo">
-              <div class="coverflow-poster-placeholder" style="background:linear-gradient(150deg,#3b82f6,#152e5e)"></div>
-              <div class="coverflow-poster-overlay"></div>
-              <span class="coverflow-label">Taken</span>
-            </div>
-          </div>
-          <div class="coverflow-fade-bottom"></div>
-          <div class="coverflow-accent coverflow-accent--adv"></div>
-        </div>
-
-        <div class="collection-info">
-          <div class="collection-header">
-            <div class="collection-left">
-              <span class="collection-num" style="color:var(--red)">03</span>
-              <div>
-                <span class="collection-badge collection-badge--adv">Advanced</span>
-                <h3 class="collection-title">LEVEL 3</h3>
-              </div>
-            </div>
-            <div class="collection-right">
-              <div class="collection-scenes-count">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="20" rx="3"/><polygon points="10 8 16 12 10 16 10 8"/></svg>
-                <strong style="color:var(--red)">1</strong> scene
-              </div>
-              <div class="collection-status">
-                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-                <span id="collLock3">Unlock at 70%</span>
-              </div>
-            </div>
-          </div>
-          <p class="collection-desc">Accent precision and raw delivery. The real challenge begins here.</p>
-          <div class="collection-movies">
-            <span class="collection-pill">Taken</span>
-          </div>
-          <button class="collection-cta collection-cta--adv">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-            <span id="collCtaText3">Locked</span>
-          </button>
-        </div>
-      </div>
-
     </div>
 
     <!-- Hidden grids — JS still populates these, they must remain in DOM -->
@@ -635,6 +464,26 @@
     <p class="section-label">Top 10 per scene</p>
     <div class="lb-tabs"  id="lbTabs"></div>
     <div id="lbPanels"></div>
+  </div>
+
+  <!-- Hidden elements that old daily challenge JS still references -->
+  <div style="display:none">
+    <div id="dailySection"></div>
+    <div id="dcCard"></div>
+    <div id="dcMovie"></div>
+    <div id="dcQuote"></div>
+    <div id="dcActor"></div>
+    <div id="dcLevel"></div>
+    <div id="dcOpenBtn"></div>
+    <div id="dcCompleteOverlay"></div>
+    <div id="dcCompletePts"></div>
+    <div id="streakCard"></div>
+    <div id="streakDotRow"></div>
+    <div id="streakMsg"></div>
+    <span id="collLock2"></span>
+    <span id="collLock3"></span>
+    <span id="collCtaText2"></span>
+    <span id="collCtaText3"></span>
   </div>
 
 </div>
@@ -958,6 +807,24 @@
 <div class="clv-panel-backdrop" id="clvPanelBackdrop" onclick="closeLevelPanel()"></div>
 
 <script src="/static/app-config.js"></script>
+<script src="/static/app-helpers.js"></script>
+<script src="/static/app-view-helpers.js"></script>
+<script src="/static/app-render-helpers.js"></script>
+<script src="/static/app-state-helpers.js"></script>
+<script src="/static/app-dom-helpers.js"></script>
+<script src="/static/level-panel-domain.js"></script>
+<script src="/static/progress-dashboard-domain.js"></script>
+<script src="/static/scene-browser-domain.js"></script>
+<script src="/static/scene-modal-domain.js"></script>
+<script src="/static/analyze-score-domain.js"></script>
+<script src="/static/recording-playback-domain.js"></script>
+<script src="/static/auth-modal-domain.js"></script>
+<script src="/static/daily-challenge-domain.js"></script>
+<script src="/static/app-runtime-utils.js"></script>
+<script src="/static/app-progress-orchestration.js"></script>
+<script src="/static/app-post-score-orchestration.js"></script>
+<script src="/static/app-leaderboard-orchestration.js"></script>
+<script src="/static/app-level-panel-orchestration.js"></script>
 <script src="/static/app.js"></script>
 </body>
 </html>

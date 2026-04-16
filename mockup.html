@@ -1,0 +1,1100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Mirror App — Cinematic Astral Design Mockup</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    /* ==================== RESET ==================== */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    /* ==================== CSS TOKENS ==================== */
+    :root {
+      --surface: #0b0e14;
+      --surface-dim: #0b0e14;
+      --surface-bright: #282c36;
+      --surface-container-lowest: #000000;
+      --surface-container-low: #10131a;
+      --surface-container: #161a21;
+      --surface-container-high: #1c2028;
+      --surface-container-highest: #22262f;
+      --surface-variant: #22262f;
+      --surface-tint: #81ecff;
+
+      --primary: #81ecff;
+      --primary-dim: #00d4ec;
+      --primary-container: #00e3fd;
+      --on-primary: #005762;
+      --on-primary-fixed: #003840;
+
+      --secondary: #ffd709;
+      --secondary-dim: #efc900;
+      --secondary-container: #705d00;
+      --on-secondary: #5b4b00;
+
+      --tertiary: #ff7350;
+      --tertiary-dim: #dc3300;
+      --tertiary-container: #fc3c00;
+      --on-tertiary: #440900;
+
+      --on-background: #ecedf6;
+      --on-surface: #ecedf6;
+      --on-surface-variant: #a9abb3;
+
+      --error: #ff716c;
+      --outline: #73757d;
+      --outline-variant: #45484f;
+
+      --font-display: 'Space Grotesk', sans-serif;
+      --font-body: 'Plus Jakarta Sans', sans-serif;
+
+      --round-sm: 4px;
+      --round-md: 8px;
+      --round-lg: 12px;
+      --round-xl: 16px;
+      --round-2xl: 24px;
+      --round-full: 9999px;
+    }
+
+    /* ==================== BASE ==================== */
+    body {
+      font-family: var(--font-body);
+      background: var(--surface);
+      color: var(--on-surface);
+      min-height: 100vh;
+      overflow-x: hidden;
+      line-height: 1.6;
+    }
+
+    /* ==================== COSMIC BACKGROUND ==================== */
+    .cosmos {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      overflow: hidden;
+      pointer-events: none;
+    }
+    .cosmos::before {
+      content: '';
+      position: absolute;
+      width: 800px;
+      height: 800px;
+      top: -200px;
+      left: -200px;
+      background: radial-gradient(circle, rgba(0, 212, 236, 0.08) 0%, transparent 70%);
+      animation: drift 20s ease-in-out infinite alternate;
+    }
+    .cosmos::after {
+      content: '';
+      position: absolute;
+      width: 600px;
+      height: 600px;
+      bottom: -100px;
+      right: -100px;
+      background: radial-gradient(circle, rgba(255, 215, 9, 0.06) 0%, transparent 70%);
+      animation: drift 25s ease-in-out infinite alternate-reverse;
+    }
+    @keyframes drift {
+      0%   { transform: translate(0, 0) scale(1); }
+      100% { transform: translate(80px, 40px) scale(1.15); }
+    }
+
+    /* Stars */
+    .stars {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      pointer-events: none;
+    }
+    .star {
+      position: absolute;
+      width: 2px;
+      height: 2px;
+      background: rgba(236, 237, 246, 0.4);
+      border-radius: 50%;
+      animation: twinkle var(--dur) ease-in-out infinite alternate;
+    }
+    @keyframes twinkle {
+      0%   { opacity: 0.2; }
+      100% { opacity: 0.8; }
+    }
+
+    /* ==================== LAYOUT ==================== */
+    .page {
+      position: relative;
+      z-index: 1;
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 48px 24px 96px;
+    }
+
+    /* ==================== HERO ==================== */
+    .hero {
+      text-align: center;
+      padding: 80px 0 64px;
+      animation: fadeUp 0.8s cubic-bezier(0, 0, 0.2, 1) both;
+    }
+    .hero-badge {
+      display: inline-block;
+      font-family: var(--font-body);
+      font-size: 0.6875rem;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--secondary);
+      background: rgba(112, 93, 0, 0.3);
+      border: 1px solid rgba(255, 215, 9, 0.15);
+      padding: 6px 18px;
+      border-radius: var(--round-full);
+      margin-bottom: 24px;
+    }
+    .hero h1 {
+      font-family: var(--font-display);
+      font-size: clamp(2.5rem, 6vw, 3.5rem);
+      font-weight: 700;
+      line-height: 1.1;
+      letter-spacing: -0.02em;
+      background: linear-gradient(135deg, var(--primary), var(--primary-container));
+      background-clip: text;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 16px;
+    }
+    .hero p {
+      font-size: 1.125rem;
+      color: var(--on-surface-variant);
+      max-width: 600px;
+      margin: 0 auto 40px;
+    }
+    .hero-actions {
+      display: flex;
+      gap: 16px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(30px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ==================== BUTTONS ==================== */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-family: var(--font-body);
+      font-weight: 600;
+      font-size: 0.875rem;
+      letter-spacing: 0.04em;
+      border: none;
+      cursor: pointer;
+      border-radius: var(--round-full);
+      padding: 14px 36px;
+      transition: all 0.3s ease;
+      text-decoration: none;
+    }
+    .btn-primary {
+      background: linear-gradient(135deg, var(--primary), var(--primary-dim));
+      color: var(--on-primary-fixed);
+      box-shadow: 0 4px 24px rgba(0, 210, 255, 0.2);
+    }
+    .btn-primary:hover {
+      box-shadow: 0 8px 48px rgba(0, 210, 255, 0.35);
+      transform: translateY(-2px) scale(1.02);
+    }
+    .btn-secondary {
+      background: rgba(34, 38, 47, 0.35);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(69, 72, 79, 0.2);
+      color: var(--on-surface);
+    }
+    .btn-secondary:hover {
+      border-color: rgba(129, 236, 255, 0.35);
+      box-shadow: 0 0 24px rgba(0, 210, 255, 0.1);
+      transform: translateY(-2px);
+    }
+    .btn-gold {
+      background: linear-gradient(135deg, var(--secondary), var(--secondary-dim));
+      color: var(--on-secondary);
+      box-shadow: 0 4px 24px rgba(255, 215, 9, 0.2);
+    }
+    .btn-gold:hover {
+      box-shadow: 0 8px 48px rgba(255, 215, 9, 0.35);
+      transform: translateY(-2px) scale(1.02);
+    }
+    .btn-sm {
+      padding: 8px 20px;
+      font-size: 0.75rem;
+    }
+
+    /* ==================== GLASS PANEL ==================== */
+    .glass {
+      background: rgba(34, 38, 47, 0.40);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      border: 1px solid rgba(69, 72, 79, 0.15);
+      border-radius: var(--round-xl);
+    }
+    .glass-light {
+      background: rgba(34, 38, 47, 0.20);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(69, 72, 79, 0.10);
+      border-radius: var(--round-xl);
+    }
+
+    /* ==================== SECTION HEADINGS ==================== */
+    .section-label {
+      font-family: var(--font-body);
+      font-size: 0.6875rem;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--on-surface-variant);
+      margin-bottom: 8px;
+    }
+    .section-title {
+      font-family: var(--font-display);
+      font-size: 1.75rem;
+      font-weight: 700;
+      margin-bottom: 32px;
+    }
+
+    /* ==================== TIER CARDS ==================== */
+    .tier-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 24px;
+      margin-bottom: 64px;
+    }
+    .tier-card {
+      position: relative;
+      border-radius: var(--round-xl);
+      padding: 32px;
+      overflow: hidden;
+      transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.4s ease;
+      animation: fadeUp 0.6s cubic-bezier(0, 0, 0.2, 1) both;
+    }
+    .tier-card:nth-child(1) { animation-delay: 0.1s; }
+    .tier-card:nth-child(2) { animation-delay: 0.2s; }
+    .tier-card:nth-child(3) { animation-delay: 0.3s; }
+
+    .tier-card:hover {
+      transform: translateY(-6px);
+    }
+
+    .tier-card::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-radius: var(--round-xl);
+      padding: 2px;
+      background: var(--gradient);
+      -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+      mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+      -webkit-mask-composite: xor;
+      mask-composite: exclude;
+      pointer-events: none;
+    }
+
+    .tier-beginner {
+      background: rgba(112, 93, 0, 0.10);
+      --gradient: linear-gradient(135deg, rgba(255, 215, 9, 0.5), rgba(239, 201, 0, 0.15));
+      box-shadow: 0 8px 40px rgba(255, 215, 9, 0.08);
+    }
+    .tier-beginner:hover { box-shadow: 0 16px 60px rgba(255, 215, 9, 0.15); }
+    .tier-intermediate {
+      background: rgba(0, 87, 98, 0.10);
+      --gradient: linear-gradient(135deg, rgba(129, 236, 255, 0.5), rgba(0, 212, 236, 0.15));
+      box-shadow: 0 8px 40px rgba(0, 210, 255, 0.08);
+    }
+    .tier-intermediate:hover { box-shadow: 0 16px 60px rgba(0, 210, 255, 0.15); }
+    .tier-advanced {
+      background: rgba(68, 9, 0, 0.10);
+      --gradient: linear-gradient(135deg, rgba(255, 115, 80, 0.5), rgba(220, 51, 0, 0.15));
+      box-shadow: 0 8px 40px rgba(255, 61, 0, 0.08);
+    }
+    .tier-advanced:hover { box-shadow: 0 16px 60px rgba(255, 61, 0, 0.15); }
+
+    .tier-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: var(--round-lg);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.5rem;
+      margin-bottom: 20px;
+    }
+    .tier-beginner .tier-icon   { background: rgba(255, 215, 9, 0.15); }
+    .tier-intermediate .tier-icon { background: rgba(129, 236, 255, 0.15); }
+    .tier-advanced .tier-icon   { background: rgba(255, 115, 80, 0.15); }
+
+    .tier-name {
+      font-family: var(--font-display);
+      font-size: 1.5rem;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+    .tier-beginner .tier-name { color: var(--secondary); }
+    .tier-intermediate .tier-name { color: var(--primary); }
+    .tier-advanced .tier-name { color: var(--tertiary); }
+
+    .tier-desc {
+      color: var(--on-surface-variant);
+      font-size: 0.875rem;
+      margin-bottom: 20px;
+      line-height: 1.6;
+    }
+
+    .tier-meta {
+      font-size: 0.6875rem;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--on-surface-variant);
+      opacity: 0.7;
+    }
+
+    /* ==================== STATS PANEL ==================== */
+    .stats-section {
+      margin-bottom: 64px;
+    }
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px;
+    }
+    .stat-card {
+      padding: 28px 24px;
+      text-align: center;
+      animation: fadeUp 0.6s cubic-bezier(0, 0, 0.2, 1) both;
+    }
+    .stat-card:nth-child(1) { animation-delay: 0.15s; }
+    .stat-card:nth-child(2) { animation-delay: 0.25s; }
+    .stat-card:nth-child(3) { animation-delay: 0.35s; }
+    .stat-card:nth-child(4) { animation-delay: 0.45s; }
+
+    .stat-value {
+      font-family: var(--font-display);
+      font-size: 2.25rem;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+    .stat-value.cyan { color: var(--primary); }
+    .stat-value.gold { color: var(--secondary); }
+    .stat-value.red  { color: var(--tertiary); }
+    .stat-value.white { color: var(--on-surface); }
+
+    .stat-label {
+      font-size: 0.6875rem;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--on-surface-variant);
+    }
+
+    /* ==================== DASHBOARD PANEL ==================== */
+    .dashboard {
+      margin-bottom: 64px;
+      animation: fadeUp 0.6s cubic-bezier(0, 0, 0.2, 1) 0.2s both;
+    }
+    .dashboard-inner {
+      padding: 32px;
+    }
+    .dash-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 32px;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+    .dash-title {
+      font-family: var(--font-display);
+      font-size: 1.25rem;
+      font-weight: 600;
+    }
+    .dash-tabs {
+      display: flex;
+      gap: 4px;
+      background: var(--surface-container-low);
+      border-radius: var(--round-full);
+      padding: 4px;
+    }
+    .dash-tab {
+      font-family: var(--font-body);
+      font-size: 0.75rem;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      padding: 8px 20px;
+      border-radius: var(--round-full);
+      border: none;
+      cursor: pointer;
+      background: transparent;
+      color: var(--on-surface-variant);
+      transition: all 0.25s ease;
+    }
+    .dash-tab.active {
+      background: linear-gradient(135deg, var(--primary), var(--primary-dim));
+      color: var(--on-primary-fixed);
+    }
+    .dash-tab:hover:not(.active) {
+      color: var(--on-surface);
+    }
+
+    /* Activity list */
+    .activity-list {
+      list-style: none;
+    }
+    .activity-item {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 16px 0;
+      border-bottom: 1px solid rgba(69, 72, 79, 0.12);
+    }
+    .activity-item:last-child { border-bottom: none; }
+
+    .activity-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+    .activity-dot.cyan { background: var(--primary); box-shadow: 0 0 10px rgba(0, 210, 255, 0.4); }
+    .activity-dot.gold { background: var(--secondary); box-shadow: 0 0 10px rgba(255, 215, 9, 0.4); }
+    .activity-dot.red  { background: var(--tertiary); box-shadow: 0 0 10px rgba(255, 61, 0, 0.4); }
+
+    .activity-info { flex: 1; }
+    .activity-title {
+      font-weight: 600;
+      font-size: 0.875rem;
+      margin-bottom: 2px;
+    }
+    .activity-time {
+      font-size: 0.75rem;
+      color: var(--on-surface-variant);
+    }
+    .activity-value {
+      font-family: var(--font-display);
+      font-weight: 700;
+      font-size: 1rem;
+    }
+
+    /* ==================== PROGRESS SECTION ==================== */
+    .progress-section {
+      margin-bottom: 64px;
+      animation: fadeUp 0.6s cubic-bezier(0, 0, 0.2, 1) 0.3s both;
+    }
+    .progress-panel {
+      padding: 32px;
+    }
+    .progress-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      margin-bottom: 20px;
+    }
+    .progress-title {
+      font-family: var(--font-display);
+      font-size: 1.25rem;
+      font-weight: 600;
+    }
+    .progress-pct {
+      font-family: var(--font-display);
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--secondary);
+    }
+    .progress-track {
+      background: var(--surface-container-highest);
+      border-radius: var(--round-full);
+      height: 8px;
+      overflow: visible;
+      position: relative;
+      margin-bottom: 24px;
+    }
+    .progress-fill {
+      height: 100%;
+      border-radius: var(--round-full);
+      background: linear-gradient(90deg, var(--secondary-dim), var(--secondary));
+      box-shadow: 0 0 16px rgba(255, 215, 9, 0.35);
+      position: relative;
+      width: 68%;
+      transition: width 1.5s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .progress-fill::after {
+      content: '';
+      position: absolute;
+      right: -6px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 16px;
+      height: 16px;
+      background: var(--secondary);
+      border-radius: 50%;
+      box-shadow: 0 0 20px rgba(255, 215, 9, 0.6);
+      animation: neonPulse 2s ease-in-out infinite;
+    }
+    @keyframes neonPulse {
+      0%, 100% { box-shadow: 0 0 16px rgba(255, 215, 9, 0.4); }
+      50%      { box-shadow: 0 0 32px rgba(255, 215, 9, 0.7); }
+    }
+
+    .milestone-row {
+      display: flex;
+      justify-content: space-between;
+    }
+    .milestone {
+      text-align: center;
+    }
+    .milestone-label {
+      font-size: 0.6875rem;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+    .milestone.done .milestone-label { color: var(--secondary); }
+    .milestone.current .milestone-label { color: var(--primary); }
+    .milestone.upcoming .milestone-label { color: var(--on-surface-variant); opacity: 0.5; }
+
+    /* ==================== AUDIO WAVEFORM ==================== */
+    .waveform-section {
+      margin-bottom: 64px;
+      animation: fadeUp 0.6s cubic-bezier(0, 0, 0.2, 1) 0.4s both;
+    }
+    .waveform-panel {
+      padding: 32px;
+    }
+    .waveform-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 24px;
+    }
+    .waveform-title {
+      font-family: var(--font-display);
+      font-size: 1.25rem;
+      font-weight: 600;
+    }
+    .waveform-time {
+      font-family: var(--font-display);
+      font-size: 0.875rem;
+      color: var(--on-surface-variant);
+      letter-spacing: 0.05em;
+    }
+    .waveform {
+      display: flex;
+      align-items: center;
+      gap: 3px;
+      height: 80px;
+      margin-bottom: 16px;
+    }
+    .waveform-bar {
+      flex: 1;
+      border-radius: 2px;
+      transition: background 0.2s ease;
+    }
+    .waveform-bar.active {
+      background: var(--primary);
+      box-shadow: 0 0 6px rgba(0, 210, 255, 0.4);
+    }
+    .waveform-bar.inactive {
+      background: var(--surface-container-highest);
+    }
+    .waveform-controls {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+    .play-btn {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--primary), var(--primary-dim));
+      border: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 20px rgba(0, 210, 255, 0.25);
+      transition: all 0.3s ease;
+      color: var(--on-primary-fixed);
+      font-size: 1.1rem;
+    }
+    .play-btn:hover {
+      transform: scale(1.08);
+      box-shadow: 0 8px 36px rgba(0, 210, 255, 0.4);
+    }
+    .now-playing {
+      font-size: 0.875rem;
+      font-weight: 600;
+    }
+    .now-playing span {
+      color: var(--on-surface-variant);
+      font-weight: 400;
+      font-size: 0.75rem;
+    }
+
+    /* ==================== COLOR SWATCHES ==================== */
+    .swatches-section {
+      margin-bottom: 64px;
+      animation: fadeUp 0.6s cubic-bezier(0, 0, 0.2, 1) 0.5s both;
+    }
+    .swatches-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+      gap: 12px;
+    }
+    .swatch {
+      border-radius: var(--round-lg);
+      overflow: hidden;
+    }
+    .swatch-color {
+      height: 64px;
+    }
+    .swatch-info {
+      padding: 10px 12px;
+      background: var(--surface-container);
+    }
+    .swatch-name {
+      font-size: 0.6875rem;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      margin-bottom: 2px;
+    }
+    .swatch-hex {
+      font-family: var(--font-display);
+      font-size: 0.6875rem;
+      color: var(--on-surface-variant);
+    }
+
+    /* ==================== TYPOGRAPHY PREVIEW ==================== */
+    .type-section {
+      margin-bottom: 64px;
+      animation: fadeUp 0.6s cubic-bezier(0, 0, 0.2, 1) 0.5s both;
+    }
+    .type-panel {
+      padding: 32px;
+    }
+    .type-row {
+      display: flex;
+      align-items: baseline;
+      gap: 24px;
+      padding: 16px 0;
+      border-bottom: 1px solid rgba(69, 72, 79, 0.1);
+    }
+    .type-row:last-child { border-bottom: none; }
+    .type-token {
+      width: 120px;
+      flex-shrink: 0;
+      font-size: 0.6875rem;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--primary);
+    }
+    .type-sample {
+      font-family: var(--font-display);
+    }
+    .type-sample.body-font { font-family: var(--font-body); }
+
+    /* ==================== NOTIFICATION TOAST ==================== */
+    .toast-demo {
+      margin-bottom: 64px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      animation: fadeUp 0.6s cubic-bezier(0, 0, 0.2, 1) 0.6s both;
+    }
+    .toast {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 16px 20px;
+      border-radius: var(--round-lg);
+      max-width: 460px;
+    }
+    .toast-icon {
+      width: 32px;
+      height: 32px;
+      border-radius: var(--round-md);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.9rem;
+      flex-shrink: 0;
+    }
+    .toast-success {
+      background: rgba(0, 87, 98, 0.15);
+      border: 1px solid rgba(129, 236, 255, 0.15);
+    }
+    .toast-success .toast-icon {
+      background: rgba(129, 236, 255, 0.15);
+    }
+    .toast-warning {
+      background: rgba(112, 93, 0, 0.15);
+      border: 1px solid rgba(255, 215, 9, 0.15);
+    }
+    .toast-warning .toast-icon {
+      background: rgba(255, 215, 9, 0.15);
+    }
+    .toast-error {
+      background: rgba(159, 5, 25, 0.15);
+      border: 1px solid rgba(255, 113, 108, 0.15);
+    }
+    .toast-error .toast-icon {
+      background: rgba(255, 113, 108, 0.15);
+    }
+    .toast-msg {
+      font-size: 0.875rem;
+      font-weight: 500;
+    }
+
+    /* ==================== FOOTER ==================== */
+    .footer {
+      text-align: center;
+      padding: 48px 0 0;
+      border-top: 1px solid rgba(69, 72, 79, 0.1);
+    }
+    .footer p {
+      color: var(--on-surface-variant);
+      font-size: 0.75rem;
+      letter-spacing: 0.04em;
+    }
+    .footer .logo-text {
+      font-family: var(--font-display);
+      font-weight: 700;
+      font-size: 1rem;
+      background: linear-gradient(135deg, var(--primary), var(--secondary));
+      background-clip: text;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 8px;
+    }
+
+    /* ==================== RESPONSIVE ==================== */
+    @media (max-width: 768px) {
+      .page { padding: 24px 16px 64px; }
+      .hero { padding: 48px 0 40px; }
+      .tier-grid { grid-template-columns: 1fr; }
+      .stats-grid { grid-template-columns: repeat(2, 1fr); }
+      .dashboard-inner, .progress-panel, .waveform-panel, .type-panel { padding: 20px; }
+      .type-row { flex-direction: column; gap: 4px; }
+      .type-token { width: auto; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Cosmic background effects -->
+  <div class="cosmos"></div>
+  <div class="stars" id="stars"></div>
+
+  <main class="page">
+
+    <!-- ===== HERO ===== -->
+    <header class="hero">
+      <div class="hero-badge">✦ The Cinematic Astral</div>
+      <h1>Mirror App</h1>
+      <p>An immersive, high-fidelity cinematic experience. Floating HUD elements suspended in a boundless 3D space.</p>
+      <div class="hero-actions">
+        <button class="btn btn-primary">Get Started</button>
+        <button class="btn btn-secondary">Explore Levels</button>
+      </div>
+    </header>
+
+    <!-- ===== TIER CARDS ===== -->
+    <section>
+      <p class="section-label">Progression Tiers</p>
+      <h2 class="section-title">Choose Your Path</h2>
+      <div class="tier-grid">
+        <div class="tier-card tier-beginner">
+          <div class="tier-icon">☀</div>
+          <h3 class="tier-name">Beginner</h3>
+          <p class="tier-desc">Explore the fundamentals with guided cinematic lessons. Build your foundation in an immersive environment.</p>
+          <p class="tier-meta">12 MODULES • 4H 30M</p>
+        </div>
+        <div class="tier-card tier-intermediate">
+          <div class="tier-icon">◈</div>
+          <h3 class="tier-name">Intermediate</h3>
+          <p class="tier-desc">Dive deeper with advanced techniques and real-world projects. Precision meets creativity.</p>
+          <p class="tier-meta">18 MODULES • 8H 15M</p>
+        </div>
+        <div class="tier-card tier-advanced">
+          <div class="tier-icon">⬡</div>
+          <h3 class="tier-name">Advanced</h3>
+          <p class="tier-desc">Master high-energy production workflows. Push boundaries and craft professional-grade output.</p>
+          <p class="tier-meta">24 MODULES • 12H 45M</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== STATS ===== -->
+    <section class="stats-section">
+      <p class="section-label">Performance</p>
+      <h2 class="section-title">At a Glance</h2>
+      <div class="stats-grid">
+        <div class="stat-card glass">
+          <div class="stat-value cyan">2,847</div>
+          <div class="stat-label">Active Sessions</div>
+        </div>
+        <div class="stat-card glass">
+          <div class="stat-value gold">94.2%</div>
+          <div class="stat-label">Completion Rate</div>
+        </div>
+        <div class="stat-card glass">
+          <div class="stat-value red">1,203</div>
+          <div class="stat-label">Achievements</div>
+        </div>
+        <div class="stat-card glass">
+          <div class="stat-value white">4.9★</div>
+          <div class="stat-label">User Rating</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== DASHBOARD ===== -->
+    <section class="dashboard">
+      <div class="dashboard-inner glass">
+        <div class="dash-header">
+          <h3 class="dash-title">Recent Activity</h3>
+          <div class="dash-tabs">
+            <button class="dash-tab active">All</button>
+            <button class="dash-tab">Lessons</button>
+            <button class="dash-tab">Projects</button>
+          </div>
+        </div>
+        <ul class="activity-list">
+          <li class="activity-item">
+            <span class="activity-dot cyan"></span>
+            <div class="activity-info">
+              <div class="activity-title">Completed Module 7 — Advanced Composition</div>
+              <div class="activity-time">2 hours ago</div>
+            </div>
+            <div class="activity-value" style="color: var(--primary)">+120 XP</div>
+          </li>
+          <li class="activity-item">
+            <span class="activity-dot gold"></span>
+            <div class="activity-info">
+              <div class="activity-title">Unlocked "Golden Frame" Achievement</div>
+              <div class="activity-time">5 hours ago</div>
+            </div>
+            <div class="activity-value" style="color: var(--secondary)">★ Rare</div>
+          </li>
+          <li class="activity-item">
+            <span class="activity-dot red"></span>
+            <div class="activity-info">
+              <div class="activity-title">Challenge Mode — Speed Edit Sprint</div>
+              <div class="activity-time">1 day ago</div>
+            </div>
+            <div class="activity-value" style="color: var(--tertiary)">Top 5%</div>
+          </li>
+          <li class="activity-item">
+            <span class="activity-dot cyan"></span>
+            <div class="activity-info">
+              <div class="activity-title">Started Project — "Neon Horizons"</div>
+              <div class="activity-time">2 days ago</div>
+            </div>
+            <div class="activity-value" style="color: var(--on-surface-variant)">In Progress</div>
+          </li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- ===== PROGRESS ===== -->
+    <section class="progress-section">
+      <div class="progress-panel glass">
+        <div class="progress-header">
+          <h3 class="progress-title">Journey Progress</h3>
+          <div class="progress-pct">68%</div>
+        </div>
+        <div class="progress-track">
+          <div class="progress-fill"></div>
+        </div>
+        <div class="milestone-row">
+          <div class="milestone done">
+            <div class="milestone-label">ONBOARDING</div>
+          </div>
+          <div class="milestone done">
+            <div class="milestone-label">FOUNDATIONS</div>
+          </div>
+          <div class="milestone current">
+            <div class="milestone-label">INTERMEDIATE</div>
+          </div>
+          <div class="milestone upcoming">
+            <div class="milestone-label">ADVANCED</div>
+          </div>
+          <div class="milestone upcoming">
+            <div class="milestone-label">MASTERY</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== AUDIO WAVEFORM ===== -->
+    <section class="waveform-section">
+      <p class="section-label">Now Playing</p>
+      <h2 class="section-title">Audio Visualizer</h2>
+      <div class="waveform-panel glass">
+        <div class="waveform-header">
+          <div class="waveform-title">Cinematic Ambience — Deep Focus</div>
+          <div class="waveform-time">02:34 / 05:12</div>
+        </div>
+        <div class="waveform" id="waveform"></div>
+        <div class="waveform-controls">
+          <button class="play-btn">▶</button>
+          <div class="now-playing">
+            Cinematic Ambience
+            <br /><span>Deep Focus Collection</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== COLOR SWATCHES ===== -->
+    <section class="swatches-section">
+      <p class="section-label">Design Tokens</p>
+      <h2 class="section-title">Color Palette</h2>
+      <div class="swatches-grid">
+        <div class="swatch">
+          <div class="swatch-color" style="background: #81ecff"></div>
+          <div class="swatch-info"><div class="swatch-name">Primary</div><div class="swatch-hex">#81ECFF</div></div>
+        </div>
+        <div class="swatch">
+          <div class="swatch-color" style="background: #00d4ec"></div>
+          <div class="swatch-info"><div class="swatch-name">Primary Dim</div><div class="swatch-hex">#00D4EC</div></div>
+        </div>
+        <div class="swatch">
+          <div class="swatch-color" style="background: #ffd709"></div>
+          <div class="swatch-info"><div class="swatch-name">Secondary</div><div class="swatch-hex">#FFD709</div></div>
+        </div>
+        <div class="swatch">
+          <div class="swatch-color" style="background: #efc900"></div>
+          <div class="swatch-info"><div class="swatch-name">Sec. Dim</div><div class="swatch-hex">#EFC900</div></div>
+        </div>
+        <div class="swatch">
+          <div class="swatch-color" style="background: #ff7350"></div>
+          <div class="swatch-info"><div class="swatch-name">Tertiary</div><div class="swatch-hex">#FF7350</div></div>
+        </div>
+        <div class="swatch">
+          <div class="swatch-color" style="background: #dc3300"></div>
+          <div class="swatch-info"><div class="swatch-name">Tert. Dim</div><div class="swatch-hex">#DC3300</div></div>
+        </div>
+        <div class="swatch">
+          <div class="swatch-color" style="background: #0b0e14"></div>
+          <div class="swatch-info"><div class="swatch-name">Surface</div><div class="swatch-hex">#0B0E14</div></div>
+        </div>
+        <div class="swatch">
+          <div class="swatch-color" style="background: #22262f"></div>
+          <div class="swatch-info"><div class="swatch-name">Variant</div><div class="swatch-hex">#22262F</div></div>
+        </div>
+        <div class="swatch">
+          <div class="swatch-color" style="background: #ff716c"></div>
+          <div class="swatch-info"><div class="swatch-name">Error</div><div class="swatch-hex">#FF716C</div></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== TYPOGRAPHY ===== -->
+    <section class="type-section">
+      <p class="section-label">Typography</p>
+      <h2 class="section-title">Type Scale</h2>
+      <div class="type-panel glass">
+        <div class="type-row">
+          <span class="type-token">display-lg</span>
+          <span class="type-sample" style="font-size: 3rem; font-weight: 700; line-height: 1.1">The Astral</span>
+        </div>
+        <div class="type-row">
+          <span class="type-token">headline-lg</span>
+          <span class="type-sample" style="font-size: 2rem; font-weight: 700; line-height: 1.25">Cinematic Depth</span>
+        </div>
+        <div class="type-row">
+          <span class="type-token">headline-sm</span>
+          <span class="type-sample" style="font-size: 1.5rem; font-weight: 600; line-height: 1.35">Neon Typography</span>
+        </div>
+        <div class="type-row">
+          <span class="type-token">title-md</span>
+          <span class="type-sample" style="font-size: 1rem; font-weight: 600">Component Titles</span>
+        </div>
+        <div class="type-row">
+          <span class="type-token">body-lg</span>
+          <span class="type-sample body-font" style="font-size: 1rem; line-height: 1.6; color: var(--on-surface-variant)">Plus Jakarta Sans for body copy. Clean, geometric, and highly legible during extended reading sessions.</span>
+        </div>
+        <div class="type-row">
+          <span class="type-token">label-md</span>
+          <span class="type-sample body-font" style="font-size: 0.75rem; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: var(--on-surface-variant)">HUD METADATA LABEL</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== BUTTONS SHOWCASE ===== -->
+    <section class="toast-demo">
+      <p class="section-label">Components</p>
+      <h2 class="section-title">Buttons & Notifications</h2>
+      <div style="display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 24px">
+        <button class="btn btn-primary">Primary CTA</button>
+        <button class="btn btn-secondary">Glass Button</button>
+        <button class="btn btn-gold">Gold Action</button>
+        <button class="btn btn-secondary btn-sm">Small</button>
+      </div>
+      <div class="toast toast-success">
+        <div class="toast-icon">✓</div>
+        <div class="toast-msg">Module completed successfully. +120 XP earned.</div>
+      </div>
+      <div class="toast toast-warning">
+        <div class="toast-icon">⚠</div>
+        <div class="toast-msg">Unlock at 60% — keep progressing to access this tier.</div>
+      </div>
+      <div class="toast toast-error">
+        <div class="toast-icon">✕</div>
+        <div class="toast-msg">Connection lost. Retrying in 5 seconds...</div>
+      </div>
+    </section>
+
+    <!-- ===== FOOTER ===== -->
+    <footer class="footer">
+      <div class="logo-text">MIRROR</div>
+      <p>Nebula Cinematic Design System • The Cinematic Astral</p>
+    </footer>
+
+  </main>
+
+  <script>
+    // Generate stars
+    const starsEl = document.getElementById('stars');
+    for (let i = 0; i < 80; i++) {
+      const star = document.createElement('div');
+      star.className = 'star';
+      star.style.left = Math.random() * 100 + '%';
+      star.style.top = Math.random() * 100 + '%';
+      star.style.setProperty('--dur', (2 + Math.random() * 4) + 's');
+      star.style.animationDelay = Math.random() * 3 + 's';
+      if (Math.random() > 0.7) {
+        star.style.width = '3px';
+        star.style.height = '3px';
+      }
+      starsEl.appendChild(star);
+    }
+
+    // Generate waveform bars
+    const waveformEl = document.getElementById('waveform');
+    const barCount = 64;
+    const activeRatio = 0.48; // ~48% played
+    for (let i = 0; i < barCount; i++) {
+      const bar = document.createElement('div');
+      bar.className = 'waveform-bar ' + (i / barCount < activeRatio ? 'active' : 'inactive');
+      const h = 10 + Math.random() * 70;
+      bar.style.height = h + '%';
+      waveformEl.appendChild(bar);
+    }
+  </script>
+
+</body>
+</html>
