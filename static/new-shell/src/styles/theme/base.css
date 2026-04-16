@@ -1,0 +1,65 @@
+* {
+  box-sizing: border-box;
+}
+
+html {
+  min-height: 100%;
+  background: var(--ns-color-page);
+  color: var(--ns-color-ink);
+  font-family: var(--ns-font-sans);
+}
+
+body {
+  min-height: 100vh;
+  margin: 0;
+  background: var(--ns-color-page);
+  color: var(--ns-color-ink);
+  font-size: var(--ns-font-size-base);
+  line-height: var(--ns-line-height-body);
+  letter-spacing: 0;
+}
+
+a {
+  color: inherit;
+}
+
+button,
+input {
+  font: inherit;
+  letter-spacing: 0;
+}
+
+h1,
+h2,
+h3,
+p {
+  margin: 0;
+}
+
+h1,
+h2,
+h3 {
+  line-height: var(--ns-line-height-tight);
+}
+
+h2 {
+  font-size: var(--ns-font-size-2xl);
+}
+
+h3 {
+  font-size: var(--ns-font-size-lg);
+}
+
+ul {
+  margin: var(--ns-space-3) 0 0;
+  padding-left: var(--ns-space-5);
+}
+
+li + li {
+  margin-top: var(--ns-space-2);
+}
+
+:focus-visible {
+  outline: 3px solid var(--ns-color-focus);
+  outline-offset: 3px;
+}
