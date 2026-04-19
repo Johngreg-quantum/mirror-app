@@ -1,4 +1,5 @@
 import { getAnalyzeAudioExtension, submitLegacyAnalyze } from '../../../lib/api/analyze.js';
+import { trackEvent } from '../../../lib/observability.js';
 
 function createSnapshot(overrides = {}) {
   return {
@@ -161,6 +162,12 @@ export function createAnalyzeStore({
     abortActiveRequest();
     activeAbortController = new AbortController();
 
+    trackEvent('analyze_submitted', {
+      sceneId,
+      audioBytes: submissionBlob.size,
+      audioType: submissionBlob.type || '',
+    });
+
     publish({
       ...snapshot,
       status: 'submitting',
@@ -186,6 +193,13 @@ export function createAnalyzeStore({
       }
 
       activeAbortController = null;
+      trackEvent('analyze_success', {
+        sceneId,
+        score: Number(result?.sync_score || 0),
+        pointsEarned: Number(result?.points_earned || 0),
+        isDaily: Boolean(result?.is_daily),
+        isNewPersonalBest: Boolean(result?.is_new_pb),
+      });
       publish(createSnapshot({
         status: 'success',
         disabledCode: '',
@@ -209,6 +223,12 @@ export function createAnalyzeStore({
       }
 
       activeAbortController = null;
+      trackEvent('analyze_failure', {
+        sceneId,
+        status: error?.status || 0,
+        authRequired: Boolean(error?.authRequired),
+        rateLimited: Boolean(error?.rateLimited),
+      });
       publish(createSnapshot({
         status: 'error',
         disabledCode: '',

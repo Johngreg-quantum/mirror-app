@@ -1,4 +1,5 @@
 import { ApiError, clearLegacyAuthToken, storeLegacyAuthToken } from './http.js';
+import { logApiFailure } from '../observability.js';
 
 function getErrorMessage(data, fallback) {
   if (typeof data?.detail === 'string') {
@@ -31,10 +32,18 @@ async function postLegacyAuth(path, payload, fallbackError) {
   }
 
   if (!response.ok) {
-    throw new ApiError(getErrorMessage(data, fallbackError), {
+    const error = new ApiError(getErrorMessage(data, fallbackError), {
       status: response.status,
       authRequired: response.status === 401,
+      rateLimited: response.status === 429,
     });
+
+    logApiFailure(error, {
+      surface: 'auth',
+      path,
+      method: 'POST',
+    });
+    throw error;
   }
 
   if (!data?.access_token) {

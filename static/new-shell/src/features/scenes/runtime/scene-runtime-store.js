@@ -1,6 +1,7 @@
 import { createAudioPlayback } from './audio-playback.js';
 import { startMediaRecording } from './media-recorder.js';
 import { createRuntimeTimer } from './runtime-timer.js';
+import { logFrontendError, trackEvent } from '../../../lib/observability.js';
 
 function createSnapshot(overrides = {}) {
   return {
@@ -83,9 +84,16 @@ export function createSceneRuntimeStore({ canRecord = false, disabledReason = ''
       }
 
       recorder = activeRecorder;
+      trackEvent('recording_started', {
+        status: snapshot.status,
+      });
     } catch (error) {
       timer.stop();
       startRequest = null;
+      logFrontendError(error, {
+        phase: 'recording-start',
+        surface: 'scene-runtime',
+      });
       setSnapshot({
         status: 'error',
         error,
@@ -124,7 +132,16 @@ export function createSceneRuntimeStore({ canRecord = false, disabledReason = ''
         elapsedMs: durationMs,
         error: null,
       });
+      trackEvent('recording_stopped', {
+        durationMs,
+        audioBytes: audioBlob.size,
+        audioType: audioBlob.type || '',
+      });
     } catch (error) {
+      logFrontendError(error, {
+        phase: 'recording-stop',
+        surface: 'scene-runtime',
+      });
       setSnapshot({
         status: 'error',
         error,

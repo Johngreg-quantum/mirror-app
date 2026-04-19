@@ -9,6 +9,7 @@ import {
   resetPostScoreState,
 } from './state/app-state.js';
 import { createSessionStore } from './state/session-store.js';
+import { initGlobalErrorCapture } from './lib/observability.js';
 
 export function createAppShell({ root }) {
   const appState = createInitialAppState();
@@ -32,6 +33,15 @@ export function createAppShell({ root }) {
   appState.session = sessionStore.getSnapshot();
   ensureReadCacheState(appState);
   ensureChallengeState(appState);
+
+  initGlobalErrorCapture({
+    getContext: () => ({
+      routeId: activeRouteId,
+      path: window.location.pathname,
+      hash: window.location.hash,
+      sessionStatus: appState.session?.status || 'unknown',
+    }),
+  });
 
   root.replaceChildren(layout.root);
   const appActions = {

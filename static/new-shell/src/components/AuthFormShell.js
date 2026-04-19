@@ -1,5 +1,6 @@
 import { h } from '../lib/helpers/dom.js';
 import { buttonShell, fieldShell, statusPill } from './primitives.js';
+import { getFailureKind, trackEvent } from '../lib/observability.js';
 
 function setMessage(messageEl, message, type = 'error') {
   messageEl.textContent = message;
@@ -55,6 +56,10 @@ function renderLoginForm({ actions, redirectPath }) {
         setMessage(messageEl, '');
 
         if (!email || !password) {
+          trackEvent('auth_failure', {
+            action: 'login',
+            reason: 'validation',
+          });
           setMessage(messageEl, 'Email and password are required.');
           return;
         }
@@ -63,10 +68,19 @@ function renderLoginForm({ actions, redirectPath }) {
 
         try {
           await getSessionAction(actions, 'loginWithLegacy')({ email, password });
+          trackEvent('auth_success', {
+            action: 'login',
+            redirectPath: redirectPath || '',
+          });
           setMessage(messageEl, 'Signed in and session refreshed.', 'success');
           form.reset();
           redirectAfterAuth(actions, redirectPath);
         } catch (error) {
+          trackEvent('auth_failure', {
+            action: 'login',
+            status: error?.status || 0,
+            failureKind: getFailureKind(error),
+          });
           setMessage(messageEl, error.message || 'Login failed.');
         } finally {
           setSubmitting(submitButton, 'Signing in...', false);
@@ -122,11 +136,19 @@ function renderRegisterForm({ actions, redirectPath }) {
         setMessage(messageEl, '');
 
         if (!username || !email || !password || !confirmPassword) {
+          trackEvent('auth_failure', {
+            action: 'register',
+            reason: 'validation',
+          });
           setMessage(messageEl, 'Username, email, password, and confirmation are required.');
           return;
         }
 
         if (password !== confirmPassword) {
+          trackEvent('auth_failure', {
+            action: 'register',
+            reason: 'password-mismatch',
+          });
           setMessage(messageEl, 'Passwords do not match.');
           return;
         }
@@ -135,10 +157,19 @@ function renderRegisterForm({ actions, redirectPath }) {
 
         try {
           await getSessionAction(actions, 'registerWithLegacy')({ username, email, password });
+          trackEvent('auth_success', {
+            action: 'register',
+            redirectPath: redirectPath || '',
+          });
           setMessage(messageEl, 'Account created and session refreshed.', 'success');
           form.reset();
           redirectAfterAuth(actions, redirectPath);
         } catch (error) {
+          trackEvent('auth_failure', {
+            action: 'register',
+            status: error?.status || 0,
+            failureKind: getFailureKind(error),
+          });
           setMessage(messageEl, error.message || 'Registration failed.');
         } finally {
           setSubmitting(submitButton, 'Creating account...', false);

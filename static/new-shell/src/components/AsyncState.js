@@ -1,5 +1,6 @@
 import { h } from '../lib/helpers/dom.js';
 import { card, statusPill } from './primitives.js';
+import { logFrontendError } from '../lib/observability.js';
 
 export function renderLoadingState(label = 'Loading Mirror') {
   return card({
@@ -38,4 +39,16 @@ export function renderErrorState(error, { title = 'Live data unavailable' } = {}
       isRateLimited && error?.retryAfterMs ? statusPill(`Retry after ~${Math.ceil(error.retryAfterMs / 1000)}s`) : null,
     ]),
   ]);
+}
+
+export function renderLoggedErrorState(error, { title = 'Live data unavailable', surface = 'unknown' } = {}) {
+  logFrontendError(error, {
+    phase: 'surface-error',
+    surface,
+    path: window.location.pathname,
+    search: window.location.search,
+    hash: window.location.hash,
+  });
+
+  return renderErrorState(error, { title });
 }

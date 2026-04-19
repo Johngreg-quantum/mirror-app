@@ -1,4 +1,4 @@
-import { renderErrorState, renderLoadingState } from '../../components/AsyncState.js';
+import { renderLoggedErrorState, renderLoadingState } from '../../components/AsyncState.js';
 import { renderLevelSummaryCard } from '../../components/LevelSummaryCard.js';
 import { renderProgressStatCard } from '../../components/ProgressStatCard.js';
 import { card, statusPill } from '../../components/primitives.js';
@@ -15,7 +15,10 @@ export function renderLevelPanelPage() {
       page.replaceChildren(renderLevelSurface(viewModel));
     })
     .catch((error) => {
-      page.replaceChildren(renderErrorState(error, { title: 'Levels could not load' }));
+      page.replaceChildren(renderLoggedErrorState(error, {
+        title: 'Levels could not load',
+        surface: 'levels',
+      }));
     });
 
   return page;

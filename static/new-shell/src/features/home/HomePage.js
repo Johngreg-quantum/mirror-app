@@ -2,7 +2,7 @@ import { renderLeaderboardPanel } from '../../components/LeaderboardPanel.js';
 import { renderProgressStatCard } from '../../components/ProgressStatCard.js';
 import { renderSceneCard } from '../../components/SceneCard.js';
 import { renderStreakCard } from '../../components/StreakCard.js';
-import { renderErrorState, renderLoadingState } from '../../components/AsyncState.js';
+import { renderLoggedErrorState, renderLoadingState } from '../../components/AsyncState.js';
 import { buttonLink, card, statusPill } from '../../components/primitives.js';
 import { h } from '../../lib/helpers/dom.js';
 import { getFreshPostScoreReadCache } from '../../lib/api/post-score-refresh.js';
@@ -20,7 +20,10 @@ export function renderHomePage({ appState, actions }) {
       page.replaceChildren(renderHomeSurface({ appState, ...viewModel }));
     })
     .catch((error) => {
-      page.replaceChildren(renderErrorState(error, { title: 'Scene browser could not load' }));
+      page.replaceChildren(renderLoggedErrorState(error, {
+        title: 'Scene browser could not load',
+        surface: 'home',
+      }));
     });
 
   return page;

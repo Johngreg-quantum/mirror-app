@@ -1,4 +1,4 @@
-import { renderErrorState, renderLoadingState } from '../../components/AsyncState.js';
+import { renderErrorState, renderLoggedErrorState, renderLoadingState } from '../../components/AsyncState.js';
 import { renderLeaderboardPanel } from '../../components/LeaderboardPanel.js';
 import { createSceneDetailPanel, getRuntimeDisabledReason } from '../../components/SceneDetailPanel.js';
 import { renderScorePanelShell } from '../../components/ScorePanelShell.js';
@@ -19,6 +19,7 @@ import { adaptProfile } from '../../lib/adapters/progress-adapter.js';
 import { adaptSceneConfig, findSceneById } from '../../lib/adapters/scene-adapter.js';
 import { createAppHref } from '../../lib/routing/navigation.js';
 import { getSceneBackHref, getSceneEntryLabel, sceneHref } from '../../lib/routing/scene-routes.js';
+import { trackEvent } from '../../lib/observability.js';
 import {
   getStoredChallengeEntry,
   getStoredChallengeResult,
@@ -89,7 +90,10 @@ export function renderSceneDetailPage({ appState, params, query = {}, onCleanup,
       }));
     })
     .catch((error) => {
-      page.replaceChildren(renderErrorState(error, { title: 'Scene detail could not load' }));
+      page.replaceChildren(renderLoggedErrorState(error, {
+        title: 'Scene detail could not load',
+        surface: 'scene-detail',
+      }));
     });
 
   return page;
@@ -491,6 +495,13 @@ function renderSceneDetailSurface({
     ) {
       lastChallengeAnalyzeResult = analyzeSnapshot.result;
       currentViewModel = withChallengeResult(currentViewModel, appState, analyzeSnapshot.result);
+      trackEvent('challenge_completed', {
+        challengeId: currentViewModel.challengeEntry.id,
+        sceneId: currentViewModel.scene.id,
+        outcome: currentViewModel.challengeResult?.outcome || '',
+        yourScore: currentViewModel.challengeResult?.yourScore || '',
+        opponentScore: currentViewModel.challengeResult?.opponentScore || '',
+      });
       renderChallengeSlot();
     }
 

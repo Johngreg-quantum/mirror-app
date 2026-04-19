@@ -1,4 +1,4 @@
-import { renderErrorState, renderLoadingState } from '../../components/AsyncState.js';
+import { renderLoggedErrorState, renderLoadingState } from '../../components/AsyncState.js';
 import { renderDailyChallengeCard } from '../../components/DailyChallengeCard.js';
 import { renderSceneCard } from '../../components/SceneCard.js';
 import { renderSessionPrompt } from '../../components/SessionState.js';
@@ -19,7 +19,10 @@ export function renderDailyChallengePage({ appState }) {
       page.replaceChildren(renderDailySurface(viewModel));
     })
     .catch((error) => {
-      page.replaceChildren(renderErrorState(error, { title: 'Daily challenge could not load' }));
+      page.replaceChildren(renderLoggedErrorState(error, {
+        title: 'Daily challenge could not load',
+        surface: 'daily',
+      }));
     });
 
   return page;

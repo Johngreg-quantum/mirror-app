@@ -1,3 +1,5 @@
+import { logApiFailure } from '../observability.js';
+
 export class ApiError extends Error {
   constructor(message, {
     status = 0,
@@ -98,19 +100,33 @@ function createResponseError(response, { attempts = 1 } = {}) {
   const retryAfterMs = parseRetryAfterMs(response);
 
   if (response.status === 429) {
-    throw new ApiError('The existing API is rate limiting read requests. Please wait a moment, then try again.', {
+    const error = new ApiError('Mirror is receiving too many requests. Please wait a moment, then try again.', {
       status: response.status,
       rateLimited: true,
       retryAfterMs,
       attempts,
     });
+
+    logApiFailure(error, {
+      surface: 'api-read',
+      method: 'GET',
+      path: response.url || '',
+    });
+    throw error;
   }
 
-  throw new ApiError(`Request failed with status ${response.status}.`, {
+  const error = new ApiError(`Request failed with status ${response.status}.`, {
     status: response.status,
     authRequired: response.status === 401,
     attempts,
   });
+
+  logApiFailure(error, {
+    surface: 'api-read',
+    method: 'GET',
+    path: response.url || '',
+  });
+  throw error;
 }
 
 export async function getJson(path, { auth = false } = {}) {
@@ -120,10 +136,18 @@ export async function getJson(path, { auth = false } = {}) {
     const token = getReadOnlyAuthToken();
 
     if (!token) {
-      throw new ApiError('Sign in to view personalized data here.', {
+      const error = new ApiError('Sign in to view personalized data here.', {
         status: 401,
         authRequired: true,
       });
+
+      logApiFailure(error, {
+        surface: 'api-read',
+        method: 'GET',
+        path,
+        reason: 'missing-token',
+      });
+      throw error;
     }
 
     headers.Authorization = `Bearer ${token}`;

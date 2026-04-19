@@ -1,4 +1,4 @@
-import { renderErrorState, renderLoadingState } from '../../components/AsyncState.js';
+import { renderLoggedErrorState, renderLoadingState } from '../../components/AsyncState.js';
 import { renderProgressStatCard } from '../../components/ProgressStatCard.js';
 import { card, statusPill } from '../../components/primitives.js';
 import { h } from '../../lib/helpers/dom.js';
@@ -21,7 +21,10 @@ export function renderProgressDashboardPage({ appState }) {
       page.replaceChildren(renderProgressSurface(viewModel));
     })
     .catch((error) => {
-      page.replaceChildren(renderErrorState(error, { title: 'Progress dashboard needs sign-in' }));
+      page.replaceChildren(renderLoggedErrorState(error, {
+        title: 'Progress dashboard needs sign-in',
+        surface: 'progress',
+      }));
     });
 
   return page;

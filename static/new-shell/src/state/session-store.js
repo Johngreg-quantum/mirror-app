@@ -6,6 +6,7 @@ import {
   registerWithLegacyAuth,
 } from '../lib/api/auth.js';
 import { adaptSessionUser } from '../lib/adapters/session-adapter.js';
+import { getFailureKind, trackEvent } from '../lib/observability.js';
 
 const SESSION_REFRESH_DEDUPE_MS = 750;
 
@@ -60,6 +61,12 @@ export function createSessionStore() {
       }
 
       const authRequired = Boolean(error?.authRequired);
+
+      trackEvent('auth_failure', {
+        action: 'session-refresh',
+        status: error?.status || 0,
+        failureKind: getFailureKind(error),
+      });
 
       if (authRequired) {
         logoutFromLegacyAuth();

@@ -1,4 +1,4 @@
-import { renderErrorState, renderLoadingState } from '../../components/AsyncState.js';
+import { renderLoggedErrorState, renderLoadingState } from '../../components/AsyncState.js';
 import { renderChallengeResultCard } from '../../components/ChallengeResultCard.js';
 import { renderSessionPrompt } from '../../components/SessionState.js';
 import { buttonLink, card, statusPill } from '../../components/primitives.js';
@@ -7,6 +7,7 @@ import { fetchChallengeEntry } from '../../lib/api/challenge.js';
 import { adaptChallengeEntry, adaptChallengeResult } from '../../lib/adapters/challenge-adapter.js';
 import { createAppHref } from '../../lib/routing/navigation.js';
 import { scenePath } from '../../lib/routing/scene-routes.js';
+import { trackEvent } from '../../lib/observability.js';
 import { getStoredChallengeEntry, getStoredChallengeResult, storeChallengeEntry } from '../../state/app-state.js';
 
 function buildChallengeScenePath(challengeEntry) {
@@ -42,10 +43,11 @@ async function loadChallengeViewModel(appState, challengeId) {
   };
 }
 
-function renderChallengeRouteError(challengeId) {
+function renderChallengeRouteError(challengeId, error = null) {
   return h('article', { className: 'ns-page' }, [
-    renderErrorState(new Error(`Challenge ${challengeId} could not load right now.`), {
+    renderLoggedErrorState(error || new Error(`Challenge ${challengeId} could not load right now.`), {
       title: 'Challenge could not load',
+      surface: 'challenge',
     }),
     card({
       title: 'Rollback',
@@ -127,6 +129,22 @@ export function renderChallengePage({ appState, params }) {
       const isAuthenticated = appState.session.status === 'authenticated';
       const challengeSceneHref = createAppHref(buildChallengeScenePath(challengeEntry));
 
+      trackEvent('challenge_opened', {
+        challengeId: challengeEntry.id,
+        sceneId: challengeEntry.sceneId,
+        hasResult: Boolean(challengeResult),
+      });
+
+      if (challengeResult) {
+        trackEvent('challenge_completed', {
+          challengeId: challengeEntry.id,
+          sceneId: challengeEntry.sceneId,
+          outcome: challengeResult.outcome,
+          yourScore: challengeResult.yourScore,
+          opponentScore: challengeResult.opponentScore,
+        });
+      }
+
       page.replaceChildren(h('article', { className: 'ns-page' }, [
         h('header', { className: 'ns-page__header' }, [
           h('div', {}, [
@@ -174,8 +192,8 @@ export function renderChallengePage({ appState, params }) {
         }),
       ]));
     })
-    .catch(() => {
-      page.replaceChildren(renderChallengeRouteError(challengeId));
+    .catch((error) => {
+      page.replaceChildren(renderChallengeRouteError(challengeId, error));
     });
 
   return page;

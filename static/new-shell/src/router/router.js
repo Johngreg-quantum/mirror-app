@@ -4,6 +4,7 @@ import { h, mount } from '../lib/helpers/dom.js';
 import { getCurrentAppPath, getRoutingMode, navigateToAppPath } from '../lib/routing/navigation.js';
 import { getRouteFallbackConfig, isRouteEnabled, ROUTE_PROMOTION_STATUS } from './route-readiness.js';
 import { renderSessionPrompt } from '../components/SessionState.js';
+import { logFrontendError, trackEvent } from '../lib/observability.js';
 
 function normalizePath(path) {
   const cleanPath = path || '/';
@@ -72,13 +73,19 @@ function findMatchedRoute(routes, currentPath) {
 export function createRouter({ routes, outlet, appState, actions = {}, onRouteChange }) {
   let renderVersion = 0;
   let cleanupCallbacks = [];
+  let lastViewedRouteKey = '';
+  let lastLegacyFallbackKey = '';
   const routingMode = getRoutingMode();
 
   function runCleanup() {
     cleanupCallbacks.forEach((cleanup) => {
       try {
         cleanup();
-      } catch {
+      } catch (error) {
+        logFrontendError(error, {
+          phase: 'route-cleanup',
+          surface: 'router',
+        });
         // Route cleanup should not block the next render.
       }
     });
@@ -154,7 +161,11 @@ export function createRouter({ routes, outlet, appState, actions = {}, onRouteCh
       if (currentRenderVersion !== renderVersion) {
         try {
           cleanup();
-        } catch {
+        } catch (error) {
+          logFrontendError(error, {
+            phase: 'late-route-cleanup',
+            surface: 'router',
+          });
           // Late cleanup after a route change should stay isolated.
         }
         return;
@@ -162,10 +173,66 @@ export function createRouter({ routes, outlet, appState, actions = {}, onRouteCh
 
       cleanupCallbacks.push(cleanup);
     };
-    const page = blockedPage || route.render({ appState, params, path, query, actions, onCleanup });
+    let page = blockedPage;
 
-    mount(outlet, page);
+    if (!page) {
+      try {
+        page = route.render({ appState, params, path, query, actions, onCleanup });
+      } catch (error) {
+        logFrontendError(error, {
+          phase: 'route-render',
+          surface: route.id,
+          routeId: route.id,
+          path,
+        });
+        page = renderErrorState(error, {
+          title: `${route.label} could not render`,
+        });
+      }
+    }
+
+    try {
+      mount(outlet, page);
+    } catch (error) {
+      logFrontendError(error, {
+        phase: 'route-mount',
+        surface: route.id,
+        routeId: route.id,
+        path,
+      });
+      mount(outlet, renderErrorState(error, {
+        title: `${route.label} could not display`,
+      }));
+    }
+
     onRouteChange?.(route.id);
+
+    const routeViewKey = `${route.id}:${currentPath}`;
+
+    if (routeViewKey !== lastViewedRouteKey) {
+      lastViewedRouteKey = routeViewKey;
+      trackEvent('route_viewed', {
+        routeId: route.id,
+        path,
+        query,
+        params,
+        blocked: Boolean(blockedPage),
+        fallback: Boolean(fallbackPage),
+      });
+    }
+
+    if (fallbackPage) {
+      const fallbackKey = `${route.id}:${currentPath}`;
+
+      if (fallbackKey !== lastLegacyFallbackKey) {
+        lastLegacyFallbackKey = fallbackKey;
+        trackEvent('legacy_fallback_route_opened', {
+          routeId: route.id,
+          path,
+          params,
+        });
+      }
+    }
   }
 
   function handleDocumentNavigation(event) {
@@ -193,6 +260,15 @@ export function createRouter({ routes, outlet, appState, actions = {}, onRouteCh
     const url = new URL(anchor.href, window.location.origin);
 
     if (url.origin !== window.location.origin) {
+      return;
+    }
+
+    if (url.pathname === '/legacy' || url.pathname.startsWith('/legacy/')) {
+      trackEvent('legacy_fallback_route_opened', {
+        path: url.pathname,
+        search: url.search || '',
+        source: 'legacy-link',
+      });
       return;
     }
 

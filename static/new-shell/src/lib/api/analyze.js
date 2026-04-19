@@ -1,4 +1,5 @@
 import { ApiError, getReadOnlyAuthToken } from './http.js';
+import { logApiFailure } from '../observability.js';
 
 const ANALYZE_UPLOAD_LIMIT_BYTES = 10 * 1024 * 1024;
 const AUDIO_TYPE_TO_EXTENSION = [
@@ -76,10 +77,19 @@ export async function submitLegacyAnalyze({ sceneId, audioBlob, signal } = {}) {
   const token = getReadOnlyAuthToken();
 
   if (!token) {
-    throw new ApiError('Sign in before analyzing a take.', {
+    const error = new ApiError('Sign in before analyzing a take.', {
       status: 401,
       authRequired: true,
     });
+
+    logApiFailure(error, {
+      surface: 'analyze',
+      path: '/api/submit',
+      method: 'POST',
+      sceneId,
+      reason: 'missing-token',
+    });
+    throw error;
   }
 
   const extension = getAnalyzeAudioExtension(audioBlob);
@@ -103,7 +113,7 @@ export async function submitLegacyAnalyze({ sceneId, audioBlob, signal } = {}) {
       throw error;
     }
 
-    throw new ApiError('The analyze request could not reach the existing API.', {
+    throw new ApiError('The analyze request could not reach the scoring service.', {
       status: 0,
     });
   }
@@ -117,11 +127,19 @@ export async function submitLegacyAnalyze({ sceneId, audioBlob, signal } = {}) {
   }
 
   if (!response.ok) {
-    throw new ApiError(getErrorMessage(data, 'Analyze failed.'), {
+    const error = new ApiError(getErrorMessage(data, 'Analyze failed.'), {
       status: response.status,
       authRequired: response.status === 401,
       rateLimited: response.status === 429,
     });
+
+    logApiFailure(error, {
+      surface: 'analyze',
+      path: '/api/submit',
+      method: 'POST',
+      sceneId,
+    });
+    throw error;
   }
 
   return data;
