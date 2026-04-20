@@ -7,12 +7,736 @@
   <link rel="icon" href="/static/favicon.svg" type="image/svg+xml" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400;1,600&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&family=Space+Grotesk:wght@400;500;600;700&family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Playfair+Display:ital,wght@0,700;1,700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
   <!-- YouTube IFrame API — loaded early so it's ready when user opens a scene -->
   <script src="https://www.youtube.com/iframe_api"></script>
   <link rel="stylesheet" href="/static/app.css" />
+  <style>
+    /* ── DESIGN TOKENS ── */
+    :root {
+      --gold: #c8a96e;
+      --gold-light: #e8c98e;
+      --gold-dim: rgba(200,169,110,0.1);
+      --gold-border: rgba(200,169,110,0.18);
+      --surface: rgba(255,255,255,0.025);
+      --surface-border: rgba(200,169,110,0.09);
+      --text-primary: #f0ede6;
+      --text-muted: rgba(240,237,230,0.38);
+      --text-dim: rgba(240,237,230,0.25);
+    }
+
+    /* ── BASE ── */
+    body {
+      background: #060608;
+      font-family: 'DM Sans', sans-serif;
+      color: var(--text-primary);
+      margin: 0;
+    }
+
+    /* ── BACKGROUND ORBS ── */
+    .bg-orb {
+      position: fixed;
+      border-radius: 50%;
+      filter: blur(130px);
+      pointer-events: none;
+      z-index: 0;
+    }
+    .bg-orb-1 { width:600px; height:600px; background:#7a5c1e; opacity:0.22; top:-200px; left:-100px; }
+    .bg-orb-2 { width:500px; height:500px; background:#5a3e10; opacity:0.25; top:0; right:-120px; }
+    .bg-orb-3 { width:380px; height:380px; background:#3d2a08; opacity:0.3; bottom:0; left:30%; }
+
+    /* ── GRAIN OVERLAY ── */
+    .grain-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 1;
+      opacity: 0.035;
+      pointer-events: none;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 160 160' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+      background-size: 160px 160px;
+    }
+
+    /* ── CONTENT LAYER ── */
+    #authScreen { position: relative; z-index: 2; }
+
+    /* ── NAVBAR ── */
+    .site-nav {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      height: 62px;
+      padding: 0 44px;
+      display: flex;
+      align-items: center;
+      background: rgba(6,6,8,0.65);
+      backdrop-filter: blur(28px);
+      -webkit-backdrop-filter: blur(28px);
+      border-bottom: 0.5px solid rgba(200,169,110,0.1);
+      box-sizing: border-box;
+    }
+    .nav-inner {
+      width: 100%;
+      max-width: 1200px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .nav-logo {
+      font-family: 'Bebas Neue', cursive;
+      font-size: 20px;
+      letter-spacing: 0.2em;
+      color: var(--text-primary);
+      text-decoration: none;
+    }
+    .nav-logo em { color: var(--gold); font-style: normal; }
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 32px;
+    }
+    .nav-link {
+      font-size: 11px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: rgba(240,237,230,0.35);
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+    .nav-link:hover { color: var(--text-primary); }
+    .nav-btn {
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 12px;
+      color: rgba(240,237,230,0.4);
+      padding: 0;
+      transition: color 0.2s;
+    }
+    .nav-btn:hover { color: var(--text-primary); }
+    .nav-btn--cta {
+      background: var(--gold);
+      color: #080808;
+      font-size: 11px;
+      font-weight: 500;
+      padding: 9px 20px;
+      border-radius: 6px;
+      border: none;
+      transition: background 0.2s, box-shadow 0.2s;
+    }
+    .nav-btn--cta:hover {
+      background: var(--gold-light);
+      box-shadow: 0 4px 20px rgba(200,169,110,0.3);
+    }
+    .hamburger { display: none; background: none; border: none; cursor: pointer; padding: 4px; }
+    .hamburger span { display: block; width: 20px; height: 1.5px; background: var(--text-primary); margin: 4px 0; }
+
+    /* ── HERO ── */
+    .hero {
+      min-height: 88vh;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      align-items: center;
+      gap: 60px;
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 80px 44px 60px;
+      box-sizing: border-box;
+    }
+    .hero-text { display: flex; flex-direction: column; gap: 24px; }
+    .hero-grid-bg { display: none; }
+    .hero-glow, .hero-glow-2 { display: none; }
+    .hero-content { display: contents; }
+
+    /* Live badge */
+    .hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 14px 6px 10px;
+      border-radius: 100px;
+      background: rgba(200,169,110,0.1);
+      border: 0.5px solid rgba(200,169,110,0.22);
+      width: fit-content;
+    }
+    .hero-badge-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--gold);
+      animation: pulse-dot 2s ease-in-out infinite;
+      flex-shrink: 0;
+    }
+    @keyframes pulse-dot {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50%       { opacity: 0.5; transform: scale(0.8); }
+    }
+    .hero-badge-text {
+      font-size: 11px;
+      color: var(--gold);
+      letter-spacing: 0.05em;
+    }
+    /* hide old eyebrow if present */
+    .hero-eyebrow { display: none; }
+
+    /* H1 */
+    .hero-title {
+      font-family: 'Bebas Neue', cursive;
+      font-size: 96px;
+      line-height: 0.92;
+      color: var(--text-primary);
+      margin: 0;
+      letter-spacing: 0.02em;
+    }
+    .hero-title-gold { display: none; }
+    .hero-title-scene {
+      font-family: 'Playfair Display', serif;
+      font-style: italic;
+      font-size: 96px;
+      line-height: 0.92;
+      display: block;
+      background: linear-gradient(135deg, #c8a96e, #e8c98e, #c8a96e);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .hero-subtitle {
+      font-size: 14px;
+      color: rgba(240,237,230,0.4);
+      font-weight: 300;
+      max-width: 400px;
+      line-height: 1.7;
+      margin: 0;
+    }
+
+    /* Buttons */
+    .hero-btns {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .hero-btn {
+      border-radius: 8px;
+      padding: 13px 28px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      border: none;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      transition: all 0.2s;
+      line-height: 1;
+    }
+    .hero-btn--primary {
+      background: var(--gold);
+      color: #080808;
+      box-shadow: 0 6px 32px rgba(200,169,110,0.35);
+    }
+    .hero-btn--primary:hover {
+      background: var(--gold-light);
+      box-shadow: 0 8px 40px rgba(200,169,110,0.5);
+      transform: translateY(-1px);
+    }
+    .hero-btn--ghost {
+      background: rgba(255,255,255,0.04);
+      color: var(--text-primary);
+      border: 0.5px solid rgba(240,237,230,0.1);
+    }
+    .hero-btn--ghost:hover { background: rgba(255,255,255,0.07); }
+
+    /* Social proof */
+    .social-proof {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .proof-avatars { display: flex; }
+    .proof-av {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      border: 1.5px solid #060608;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      font-weight: 500;
+      color: #080808;
+      margin-left: -6px;
+    }
+    .proof-av:first-child { margin-left: 0; }
+    .proof-text { font-size: 12px; color: var(--text-muted); }
+    .proof-text strong { color: var(--text-primary); }
+
+    /* Poster stack */
+    .hero-visual {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      position: relative;
+      height: 320px;
+    }
+    /* hide old poster-fan if it renders */
+    .poster-fan { display: none; }
+    .float-card { display: none; }
+
+    .poster-stack {
+      position: relative;
+      width: 220px;
+      height: 290px;
+    }
+    .pc {
+      position: absolute;
+      width: 175px;
+      height: 255px;
+      border-radius: 12px;
+      border: 0.5px solid rgba(200,169,110,0.18);
+      box-shadow: 0 32px 72px rgba(0,0,0,0.7);
+      overflow: hidden;
+      top: 0;
+      left: 50%;
+      transform-origin: center bottom;
+    }
+    .pc::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(145deg, rgba(200,169,110,0.07) 0%, transparent 60%);
+      pointer-events: none;
+      z-index: 1;
+    }
+    .pc img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .pc-1 { transform: translateX(-65%) rotate(-7deg) translateY(22px); z-index: 1; }
+    .pc-2 { transform: translateX(-50%) rotate(-1deg); z-index: 3; }
+    .pc-3 { transform: translateX(-35%) rotate(6deg) translateY(16px); z-index: 2; }
+    .pc-score-chip {
+      position: absolute;
+      bottom: 14px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(200,169,110,0.14);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 0.5px solid rgba(200,169,110,0.32);
+      border-radius: 100px;
+      padding: 5px 12px;
+      white-space: nowrap;
+      z-index: 10;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+    }
+    .pc-score-num  { color: var(--gold); font-family: 'Bebas Neue', cursive; font-size: 15px; letter-spacing: 0.05em; }
+    .pc-score-label { color: rgba(240,237,230,0.6); }
+
+    /* ── STATS BAR ── */
+    .stats-bar {
+      border-top: 0.5px solid rgba(200,169,110,0.07);
+      border-bottom: 0.5px solid rgba(200,169,110,0.07);
+      background: rgba(200,169,110,0.025);
+    }
+    .stats-inner {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 44px;
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+    }
+    .stat-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 32px 20px;
+      gap: 6px;
+    }
+    .stat-item + .stat-item { border-left: 0.5px solid rgba(200,169,110,0.07); }
+    .stat-sep { display: none; }
+    .stat-val {
+      font-family: 'Bebas Neue', cursive;
+      font-size: 38px;
+      line-height: 1;
+      background: linear-gradient(180deg, var(--text-primary) 0%, rgba(240,237,230,0.5) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .stat-lbl {
+      font-size: 10px;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: rgba(240,237,230,0.25);
+    }
+
+    /* ── SECTION SHARED ── */
+    .section-wrap {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 44px;
+    }
+    .section-eyebrow {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.18em;
+      color: var(--gold);
+      margin: 0 0 16px;
+      font-family: 'DM Sans', sans-serif;
+      font-weight: 400;
+    }
+    .section-eyebrow::before {
+      content: '';
+      display: inline-block;
+      width: 24px;
+      height: 0.5px;
+      background: var(--gold);
+      flex-shrink: 0;
+    }
+    .section-heading {
+      font-family: 'Playfair Display', serif;
+      font-size: 38px;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin: 0 0 48px;
+      line-height: 1.15;
+    }
+
+    /* ── HOW IT WORKS ── */
+    .hiw-section { padding: 100px 0; }
+    .hiw-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+    }
+    .hiw-card {
+      background: rgba(255,255,255,0.025);
+      border: 0.5px solid rgba(200,169,110,0.09);
+      border-radius: 16px;
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      padding: 32px 28px;
+    }
+    .hiw-num {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Bebas Neue', cursive;
+      font-size: 13px;
+      letter-spacing: 0.1em;
+      color: var(--gold);
+      background: rgba(200,169,110,0.1);
+      border-radius: 100px;
+      padding: 3px 10px;
+      margin-bottom: 20px;
+    }
+    .hiw-icon { color: var(--gold); margin-bottom: 16px; }
+    .hiw-title {
+      font-family: 'Playfair Display', serif;
+      font-size: 17px;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin: 0 0 10px;
+    }
+    .hiw-desc {
+      font-size: 13px;
+      color: rgba(240,237,230,0.33);
+      font-weight: 300;
+      line-height: 1.65;
+      margin: 0;
+    }
+
+    /* ── LEVELS ── */
+    .clv-section { padding: 100px 0; }
+    .clv-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+    }
+    .clv-card {
+      background: var(--surface);
+      border: 0.5px solid var(--surface-border);
+      border-radius: 20px;
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      overflow: hidden;
+      cursor: pointer;
+      position: relative;
+      transition: transform 0.25s, box-shadow 0.25s;
+    }
+    .clv-card:hover { transform: translateY(-4px); box-shadow: 0 20px 60px rgba(0,0,0,0.5); }
+    .clv-card:nth-child(2) {
+      background: rgba(200,169,110,0.07);
+      border-color: rgba(200,169,110,0.2);
+    }
+    .clv-card:nth-child(2)::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, var(--gold), transparent);
+    }
+    /* glow blob */
+    .clv-card-bg {
+      position: absolute;
+      width: 200px; height: 200px;
+      border-radius: 50%;
+      background: var(--gold);
+      filter: blur(60px);
+      opacity: 0.08;
+      top: -60px; right: -40px;
+      pointer-events: none;
+      background-image: none !important;
+    }
+    .clv-card-overlay { display: none; }
+    .clv-card-body {
+      position: relative;
+      z-index: 1;
+      padding: 32px 28px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      min-height: 240px;
+      box-sizing: border-box;
+    }
+    .clv-badge {
+      display: inline-flex;
+      width: fit-content;
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--gold);
+      margin-bottom: 4px;
+      align-items: center;
+      gap: 5px;
+    }
+    .clv-badge::before { content: '●'; font-size: 7px; }
+    .clv-title {
+      font-family: 'Playfair Display', serif;
+      font-size: 22px;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin: 0;
+    }
+    .clv-subtitle {
+      font-size: 12px;
+      color: var(--text-muted);
+      font-weight: 300;
+      line-height: 1.6;
+      margin: 0;
+      flex: 1;
+    }
+    .clv-meta {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-top: 0.5px solid var(--gold-border);
+      padding-top: 16px;
+      margin-top: 6px;
+    }
+    .clv-count {
+      font-family: 'Bebas Neue', cursive;
+      font-size: 20px;
+      color: var(--text-primary);
+      letter-spacing: 0.05em;
+    }
+    .clv-lock {
+      font-size: 11px;
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+    .clv-cta { font-size: 11px; color: var(--gold); letter-spacing: 0.08em; }
+    .clv-pb-avg { font-size: 11px; color: var(--text-dim); }
+
+    /* ── PRICING ── */
+    .pricing-section { padding: 100px 0; }
+    .pricing-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      max-width: 660px;
+    }
+    .pricing-card {
+      background: var(--surface);
+      border: 0.5px solid var(--surface-border);
+      border-radius: 20px;
+      padding: 36px 30px;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .pricing-card--pro {
+      background: rgba(200,169,110,0.07);
+      border-color: rgba(200,169,110,0.22);
+    }
+    .pricing-card--pro::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 2px;
+      border-radius: 20px 20px 0 0;
+      background: linear-gradient(90deg, transparent, var(--gold), transparent);
+    }
+    .pricing-popular {
+      display: inline-flex;
+      width: fit-content;
+      font-size: 9px;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--gold);
+      background: rgba(200,169,110,0.12);
+      border: 0.5px solid rgba(200,169,110,0.25);
+      border-radius: 100px;
+      padding: 4px 10px;
+      font-family: 'DM Sans', sans-serif;
+    }
+    .pricing-tier {
+      font-family: 'Playfair Display', serif;
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+    .pricing-price {
+      font-family: 'Bebas Neue', cursive;
+      font-size: 52px;
+      color: var(--text-primary);
+      line-height: 1;
+      letter-spacing: 0.02em;
+    }
+    .pricing-price span {
+      font-size: 18px;
+      color: var(--text-muted);
+      font-family: 'DM Sans', sans-serif;
+      font-weight: 300;
+    }
+    .pricing-desc {
+      font-size: 13px;
+      color: var(--text-muted);
+      font-weight: 300;
+      margin: 0;
+      line-height: 1.6;
+    }
+    .pricing-features {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      flex: 1;
+    }
+    .pricing-features li {
+      font-size: 13px;
+      color: rgba(240,237,230,0.55);
+      font-weight: 300;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .pricing-features li::before {
+      content: '✓';
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 18px; height: 18px;
+      min-width: 18px;
+      border-radius: 50%;
+      background: rgba(200,169,110,0.12);
+      border: 0.5px solid rgba(200,169,110,0.25);
+      color: var(--gold);
+      font-size: 10px;
+      flex-shrink: 0;
+    }
+    .pricing-btn {
+      padding: 13px 20px;
+      border-radius: 8px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      border: 0.5px solid rgba(240,237,230,0.1);
+      background: rgba(255,255,255,0.04);
+      color: var(--text-primary);
+      transition: all 0.2s;
+    }
+    .pricing-btn:hover { background: rgba(255,255,255,0.07); }
+    .pricing-btn--gold {
+      background: var(--gold);
+      color: #080808;
+      border: none;
+      box-shadow: 0 6px 32px rgba(200,169,110,0.3);
+    }
+    .pricing-btn--gold:hover {
+      background: var(--gold-light);
+      box-shadow: 0 8px 40px rgba(200,169,110,0.45);
+    }
+
+    /* ── FOOTER ── */
+    .site-footer {
+      border-top: 0.5px solid rgba(200,169,110,0.07);
+      padding: 22px 44px;
+    }
+    .footer-inner {
+      max-width: 1200px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .footer-logo {
+      font-family: 'Bebas Neue', cursive;
+      font-size: 16px;
+      letter-spacing: 0.2em;
+      color: rgba(240,237,230,0.18);
+    }
+    .footer-logo em { font-style: normal; }
+    .footer-copy { font-size: 11px; color: rgba(240,237,230,0.18); }
+
+    /* ── FADE UP ── */
+    .fade-up {
+      opacity: 0;
+      transform: translateY(24px);
+      transition: opacity 0.6s ease, transform 0.6s ease;
+    }
+    .fade-up.visible { opacity: 1; transform: none; }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 768px) {
+      .hero {
+        grid-template-columns: 1fr;
+        padding: 48px 24px 40px;
+        gap: 40px;
+        min-height: auto;
+      }
+      .hero-title, .hero-title-scene { font-size: 64px; }
+      .hero-visual { height: 220px; }
+      .stats-inner { grid-template-columns: repeat(2, 1fr); padding: 0 24px; }
+      .hiw-grid, .clv-grid { grid-template-columns: 1fr; }
+      .pricing-grid { grid-template-columns: 1fr; max-width: 100%; }
+      .site-nav { padding: 0 24px; }
+      .section-wrap { padding: 0 24px; }
+      .site-footer { padding: 22px 24px; }
+      .nav-links { display: none; }
+      .hamburger { display: block; }
+    }
+  </style>
 </head>
 <body>
+
+<!-- Background atmosphere -->
+<div class="bg-orb bg-orb-1"></div>
+<div class="bg-orb bg-orb-2"></div>
+<div class="bg-orb bg-orb-3"></div>
+<div class="grain-overlay"></div>
 
 <!-- Custom cursor -->
 <div id="cursorDot"></div>
@@ -22,13 +746,13 @@
 ══════════════════════════════════════════════ -->
 <div id="authScreen">
 
-  <!-- ── FIXED NAV ── -->
+  <!-- ── NAVBAR ── -->
   <nav class="site-nav" id="siteNav">
     <div class="nav-inner">
       <a href="#" class="nav-logo">MIR<em>RO</em>R</a>
       <div class="nav-links" id="navLinks">
-        <a href="#howItWorks"    class="nav-link">How It Works</a>
-        <a href="#levelsSection" class="nav-link">Levels</a>
+        <a href="#howItWorks"     class="nav-link">How It Works</a>
+        <a href="#levelsSection"  class="nav-link">Levels</a>
         <a href="#pricingSection" class="nav-link">Pricing</a>
         <button class="nav-btn" id="navLoginBtn">Login</button>
         <button class="nav-btn nav-btn--cta" id="navRegisterBtn">Get Started</button>
@@ -41,85 +765,76 @@
 
   <!-- ── HERO ── -->
   <section class="hero">
-    <div class="hero-grid-bg"></div>
-    <div class="hero-glow"></div>
-    <div class="hero-glow-2"></div>
-    <div class="hero-content">
 
-      <!-- LEFT: Text -->
-      <div class="hero-text">
-        <p class="hero-eyebrow">AI-Powered Movie English</p>
-        <h1 class="hero-title">ACT THE<span class="hero-title-gold">SCENE.</span></h1>
-        <p class="hero-subtitle">Speak every line. Score every take.<br>Unlock every level.</p>
-        <div class="hero-btns">
-          <button class="hero-btn hero-btn--primary" id="heroStartBtn">Start for Free</button>
-          <a href="#howItWorks" class="hero-btn hero-btn--ghost">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
-            How It Works
-          </a>
-        </div>
-        <div class="social-proof">
-          <div class="proof-avatars">
-            <div class="proof-av" style="background:#4ade80">J</div>
-            <div class="proof-av" style="background:#60a5fa">M</div>
-            <div class="proof-av" style="background:#f472b6">A</div>
-            <div class="proof-av" style="background:#fb923c">K</div>
-          </div>
-          <div class="proof-text"><strong>50+ learners</strong> practicing now &mdash; join them</div>
-        </div>
+    <!-- Left: Text -->
+    <div class="hero-text">
+      <div class="hero-badge">
+        <span class="hero-badge-dot"></span>
+        <span class="hero-badge-text">AI-Powered Movie English</span>
       </div>
 
-      <!-- RIGHT: Visual -->
-      <div class="hero-visual">
-        <div class="poster-fan">
-          <div class="pf-card pf-1"><img src="/static/posters/heat.jpg" alt="Heat"></div>
-          <div class="pf-card pf-2"><img src="/static/posters/back_to_the_future.jpg" alt="Back to the Future"></div>
-          <div class="pf-card pf-3"><img src="/static/posters/forrest_gump.jpg" alt="Forrest Gump"></div>
-          <div class="pf-card pf-4"><img src="/static/posters/the_matrix.jpg" alt="The Matrix"></div>
-          <div class="pf-card pf-5"><img src="/static/posters/fight_club.jpg" alt="Fight Club"></div>
-        </div>
+      <h1 class="hero-title">
+        ACT THE
+        <span class="hero-title-scene">Scene.</span>
+      </h1>
 
-        <!-- Floating score cards -->
-        <div class="float-card fc-1">
-          <div class="fc-label">Your Score</div>
-          <div class="fc-value">94<span class="fc-unit">%</span></div>
-          <div class="fc-sub">Forrest Gump · Scene 3</div>
-        </div>
-        <div class="float-card fc-2">
-          <div class="fc-icon">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
-          </div>
-          <div class="fc-value-sm">Level 2</div>
-          <div class="fc-sub">Unlocked!</div>
-        </div>
-        <div class="float-card fc-3">
-          <div class="fc-label">Streak</div>
-          <div class="fc-value">7<span class="fc-unit">d</span></div>
-          <div class="fc-sub">Keep it up</div>
-        </div>
+      <p class="hero-subtitle">Speak every line. Score every take.<br>Unlock every level.</p>
+
+      <div class="hero-btns">
+        <button class="hero-btn hero-btn--primary" id="heroStartBtn">Start for Free</button>
+        <a href="#howItWorks" class="hero-btn hero-btn--ghost">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+          How It Works
+        </a>
       </div>
 
+      <div class="social-proof">
+        <div class="proof-avatars">
+          <div class="proof-av" style="background:#c8a96e">J</div>
+          <div class="proof-av" style="background:#b8956a">M</div>
+          <div class="proof-av" style="background:#a07850">A</div>
+          <div class="proof-av" style="background:#d4b87e">K</div>
+        </div>
+        <div class="proof-text"><strong>50+ learners</strong> practicing now &mdash; join them</div>
+      </div>
     </div>
+
+    <!-- Right: Poster stack -->
+    <div class="hero-visual">
+      <div class="poster-stack">
+        <div class="pc pc-1">
+          <img src="/static/posters/heat.jpg" alt="Heat" />
+        </div>
+        <div class="pc pc-2">
+          <img src="/static/posters/forrest_gump.jpg" alt="Forrest Gump" />
+          <div class="pc-score-chip">
+            <span class="pc-score-num">94%</span>
+            <span class="pc-score-label">Forrest Gump</span>
+          </div>
+        </div>
+        <div class="pc pc-3">
+          <img src="/static/posters/the_matrix.jpg" alt="The Matrix" />
+        </div>
+      </div>
+    </div>
+
   </section>
 
   <!-- ── STATS BAR ── -->
   <div class="stats-bar">
     <div class="stats-inner">
       <div class="stat-item">
-        <span class="stat-val">12+</span>
+        <span class="stat-val">27+</span>
         <span class="stat-lbl">Movie Scenes</span>
       </div>
-      <div class="stat-sep"></div>
       <div class="stat-item">
-        <span class="stat-val">4</span>
+        <span class="stat-val">3</span>
         <span class="stat-lbl">Difficulty Levels</span>
       </div>
-      <div class="stat-sep"></div>
       <div class="stat-item">
         <span class="stat-val">AI</span>
         <span class="stat-lbl">Sync Scoring</span>
       </div>
-      <div class="stat-sep"></div>
       <div class="stat-item">
         <span class="stat-val">Free</span>
         <span class="stat-lbl">To Start</span>
@@ -131,7 +846,7 @@
   <section class="hiw-section fade-up" id="howItWorks">
     <div class="section-wrap">
       <p class="section-eyebrow">Simple Process</p>
-      <h2 class="section-heading">How It Works</h2>
+      <h2 class="section-heading">Three acts. One method.</h2>
       <div class="hiw-grid">
 
         <div class="hiw-card">
@@ -176,19 +891,19 @@
   <section class="clv-section fade-up" id="levelsSection">
     <div class="section-wrap">
       <p class="section-eyebrow">Progressive Difficulty</p>
-      <h2 class="section-heading">Your Journey</h2>
+      <h2 class="section-heading">Your journey.</h2>
       <div class="clv-grid">
 
         <!-- Level 1 — Beginner -->
         <div class="clv-card" id="clvCard1" onclick="openLevelPanel(1)">
-          <div class="clv-card-bg" style="background-image:url('/static/beginner-card.jpg');background-color:#1a2a1a"></div>
+          <div class="clv-card-bg"></div>
           <div class="clv-card-overlay"></div>
           <div class="clv-card-body">
             <span class="clv-badge beg">Beginner</span>
             <h3 class="clv-title">Level 1</h3>
             <p class="clv-subtitle">Short, clear lines. Build confidence on camera.</p>
             <div class="clv-meta">
-              <span class="clv-count">5 scenes</span>
+              <span class="clv-count">20 scenes</span>
               <span class="clv-pb-avg" id="clvPbAvg1"></span>
             </div>
             <div class="clv-cta">Explore Level &rarr;</div>
@@ -197,7 +912,7 @@
 
         <!-- Level 2 — Intermediate -->
         <div class="clv-card" id="clvCard2" onclick="openLevelPanel(2)">
-          <div class="clv-card-bg" style="background-image:url('/static/intermediate-card.jpg');background-color:#1a1a2a"></div>
+          <div class="clv-card-bg"></div>
           <div class="clv-card-overlay"></div>
           <div class="clv-card-body">
             <span class="clv-badge int">Intermediate</span>
@@ -217,7 +932,7 @@
 
         <!-- Level 3 — Advanced -->
         <div class="clv-card" id="clvCard3" onclick="openLevelPanel(3)">
-          <div class="clv-card-bg" style="background-image:url('/static/advanced-card.jpg');background-color:#2a1a0a"></div>
+          <div class="clv-card-bg"></div>
           <div class="clv-card-overlay"></div>
           <div class="clv-card-body">
             <span class="clv-badge adv">Advanced</span>
@@ -237,15 +952,13 @@
 
       </div>
     </div>
-
-
   </section>
 
   <!-- ── PRICING ── -->
   <section class="pricing-section fade-up" id="pricingSection">
     <div class="section-wrap">
       <p class="section-eyebrow">No Surprises</p>
-      <h2 class="section-heading">Simple Pricing</h2>
+      <h2 class="section-heading">Simple pricing.</h2>
       <div class="pricing-grid">
 
         <div class="pricing-card">
@@ -262,7 +975,7 @@
         </div>
 
         <div class="pricing-card pricing-card--pro">
-          <div class="pricing-popular">MOST POPULAR</div>
+          <div class="pricing-popular">Most Popular</div>
           <div class="pricing-tier">Pro</div>
           <div class="pricing-price">$4.99<span>/mo</span></div>
           <p class="pricing-desc">For serious learners who want it all.</p>
