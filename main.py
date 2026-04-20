@@ -461,13 +461,27 @@ def _read_html_file(path: str, missing_title: str):
 
 
 @app.get("/", response_class=HTMLResponse)
-@app.get("/auth", response_class=HTMLResponse)
-@app.get("/levels", response_class=HTMLResponse)
-@app.get("/progress", response_class=HTMLResponse)
-@app.get("/daily", response_class=HTMLResponse)
+async def cinematic_landing():
+    return _read_html_file(_INDEX_HTML_PATH, "index.html not found")
+
+
+@app.get("/app", response_class=HTMLResponse)
+@app.get("/app/auth", response_class=HTMLResponse)
+@app.get("/app/levels", response_class=HTMLResponse)
+@app.get("/app/progress", response_class=HTMLResponse)
+@app.get("/app/daily", response_class=HTMLResponse)
+@app.get("/app/scene/{scene_id}", response_class=HTMLResponse)
+@app.get("/app/challenge/{challenge_id}", response_class=HTMLResponse)
+async def new_shell_app_entry(
+    scene_id: Optional[str] = None,
+    challenge_id: Optional[str] = None,
+):
+    return _read_html_file(_NEW_SHELL_INDEX_HTML_PATH, "app index.html not found")
+
+
 @app.get("/scene/{scene_id}", response_class=HTMLResponse)
 @app.get("/challenge/{challenge_id}", response_class=HTMLResponse)
-async def promoted_new_shell_entry(
+async def new_shell_legacy_links(
     scene_id: Optional[str] = None,
     challenge_id: Optional[str] = None,
 ):
