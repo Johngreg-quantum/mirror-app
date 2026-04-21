@@ -1,21 +1,40 @@
 :root {
-  --ns-color-page: #f5f7f1;
-  --ns-color-surface: #ffffff;
-  --ns-color-surface-alt: #eef5ef;
-  --ns-color-surface-strong: #fbfcf8;
-  --ns-color-ink: #161917;
-  --ns-color-muted: #58635c;
-  --ns-color-soft-muted: #78837b;
-  --ns-color-line: #d8e0d9;
-  --ns-color-line-strong: #c3cec6;
-  --ns-color-primary: #0d7a66;
-  --ns-color-primary-strong: #065848;
-  --ns-color-primary-soft: #dcefe8;
-  --ns-color-accent: #bd473e;
-  --ns-color-accent-soft: #fde5df;
-  --ns-color-warm: #b88d25;
-  --ns-color-warm-soft: #f4ecd4;
-  --ns-color-focus: #1d9a8a;
+  /* Gold cinema palette */
+  --gold: #c8a96e;
+  --gold-light: #e8c98e;
+  --gold-dim: rgba(200, 169, 110, 0.1);
+  --gold-border: rgba(200, 169, 110, 0.15);
+  --gold-glow: rgba(200, 169, 110, 0.28);
+  --surface: rgba(255, 255, 255, 0.025);
+  --surface-border: rgba(200, 169, 110, 0.09);
+  --bg-deep: #060609;
+  --text-primary: #f0ede6;
+  --text-muted: rgba(240, 237, 230, 0.38);
+  --text-dim: rgba(240, 237, 230, 0.22);
+  --font-display: 'Bebas Neue', sans-serif;
+  --font-serif: 'Playfair Display', serif;
+  --font-body: 'DM Sans', sans-serif;
+
+  /* Semantic aliases — keep all --ns-* vars so existing CSS compiles unchanged */
+  --ns-color-page: #060609;
+  --ns-color-surface: rgba(255, 255, 255, 0.025);
+  --ns-color-surface-alt: rgba(255, 255, 255, 0.04);
+  --ns-color-surface-strong: rgba(255, 255, 255, 0.035);
+  --ns-color-ink: #f0ede6;
+  --ns-color-muted: rgba(240, 237, 230, 0.38);
+  --ns-color-soft-muted: rgba(240, 237, 230, 0.28);
+  --ns-color-line: rgba(200, 169, 110, 0.09);
+  --ns-color-line-strong: rgba(200, 169, 110, 0.18);
+  --ns-color-primary: #c8a96e;
+  --ns-color-primary-strong: #a88850;
+  --ns-color-primary-soft: rgba(200, 169, 110, 0.1);
+  --ns-color-accent: #c8a96e;
+  --ns-color-accent-soft: rgba(200, 169, 110, 0.08);
+  --ns-color-warm: #c8a96e;
+  --ns-color-warm-soft: rgba(200, 169, 110, 0.07);
+  --ns-color-focus: rgba(200, 169, 110, 0.6);
+
+  /* Spacing scale */
   --ns-space-1: 0.25rem;
   --ns-space-2: 0.5rem;
   --ns-space-3: 0.75rem;
@@ -23,12 +42,18 @@
   --ns-space-5: 1.5rem;
   --ns-space-6: 2rem;
   --ns-space-7: 3rem;
+
+  /* Radius */
   --ns-radius-sm: 4px;
-  --ns-radius-md: 8px;
-  --ns-shadow-soft: 0 18px 42px rgb(22 25 23 / 9%);
-  --ns-shadow-lift: 0 24px 70px rgb(22 25 23 / 14%);
-  --ns-shadow-tight: 0 10px 24px rgb(22 25 23 / 8%);
-  --ns-font-sans: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --ns-radius-md: 10px;
+
+  /* Shadows */
+  --ns-shadow-soft: 0 8px 32px rgba(0, 0, 0, 0.45);
+  --ns-shadow-lift: 0 20px 60px rgba(0, 0, 0, 0.55);
+  --ns-shadow-tight: 0 4px 16px rgba(0, 0, 0, 0.35);
+
+  /* Typography */
+  --ns-font-sans: 'DM Sans', sans-serif;
   --ns-font-size-sm: 0.875rem;
   --ns-font-size-base: 1rem;
   --ns-font-size-lg: 1.125rem;
