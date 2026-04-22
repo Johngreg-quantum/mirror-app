@@ -224,10 +224,9 @@ function renderSceneDailyStateCard({ scene, daily, profile, profileError, refres
     : `The current daily scene is ${daily?.scene_id || 'unavailable'}; this is a regular scene entry.`;
 
   return card({
-    eyebrow: 'Daily context',
-    title: isDailyScene ? 'Daily scene is live' : 'Daily scene is elsewhere',
+    title: 'Daily state',
     body,
-    className: 'ns-context-card ns-support-card',
+    className: 'ns-context-card',
     children: [
       h('div', { className: 'ns-inline-list' }, [
         statusPill(isDailyScene ? 'Daily scene' : 'Not daily'),
@@ -245,73 +244,50 @@ function renderSceneDailyStateCard({ scene, daily, profile, profileError, refres
   });
 }
 
-function getNextScene(scene, scenes = []) {
-  if (!scene || !scenes.length) {
-    return null;
-  }
-
-  const currentIndex = scenes.findIndex((item) => item.id === scene.id);
-  const orderedCandidates = currentIndex >= 0
-    ? [...scenes.slice(currentIndex + 1), ...scenes.slice(0, currentIndex)]
-    : scenes;
-
-  return orderedCandidates.find((item) => !item.locked && item.id !== scene.id) || null;
-}
-
-function renderPostScoreAftermathCard({ analyzeSnapshot, refreshSnapshot, scene, scenes }) {
+function renderPostScoreAftermathCard({ analyzeSnapshot, refreshSnapshot }) {
   const result = analyzeSnapshot.result;
 
   if (!result) {
     return card({
-      eyebrow: 'After score',
-      title: 'Result stage',
-      body: 'Score, progress refresh, and next-step context appear here after analyze returns.',
-      className: 'ns-aftermath-card ns-aftermath-card--empty ns-support-card',
+      title: 'Post-score aftermath',
+      body: 'After a successful analyze, refreshed scene context appears here.',
+      className: 'ns-aftermath-card',
       children: [statusPill(getRefreshStatusLabel(refreshSnapshot))],
     });
   }
 
-  const refreshNote = refreshSnapshot.status === 'degraded'
-    ? refreshSnapshot.error?.message || 'The score was saved, but some related views did not refresh yet.'
-    : refreshSnapshot.status === 'success'
-      ? 'Progress, leaderboard, scene PB visibility, and daily/streak reads were refreshed from the server.'
-      : 'Mirror is preparing the surrounding reads for this score.';
-  const nextScene = getNextScene(scene, scenes);
+  const children = [
+    h('div', { className: 'ns-inline-list' }, [
+      statusPill(getRefreshStatusLabel(refreshSnapshot)),
+      statusPill(`+${Math.round(Number(result.points_earned || 0))} points`),
+      statusPill(result.division?.name || 'Unranked'),
+      result.is_new_pb ? statusPill('New PB') : statusPill('PB unchanged'),
+      result.is_daily
+        ? statusPill(result.daily_already_done ? 'Daily already completed' : 'Daily result reflected')
+        : statusPill('Standard scene'),
+    ]),
+  ];
 
-  return h('section', {
-    className: `ns-aftermath-stage${result.is_new_pb ? ' ns-aftermath-stage--pb' : ''}`,
-  }, [
-    h('div', { className: 'ns-aftermath-stage__copy' }, [
-      h('p', { className: 'ns-eyebrow', text: 'After score' }),
-      h('h3', { text: result.is_new_pb ? 'New personal best' : 'Score locked in' }),
-      h('p', {
-        text: result.is_new_pb
-          ? 'This take moved your personal mark and refreshed the surrounding scene context.'
-          : 'This take has a saved score, with the surrounding scene context refreshed from the server.',
-      }),
-      h('div', { className: 'ns-inline-list' }, [
-        statusPill(getRefreshStatusLabel(refreshSnapshot)),
-        statusPill(result.is_daily
-          ? result.daily_already_done ? 'Daily already completed' : 'Daily result reflected'
-          : 'Standard scene'),
-      ]),
-    ]),
-    h('div', { className: 'ns-aftermath-stage__score' }, [
-      h('span', { text: 'Awarded' }),
-      h('strong', { text: `+${Math.round(Number(result.points_earned || 0))}` }),
-      h('small', { text: `${result.division?.name || 'Unranked'} / ${result.is_new_pb ? 'New PB' : 'PB unchanged'}` }),
-    ]),
-    h('div', { className: 'ns-action-row ns-aftermath-stage__actions' }, [
-      buttonLink({ href: sceneHref(scene.id, { from: 'scene-detail' }), text: 'Try another take', variant: 'secondary' }),
-      nextScene
-        ? buttonLink({ href: sceneHref(nextScene.id, { from: 'scene-detail' }), text: 'Next scene', variant: 'secondary' })
-        : null,
-      buttonLink({ href: createAppHref('/daily'), text: 'Do today\'s challenge', variant: 'secondary' }),
-      buttonLink({ href: createAppHref('/progress'), text: 'Open progress', variant: 'secondary' }),
-      buttonLink({ href: createAppHref('/'), text: 'Back home', variant: 'secondary' }),
-    ]),
-    h('p', { className: 'ns-aftermath-stage__note', text: refreshNote }),
-  ]);
+  if (refreshSnapshot.status === 'degraded') {
+    children.push(h('p', {
+      className: 'ns-muted',
+      text: refreshSnapshot.error?.message || 'The score was saved, but some related views did not refresh yet.',
+    }));
+  } else if (refreshSnapshot.status === 'success') {
+    children.push(h('p', {
+      className: 'ns-muted',
+      text: 'Progress, leaderboard, scene PB visibility, and daily/streak reads were refreshed from the server after this score.',
+    }));
+  }
+
+  return card({
+    title: 'Post-score aftermath',
+    body: result.is_new_pb
+      ? 'This take set a new personal best and the app is reflecting the server aftermath.'
+      : 'This take was scored by the server and the app is reflecting the returned aftermath.',
+    className: 'ns-aftermath-card ns-aftermath-card--scored',
+    children,
+  });
 }
 
 function mergeSceneDetailViewModel(currentViewModel, bundle, sceneId) {
@@ -359,10 +335,9 @@ function withChallengeResult(currentViewModel, appState, analyzeResult) {
 function renderChallengeStateCard({ challengeId, challengeEntry, challengeResult, challengeError }) {
   if (!challengeEntry && challengeError) {
     return card({
-      eyebrow: 'Challenge',
       title: 'Challenge context unavailable',
       body: challengeError.message || 'The public challenge lookup did not load for this scene.',
-      className: 'ns-state-card ns-state-card--error ns-support-card',
+      className: 'ns-state-card ns-state-card--error',
       children: [
         h('div', { className: 'ns-inline-list' }, [
           statusPill('Partial state'),
@@ -381,43 +356,30 @@ function renderChallengeStateCard({ challengeId, challengeEntry, challengeResult
   }
 
   if (challengeResult) {
-    const isWin = challengeResult.outcome === 'won';
-
-    return h('section', {
-      className: `ns-challenge-mini-result ns-challenge-mini-result--${isWin ? 'win' : 'loss'}`,
-    }, [
-      h('div', { className: 'ns-challenge-mini-result__copy' }, [
-        h('p', { className: 'ns-eyebrow', text: 'Challenge aftermath' }),
-        h('h3', { text: isWin ? 'Benchmark cleared' : 'Benchmark still ahead' }),
-        h('p', { text: challengeResult.message }),
+    return card({
+      title: 'Challenge aftermath',
+      body: challengeResult.message,
+      className: `ns-challenge-aftermath ns-challenge-aftermath--${challengeResult.outcome === 'won' ? 'win' : 'loss'}`,
+      children: [
         h('div', { className: 'ns-inline-list' }, [
           statusPill(challengeResult.comparisonLabel),
+          statusPill(challengeResult.yourScore),
+          statusPill(`Target ${challengeResult.opponentScore}`),
           challengeResult.isNewPersonalBest ? statusPill('New PB') : null,
+          buttonLink({
+            href: createAppHref(`/challenge/${encodeURIComponent(challengeEntry.id)}`),
+            text: 'View challenge',
+            variant: 'secondary',
+          }),
         ]),
-      ]),
-      h('div', { className: 'ns-score-compare ns-challenge-mini-result__scores' }, [
-        h('div', { className: 'ns-score-compare__item ns-score-compare__item--primary' }, [
-          h('span', { text: 'Your score' }),
-          h('strong', { text: challengeResult.yourScore }),
-        ]),
-        h('div', { className: 'ns-score-compare__item' }, [
-          h('span', { text: 'Score to beat' }),
-          h('strong', { text: challengeResult.opponentScore }),
-        ]),
-      ]),
-      buttonLink({
-        href: createAppHref(`/challenge/${encodeURIComponent(challengeEntry.id)}`),
-        text: 'View challenge',
-        variant: 'secondary',
-      }),
-    ]);
+      ],
+    });
   }
 
   return card({
-    eyebrow: 'Challenge',
     title: 'Challenge benchmark',
     body: `${challengeEntry.challengerName} set ${challengeEntry.targetScoreLabel} on this scene. Submit a scored take to compare against that benchmark.`,
-    className: 'ns-challenge-aftermath ns-support-card',
+    className: 'ns-challenge-aftermath',
     children: [
       h('div', { className: 'ns-inline-list' }, [
         statusPill(challengeEntry.targetScoreLabel),
@@ -507,8 +469,6 @@ function renderSceneDetailSurface({
     aftermathSlot.replaceChildren(renderPostScoreAftermathCard({
       analyzeSnapshot: analyzeStore.getSnapshot(),
       refreshSnapshot: postScoreRefreshStore.getSnapshot(),
-      scene: currentViewModel.scene,
-      scenes: currentViewModel.scenes,
     }));
   }
 
@@ -574,7 +534,7 @@ function renderSceneDetailSurface({
   renderAftermathSlot();
   renderChallengeSlot();
 
-  return h('article', { className: 'ns-page ns-scene-detail-page' }, [
+  return h('article', { className: 'ns-page' }, [
     h('header', { className: 'ns-page__header' }, [
       h('div', {}, [
         h('p', { className: 'ns-eyebrow', text: 'Scene detail' }),
@@ -613,10 +573,9 @@ function renderSceneDetailSurface({
     ]),
     hasChallengeContext ? h('section', { className: 'ns-stack' }, [dailyStateSlot]) : null,
     card({
-      eyebrow: 'Score sync',
-      title: 'Keep the loop moving',
-      body: 'After a score, try again, move to another scene, check progress, or use the result as challenge fuel from the score flow.',
-      className: 'ns-context-card ns-support-card',
+      title: 'After scoring',
+      body: 'Progress, leaderboard, personal best, daily status, streak data, and challenge comparison refresh after a successful scored take.',
+      className: 'ns-context-card',
     }),
   ]);
 }

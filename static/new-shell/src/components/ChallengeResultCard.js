@@ -6,18 +6,8 @@ export function renderChallengeResultCard({ entry, result }) {
     return h('section', { className: 'ns-result-card ns-result-card--empty' }, [
       h('div', {}, [
         h('p', { className: 'ns-eyebrow', text: 'Challenge result' }),
-        h('h3', { text: 'Beat the benchmark' }),
-        h('p', { text: 'Record the linked scene, analyze the take, and Mirror will settle the head-to-head here.' }),
-      ]),
-      h('div', { className: 'ns-score-compare ns-score-compare--challenge-empty' }, [
-        h('div', { className: 'ns-score-compare__item ns-score-compare__item--primary' }, [
-          h('span', { text: 'Your score' }),
-          h('strong', { text: '--' }),
-        ]),
-        h('div', { className: 'ns-score-compare__item' }, [
-          h('span', { text: 'Score to beat' }),
-          h('strong', { text: entry?.targetScoreLabel || '--' }),
-        ]),
+        h('h3', { text: 'No scored take yet' }),
+        h('p', { text: 'Record the challenge scene and submit a scored take to reveal the comparison.' }),
       ]),
       h('div', { className: 'ns-inline-list' }, [
         statusPill(entry?.targetScoreLabel || 'No benchmark'),
@@ -29,13 +19,9 @@ export function renderChallengeResultCard({ entry, result }) {
   const isWin = result.outcome === 'won';
 
   return h('section', { className: `ns-result-card ns-result-card--${isWin ? 'win' : 'loss'}` }, [
-    h('div', {
-      className: `ns-result-card__outcome ns-result-card__outcome--${isWin ? 'win' : 'loss'}`,
-      text: isWin ? 'Won' : 'Retry',
-    }),
     h('div', { className: 'ns-result-card__intro' }, [
       h('p', { className: 'ns-eyebrow', text: 'Challenge result' }),
-      h('h3', { text: isWin ? 'Benchmark beaten' : 'Within striking distance' }),
+      h('h3', { text: result.title }),
       h('p', { text: result.message }),
     ]),
     h('div', { className: 'ns-score-compare' }, [
@@ -44,7 +30,7 @@ export function renderChallengeResultCard({ entry, result }) {
         h('strong', { text: result.yourScore }),
       ]),
       h('div', { className: 'ns-score-compare__item' }, [
-        h('span', { text: 'Score to beat' }),
+        h('span', { text: `${entry.challengerName}'s benchmark` }),
         h('strong', { text: result.opponentScore }),
       ]),
     ]),

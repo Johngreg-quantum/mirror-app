@@ -8,11 +8,9 @@ import { h } from '../../lib/helpers/dom.js';
 import { getFreshPostScoreReadCache } from '../../lib/api/post-score-refresh.js';
 import { loadPersonalReadData, loadPublicHomeData } from '../../lib/api/read-data.js';
 import { adaptLeaderboard } from '../../lib/adapters/leaderboard-adapter.js';
-import { adaptDailyChallenge } from '../../lib/adapters/daily-adapter.js';
 import { adaptProgressSummary, adaptProfile } from '../../lib/adapters/progress-adapter.js';
 import { adaptSceneConfig } from '../../lib/adapters/scene-adapter.js';
 import { createAppHref } from '../../lib/routing/navigation.js';
-import { sceneHref } from '../../lib/routing/scene-routes.js';
 
 export function renderHomePage({ appState, actions }) {
   const page = h('div', {}, [renderLoadingState('Loading scene browser')]);
@@ -81,7 +79,6 @@ async function loadHomeViewModel({ appState, actions }) {
   });
   const leaderboard = adaptLeaderboard(publicData.leaderboard, scenes, publicData.daily.scene_id);
   const profile = adaptProfile(personalData?.profile);
-  const daily = adaptDailyChallenge(publicData.daily, scenes, profile);
   const progressSummary = personalData
     ? adaptProgressSummary(personalData)
     : {
@@ -93,7 +90,6 @@ async function loadHomeViewModel({ appState, actions }) {
 
   return {
     scenes,
-    daily,
     leaderboard,
     profile,
     progressSummary,
@@ -101,58 +97,21 @@ async function loadHomeViewModel({ appState, actions }) {
   };
 }
 
-function renderHomeActionPanel({ daily, scenes }) {
-  const firstOpenScene = scenes.find((scene) => !scene.locked) || scenes[0] || daily?.scene;
-  const practiceHref = firstOpenScene
-    ? sceneHref(firstOpenScene.id, { from: 'home' })
-    : createAppHref('/daily');
-
-  return h('section', { className: 'ns-home-action-panel' }, [
-    h('div', { className: 'ns-home-action-panel__primary' }, [
-      h('p', { className: 'ns-eyebrow', text: 'Start here' }),
-      h('h3', { text: daily?.scene?.title || 'Today\'s practice' }),
-      h('p', {
-        text: daily?.scene
-          ? `${daily.scene.film} is live for the daily. One recorded take starts your streak, score, and next challenge.`
-          : 'Choose one scene, record one take, and get your first score on the board.',
-      }),
-      h('div', { className: 'ns-action-row' }, [
-        buttonLink({
-          href: daily?.scene ? sceneHref(daily.scene.id, { from: 'daily' }) : practiceHref,
-          text: daily?.scene ? 'Start daily take' : 'Start practice',
-        }),
-        buttonLink({ href: practiceHref, text: 'Pick a scene', variant: 'secondary' }),
-      ]),
-    ]),
-    h('div', { className: 'ns-home-action-panel__challenge' }, [
-      h('span', { text: 'Challenge loop' }),
-      h('strong', { text: 'Score. Improve. Challenge.' }),
-      h('p', { text: 'A saved score gives you a benchmark to beat again or turn into a friend challenge later.' }),
-    ]),
-  ]);
-}
-
-function renderHomeSurface({ appState, scenes, daily, leaderboard, profile, progressSummary, personalError }) {
-  return h('article', { className: 'ns-page ns-home-page' }, [
+function renderHomeSurface({ appState, scenes, leaderboard, profile, progressSummary, personalError }) {
+  return h('article', { className: 'ns-page' }, [
     h('section', { className: 'ns-home-hero' }, [
       h('div', {}, [
-        h('p', { className: 'ns-eyebrow', text: 'Practice room' }),
-        h('h2', { text: profile ? `Record the next take, ${profile.displayName}` : 'Get your first score' }),
+        h('p', { className: 'ns-eyebrow', text: 'Scene browser' }),
+        h('h2', { text: profile ? `Welcome back, ${profile.displayName}` : 'Choose a scene' }),
         h('p', {
-          text: 'Pick a scene, record one take, analyze it, then let Mirror point you to the next move.',
+          text: 'Browse scenes, check today\'s challenge, and keep your practice streak moving.',
         }),
         h('div', { className: 'ns-action-row' }, [
-          buttonLink({
-            href: daily?.scene ? sceneHref(daily.scene.id, { from: 'daily' }) : createAppHref('/daily'),
-            text: 'Start practicing now',
-          }),
-          buttonLink({ href: createAppHref('/daily'), text: 'Keep daily streak', variant: 'secondary' }),
+          buttonLink({ href: createAppHref('/daily'), text: 'Daily challenge' }),
           buttonLink({ href: createAppHref('/progress'), text: 'View progress', variant: 'secondary' }),
         ]),
       ]),
-      daily
-        ? renderHomeActionPanel({ daily, scenes })
-        : profile
+      profile
         ? renderStreakCard({ profile })
         : card({
             title: 'Personal data paused',
@@ -169,10 +128,10 @@ function renderHomeSurface({ appState, scenes, daily, leaderboard, profile, prog
     h('section', { className: 'ns-stack' }, [
       h('div', { className: 'ns-section-heading' }, [
         h('div', {}, [
-          h('p', { className: 'ns-eyebrow', text: 'Choose fast' }),
-          h('h2', { text: 'Pick a first take' }),
+          h('p', { className: 'ns-eyebrow', text: 'Scenes' }),
+          h('h2', { text: 'Scene browser' }),
         ]),
-        statusPill('Record / analyze / continue'),
+        statusPill('Live scene config'),
       ]),
       scenes.length
         ? h('div', { className: 'ns-carousel-wrap' }, [
@@ -195,10 +154,8 @@ function renderHomeSurface({ appState, scenes, daily, leaderboard, profile, prog
         ? renderLeaderboardPanel({ leaderboard, entrySource: 'leaderboard' })
         : card({ title: 'Leaderboard is empty', body: 'Scores will appear here after scored takes are submitted.' }),
       card({
-        eyebrow: 'Momentum',
-        title: 'Your next action is the product',
-        body: 'A score should never be a dead end. Each take can lead into a retry, a next scene, the daily loop, progress, or a challenge.',
-        className: 'ns-support-card',
+        title: 'Practice sync',
+        body: 'Scene availability, leaderboard rows, progress, and profile data stay in sync with your latest scored takes.',
       }),
     ]),
   ]);
