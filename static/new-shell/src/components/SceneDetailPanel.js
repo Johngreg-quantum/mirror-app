@@ -16,18 +16,20 @@ function getLockLabel({ scene, session }) {
 function renderPersonalizationPanel({ scene, session, progressError }) {
   if (progressError) {
     return card({
+      eyebrow: 'Read state',
       title: 'Personalization unavailable',
       body: progressError.message || 'Progress could not load for this scene.',
-      className: 'ns-state-card ns-state-card--error',
+      className: 'ns-state-card ns-state-card--error ns-support-card',
       children: [statusPill(progressError.rateLimited ? 'Rate limited' : 'Read-only fetch failed')],
     });
   }
 
   if (session?.status !== 'authenticated') {
     return card({
-      title: 'Personalization needs auth',
-      body: 'Sign in to verify unlock state, personal best, and scene progress here.',
-      className: 'ns-state-card ns-state-card--auth',
+      eyebrow: 'Personal signal',
+      title: 'Sign in for your scene state',
+      body: 'Unlock state, personal best, and scene progress appear here once your session is verified.',
+      className: 'ns-state-card ns-state-card--auth ns-support-card',
       children: [
         statusPill('Auth required'),
         buttonLink({ href: createAppHref('/auth'), text: 'Sign in', variant: 'secondary' }),
@@ -36,11 +38,12 @@ function renderPersonalizationPanel({ scene, session, progressError }) {
   }
 
   return card({
-    title: 'Personalization',
+    eyebrow: 'Personal signal',
+    title: scene.locked ? 'Scene locked' : 'Scene ready',
     body: scene.locked
       ? 'This scene is locked for your current session. It remains visible here, but recording and analyze stay disabled.'
       : 'This scene is available for your current session. Personal bests update from saved scoring data.',
-    className: 'ns-state-card ns-state-card--ready',
+    className: 'ns-state-card ns-state-card--ready ns-support-card',
     children: [
       h('div', { className: 'ns-inline-list' }, [
         statusPill(scene.locked ? 'Locked' : 'Unlocked'),
@@ -102,22 +105,13 @@ function renderLocalRuntimePanel({ canRecord, disabledReason, runtime, onCleanup
   const controls = createRecordingControls({ runtime, canRecord });
   const status = createRecordingStatus({ disabledReason });
   const waveform = createWaveformShell();
-  const unsubscribe = runtime.subscribe((state) => {
-    controls.update(state);
-    status.update(state);
-    waveform.update(state);
-  });
-
-  onCleanup?.(() => {
-    unsubscribe();
-  });
-
-  return card({
+  const runtimeRoot = card({
+    eyebrow: 'Take one',
     title: 'Recording studio',
     body: canRecord
-      ? 'Record, review, and reset a local take before submitting it for scoring.'
+      ? 'Capture the take, listen back, then send only the keeper for scoring.'
       : disabledReason,
-    className: `ns-runtime-card${canRecord ? ' is-ready' : ' is-disabled'}`,
+    className: `ns-runtime-card ns-support-card${canRecord ? ' is-ready' : ' is-disabled'}`,
     children: [
       status.root,
       waveform.root,
@@ -128,6 +122,21 @@ function renderLocalRuntimePanel({ canRecord, disabledReason, runtime, onCleanup
       }),
     ],
   });
+  const unsubscribe = runtime.subscribe((state) => {
+    runtimeRoot.classList.toggle('is-recording', state.status === 'recording');
+    runtimeRoot.classList.toggle('is-recorded', state.status === 'recorded');
+    runtimeRoot.classList.toggle('is-playing', state.status === 'playing');
+    runtimeRoot.classList.toggle('is-runtime-error', state.status === 'error');
+    controls.update(state);
+    status.update(state);
+    waveform.update(state);
+  });
+
+  onCleanup?.(() => {
+    unsubscribe();
+  });
+
+  return runtimeRoot;
 }
 
 function renderAnalyzePanel({ analyzeStore, onCleanup }) {
@@ -145,9 +154,10 @@ function renderAnalyzePanel({ analyzeStore, onCleanup }) {
   const authLink = buttonLink({ href: createAppHref('/auth'), text: 'Sign in', variant: 'secondary' });
   authLink.hidden = true;
   const analyzeRoot = card({
+    eyebrow: 'Take two',
     title: 'Analyze take',
-    body: 'Send the current take for scoring when the recording feels ready.',
-    className: 'ns-analyze-card',
+    body: 'Submit the selected take and turn the recording into score, points, and feedback.',
+    className: 'ns-analyze-card ns-support-card',
     children: [
       h('div', { className: 'ns-inline-list' }, [statePill, endpointPill]),
       detailEl,
@@ -158,6 +168,7 @@ function renderAnalyzePanel({ analyzeStore, onCleanup }) {
   const unsubscribe = analyzeStore.subscribe((snapshot) => {
     const needsAuth = snapshot.disabledCode === 'auth-required' || Boolean(snapshot.error?.authRequired);
 
+    analyzeRoot.classList.toggle('is-idle', snapshot.status === 'idle');
     analyzeRoot.classList.toggle('is-success', snapshot.status === 'success');
     analyzeRoot.classList.toggle('is-submitting', snapshot.status === 'submitting');
     analyzeRoot.classList.toggle('is-error', snapshot.status === 'error' && !needsAuth);
@@ -169,7 +180,11 @@ function renderAnalyzePanel({ analyzeStore, onCleanup }) {
     button.classList.toggle('ns-button--loading', snapshot.status === 'submitting');
     statePill.textContent = getAnalyzeStatusLabel(snapshot);
     detailEl.textContent = getAnalyzeDetail(snapshot);
-    button.textContent = snapshot.status === 'submitting' ? 'Analyzing...' : 'Analyze take';
+    button.textContent = snapshot.status === 'submitting'
+      ? 'Analyzing...'
+      : snapshot.status === 'success'
+        ? 'Scored'
+        : 'Analyze take';
     button.disabled = !snapshot.canSubmit;
     authLink.hidden = !needsAuth;
   });
@@ -265,16 +280,16 @@ export function createSceneDetailPanel({
       h('h2', { text: currentScene.title }),
       h('p', { className: 'ns-scene-detail__meta', text: `${currentScene.film} (${currentScene.year})` }),
       h('blockquote', { text: currentScene.quote }),
-      h('div', { className: 'ns-inline-list' }, [
+      h('div', { className: 'ns-inline-list ns-scene-detail__primary-pills' }, [
         statusPill(currentScene.difficulty),
         statusPill(currentScene.runtime),
         statusPill(`Target ${currentScene.targetScore}`),
         statusPill(lockLabel),
         currentScene.isDaily ? statusPill('Daily scene') : statusPill('Standard scene'),
       ]),
-      h('div', { className: 'ns-inline-list' }, [
+      h('div', { className: 'ns-inline-list ns-scene-detail__flow-pills' }, [
         statusPill(recordLabel),
-        statusPill('Local playback below'),
+        statusPill('Playback check'),
         statusPill(`Analyze ${getAnalyzeStatusLabel(analyzeStore.getSnapshot()).toLowerCase()}`),
       ]),
       h('p', {

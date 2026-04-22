@@ -115,6 +115,10 @@ export function renderScorePanelShell({
   }
 
   const unsubscribe = analyzeStore.subscribe((snapshot) => {
+    root.classList.toggle('is-success', snapshot.status === 'success');
+    root.classList.toggle('is-submitting', snapshot.status === 'submitting');
+    root.classList.toggle('is-error', snapshot.status === 'error');
+    root.classList.toggle('is-ready', snapshot.status === 'idle');
     update(adaptAnalyzeViewModel(snapshot));
   });
   onCleanup?.(() => unsubscribe());

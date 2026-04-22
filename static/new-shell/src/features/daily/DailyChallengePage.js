@@ -3,13 +3,14 @@ import { renderDailyChallengeCard } from '../../components/DailyChallengeCard.js
 import { renderSceneCard } from '../../components/SceneCard.js';
 import { renderSessionPrompt } from '../../components/SessionState.js';
 import { renderStreakCard } from '../../components/StreakCard.js';
-import { card, statusPill } from '../../components/primitives.js';
+import { buttonLink, card, statusPill } from '../../components/primitives.js';
 import { h } from '../../lib/helpers/dom.js';
 import { getFreshPostScoreReadCache } from '../../lib/api/post-score-refresh.js';
 import { fetchDailyChallenge, fetchProfile, fetchSceneConfig } from '../../lib/api/read-data.js';
 import { adaptDailyChallenge } from '../../lib/adapters/daily-adapter.js';
 import { adaptProfile } from '../../lib/adapters/progress-adapter.js';
 import { adaptSceneConfig } from '../../lib/adapters/scene-adapter.js';
+import { createAppHref } from '../../lib/routing/navigation.js';
 
 export function renderDailyChallengePage({ appState }) {
   const page = h('div', {}, [renderLoadingState('Loading daily challenge')]);
@@ -67,14 +68,18 @@ async function loadDailyViewModel(appState) {
 }
 
 function renderDailySurface({ daily, profile, profileError, session }) {
-  return h('article', { className: 'ns-page' }, [
+  const dailyCompleted = profile?.dailyStatus && !/ready|not/i.test(profile.dailyStatus);
+
+  return h('article', { className: 'ns-page ns-daily-page' }, [
     h('header', { className: 'ns-page__header' }, [
       h('div', {}, [
         h('p', { className: 'ns-eyebrow', text: 'Daily challenge' }),
-        h('h2', { text: 'Daily challenge' }),
+        h('h2', { text: dailyCompleted ? 'Daily locked in' : 'Keep the streak alive' }),
         h('p', {
           className: 'ns-page__summary',
-          text: 'Practice today\'s scene and keep your streak moving when your session is active.',
+          text: dailyCompleted
+            ? `${daily.scene.title} is banked for today. Come back after reset to keep the habit warm.`
+            : `Today is worth ${daily.rewardPoints} points plus ${daily.streakBonus}. Record one take before reset.`,
         }),
       ]),
       statusPill(daily.resetLabel),
@@ -89,20 +94,42 @@ function renderDailySurface({ daily, profile, profileError, session }) {
       profile
         ? renderStreakCard({ profile })
         : card({
-            title: 'Streak data needs sign-in',
-            body: profileError?.message || 'Sign in to show streak status here.',
-            children: [statusPill(profileError?.rateLimited ? 'Rate limited' : 'Session')],
+            eyebrow: 'Habit state',
+            title: 'Start tracking your streak',
+            body: profileError?.message || 'Sign in to attach daily completions, streak status, and points to your profile.',
+            className: 'ns-support-card',
+            children: [
+              statusPill(profileError?.rateLimited ? 'Rate limited' : 'Session'),
+              buttonLink({ href: createAppHref('/auth'), text: 'Sign in', variant: 'secondary' }),
+            ],
           }),
       renderSceneCard({ scene: daily.scene, entrySource: 'daily' }),
     ]),
     h('div', { className: 'ns-grid ns-grid--two' }, [
       card({
-        title: 'Daily result summary',
-        body: 'Points, streak bonus, and reset timing update after a scored daily take.',
+        eyebrow: 'Reward loop',
+        title: dailyCompleted ? 'Come back tomorrow' : 'One take protects the habit',
+        body: dailyCompleted
+          ? 'Your daily state is reflected here. Tomorrow brings a fresh scene, fresh points, and another streak moment.'
+          : 'Score the daily scene to update points, streak status, and the next best action across Mirror.',
+        className: 'ns-support-card',
+        children: [
+          h('div', { className: 'ns-inline-list' }, [
+            statusPill(`${daily.rewardPoints} points`),
+            statusPill(daily.streakBonus),
+            statusPill(daily.resetLabel),
+          ]),
+          h('div', { className: 'ns-action-row' }, [
+            buttonLink({ href: createAppHref('/progress'), text: 'Open progress', variant: 'secondary' }),
+            buttonLink({ href: createAppHref('/'), text: 'Pick another scene', variant: 'secondary' }),
+          ]),
+        ],
       }),
       card({
-        title: 'Daily sync',
-        body: 'Daily scene, streak status, profile points, and reset copy update from the current server data.',
+        eyebrow: 'Why daily matters',
+        title: 'Make Mirror easy to return to',
+        body: 'The daily scene gives you a short, repeatable loop: record, analyze, see progress, then return tomorrow with momentum.',
+        className: 'ns-support-card',
       }),
     ]),
   ]);

@@ -72,7 +72,7 @@ function renderChallengeEntryCard({ challengeEntry, isAuthenticated }) {
     h('div', { className: 'ns-challenge-entry__copy' }, [
       h('p', { className: 'ns-eyebrow', text: 'Incoming challenge' }),
       h('h3', { text: `${challengeEntry.challengerName} challenged you` }),
-      h('p', { text: `${challengeEntry.sceneTitle} from ${challengeEntry.film}` }),
+      h('p', { text: `${challengeEntry.sceneTitle} from ${challengeEntry.film}. Beat the score, bank the points, then decide whether to run it back.` }),
     ]),
     h('div', { className: 'ns-challenge-entry__benchmark' }, [
       h('span', { text: 'Score to beat' }),
@@ -82,10 +82,10 @@ function renderChallengeEntryCard({ challengeEntry, isAuthenticated }) {
       statusPill(challengeEntry.createdLabel),
       statusPill(isAuthenticated ? 'Ready to record' : 'Sign-in handoff'),
     ]),
-    h('div', { className: 'ns-action-row' }, [
+    h('div', { className: 'ns-action-row ns-challenge-entry__actions' }, [
       buttonLink({
         href: primaryHref,
-        text: isAuthenticated ? 'Accept challenge' : 'Sign in to accept',
+        text: isAuthenticated ? 'Record your take' : 'Sign in to accept',
       }),
       buttonLink({
         href: createAppHref(buildChallengeScenePath(challengeEntry)),
@@ -96,25 +96,53 @@ function renderChallengeEntryCard({ challengeEntry, isAuthenticated }) {
   ]);
 }
 
-function renderChallengeResultSummary({ challengeResult }) {
+function renderChallengeResultSummary({ challengeEntry, challengeResult, challengeSceneHref }) {
   if (!challengeResult) {
     return card({
-      title: 'Challenge aftermath',
-      body: 'Your result appears here after the scored take returns.',
-      className: 'ns-challenge-aftermath',
-      children: [statusPill('Awaiting scored take')],
+      eyebrow: 'Aftermath',
+      title: 'The board is waiting',
+      body: 'Start the attempt and your score will land here with a clear win or retry path.',
+      className: 'ns-challenge-aftermath ns-support-card',
+      children: [
+        h('div', { className: 'ns-inline-list' }, [
+          statusPill('Awaiting scored take'),
+          statusPill(`Beat ${challengeEntry.targetScoreLabel}`),
+        ]),
+        buttonLink({
+          href: challengeSceneHref,
+          text: 'Start the attempt',
+          variant: 'secondary',
+        }),
+      ],
     });
   }
 
+  const isWin = challengeResult.outcome === 'won';
+
   return card({
-    title: 'Challenge aftermath',
+    eyebrow: 'Aftermath',
+    title: isWin ? 'Make the win count' : 'Run it back',
     body: challengeResult.message,
-    className: `ns-challenge-aftermath ns-challenge-aftermath--${challengeResult.outcome === 'won' ? 'win' : 'loss'}`,
+    className: `ns-challenge-aftermath ns-challenge-aftermath--${isWin ? 'win' : 'loss'}`,
     children: [
       h('div', { className: 'ns-inline-list' }, [
         statusPill(challengeResult.comparisonLabel),
+        statusPill(`${challengeResult.yourScore} yours`),
+        statusPill(`${challengeResult.opponentScore} to beat`),
         statusPill(`${challengeResult.pointsEarned} points`),
         statusPill(challengeResult.streakLabel),
+      ]),
+      h('div', { className: 'ns-action-row ns-challenge-aftermath__actions' }, [
+        buttonLink({
+          href: challengeSceneHref,
+          text: isWin ? 'Defend with another take' : 'Try again',
+          variant: 'secondary',
+        }),
+        buttonLink({
+          href: createAppHref('/progress'),
+          text: 'View progress',
+          variant: 'secondary',
+        }),
       ]),
     ],
   });
@@ -145,14 +173,14 @@ export function renderChallengePage({ appState, params }) {
         });
       }
 
-      page.replaceChildren(h('article', { className: 'ns-page' }, [
+      page.replaceChildren(h('article', { className: 'ns-page ns-challenge-page' }, [
         h('header', { className: 'ns-page__header' }, [
           h('div', {}, [
             h('p', { className: 'ns-eyebrow', text: 'Challenge' }),
-            h('h2', { text: `Challenge ${challengeEntry.id}` }),
+            h('h2', { text: `Beat ${challengeEntry.targetScoreLabel}` }),
             h('p', {
               className: 'ns-page__summary',
-              text: 'Review the invite, launch the scene, and compare your scored take against the benchmark.',
+            text: `${challengeEntry.challengerName} set the benchmark on ${challengeEntry.sceneTitle}. Record a take, beat the score, then keep the rivalry moving.`,
             }),
           ]),
           h('div', { className: 'ns-inline-list' }, [
@@ -166,18 +194,23 @@ export function renderChallengePage({ appState, params }) {
             ? `Signed in as ${appState.session.user?.displayName || 'performer'}`
             : 'Sign in to accept this challenge',
           body: isAuthenticated
-            ? 'Accepting this challenge launches the linked scene with challenge context preserved.'
+            ? 'Launch the scene with this benchmark attached, then analyze a take to settle the board.'
             : 'After sign-in, Mirror sends you into the challenge scene to record your take.',
         }),
         renderChallengeEntryCard({ challengeEntry, isAuthenticated }),
         h('div', { className: 'ns-grid ns-grid--two' }, [
           renderChallengeResultCard({ entry: challengeEntry, result: challengeResult }),
-          renderChallengeResultSummary({ challengeResult }),
+          renderChallengeResultSummary({ challengeEntry, challengeResult, challengeSceneHref }),
         ]),
         card({
-          title: 'Challenge scene launch',
-          body: 'Launch the linked scene with challenge context preserved.',
-          className: 'ns-challenge-launch-card',
+          eyebrow: 'Next action',
+          title: challengeResult ? 'Keep the rivalry moving' : 'Challenge scene launch',
+          body: isAuthenticated
+            ? challengeResult
+              ? 'Try again from the same scene, improve the benchmark, or use the score as fuel for the next invite.'
+              : 'Open the linked scene with challenge context preserved and score the take there.'
+            : 'Sign in first, then Mirror brings this challenge context into the scene.',
+          className: 'ns-challenge-launch-card ns-support-card',
           children: [
             h('div', { className: 'ns-inline-list' }, [
               statusPill(challengeEntry.sceneTitle),
