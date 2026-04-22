@@ -134,7 +134,19 @@ function renderHomeSurface({ appState, scenes, leaderboard, profile, progressSum
         statusPill('Live scene config'),
       ]),
       scenes.length
-        ? h('div', { className: 'ns-scene-grid' }, scenes.map((scene) => renderSceneCard({ scene, entrySource: 'home' })))
+        ? h('div', { className: 'ns-carousel-wrap' }, [
+            h('button', {
+              className: 'ns-carousel-prev',
+              on: { click: () => { const c = document.querySelector('.ns-scene-carousel'); if (c) c.scrollBy({ left: -240, behavior: 'smooth' }); } },
+              text: '←',
+            }),
+            h('div', { className: 'ns-scene-carousel' }, scenes.map((scene) => renderSceneCard({ scene, entrySource: 'home' }))),
+            h('button', {
+              className: 'ns-carousel-next',
+              on: { click: () => { const c = document.querySelector('.ns-scene-carousel'); if (c) c.scrollBy({ left: 240, behavior: 'smooth' }); } },
+              text: '→',
+            }),
+          ])
         : card({ title: 'No scenes found', body: 'Scenes will appear here when the catalog is ready.' }),
     ]),
     h('div', { className: 'ns-grid ns-grid--two' }, [

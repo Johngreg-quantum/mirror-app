@@ -144,20 +144,7 @@ function renderAnalyzePanel({ analyzeStore, onCleanup }) {
   const detailEl = h('p', { className: 'ns-muted' });
   const authLink = buttonLink({ href: createAppHref('/auth'), text: 'Sign in', variant: 'secondary' });
   authLink.hidden = true;
-
-  const unsubscribe = analyzeStore.subscribe((snapshot) => {
-    statePill.textContent = getAnalyzeStatusLabel(snapshot);
-    detailEl.textContent = getAnalyzeDetail(snapshot);
-    button.textContent = snapshot.status === 'submitting' ? 'Analyzing...' : 'Analyze take';
-    button.disabled = !snapshot.canSubmit;
-    authLink.hidden = !(snapshot.disabledCode === 'auth-required' || snapshot.error?.authRequired);
-  });
-
-  onCleanup?.(() => {
-    unsubscribe();
-  });
-
-  return card({
+  const analyzeRoot = card({
     title: 'Analyze take',
     body: 'Send the current take for scoring when the recording feels ready.',
     className: 'ns-analyze-card',
@@ -167,6 +154,31 @@ function renderAnalyzePanel({ analyzeStore, onCleanup }) {
       h('div', { className: 'ns-action-row' }, [button, authLink]),
     ],
   });
+
+  const unsubscribe = analyzeStore.subscribe((snapshot) => {
+    const needsAuth = snapshot.disabledCode === 'auth-required' || Boolean(snapshot.error?.authRequired);
+
+    analyzeRoot.classList.toggle('is-success', snapshot.status === 'success');
+    analyzeRoot.classList.toggle('is-submitting', snapshot.status === 'submitting');
+    analyzeRoot.classList.toggle('is-error', snapshot.status === 'error' && !needsAuth);
+    analyzeRoot.classList.toggle('is-auth-required', needsAuth);
+    statePill.classList.toggle('ns-pill--success', snapshot.status === 'success');
+    statePill.classList.toggle('ns-pill--accent', needsAuth || snapshot.status === 'error');
+    button.classList.toggle('ns-button--success', snapshot.status === 'success');
+    button.classList.toggle('ns-button--danger', needsAuth || snapshot.status === 'error');
+    button.classList.toggle('ns-button--loading', snapshot.status === 'submitting');
+    statePill.textContent = getAnalyzeStatusLabel(snapshot);
+    detailEl.textContent = getAnalyzeDetail(snapshot);
+    button.textContent = snapshot.status === 'submitting' ? 'Analyzing...' : 'Analyze take';
+    button.disabled = !snapshot.canSubmit;
+    authLink.hidden = !needsAuth;
+  });
+
+  onCleanup?.(() => {
+    unsubscribe();
+  });
+
+  return analyzeRoot;
 }
 
 function getRuntimeDisabledReason({ scene, session, progressError }) {
@@ -198,11 +210,39 @@ export function createSceneDetailPanel({
   let currentProgressError = progressError;
   let currentRuntimeDisabledReason = runtimeDisabledReason;
   const canRecord = !currentRuntimeDisabledReason;
-  const imageEl = h('img', {
-    className: 'ns-scene-detail__image',
-    src: currentScene.imageUrl,
-    alt: `${currentScene.film} scene reference`,
-  });
+  const mediaSlot = h('div');
+
+  function renderMedia(s) {
+    const youtubeId = s.source?.ui?.youtube_id;
+    const clipStart = Number(s.source?.ui?.clip_start || 0);
+    const clipEnd = Number(s.source?.ui?.clip_end || 0);
+
+    if (youtubeId) {
+      const src = `https://www.youtube.com/embed/${youtubeId}?start=${clipStart}&end=${clipEnd}&autoplay=0&rel=0&modestbranding=1`;
+      mediaSlot.replaceChildren(
+        h('div', { className: 'ns-scene-detail__video-wrap' }, [
+          h('iframe', {
+            className: 'ns-scene-detail__video',
+            src,
+            attrs: {
+              frameborder: '0',
+              allowfullscreen: '',
+              allow: 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture',
+            },
+          }),
+        ]),
+      );
+      return;
+    }
+
+    mediaSlot.replaceChildren(
+      h('img', {
+        className: 'ns-scene-detail__image',
+        src: s.imageUrl,
+        alt: `${s.film} scene reference`,
+      }),
+    );
+  }
   const detailBody = h('div', { className: 'ns-scene-detail__body' });
   const personalizationSlot = h('div');
   const runtimeCard = renderLocalRuntimePanel({
@@ -260,8 +300,7 @@ export function createSceneDetailPanel({
       ? currentRuntimeDisabledReason
       : nextState.runtimeDisabledReason;
 
-    imageEl.src = currentScene.imageUrl;
-    imageEl.alt = `${currentScene.film} scene reference`;
+    renderMedia(currentScene);
     renderDetailBody();
     renderPersonalization();
   }
@@ -276,7 +315,7 @@ export function createSceneDetailPanel({
 
   const root = h('div', { className: 'ns-scene-entry-stack' }, [
     h('section', { className: 'ns-scene-detail' }, [
-      h('div', { className: 'ns-scene-detail__media' }, [imageEl]),
+      h('div', { className: 'ns-scene-detail__media' }, [mediaSlot]),
       detailBody,
     ]),
     h('div', { className: 'ns-grid ns-grid--three ns-scene-workflow' }, [

@@ -1264,3 +1264,58 @@
     font-size: 2.5rem;
   }
 }
+
+/* ─── Scene detail video player ──────────────────── */
+
+.ns-scene-detail__video-wrap {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  background: #000;
+  border-radius: 14px;
+  overflow: hidden;
+  border: 0.5px solid rgba(200, 169, 110, 0.15);
+}
+
+.ns-scene-detail__video {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border: none;
+}
+
+/* ─── Carousel wrap + arrows ─────────────────────── */
+
+.ns-carousel-wrap {
+  position: relative;
+  padding: 0 24px;
+}
+
+.ns-carousel-prev,
+.ns-carousel-next {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: rgba(200, 169, 110, 0.15);
+  border: 0.5px solid rgba(200, 169, 110, 0.3);
+  color: #c8a96e;
+  font-size: 16px;
+  cursor: pointer;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s;
+}
+
+.ns-carousel-prev { left: -18px; }
+.ns-carousel-next { right: -18px; }
+
+.ns-carousel-prev:hover,
+.ns-carousel-next:hover {
+  background: rgba(200, 169, 110, 0.28);
+}
