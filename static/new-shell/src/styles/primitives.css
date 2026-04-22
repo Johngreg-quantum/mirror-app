@@ -1,16 +1,17 @@
-/* ─── Glass card ─────────────────────────────── */
+/* ─── Glass card ─────────────────────────────────── */
 
-.ns-card {
+.ns-card,
+[class*="card"]:not([class*="scene-card"]):not(button):not([class*="nav"]):not([class*="rail"]) {
   display: grid;
   gap: var(--ns-space-4);
   align-content: start;
   min-width: 0;
   padding: var(--ns-space-5);
-  background: rgba(255, 255, 255, 0.025);
-  border: 0.5px solid rgba(200, 169, 110, 0.09);
-  border-radius: 12px;
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
+  background: var(--bg-card) !important;
+  border: 0.5px solid var(--border-subtle) !important;
+  border-radius: var(--r-md);
+  backdrop-filter: var(--blur-card);
+  -webkit-backdrop-filter: var(--blur-card);
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
 }
 
@@ -29,7 +30,7 @@
   color: var(--text-muted);
 }
 
-/* ─── Buttons ────────────────────────────────── */
+/* ─── Buttons ─────────────────────────────────────── */
 
 .ns-button {
   display: inline-flex;
@@ -43,7 +44,7 @@
   background: var(--gold);
   border: none;
   border-radius: 7px;
-  box-shadow: 0 4px 20px rgba(200, 169, 110, 0.28);
+  box-shadow: var(--gold-glow);
   font-family: var(--font-body);
   font-weight: 500;
   font-size: 0.9rem;
@@ -54,7 +55,7 @@
 
 .ns-button:hover {
   background: var(--gold-light);
-  box-shadow: 0 6px 28px rgba(200, 169, 110, 0.4);
+  box-shadow: var(--gold-glow-strong);
   transform: translateY(-1px);
 }
 
@@ -65,7 +66,7 @@
 }
 
 .ns-button--secondary {
-  color: rgba(240, 237, 230, 0.55);
+  color: var(--text-secondary);
   background: rgba(255, 255, 255, 0.03);
   border: 0.5px solid rgba(240, 237, 230, 0.09);
   box-shadow: none;
@@ -97,37 +98,53 @@
   opacity: 0.75;
 }
 
-/* ─── Inputs ─────────────────────────────────── */
+/* ─── Inputs ──────────────────────────────────────── */
 
-.ns-input {
-  width: 100%;
-  min-height: 2.75rem;
-  padding: 0 var(--ns-space-3);
-  color: var(--text-primary);
-  background: rgba(255, 255, 255, 0.04);
-  border: 0.5px solid rgba(240, 237, 230, 0.1);
-  border-radius: 8px;
-  transition: border-color 160ms ease;
+.ns-input,
+input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="submit"]):not([type="button"]):not([type="reset"]):not([type="file"]),
+textarea,
+select {
+  width: 100% !important;
+  min-height: 2.75rem !important;
+  padding: 0 var(--ns-space-3) !important;
+  color: var(--text-primary) !important;
+  background: var(--bg-input) !important;
+  border: 0.5px solid rgba(240, 237, 230, 0.1) !important;
+  border-radius: 8px !important;
+  transition: border-color 160ms ease !important;
+  font-family: var(--font-body) !important;
+  font-size: var(--ns-font-size-base) !important;
 }
 
-.ns-input:focus {
-  outline: none;
-  border-color: rgba(200, 169, 110, 0.4);
+.ns-input:focus,
+input:focus,
+textarea:focus,
+select:focus {
+  outline: none !important;
+  border-color: rgba(200, 169, 110, 0.4) !important;
 }
 
-.ns-input::placeholder {
-  color: rgba(240, 237, 230, 0.22);
+.ns-input::placeholder,
+input::placeholder,
+textarea::placeholder {
+  color: var(--text-dim) !important;
+}
+
+textarea {
+  min-height: 6rem !important;
+  padding: var(--ns-space-3) !important;
+  resize: vertical !important;
 }
 
 .ns-field {
   display: grid;
   gap: var(--ns-space-2);
-  color: rgba(240, 237, 230, 0.55);
+  color: var(--text-secondary);
   font-size: 0.875rem;
   font-weight: 400;
 }
 
-/* ─── Pills ──────────────────────────────────── */
+/* ─── Pills ───────────────────────────────────────── */
 
 .ns-pill {
   display: inline-flex;
@@ -139,7 +156,7 @@
   color: rgba(240, 237, 230, 0.44);
   background: rgba(255, 255, 255, 0.025);
   border: 0.5px solid rgba(240, 237, 230, 0.07);
-  border-radius: 100px;
+  border-radius: var(--r-pill);
   font-size: 0.75rem;
   font-weight: 400;
   white-space: nowrap;
@@ -157,7 +174,52 @@
   border-color: rgba(200, 169, 110, 0.22);
 }
 
-/* ─── Layout helpers ─────────────────────────── */
+/* Level difficulty pills */
+[class*="beginner"] .ns-pill,
+.ns-pill[class*="beginner"] {
+  color: var(--gold);
+  background: rgba(200, 169, 110, 0.08);
+  border-color: rgba(200, 169, 110, 0.2);
+}
+
+[class*="intermediate"] .ns-pill,
+.ns-pill[class*="intermediate"] {
+  color: var(--text-secondary);
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(240, 237, 230, 0.1);
+}
+
+[class*="advanced"] .ns-pill,
+.ns-pill[class*="advanced"] {
+  color: var(--gold-light);
+  background: rgba(232, 201, 142, 0.1);
+  border-color: rgba(232, 201, 142, 0.25);
+}
+
+/* ─── Eyebrow ─────────────────────────────────────── */
+
+.ns-eyebrow,
+[class*="eyebrow"] {
+  color: var(--gold);
+  font-size: 0.7rem;
+  font-weight: 400;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  font-family: var(--font-body);
+}
+
+[class*="eyebrow"]::before {
+  content: '';
+  display: inline-block;
+  width: 16px;
+  height: 1px;
+  background: var(--gold);
+  margin-right: 8px;
+  vertical-align: middle;
+  opacity: 0.7;
+}
+
+/* ─── Layout helpers ──────────────────────────────── */
 
 .ns-grid {
   display: grid;
@@ -174,15 +236,6 @@
   gap: var(--ns-space-5);
 }
 
-.ns-eyebrow {
-  color: var(--gold);
-  font-size: 0.7rem;
-  font-weight: 400;
-  text-transform: uppercase;
-  letter-spacing: 0.12em;
-  font-family: var(--font-body);
-}
-
 .ns-list-block {
   display: grid;
   gap: var(--ns-space-2);
@@ -193,7 +246,7 @@
   font-size: var(--ns-font-size-sm);
 }
 
-/* ─── Responsive ─────────────────────────────── */
+/* ─── Responsive ──────────────────────────────────── */
 
 @media (max-width: 760px) {
   .ns-grid--two {

@@ -4,35 +4,75 @@
   --gold-light: #e8c98e;
   --gold-dim: rgba(200, 169, 110, 0.1);
   --gold-border: rgba(200, 169, 110, 0.15);
-  --gold-glow: rgba(200, 169, 110, 0.28);
-  --surface: rgba(255, 255, 255, 0.025);
-  --surface-border: rgba(200, 169, 110, 0.09);
-  --bg-deep: #060609;
+  --gold-glow: 0 4px 24px rgba(200, 169, 110, 0.3);
+  --gold-glow-strong: 0 8px 40px rgba(200, 169, 110, 0.45);
+
+  /* Surfaces */
+  --surface-1: rgba(255, 255, 255, 0.025);
+  --surface-2: rgba(255, 255, 255, 0.045);
+  --surface-featured: rgba(200, 169, 110, 0.07);
+
+  /* Borders */
+  --border-subtle: rgba(200, 169, 110, 0.09);
+  --border-gold: rgba(200, 169, 110, 0.18);
+  --border-gold-strong: rgba(200, 169, 110, 0.35);
+
+  /* Text */
   --text-primary: #f0ede6;
-  --text-muted: rgba(240, 237, 230, 0.38);
-  --text-dim: rgba(240, 237, 230, 0.22);
+  --text-secondary: rgba(240, 237, 230, 0.55);
+  --text-muted: rgba(240, 237, 230, 0.32);
+  --text-dim: rgba(240, 237, 230, 0.18);
+  --text-gold: #c8a96e;
+
+  /* Backgrounds */
+  --bg-app: #060609;
+  --bg-rail: rgba(4, 4, 8, 0.92);
+  --bg-topbar: rgba(4, 4, 8, 0.8);
+  --bg-card: rgba(255, 255, 255, 0.025);
+  --bg-input: rgba(255, 255, 255, 0.04);
+
+  /* Blur */
+  --blur-rail: blur(32px);
+  --blur-card: blur(20px);
+  --blur-topbar: blur(24px);
+
+  /* Radius */
+  --r-sm: 8px;
+  --r-md: 12px;
+  --r-lg: 16px;
+  --r-xl: 20px;
+  --r-pill: 100px;
+
+  /* Fonts */
   --font-display: 'Bebas Neue', sans-serif;
   --font-serif: 'Playfair Display', serif;
   --font-body: 'DM Sans', sans-serif;
 
-  /* Semantic aliases — keep all --ns-* vars so existing CSS compiles unchanged */
-  --ns-color-page: #060609;
-  --ns-color-surface: rgba(255, 255, 255, 0.025);
-  --ns-color-surface-alt: rgba(255, 255, 255, 0.04);
+  /* ── Legacy --ns-* aliases so existing selectors resolve ── */
+
+  --ns-color-page: var(--bg-app);
+  --ns-color-surface: var(--surface-1);
+  --ns-color-surface-alt: var(--surface-2);
   --ns-color-surface-strong: rgba(255, 255, 255, 0.035);
-  --ns-color-ink: #f0ede6;
-  --ns-color-muted: rgba(240, 237, 230, 0.38);
+  --ns-color-ink: var(--text-primary);
+  --ns-color-muted: var(--text-muted);
   --ns-color-soft-muted: rgba(240, 237, 230, 0.28);
-  --ns-color-line: rgba(200, 169, 110, 0.09);
-  --ns-color-line-strong: rgba(200, 169, 110, 0.18);
-  --ns-color-primary: #c8a96e;
+  --ns-color-line: var(--border-subtle);
+  --ns-color-line-strong: var(--border-gold);
+  --ns-color-primary: var(--gold);
   --ns-color-primary-strong: #a88850;
-  --ns-color-primary-soft: rgba(200, 169, 110, 0.1);
-  --ns-color-accent: #c8a96e;
+  --ns-color-primary-soft: var(--gold-dim);
+  --ns-color-accent: var(--gold);
   --ns-color-accent-soft: rgba(200, 169, 110, 0.08);
-  --ns-color-warm: #c8a96e;
+  --ns-color-warm: var(--gold);
   --ns-color-warm-soft: rgba(200, 169, 110, 0.07);
   --ns-color-focus: rgba(200, 169, 110, 0.6);
+
+  /* Short aliases for new code */
+  --ns-bg-primary: var(--bg-app);
+  --ns-border: var(--border-subtle);
+  --ns-text-primary: var(--text-primary);
+  --ns-accent: var(--gold);
 
   /* Spacing scale */
   --ns-space-1: 0.25rem;

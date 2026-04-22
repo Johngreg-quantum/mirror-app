@@ -1,4 +1,4 @@
-/* ─── Shared surface base ─────────────────────
+/* ─── Shared surface base ──────────────────────────
    All major surfaces: glass card on dark cinema bg */
 
 .ns-home-hero,
@@ -12,11 +12,11 @@
 .ns-level-card,
 .ns-stat-card,
 .ns-streak-card {
-  border: 0.5px solid rgba(200, 169, 110, 0.09);
-  border-radius: 12px;
-  background: rgba(255, 255, 255, 0.025);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
+  border: 0.5px solid var(--border-subtle);
+  border-radius: var(--r-md);
+  background: var(--surface-1);
+  backdrop-filter: var(--blur-card);
+  -webkit-backdrop-filter: var(--blur-card);
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
 }
 
@@ -39,12 +39,12 @@
   color: var(--text-muted);
 }
 
-/* ─── Featured card pattern
-   Applied to: daily card, active level, home hero, runtime-ready */
+/* ─── Featured card pattern ─────────────────────── */
+
 .ns-home-hero,
 .ns-daily-card,
 .ns-scene-detail {
-  background: rgba(200, 169, 110, 0.05);
+  background: var(--surface-featured);
   border-color: rgba(200, 169, 110, 0.14);
 }
 
@@ -54,12 +54,12 @@
   content: '';
   display: block;
   height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(200, 169, 110, 0.55), transparent);
+  background: linear-gradient(90deg, transparent, rgba(200, 169, 110, 0.6), transparent);
   border-radius: 12px 12px 0 0;
   margin: calc(-1 * var(--ns-space-6)) calc(-1 * var(--ns-space-6)) 0;
 }
 
-/* ─── Home hero ──────────────────────────────── */
+/* ─── Home hero ──────────────────────────────────── */
 
 .ns-home-hero {
   display: grid;
@@ -71,7 +71,7 @@
   overflow: hidden;
 }
 
-/* ─── Auth panel ─────────────────────────────── */
+/* ─── Auth panel & form ──────────────────────────── */
 
 .ns-auth-panel {
   display: grid;
@@ -99,16 +99,18 @@
 
 .ns-auth-form {
   align-content: start;
-  padding: var(--ns-space-5);
+  max-width: 380px;
+  margin: 0 auto;
+  padding: 36px;
   background: rgba(255, 255, 255, 0.04);
   border: 0.5px solid rgba(240, 237, 230, 0.08);
-  border-radius: 10px;
+  border-radius: 20px;
   gap: var(--ns-space-4);
 }
 
 .ns-auth-form h3 {
   font-family: var(--font-serif);
-  font-size: 1.2rem;
+  font-size: 1.4rem;
   color: var(--text-primary);
 }
 
@@ -130,7 +132,7 @@
   color: var(--gold-light);
 }
 
-/* ─── Inline/action rows ─────────────────────── */
+/* ─── Inline/action rows ─────────────────────────── */
 
 .ns-inline-list,
 .ns-action-row {
@@ -145,7 +147,7 @@
   gap: var(--ns-space-3);
 }
 
-/* ─── Grid helpers ───────────────────────────── */
+/* ─── Grid helpers ───────────────────────────────── */
 
 .ns-grid--three {
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -158,27 +160,56 @@
 .ns-scene-grid,
 .ns-level-grid {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
   gap: var(--ns-space-5);
 }
 
-/* ─── Scene card ─────────────────────────────── */
+/* ─── Scene carousel ─────────────────────────────── */
+
+[class*="scene-carousel"] {
+  display: flex;
+  gap: var(--ns-space-4);
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  scroll-padding-left: var(--ns-space-5);
+  padding-bottom: var(--ns-space-3);
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(200, 169, 110, 0.2) transparent;
+}
+
+[class*="scene-carousel"] > * {
+  scroll-snap-align: start;
+  flex: 0 0 260px;
+  min-width: 0;
+}
+
+[class*="scene-carousel"]::-webkit-scrollbar {
+  height: 4px;
+}
+
+[class*="scene-carousel"]::-webkit-scrollbar-thumb {
+  background: rgba(200, 169, 110, 0.25);
+  border-radius: 2px;
+}
+
+/* ─── Scene card ─────────────────────────────────── */
 
 .ns-scene-card {
   display: grid;
   grid-template-rows: auto 1fr;
   overflow: hidden;
-  border: 0.5px solid rgba(200, 169, 110, 0.09);
-  border-radius: 12px;
+  border: 0.5px solid var(--border-subtle);
+  border-radius: var(--r-md);
   background: rgba(255, 255, 255, 0.02);
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
-  transition: border-color 180ms ease, box-shadow 180ms ease, transform 180ms ease;
+  transition: border-color 200ms ease, box-shadow 200ms ease, transform 200ms ease;
 }
 
 .ns-scene-card:hover {
-  border-color: rgba(200, 169, 110, 0.22);
-  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.55);
-  transform: translateY(-2px);
+  border-color: var(--border-gold);
+  box-shadow: 0 20px 56px rgba(0, 0, 0, 0.6), 0 0 0 0.5px rgba(200, 169, 110, 0.12) inset;
+  transform: translateY(-6px) scale(1.02);
 }
 
 .ns-scene-card.is-locked {
@@ -191,8 +222,9 @@
 
 .ns-scene-card__media {
   position: relative;
-  min-height: 14.5rem;
+  height: 160px;
   background: rgba(6, 6, 9, 0.8);
+  overflow: hidden;
 }
 
 .ns-scene-card__media img,
@@ -202,10 +234,16 @@
   width: 100%;
   height: 100%;
   object-fit: cover;
-  opacity: 0.78;
+  opacity: 0.8;
+  transition: opacity 200ms ease, transform 200ms ease;
 }
 
-/* Gradient overlay on scene card poster */
+.ns-scene-card:hover .ns-scene-card__media img {
+  opacity: 0.9;
+  transform: scale(1.04);
+}
+
+/* Gradient overlay */
 .ns-scene-card__media::after {
   content: '';
   position: absolute;
@@ -229,7 +267,7 @@
 }
 
 .ns-scene-card__body {
-  padding: var(--ns-space-5);
+  padding: var(--ns-space-4);
   align-content: start;
   gap: var(--ns-space-3);
 }
@@ -258,7 +296,7 @@
   font-size: 0.85rem;
 }
 
-/* ─── Section heading ────────────────────────── */
+/* ─── Section heading ────────────────────────────── */
 
 .ns-section-heading {
   display: flex;
@@ -267,14 +305,14 @@
   align-items: flex-start;
 }
 
-/* ─── Stat cards ─────────────────────────────── */
+/* ─── Stat cards ─────────────────────────────────── */
 
 .ns-stat-card {
   display: grid;
   gap: var(--ns-space-2);
   padding: var(--ns-space-5);
-  background: rgba(255, 255, 255, 0.025);
-  border: 0.5px solid rgba(200, 169, 110, 0.09);
+  background: var(--surface-1);
+  border: 0.5px solid var(--border-subtle);
 }
 
 .ns-stat-card span {
@@ -282,14 +320,13 @@
   font-weight: 400;
   text-transform: uppercase;
   letter-spacing: 0.1em;
-  color: rgba(240, 237, 230, 0.25);
+  color: var(--text-dim);
 }
 
 .ns-stat-card strong {
   font-family: var(--font-display);
-  font-size: 30px;
+  font-size: 32px;
   line-height: 1;
-  color: var(--text-primary);
   background: linear-gradient(135deg, var(--gold-light), var(--gold));
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -301,7 +338,7 @@
   color: rgba(240, 237, 230, 0.2);
 }
 
-/* ─── Shared padded surfaces ─────────────────── */
+/* ─── Shared padded surfaces ─────────────────────── */
 
 .ns-leaderboard,
 .ns-level-card,
@@ -322,7 +359,7 @@
   min-width: 0;
 }
 
-/* ─── Leaderboard ────────────────────────────── */
+/* ─── Leaderboard ────────────────────────────────── */
 
 .ns-leaderboard__rows {
   display: grid;
@@ -389,7 +426,7 @@
   color: var(--gold);
 }
 
-/* ─── Daily challenge card ───────────────────── */
+/* ─── Daily challenge card ───────────────────────── */
 
 .ns-daily-card {
   display: grid;
@@ -408,13 +445,13 @@
   gap: var(--ns-space-4);
 }
 
-/* ─── Streak card ────────────────────────────── */
+/* ─── Streak card ────────────────────────────────── */
 
 .ns-streak-card strong {
   font-family: var(--font-display);
-  font-size: 48px;
+  font-size: 52px;
   line-height: 1;
-  color: var(--text-primary);
+  color: var(--gold-light);
 }
 
 .ns-streak-card .ns-eyebrow {
@@ -424,14 +461,14 @@
   color: rgba(240, 237, 230, 0.27);
 }
 
-/* ─── Scene entry stack ──────────────────────── */
+/* ─── Scene entry stack ──────────────────────────── */
 
 .ns-scene-entry-stack {
   display: grid;
   gap: var(--ns-space-5);
 }
 
-/* ─── Scene detail (2-col panel) ─────────────── */
+/* ─── Scene detail (2-col panel) ─────────────────── */
 
 .ns-scene-detail {
   display: grid;
@@ -478,7 +515,7 @@
   font-weight: 400;
 }
 
-/* ─── Scene workflow (3-col: personalization, recording, analyze) */
+/* ─── Scene workflow (3-col) ─────────────────────── */
 
 .ns-scene-workflow {
   grid-template-columns: minmax(0, 0.9fr) minmax(18rem, 1.25fr) minmax(0, 0.9fr);
@@ -509,12 +546,12 @@
   border-color: rgba(240, 237, 230, 0.06);
 }
 
-/* ─── Score panel ────────────────────────────── */
+/* ─── Score panel ────────────────────────────────── */
 
 .ns-score-panel {
   grid-template-columns: minmax(0, 1fr);
   align-items: start;
-  border-color: var(--ns-score-accent, rgba(200, 169, 110, 0.09));
+  border-color: var(--ns-score-accent, var(--border-subtle));
 }
 
 .ns-score-panel > *,
@@ -592,9 +629,12 @@
 
 .ns-score-panel__score strong {
   font-family: var(--font-display);
-  font-size: 56px;
+  font-size: 64px;
   line-height: 1;
-  color: var(--text-primary);
+  background: linear-gradient(135deg, var(--gold-light), var(--gold));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
 .ns-score-panel__score span {
@@ -613,7 +653,7 @@
   gap: var(--ns-space-2);
   min-width: 0;
   padding: var(--ns-space-4);
-  background: rgba(255, 255, 255, 0.025);
+  background: var(--surface-1);
   border: 0.5px solid rgba(200, 169, 110, 0.07);
   border-radius: 8px;
 }
@@ -649,7 +689,7 @@
   gap: 0.35rem;
   min-width: 0;
   padding: var(--ns-space-4);
-  background: rgba(255, 255, 255, 0.025);
+  background: var(--surface-1);
   border: 0.5px solid rgba(200, 169, 110, 0.07);
   border-radius: 8px;
 }
@@ -673,7 +713,7 @@
   gap: var(--ns-space-3);
   min-height: 8.5rem;
   padding: var(--ns-space-4);
-  background: rgba(255, 255, 255, 0.025);
+  background: var(--surface-1);
   border: 0.5px solid rgba(200, 169, 110, 0.07);
   border-radius: 8px;
 }
@@ -684,11 +724,11 @@
   color: var(--text-muted);
 }
 
-/* ─── Recording status ───────────────────────── */
+/* ─── Recording status ───────────────────────────── */
 
 .ns-recording-status {
   padding: var(--ns-space-4);
-  background: rgba(255, 255, 255, 0.025);
+  background: var(--surface-1);
   border: 0.5px solid rgba(200, 169, 110, 0.07);
   border-radius: 8px;
   gap: var(--ns-space-2);
@@ -715,7 +755,21 @@
   color: var(--text-muted);
 }
 
-/* ─── Waveform ───────────────────────────────── */
+/* ─── Recording active state ─────────────────────── */
+
+.ns-runtime-card.is-recording,
+[class*="runtime"].is-recording {
+  border-color: rgba(220, 60, 50, 0.4) !important;
+  box-shadow: 0 0 0 1px rgba(220, 60, 50, 0.15), 0 12px 40px rgba(0, 0, 0, 0.5) !important;
+  animation: recordPulse 1.8s ease-in-out infinite;
+}
+
+@keyframes recordPulse {
+  0%, 100% { box-shadow: 0 0 0 1px rgba(220, 60, 50, 0.15), 0 12px 40px rgba(0, 0, 0, 0.5); }
+  50% { box-shadow: 0 0 0 3px rgba(220, 60, 50, 0.25), 0 12px 48px rgba(0, 0, 0, 0.55); }
+}
+
+/* ─── Waveform ───────────────────────────────────── */
 
 .ns-waveform-shell {
   display: flex;
@@ -741,11 +795,11 @@
   background: var(--gold);
 }
 
-/* ─── State cards ────────────────────────────── */
+/* ─── State cards ────────────────────────────────── */
 
 .ns-state-card {
-  border-color: rgba(200, 169, 110, 0.09);
-  background: rgba(255, 255, 255, 0.025);
+  border-color: var(--border-subtle);
+  background: var(--surface-1);
 }
 
 .ns-state-card--loading {
@@ -798,12 +852,12 @@
 .ns-state-card--ready,
 .ns-context-card,
 .ns-aftermath-card {
-  background: rgba(255, 255, 255, 0.025);
-  border-color: rgba(200, 169, 110, 0.09);
+  background: var(--surface-1);
+  border-color: var(--border-subtle);
 }
 
 .ns-scene-workflow .ns-state-card--ready {
-  border-color: rgba(200, 169, 110, 0.18);
+  border-color: var(--border-gold);
   background: rgba(200, 169, 110, 0.04);
 }
 
@@ -814,15 +868,15 @@
   border-color: rgba(200, 169, 110, 0.22);
 }
 
-/* ─── Session card ───────────────────────────── */
+/* ─── Session card ───────────────────────────────── */
 
 .ns-session-card {
-  border-color: rgba(200, 169, 110, 0.09);
-  background: rgba(255, 255, 255, 0.025);
+  border-color: var(--border-subtle);
+  background: var(--surface-1);
 }
 
 .ns-session-card.is-authenticated {
-  border-color: rgba(200, 169, 110, 0.18);
+  border-color: var(--border-gold);
   background: rgba(200, 169, 110, 0.05);
 }
 
@@ -832,19 +886,18 @@
   font-weight: 500;
 }
 
-/* ─── Runtime card (recording studio) ───────── */
+/* ─── Runtime card (recording studio) ───────────── */
 
 .ns-runtime-card,
 .ns-analyze-card {
-  background: rgba(255, 255, 255, 0.025);
-  border-color: rgba(200, 169, 110, 0.09);
+  background: var(--surface-1);
+  border-color: var(--border-subtle);
   position: relative;
   overflow: hidden;
 }
 
-/* Gold top edge when recording ready */
 .ns-runtime-card.is-ready {
-  border-color: rgba(200, 169, 110, 0.18);
+  border-color: var(--border-gold);
   background: rgba(200, 169, 110, 0.04);
   box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5), 0 0 0 0.5px rgba(200, 169, 110, 0.12) inset;
 }
@@ -881,7 +934,7 @@
   padding-top: var(--ns-space-1);
 }
 
-/* ─── Result card ────────────────────────────── */
+/* ─── Result card ────────────────────────────────── */
 
 .ns-result-card {
   position: relative;
@@ -928,7 +981,7 @@
   color: var(--gold-light);
 }
 
-/* ─── Challenge entry ────────────────────────── */
+/* ─── Challenge entry ────────────────────────────── */
 
 .ns-challenge-entry--hero {
   grid-template-columns: minmax(0, 1fr) minmax(9rem, 0.35fr);
@@ -954,11 +1007,10 @@
 
 .ns-challenge-entry__benchmark span {
   color: var(--text-muted);
-  font-size: var(--ns-font-size-sm);
+  font-size: 9px;
   font-weight: 400;
   text-transform: uppercase;
   letter-spacing: 0.06em;
-  font-size: 9px;
 }
 
 .ns-challenge-entry__benchmark strong {
@@ -988,7 +1040,7 @@
   justify-content: space-between;
 }
 
-/* ─── Level cards ────────────────────────────── */
+/* ─── Level cards ────────────────────────────────── */
 
 .ns-level-card--complete {
   border-color: rgba(200, 169, 110, 0.2);
@@ -1000,7 +1052,7 @@
   opacity: 0.65;
 }
 
-/* ─── Progress meter ─────────────────────────── */
+/* ─── Progress meter ─────────────────────────────── */
 
 .ns-meter {
   height: 4px;
@@ -1017,7 +1069,46 @@
   border-radius: 2px;
 }
 
-/* ─── Card list items ────────────────────────── */
+/* ─── Tab bar (progress page) ────────────────────── */
+
+[class*="tab-bar"],
+[class*="tabs-bar"] {
+  display: flex;
+  gap: 2px;
+  border-bottom: 0.5px solid var(--border-subtle);
+  margin-bottom: var(--ns-space-5);
+}
+
+[class*="tab-bar"] button,
+[class*="tabs-bar"] button,
+[class*="tab-item"] {
+  padding: var(--ns-space-2) var(--ns-space-4);
+  color: var(--text-muted);
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  border-radius: 0;
+  font-size: var(--ns-font-size-sm);
+  cursor: pointer;
+  transition: color 140ms ease, border-color 140ms ease;
+}
+
+[class*="tab-bar"] button:hover,
+[class*="tabs-bar"] button:hover,
+[class*="tab-item"]:hover {
+  color: var(--text-primary);
+}
+
+[class*="tab-bar"] button.is-active,
+[class*="tab-bar"] button.active,
+[class*="tabs-bar"] button.is-active,
+[class*="tab-item"].is-active,
+[class*="tab-item"].active {
+  color: var(--gold);
+  border-bottom-color: var(--gold);
+}
+
+/* ─── Card list items ────────────────────────────── */
 
 .ns-card ul {
   display: grid;
@@ -1030,24 +1121,27 @@
 .ns-card li {
   padding: var(--ns-space-3);
   color: var(--text-muted);
-  background: rgba(255, 255, 255, 0.025);
+  background: var(--surface-1);
   border: 0.5px solid rgba(200, 169, 110, 0.07);
   border-radius: 7px;
   font-size: 0.875rem;
 }
 
-/* ─── Responsive ─────────────────────────────── */
+/* ─── Responsive ─────────────────────────────────── */
 
 @media (max-width: 1040px) {
   .ns-grid--four,
   .ns-grid--three,
-  .ns-scene-grid,
-  .ns-level-grid,
   .ns-home-hero,
   .ns-auth-panel,
   .ns-daily-card,
   .ns-scene-detail {
     grid-template-columns: 1fr;
+  }
+
+  .ns-scene-grid,
+  .ns-level-grid {
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
   }
 
   .ns-home-hero::before,
@@ -1138,6 +1232,15 @@
   .ns-scene-detail__body,
   .ns-scene-card__body {
     padding: var(--ns-space-4);
+  }
+
+  .ns-scene-grid,
+  .ns-level-grid {
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  }
+
+  .ns-scene-card__media {
+    height: 120px;
   }
 
   .ns-action-row {
