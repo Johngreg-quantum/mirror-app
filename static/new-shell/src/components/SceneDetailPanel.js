@@ -218,7 +218,7 @@ export function createSceneDetailPanel({
     const clipEnd = Number(s.source?.ui?.clip_end || 0);
 
     if (youtubeId) {
-      const src = `https://www.youtube.com/embed/${youtubeId}?start=${clipStart}&end=${clipEnd}&autoplay=0&rel=0&modestbranding=1`;
+      const src = `https://www.youtube.com/embed/${youtubeId}?start=${clipStart}&autoplay=0&rel=0&modestbranding=1`;
       mediaSlot.replaceChildren(
         h('div', { className: 'ns-scene-detail__video-wrap' }, [
           h('iframe', {
@@ -227,7 +227,8 @@ export function createSceneDetailPanel({
             attrs: {
               frameborder: '0',
               allowfullscreen: '',
-              allow: 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture',
+              allow: 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share',
+              referrerpolicy: 'strict-origin-when-cross-origin',
             },
           }),
         ]),
