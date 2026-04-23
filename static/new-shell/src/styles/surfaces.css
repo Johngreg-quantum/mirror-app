@@ -180,7 +180,7 @@
 
 [class*="scene-carousel"] > * {
   scroll-snap-align: start;
-  flex: 0 0 260px;
+  flex: 0 0 200px;
   min-width: 0;
 }
 
@@ -222,7 +222,7 @@
 
 .ns-scene-card__media {
   position: relative;
-  height: 160px;
+  height: 200px;
   background: rgba(6, 6, 9, 0.8);
   overflow: hidden;
 }
