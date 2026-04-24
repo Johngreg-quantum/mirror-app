@@ -66,14 +66,16 @@ function nsCfRotate(dir) {
   }
 }
 
-setTimeout(() => { nsCfRotate(0); }, 50);
-
 export function renderHomePage({ appState, actions }) {
   const page = h('div', {}, [renderLoadingState('Loading scene browser')]);
 
   loadHomeViewModel({ appState, actions })
     .then((viewModel) => {
       page.replaceChildren(renderHomeSurface({ appState, ...viewModel }));
+      requestAnimationFrame(() => requestAnimationFrame(() => {
+        nsCfTotal = document.querySelectorAll('.ns-cf-card').length;
+        nsCfRotate(0);
+      }));
     })
     .catch((error) => {
       page.replaceChildren(renderLoggedErrorState(error, {

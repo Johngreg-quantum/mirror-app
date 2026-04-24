@@ -2005,23 +2005,12 @@ function renderCarousel() {
     if (e.key === 'ArrowRight') cfRotate(1);
   });
 
-  cfRender();
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      cfRender();
+    });
+  });
 }
-
-// Carousel arrow scrolling
-(function() {
-  const wrap = document.querySelector('.carousel-track-wrap');
-  const prevBtn = document.getElementById('carouselPrev');
-  const nextBtn = document.getElementById('carouselNext');
-  if (!wrap || !prevBtn || !nextBtn) return;
-
-  prevBtn.addEventListener('click', () => {
-    wrap.scrollBy({ left: -300, behavior: 'smooth' });
-  });
-  nextBtn.addEventListener('click', () => {
-    wrap.scrollBy({ left: 300, behavior: 'smooth' });
-  });
-})();
 
 // Hook into loadScenes to also render carousel
 const _origLoadScenes = loadScenes;
