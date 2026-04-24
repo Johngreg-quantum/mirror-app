@@ -1370,3 +1370,155 @@ button[class*="record"][class*="is-recording"] {
   object-fit: cover !important;
   object-position: center top !important;
 }
+
+/* ============ NS COVERFLOW ============ */
+
+.ns-coverflow-section {
+  padding: 40px 0 60px;
+  position: relative;
+}
+
+.ns-coverflow-wrap {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+  position: relative;
+}
+
+.ns-coverflow-stage {
+  width: 100%;
+  height: 320px;
+  position: relative;
+  perspective: 1200px;
+  perspective-origin: 50% 50%;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ns-coverflow-track {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  transform-style: preserve-3d;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ns-coverflow-floor {
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(200,169,110,0.12), transparent);
+  pointer-events: none;
+}
+
+.ns-cf-card {
+  position: absolute !important;
+  width: 170px !important;
+  cursor: pointer;
+  transform-style: preserve-3d;
+  transition: transform 0.45s cubic-bezier(0.25,0.46,0.45,0.94),
+              filter 0.45s ease;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+}
+
+.ns-cf-poster {
+  width: 170px !important;
+  height: 245px !important;
+  border-radius: 10px !important;
+  overflow: hidden !important;
+  border: 0.5px solid rgba(200,169,110,0.18) !important;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.7) !important;
+  position: relative !important;
+  background: rgba(200,169,110,0.06) !important;
+  transition: box-shadow 0.45s, border-color 0.45s !important;
+}
+
+.ns-cf-poster img {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover !important;
+  object-position: center top !important;
+  display: block !important;
+}
+
+.ns-cf-poster::after {
+  content: '';
+  position: absolute; inset: 0;
+  background: linear-gradient(150deg, rgba(200,169,110,0.06) 0%, transparent 50%);
+  pointer-events: none;
+}
+
+.ns-cf-reflection {
+  width: 170px !important;
+  height: 65px !important;
+  margin-top: 2px !important;
+  overflow: hidden !important;
+  border-radius: 0 0 10px 10px !important;
+  opacity: 0.2 !important;
+  -webkit-mask-image: linear-gradient(to bottom, rgba(0,0,0,0.5) 0%, transparent 100%) !important;
+  mask-image: linear-gradient(to bottom, rgba(0,0,0,0.5) 0%, transparent 100%) !important;
+  transform: scaleY(-1) !important;
+}
+
+.ns-cf-reflection img {
+  width: 100% !important;
+  height: 245px !important;
+  object-fit: cover !important;
+  object-position: center top !important;
+  display: block !important;
+  margin-top: -180px !important;
+}
+
+.ns-coverflow-info {
+  text-align: center;
+  height: 50px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+}
+
+.ns-coverflow-title {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 24px;
+  letter-spacing: 0.1em;
+  color: #f0ede6;
+}
+
+.ns-coverflow-actor {
+  font-size: 11px;
+  color: rgba(240,237,230,0.36);
+  letter-spacing: 0.04em;
+}
+
+.ns-coverflow-arrows {
+  display: flex;
+  gap: 12px;
+}
+
+.ns-cf-arrow {
+  width: 40px; height: 40px;
+  border-radius: 50%;
+  background: rgba(200,169,110,0.1);
+  border: 0.5px solid rgba(200,169,110,0.25);
+  color: #c8a96e;
+  font-size: 22px;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer;
+  transition: background 0.2s;
+  font-family: sans-serif;
+}
+
+.ns-cf-arrow:hover { background: rgba(200,169,110,0.22); }
+
+/* Hide old carousel in new-shell */
+.ns-scene-carousel, .ns-carousel-wrap { display: none !important; }

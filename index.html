@@ -618,51 +618,168 @@
     .fade-up { opacity: 0; transform: translateY(24px); transition: opacity 0.6s ease, transform 0.6s ease; }
     .fade-up.visible { opacity: 1; transform: none; }
 
-    /* ── SECTION 5 — CAROUSEL ── */
-    .carousel-section { padding: 80px 52px; }
-    .carousel-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; }
-    .carousel-label {
-      font-size: 11px; letter-spacing: 0.2em; text-transform: uppercase;
-      color: #c8a96e; display: flex; align-items: center; gap: 10px;
+    /* ── SECTION 5 — COVERFLOW ── */
+    .carousel-section {
+      padding: 60px 0 80px;
+      position: relative;
+      z-index: 2;
     }
-    .carousel-label::before { content: ''; width: 20px; height: 0.5px; background: #c8a96e; display: block; }
-    .carousel-arrows { display: flex; gap: 8px; }
+    .carousel-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 52px;
+      margin-bottom: 40px;
+    }
+    .carousel-label {
+      font-size: 11px;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: #c8a96e;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .carousel-label::before {
+      content: '';
+      width: 20px;
+      height: 0.5px;
+      background: #c8a96e;
+      display: block;
+    }
     .carousel-arrow {
-      width: 36px; height: 36px; border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
       background: rgba(200,169,110,0.1);
-      border: 0.5px solid rgba(200,169,110,0.25);
-      color: #c8a96e; font-size: 16px; cursor: pointer;
-      display: flex; align-items: center; justify-content: center;
+      border: 0.5px solid rgba(200,169,110,0.28);
+      color: #c8a96e;
+      font-size: 22px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
       transition: background 0.2s;
+      line-height: 1;
     }
     .carousel-arrow:hover { background: rgba(200,169,110,0.22); }
-    .carousel-track-wrap { overflow: hidden; }
-    .carousel-track { display: flex; gap: 16px; overflow-x: auto; scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch; padding-bottom: 8px; }
+    .coverflow-wrap {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 20px;
+    }
+    .coverflow-stage {
+      width: 100%;
+      height: 340px;
+      position: relative;
+      perspective: 1200px;
+      perspective-origin: 50% 50%;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .coverflow-track {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      transform-style: preserve-3d;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .coverflow-floor {
+      position: absolute;
+      bottom: 0;
+      left: 0; right: 0;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(200,169,110,0.12), transparent);
+      pointer-events: none;
+    }
+    .coverflow-info {
+      text-align: center;
+      height: 52px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+    }
+    .coverflow-info-title {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 26px;
+      letter-spacing: 0.1em;
+      color: #f0ede6;
+      transition: opacity 0.3s;
+    }
+    .coverflow-info-actor {
+      font-size: 12px;
+      color: rgba(240,237,230,0.38);
+      letter-spacing: 0.04em;
+    }
     .carousel-card {
-      min-width: 210px; max-width: 210px; flex: 0 0 210px;
-      border-radius: 14px; overflow: hidden;
-      border: 0.5px solid rgba(200,169,110,0.1);
-      background: rgba(255,255,255,0.025);
-      backdrop-filter: blur(16px);
+      position: absolute !important;
+      width: 180px !important;
       cursor: pointer;
-      transition: transform 0.3s cubic-bezier(0.34,1.56,0.64,1), border-color 0.2s, box-shadow 0.3s;
-      flex-shrink: 0; scroll-snap-align: start;
+      transform-style: preserve-3d;
+      transition: transform 0.45s cubic-bezier(0.25,0.46,0.45,0.94),
+                  filter 0.45s ease,
+                  z-index 0s;
+      display: flex !important;
+      flex-direction: column !important;
+      align-items: center !important;
     }
-    .carousel-card:hover {
-      transform: translateY(-8px) scale(1.03);
-      border-color: rgba(200,169,110,0.3);
-      box-shadow: 0 24px 60px rgba(0,0,0,0.5), 0 0 0 0.5px rgba(200,169,110,0.15);
+    .carousel-poster {
+      width: 180px !important;
+      height: 260px !important;
+      border-radius: 10px !important;
+      overflow: hidden !important;
+      border: 0.5px solid rgba(200,169,110,0.18) !important;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.7) !important;
+      position: relative !important;
+      background: rgba(200,169,110,0.06) !important;
+      flex-shrink: 0 !important;
     }
-    .carousel-poster { position: relative; overflow: hidden; }
-    .carousel-poster img { width: 100%; height: 320px; object-fit: cover; object-position: center top; display: block; opacity: 0.82; transition: opacity 0.2s, transform 0.3s; }
-    .carousel-card:hover .carousel-poster img { opacity: 1; transform: scale(1.05); }
-    .carousel-poster-overlay {
+    .carousel-poster img {
+      width: 100% !important;
+      height: 100% !important;
+      object-fit: cover !important;
+      object-position: center top !important;
+      display: block !important;
+    }
+    .carousel-poster::after {
+      content: '';
       position: absolute; inset: 0;
-      background: linear-gradient(to bottom, transparent 40%, rgba(4,4,10,0.9) 100%);
+      background: linear-gradient(150deg, rgba(200,169,110,0.06) 0%, transparent 50%);
+      pointer-events: none;
     }
-    .carousel-card-label { font-size: 9px; letter-spacing: 0.1em; text-transform: uppercase; color: rgba(200,169,110,0.5); padding: 10px 14px 0; }
-    .carousel-card-title { font-family: 'Playfair Display', serif; font-size: 15px; font-weight: 700; color: #f0ede6; padding: 6px 14px 4px; }
-    .carousel-card-actors { font-size: 11px; color: rgba(240,237,230,0.35); padding: 0 14px 12px; }
+    .carousel-reflection {
+      width: 180px;
+      height: 70px;
+      margin-top: 2px;
+      overflow: hidden;
+      border-radius: 0 0 10px 10px;
+      opacity: 0.22;
+      -webkit-mask-image: linear-gradient(to bottom, rgba(0,0,0,0.5) 0%, transparent 100%);
+      mask-image: linear-gradient(to bottom, rgba(0,0,0,0.5) 0%, transparent 100%);
+      transform: scaleY(-1);
+      flex-shrink: 0;
+    }
+    .carousel-reflection img {
+      width: 100%;
+      height: 260px;
+      object-fit: cover;
+      object-position: center top;
+      display: block;
+      margin-top: -190px;
+    }
+    .carousel-card-label { display: none !important; }
+    .carousel-card-title { display: none !important; }
+    .carousel-card-actors { display: none !important; }
+    .carousel-poster-overlay { display: none !important; }
+    .carousel-track-wrap { display: none !important; }
 
     /* ── SECTION 9 — SCENE MODAL ── */
     .overlay {
@@ -1194,17 +1311,18 @@
       <div class="carousel-header">
         <p class="carousel-label">PRACTICE SPECIFIC SCENES</p>
         <div class="carousel-arrows">
-          <button class="carousel-arrow" id="carouselPrev">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
-          </button>
-          <button class="carousel-arrow" id="carouselNext">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
-          </button>
+          <button class="carousel-arrow" id="carouselPrev">&#8249;</button>
+          <button class="carousel-arrow" id="carouselNext">&#8250;</button>
         </div>
       </div>
-      <div class="carousel-track-wrap">
-        <div class="carousel-track" id="carouselTrack">
-          <!-- JS populates poster cards here -->
+      <div class="coverflow-wrap" id="coverflowWrap">
+        <div class="coverflow-stage" id="coverflowStage">
+          <div class="coverflow-track" id="carouselTrack"></div>
+          <div class="coverflow-floor"></div>
+        </div>
+        <div class="coverflow-info" id="coverflowInfo">
+          <div class="coverflow-info-title" id="coverflowTitle"></div>
+          <div class="coverflow-info-actor" id="coverflowActor"></div>
         </div>
       </div>
     </div>

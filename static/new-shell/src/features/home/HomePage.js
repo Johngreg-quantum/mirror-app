@@ -1,6 +1,5 @@
 import { renderLeaderboardPanel } from '../../components/LeaderboardPanel.js';
 import { renderProgressStatCard } from '../../components/ProgressStatCard.js';
-import { renderSceneCard } from '../../components/SceneCard.js';
 import { renderStreakCard } from '../../components/StreakCard.js';
 import { renderLoggedErrorState, renderLoadingState } from '../../components/AsyncState.js';
 import { buttonLink, card, statusPill } from '../../components/primitives.js';
@@ -11,6 +10,63 @@ import { adaptLeaderboard } from '../../lib/adapters/leaderboard-adapter.js';
 import { adaptProgressSummary, adaptProfile } from '../../lib/adapters/progress-adapter.js';
 import { adaptSceneConfig } from '../../lib/adapters/scene-adapter.js';
 import { createAppHref } from '../../lib/routing/navigation.js';
+
+let nsCfCenter = 0;
+let nsCfTotal = 0;
+
+function nsCfRotate(dir) {
+  const wrap = document.getElementById('nsCoverflowWrap');
+  const titleEl = document.getElementById('nsCoverflowTitle');
+  const actorEl = document.getElementById('nsCoverflowActor');
+  if (!wrap) return;
+
+  const cards = wrap.querySelectorAll('.ns-cf-card');
+  nsCfTotal = cards.length;
+  nsCfCenter = (nsCfCenter + dir + nsCfTotal) % nsCfTotal;
+  wrap.dataset.center = String(nsCfCenter);
+
+  const slots = [
+    { x: -440, z: -320, ry: 62,  b: 0.15, zi: 1 },
+    { x: -320, z: -230, ry: 56,  b: 0.3,  zi: 3 },
+    { x: -185, z: -130, ry: 46,  b: 0.55, zi: 6 },
+    { x: 0,    z: 0,    ry: 0,   b: 1,    zi: 10 },
+    { x: 185,  z: -130, ry: -46, b: 0.55, zi: 6 },
+    { x: 320,  z: -230, ry: -56, b: 0.3,  zi: 3 },
+    { x: 440,  z: -320, ry: -62, b: 0.15, zi: 1 },
+  ];
+
+  cards.forEach((card, i) => {
+    let offset = i - nsCfCenter;
+    if (offset > nsCfTotal / 2) offset -= nsCfTotal;
+    if (offset < -nsCfTotal / 2) offset += nsCfTotal;
+    const slotIdx = offset + 3;
+    const slot = slotIdx >= 0 && slotIdx <= 6
+      ? slots[slotIdx]
+      : { x: (offset > 0 ? 600 : -600), z: -400, ry: offset > 0 ? -65 : 65, b: 0, zi: 0 };
+
+    card.style.transform = `translateX(${slot.x}px) translateZ(${slot.z}px) rotateY(${slot.ry}deg)`;
+    card.style.filter = `brightness(${slot.b})`;
+    card.style.zIndex = slot.zi;
+
+    const poster = card.querySelector('.ns-cf-poster');
+    if (slot.zi === 10 && poster) {
+      poster.style.boxShadow = '0 30px 80px rgba(0,0,0,0.85), 0 0 0 0.5px rgba(200,169,110,0.35), 0 0 50px rgba(200,169,110,0.12)';
+      poster.style.borderColor = 'rgba(200,169,110,0.4)';
+    } else if (poster) {
+      poster.style.boxShadow = '';
+      poster.style.borderColor = 'rgba(200,169,110,0.15)';
+    }
+  });
+
+  if (titleEl && actorEl) {
+    const centerCard = cards[nsCfCenter];
+    if (centerCard) {
+      titleEl.textContent = centerCard.querySelector('.ns-cf-poster img')?.alt || '';
+    }
+  }
+}
+
+setTimeout(() => { nsCfRotate(0); }, 50);
 
 export function renderHomePage({ appState, actions }) {
   const page = h('div', {}, [renderLoadingState('Loading scene browser')]);
@@ -133,21 +189,47 @@ function renderHomeSurface({ appState, scenes, leaderboard, profile, progressSum
         ]),
         statusPill('Live scene config'),
       ]),
-      scenes.length
-        ? h('div', { className: 'ns-carousel-wrap' }, [
-            h('button', {
-              className: 'ns-carousel-prev',
-              on: { click: () => { const c = document.querySelector('.ns-scene-carousel'); if (c) c.scrollBy({ left: -240, behavior: 'smooth' }); } },
-              text: '←',
-            }),
-            h('div', { className: 'ns-scene-carousel' }, scenes.map((scene) => renderSceneCard({ scene, entrySource: 'home' }))),
-            h('button', {
-              className: 'ns-carousel-next',
-              on: { click: () => { const c = document.querySelector('.ns-scene-carousel'); if (c) c.scrollBy({ left: 240, behavior: 'smooth' }); } },
-              text: '→',
-            }),
-          ])
-        : card({ title: 'No scenes found', body: 'Scenes will appear here when the catalog is ready.' }),
+      h('div', { className: 'ns-coverflow-section' }, [
+        h('div', { className: 'ns-coverflow-wrap', id: 'nsCoverflowWrap' }, [
+          h('div', { className: 'ns-coverflow-stage' }, [
+            h('div', { className: 'ns-coverflow-track', id: 'nsCoverflowTrack' },
+              scenes.map((scene, i) => h('div', {
+                className: 'ns-cf-card',
+                attrs: { 'data-index': String(i), 'data-scene-id': scene.id },
+                on: { click: () => {
+                  const wrap = document.getElementById('nsCoverflowWrap');
+                  if (!wrap) return;
+                  const currentCenter = parseInt(wrap.dataset.center || '0');
+                  if (i === currentCenter) {
+                    window.location.href = `/app/scene/${scene.id}`;
+                  } else {
+                    const diff = i - currentCenter;
+                    nsCfRotate(diff > 0 ? 1 : -1);
+                  }
+                } },
+              }, [
+                h('div', { className: 'ns-cf-poster' }, [
+                  h('img', { src: scene.imageUrl, alt: scene.film }),
+                ]),
+                h('div', { className: 'ns-cf-reflection' }, [
+                  h('img', { src: scene.imageUrl, alt: '' }),
+                ]),
+              ]))
+            ),
+            h('div', { className: 'ns-coverflow-floor' }),
+          ]),
+          h('div', { className: 'ns-coverflow-info', id: 'nsCoverflowInfo' }, [
+            h('div', { className: 'ns-coverflow-title', id: 'nsCoverflowTitle',
+              text: scenes[0] ? (scenes[0].film || scenes[0].title || '') : '' }),
+            h('div', { className: 'ns-coverflow-actor', id: 'nsCoverflowActor',
+              text: scenes[0] ? (scenes[0].actor || '') : '' }),
+          ]),
+          h('div', { className: 'ns-coverflow-arrows' }, [
+            h('button', { className: 'ns-cf-arrow ns-cf-prev', on: { click: () => nsCfRotate(-1) } }, ['‹']),
+            h('button', { className: 'ns-cf-arrow ns-cf-next', on: { click: () => nsCfRotate(1) } }, ['›']),
+          ]),
+        ]),
+      ]),
     ]),
     h('div', { className: 'ns-grid ns-grid--two' }, [
       leaderboard.rows.length

@@ -1880,30 +1880,132 @@ function renderCarousel() {
 
   const unlocked = userProgress.unlocked_scenes || [];
   const sceneIds = Object.keys(scenes).filter(sid => unlocked.includes(sid));
+  if (!sceneIds.length) return;
 
-  sceneIds.forEach(sid => {
+  // Build card elements
+  const cards = [];
+  sceneIds.forEach((sid, i) => {
     const s = scenes[sid];
     if (!s) return;
     const poster = getScenePoster(sid);
-    const pb = userProgress.best_scores && userProgress.best_scores[sid];
 
     const card = document.createElement('div');
     card.className = 'carousel-card';
-    card.innerHTML = `
-      <div class="carousel-poster">
-        ${poster
-          ? `<img src="${poster}" alt="${s.movie}" loading="lazy">`
-          : `<div style="width:100%;height:100%;background:linear-gradient(135deg,${getSceneColor(sid)+'22'},#111)"></div>`
+    card.dataset.sid = sid;
+    card.dataset.index = i;
+
+    const posterDiv = document.createElement('div');
+    posterDiv.className = 'carousel-poster';
+
+    if (poster) {
+      const img = document.createElement('img');
+      img.src = poster;
+      img.alt = s.movie;
+      img.loading = 'lazy';
+      posterDiv.appendChild(img);
+
+      // Reflection
+      const ref = document.createElement('div');
+      ref.className = 'carousel-reflection';
+      const refImg = document.createElement('img');
+      refImg.src = poster;
+      refImg.alt = '';
+      refImg.loading = 'lazy';
+      ref.appendChild(refImg);
+      card.appendChild(posterDiv);
+      card.appendChild(ref);
+    } else {
+      posterDiv.style.background = `linear-gradient(135deg, ${getSceneColor(sid)}22, #111)`;
+      card.appendChild(posterDiv);
+    }
+
+    card.addEventListener('click', () => {
+      const idx = parseInt(card.dataset.index);
+      if (idx === cfState.center) {
+        openModal(sid, s);
+      } else {
+        const diff = idx - cfState.center;
+        if (Math.abs(diff) <= 3) {
+          cfRotate(diff > 0 ? 1 : -1);
         }
-        <div class="carousel-poster-overlay"></div>
-      </div>
-      <div class="carousel-card-label">${pb ? `Progress` : `Progress`}</div>
-      <div class="carousel-card-title">${s.movie}</div>
-      <div class="carousel-card-actors">${s.actor || ''}</div>
-    `;
-    card.addEventListener('click', () => openModal(sid, s));
+      }
+    });
+
     track.appendChild(card);
+    cards.push({ card, sid, scene: s });
   });
+
+  // Coverflow state
+  const cfState = { center: 0, total: cards.length };
+
+  function cfPositions(center, total) {
+    const slots = [
+      { x: -440, z: -320, ry: 62,  b: 0.15, zi: 1 },
+      { x: -320, z: -230, ry: 56,  b: 0.3,  zi: 3 },
+      { x: -185, z: -130, ry: 46,  b: 0.55, zi: 6 },
+      { x: 0,    z: 0,    ry: 0,   b: 1,    zi: 10 },
+      { x: 185,  z: -130, ry: -46, b: 0.55, zi: 6 },
+      { x: 320,  z: -230, ry: -56, b: 0.3,  zi: 3 },
+      { x: 440,  z: -320, ry: -62, b: 0.15, zi: 1 },
+    ];
+
+    const result = [];
+    for (let i = 0; i < total; i++) {
+      let offset = i - center;
+      if (offset > total / 2) offset -= total;
+      if (offset < -total / 2) offset += total;
+      const slotIdx = offset + 3;
+      if (slotIdx >= 0 && slotIdx <= 6) {
+        result.push({ i, slot: slots[slotIdx] });
+      } else {
+        const side = offset > 0 ? 1 : -1;
+        result.push({ i, slot: { x: side * 600, z: -400, ry: side * 65, b: 0, zi: 0 } });
+      }
+    }
+    return result;
+  }
+
+  function cfRender() {
+    const positions = cfPositions(cfState.center, cfState.total);
+    positions.forEach(({ i, slot }) => {
+      const { card } = cards[i];
+      card.style.transform = `translateX(${slot.x}px) translateZ(${slot.z}px) rotateY(${slot.ry}deg)`;
+      card.style.filter = `brightness(${slot.b})`;
+      card.style.zIndex = slot.zi;
+
+      const poster = card.querySelector('.carousel-poster');
+      if (slot.zi === 10 && poster) {
+        poster.style.boxShadow = '0 30px 80px rgba(0,0,0,0.85), 0 0 0 0.5px rgba(200,169,110,0.35), 0 0 50px rgba(200,169,110,0.12)';
+        poster.style.borderColor = 'rgba(200,169,110,0.4)';
+      } else if (poster) {
+        poster.style.boxShadow = '0 20px 60px rgba(0,0,0,0.7)';
+        poster.style.borderColor = 'rgba(200,169,110,0.15)';
+      }
+    });
+
+    const c = cards[cfState.center];
+    const titleEl = document.getElementById('coverflowTitle');
+    const actorEl = document.getElementById('coverflowActor');
+    if (titleEl && c) titleEl.textContent = c.scene.movie || c.scene.title || '';
+    if (actorEl && c) actorEl.textContent = (c.scene.actor || '') + (c.scene.difficulty ? ' · ' + c.scene.difficulty : '');
+  }
+
+  function cfRotate(dir) {
+    cfState.center = (cfState.center + dir + cfState.total) % cfState.total;
+    cfRender();
+  }
+
+  const prevBtn = document.getElementById('carouselPrev');
+  const nextBtn = document.getElementById('carouselNext');
+  if (prevBtn) prevBtn.onclick = () => cfRotate(-1);
+  if (nextBtn) nextBtn.onclick = () => cfRotate(1);
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowLeft') cfRotate(-1);
+    if (e.key === 'ArrowRight') cfRotate(1);
+  });
+
+  cfRender();
 }
 
 // Carousel arrow scrolling
