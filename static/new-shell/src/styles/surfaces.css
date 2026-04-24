@@ -1336,3 +1336,37 @@ button[class*="record"][class*="is-recording"] {
   color: #f0ede6 !important;
   box-shadow: 0 4px 24px rgba(200, 50, 40, 0.4) !important;
 }
+
+/* ─── Streak card height cap ─────────────────────── */
+
+[class*="streak-card"],
+[class*="StreakCard"] {
+  max-height: 220px;
+  overflow: hidden;
+}
+
+/* ─── Stats row — force 4 columns ───────────────── */
+
+[class*="stats-row"],
+[class*="stat-grid"],
+[class*="stats-grid"] {
+  display: grid !important;
+  grid-template-columns: repeat(4, 1fr) !important;
+  gap: 12px !important;
+}
+
+/* ─── Scene carousel card overrides ─────────────── */
+
+.ns-scene-carousel [class*="scene-card"],
+[class*="scene-carousel"] [class*="scene-card"] {
+  flex: 0 0 200px !important;
+  min-width: 200px !important;
+  max-width: 200px !important;
+}
+
+[class*="scene-carousel"] [class*="scene-card"] img,
+[class*="scene-carousel"] [class*="scene-card"] [class*="poster"] img {
+  height: 280px !important;
+  object-fit: cover !important;
+  object-position: center top !important;
+}
