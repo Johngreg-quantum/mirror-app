@@ -29,6 +29,10 @@ load_dotenv()
 
 app = FastAPI(title="MIRROR — Movie Scene Language Learning")
 
+@app.get("/health")
+async def health_check():
+    return {"status": "ok", "timestamp": datetime.now(timezone.utc).isoformat()}
+
 # ---------------------------------------------------------------------------
 # CORS — only the production domain and local dev origins are allowed.
 # The frontend is served from the same domain as the API, so these origins
