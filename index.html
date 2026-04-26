@@ -1364,26 +1364,6 @@
     </div>
 
     <!-- ═══ PRACTICE SPECIFIC SCENES — POSTER CAROUSEL ═══ -->
-    <div class="carousel-section">
-      <div class="carousel-header">
-        <p class="carousel-label">PRACTICE SPECIFIC SCENES</p>
-        <div class="carousel-arrows">
-          <button class="carousel-arrow" id="carouselPrev">&#8249;</button>
-          <button class="carousel-arrow" id="carouselNext">&#8250;</button>
-        </div>
-      </div>
-      <div class="coverflow-wrap" id="coverflowWrap">
-        <div class="coverflow-stage" id="coverflowStage">
-          <div class="coverflow-track" id="carouselTrack"></div>
-          <div class="coverflow-floor"></div>
-        </div>
-        <div class="coverflow-info" id="coverflowInfo">
-          <div class="coverflow-info-title" id="coverflowTitle"></div>
-          <div class="coverflow-info-actor" id="coverflowActor"></div>
-        </div>
-      </div>
-    </div>
-
     <!-- Hidden grids — JS still populates these, they must remain in DOM -->
     <div id="scenesGrid" style="display:none">
       <div class="level-group" id="groupBeginner">
@@ -1793,7 +1773,95 @@
 </nav>
 
 <div id="appShell" style="display:none; max-width:480px; margin:0 auto; padding:0 16px;">
-  <div class="app-panel active" id="panelHome"></div>
+  <div class="app-panel active" id="panelHome">
+
+  <!-- Top stats bar -->
+  <div style="display:flex; justify-content:space-between; align-items:center; padding:16px 4px 8px;">
+    <div style="font-family:'Bebas Neue',sans-serif; font-size:22px; letter-spacing:0.15em; color:#c8a96e;">MIRROR</div>
+    <div style="display:flex; gap:8px;">
+      <div style="display:flex; align-items:center; gap:5px; background:rgba(255,255,255,0.04); border:0.5px solid rgba(200,169,110,0.2); border-radius:20px; padding:5px 12px;">
+        <span style="font-size:13px;">🔥</span>
+        <span id="homeStreakVal" style="font-family:'DM Sans',sans-serif; font-size:12px; font-weight:600; color:#c8a96e;">0</span>
+        <span style="font-family:'DM Sans',sans-serif; font-size:10px; color:#555;">day streak</span>
+      </div>
+      <div style="display:flex; align-items:center; gap:5px; background:rgba(255,255,255,0.04); border:0.5px solid rgba(200,169,110,0.2); border-radius:20px; padding:5px 12px;">
+        <span style="font-size:13px;">⭐</span>
+        <span id="homeXpVal" style="font-family:'DM Sans',sans-serif; font-size:12px; font-weight:600; color:#c8a96e;">0</span>
+        <span style="font-family:'DM Sans',sans-serif; font-size:10px; color:#555;">XP</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Daily challenge bar -->
+  <div id="homeDailyChallenge" style="background:rgba(200,169,110,0.06); border:0.5px solid rgba(200,169,110,0.25); border-radius:14px; padding:12px 16px; margin-bottom:16px; display:flex; align-items:center; justify-content:space-between; cursor:pointer;" onclick="switchTab(document.querySelector('[data-panel=panelMissions]'))">
+    <div>
+      <div style="font-family:'DM Sans',sans-serif; font-size:9px; letter-spacing:2px; text-transform:uppercase; color:#c8a96e; margin-bottom:3px;">⚡ Today's Challenge</div>
+      <div id="homeDailyTitle" style="font-family:'Georgia',serif; font-size:15px; color:#fff;">Complete a scene to start your streak</div>
+    </div>
+    <div style="background:rgba(200,169,110,0.15); border:0.5px solid #c8a96e; border-radius:8px; padding:4px 10px; font-family:'DM Sans',sans-serif; font-size:11px; font-weight:700; color:#c8a96e;">2X XP</div>
+  </div>
+
+  <!-- Level 1 — open coverflow -->
+  <div style="font-family:'DM Sans',sans-serif; font-size:9px; letter-spacing:2px; text-transform:uppercase; color:#555; margin-bottom:10px;">Level 1 · Beginner</div>
+  <div class="carousel-section" style="margin:0 -16px;">
+    <div class="carousel-header">
+      <p class="carousel-label">PRACTICE SPECIFIC SCENES</p>
+      <div class="carousel-arrows">
+        <button class="carousel-arrow" id="carouselPrev">‹</button>
+        <button class="carousel-arrow" id="carouselNext">›</button>
+      </div>
+    </div>
+    <div class="coverflow-wrap" id="coverflowWrap">
+      <div class="coverflow-stage" id="coverflowStage">
+        <div class="coverflow-track" id="carouselTrack"></div>
+        <div class="coverflow-floor"></div>
+      </div>
+      <div class="coverflow-info" id="coverflowInfo">
+        <div class="coverflow-info-title" id="coverflowTitle"></div>
+        <div class="coverflow-info-actor" id="coverflowActor"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Level 1 progress -->
+  <div style="margin:16px 4px 20px; display:flex; align-items:center; gap:10px;">
+    <div style="flex:1; height:3px; background:rgba(255,255,255,0.06); border-radius:3px;">
+      <div id="level1ProgressBar" style="height:3px; background:#c8a96e; border-radius:3px; width:0%; transition:width 0.6s ease;"></div>
+    </div>
+    <div id="level1ProgressLabel" style="font-family:'DM Sans',sans-serif; font-size:11px; color:#c8a96e; white-space:nowrap;">0 / 27 scenes</div>
+  </div>
+
+  <!-- Level 2 — locked -->
+  <div style="background:rgba(255,255,255,0.02); border:0.5px solid rgba(255,255,255,0.07); border-radius:16px; padding:16px; margin-bottom:10px; display:flex; align-items:center; justify-content:space-between; opacity:0.45;">
+    <div>
+      <div style="font-family:'DM Sans',sans-serif; font-size:9px; letter-spacing:2px; text-transform:uppercase; color:#555; margin-bottom:4px;">Level 2</div>
+      <div style="font-family:'Georgia',serif; font-size:17px; color:#fff; margin-bottom:2px;">Intermediate</div>
+      <div style="font-family:'DM Sans',sans-serif; font-size:11px; color:#444;">Pass the Level 1 Quiz to unlock</div>
+    </div>
+    <div style="font-size:28px;">🔒</div>
+  </div>
+
+  <!-- Level 3 — locked -->
+  <div style="background:rgba(255,255,255,0.02); border:0.5px solid rgba(255,255,255,0.07); border-radius:16px; padding:16px; margin-bottom:10px; display:flex; align-items:center; justify-content:space-between; opacity:0.3;">
+    <div>
+      <div style="font-family:'DM Sans',sans-serif; font-size:9px; letter-spacing:2px; text-transform:uppercase; color:#555; margin-bottom:4px;">Level 3</div>
+      <div style="font-family:'Georgia',serif; font-size:17px; color:#fff; margin-bottom:2px;">Advanced</div>
+      <div style="font-family:'DM Sans',sans-serif; font-size:11px; color:#444;">Complete Level 2 to unlock</div>
+    </div>
+    <div style="font-size:28px;">🔒</div>
+  </div>
+
+  <!-- Level 4 — locked -->
+  <div style="background:rgba(255,255,255,0.02); border:0.5px solid rgba(255,255,255,0.07); border-radius:16px; padding:16px; margin-bottom:24px; display:flex; align-items:center; justify-content:space-between; opacity:0.2;">
+    <div>
+      <div style="font-family:'DM Sans',sans-serif; font-size:9px; letter-spacing:2px; text-transform:uppercase; color:#555; margin-bottom:4px;">Level 4</div>
+      <div style="font-family:'Georgia',serif; font-size:17px; color:#fff; margin-bottom:2px;">Fluency</div>
+      <div style="font-family:'DM Sans',sans-serif; font-size:11px; color:#444;">Complete Level 3 to unlock</div>
+    </div>
+    <div style="font-size:28px;">🔒</div>
+  </div>
+
+  </div>
   <div class="app-panel" id="panelLevels"></div>
   <div class="app-panel" id="panelRanks"></div>
   <div class="app-panel" id="panelMissions"></div>
@@ -1814,6 +1882,18 @@ function enterAppMode() {
   document.getElementById('bottomNav').classList.add('visible');
   document.getElementById('appShell').style.display = 'block';
   document.getElementById('siteNav').style.display = 'none';
+  // update home panel stats
+  const streak = (typeof userProgress !== 'undefined' && userProgress.streak) ? userProgress.streak : 0;
+  const xp = (typeof userProgress !== 'undefined' && userProgress.xp) ? userProgress.xp : 0;
+  const completed = (typeof scenes !== 'undefined') ? scenes.filter(s => userProgress && userProgress[s.id] && userProgress[s.id].pb).length : 0;
+  const el = document.getElementById('homeStreakVal');
+  const xpEl = document.getElementById('homeXpVal');
+  const bar = document.getElementById('level1ProgressBar');
+  const label = document.getElementById('level1ProgressLabel');
+  if (el) el.textContent = streak;
+  if (xpEl) xpEl.textContent = xp.toLocaleString();
+  if (bar) bar.style.width = Math.round((completed / 27) * 100) + '%';
+  if (label) label.textContent = completed + ' / 27 scenes';
 }
 </script>
 </body>
