@@ -2126,6 +2126,7 @@ function enterAppMode() {
     }
   })();
   (async function updateMissionsPanel() {
+    if (window._missionsCountdownTimer) clearInterval(window._missionsCountdownTimer);
     const streak = userProfile ? (userProfile.streak || 0) : 0;
     const doneToday = userProfile ? userProfile.daily_done_today : false;
     const streakTag = document.getElementById('missionsStreakTag');
@@ -2159,7 +2160,7 @@ function enterAppMode() {
       if (el('mission1Sub')) el('mission1Sub').textContent = movie + ' · 2X points';
       if (el('missionsDailyCta')) {
         if (doneToday) { el('missionsDailyCta').textContent = '✓ Completed Today'; el('missionsDailyCta').style.background = 'rgba(106,170,46,0.15)'; el('missionsDailyCta').style.color = '#6aaa2e'; el('missionsDailyCta').style.cursor = 'default'; }
-        else { el('missionsDailyCta').onclick = () => { if (typeof openScene === 'function') openScene(data.scene_id); }; }
+        else { el('missionsDailyCta').onclick = () => { if (typeof openModal === 'function') openModal(data.scene_id, data.scene); }; }
       }
       if (secs > 0) {
         function tick() {
@@ -2169,7 +2170,7 @@ function enterAppMode() {
         }
         tick();
         let remaining = secs;
-        setInterval(() => { if (remaining > 0) { remaining--; const h = Math.floor(remaining/3600); const m = Math.floor((remaining%3600)/60); const s = remaining%60; const cd = document.getElementById('missionsCountdown'); if(cd) cd.textContent = String(h).padStart(2,'0')+':'+String(m).padStart(2,'0')+':'+String(s).padStart(2,'0'); } }, 1000);
+        window._missionsCountdownTimer = setInterval(() => { if (remaining > 0) { remaining--; const h = Math.floor(remaining/3600); const m = Math.floor((remaining%3600)/60); const s = remaining%60; const cd = document.getElementById('missionsCountdown'); if(cd) cd.textContent = String(h).padStart(2,'0')+':'+String(m).padStart(2,'0')+':'+String(s).padStart(2,'0'); } }, 1000);
       }
     } catch(e) { console.error('daily fetch failed', e); }
   })();
