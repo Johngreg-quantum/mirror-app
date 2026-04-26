@@ -650,6 +650,11 @@ async function loadScenes() {
   }
   renderCards();
   updateLevelCardStats();
+  const dailyEl = document.getElementById('homeDailyTitle');
+  if (dailyEl && userProfile.daily_scene_id && scenes[userProfile.daily_scene_id]) {
+    const s = scenes[userProfile.daily_scene_id];
+    dailyEl.textContent = s.title || s.movie || userProfile.daily_scene_id;
+  }
 }
 
 function renderCards() {
