@@ -976,6 +976,31 @@ async def get_profile(user: dict = Depends(current_user)):
     }
 
 
+@app.post("/api/quiz-pass")
+async def quiz_pass(payload: dict, user: dict = Depends(current_user)):
+    """Register a qualifying Beginner-level score when the user passes the
+    Level 1 quiz, so the existing unlock logic opens Level 2."""
+    quiz  = payload.get("quiz", "")
+    score = float(payload.get("score", 0))
+    if quiz != "level1" or score < 70:
+        raise HTTPException(400, "Invalid quiz pass")
+    beginner_scenes = [sid for sid, s in SCENES.items() if s.get("difficulty", "").lower() == "beginner"]
+    if not beginner_scenes:
+        return {"unlocked": False}
+    sid   = beginner_scenes[0]
+    scene = SCENES[sid]
+    conn  = get_conn()
+    cur   = conn.cursor()
+    cur.execute(
+        f"INSERT INTO scores (scene_id, movie, quote, transcription, sync_score, username, user_id) "
+        f"VALUES ({PH}, {PH}, {PH}, {PH}, {PH}, {PH}, {PH})",
+        (sid, scene.get("movie", ""), scene.get("quote", ""), "[quiz pass]", 75.0, user["username"], user["id"]),
+    )
+    conn.commit()
+    conn.close()
+    return {"unlocked": True}
+
+
 @app.get("/api/translations")
 async def get_translations(user: dict = Depends(current_user)):
     """Return {scene_id: spanish_translation} for every scene the user has

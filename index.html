@@ -2359,8 +2359,11 @@ function renderQuizQuestion() {
   else { quoteEl.style.display = 'none'; }
   const optsEl = document.getElementById('quizOptions');
   optsEl.innerHTML = q.opts.map(opt =>
-    '<button class="quiz-option" onclick="quizAnswer(this, \'' + opt.replace(/'/g, "\\'") + '\')">' + opt + '</button>'
+    '<button class="quiz-option" data-answer="' + opt.replace(/"/g, '&quot;') + '">' + opt + '</button>'
   ).join('');
+  optsEl.querySelectorAll('.quiz-option').forEach(btn => {
+    btn.addEventListener('click', function() { quizAnswer(this, this.getAttribute('data-answer')); });
+  });
   document.getElementById('quizNext').classList.remove('visible');
   quizAnswered = false;
 }
@@ -2371,7 +2374,7 @@ function quizAnswer(btn, chosen) {
   const correct = quizQuestions[quizIndex].answer;
   document.querySelectorAll('.quiz-option').forEach(b => {
     b.disabled = true;
-    if (b.textContent === correct) b.classList.add(chosen === correct ? 'correct' : 'reveal');
+    if (b.getAttribute('data-answer') === correct) b.classList.add(chosen === correct ? 'correct' : 'reveal');
   });
   if (chosen === correct) { quizScore++; btn.classList.add('correct'); }
   else { btn.classList.add('wrong'); }
@@ -2405,6 +2408,13 @@ function showQuizResult() {
   btn.onclick = passed
     ? () => { closeQuiz(); switchTab(document.querySelector('[data-panel=panelLevels]')); }
     : () => { closeQuiz(); };
+  if (passed) {
+    fetch('/api/quiz-pass', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + authToken },
+      body: JSON.stringify({ quiz: 'level1', score: pct })
+    }).catch(() => {});
+  }
 }
 </script>
 </body>
