@@ -664,6 +664,7 @@
     body.app-mode #appScreen { display: block !important; }
     body.app-mode .lb-section { display: none; }
     body.app-mode #heroFeatured { display: block; }
+    body.app-mode #scenesGrid { display: none; }
 
     .quiz-overlay { display:none; position:fixed; inset:0; z-index:99999; background:rgba(4,4,8,0.97); overflow-y:auto; padding:24px 20px 40px; box-sizing:border-box; }
     .quiz-overlay.open { display:block; }
@@ -2139,13 +2140,19 @@ function switchTab(tab) {
   if (heroFeatured) heroFeatured.style.display = 'none';
   if (lbSection) lbSection.style.display = 'none';
   if (appShell) appShell.style.display = 'none';
+  const scenesGridHide = document.getElementById('scenesGrid');
+  if (scenesGridHide) scenesGridHide.style.display = 'none';
 
   if (panel === 'panelHome') {
     if (appShell) appShell.style.display = 'block';
     const hp = document.getElementById('panelHome');
     if (hp) hp.classList.add('active');
   } else if (panel === 'panelLevels') {
-    if (heroFeatured) heroFeatured.style.display = 'block';
+    const scenesGrid = document.getElementById('scenesGrid');
+    if (scenesGrid) { scenesGrid.style.display = 'block'; }
+    if (appShell) { appShell.style.display = 'block'; }
+    const lp = document.getElementById('panelLevels');
+    if (lp) lp.classList.add('active');
   } else if (panel === 'panelRanks') {
     if (lbSection) lbSection.style.display = 'block';
   } else if (panel === 'panelMissions') {
@@ -2164,6 +2171,8 @@ function enterAppMode() {
   document.getElementById('appShell').style.display = 'block';
   document.getElementById('siteNav').style.display = 'none';
   document.querySelectorAll('.lb-section').forEach(el => el.style.display = 'none');
+  const sg = document.getElementById('scenesGrid');
+  if (sg) sg.style.display = 'none';
   // update home panel stats from real API data
   const completed = Object.keys(userProgress.best_scores || {}).length;
   const streak = (typeof userProfile !== 'undefined') ? (userProfile.streak || 0) : 0;
