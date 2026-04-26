@@ -1894,6 +1894,11 @@ function enterAppMode() {
   if (xpEl) xpEl.textContent = xp.toLocaleString();
   if (bar) bar.style.width = Math.round((completed / 27) * 100) + '%';
   if (label) label.textContent = completed + ' / 27 scenes';
+  const dailyEl = document.getElementById('homeDailyTitle');
+  if (dailyEl && userProfile.daily_scene_id && typeof scenes !== 'undefined') {
+    const dailyScene = scenes[userProfile.daily_scene_id];
+    if (dailyScene) dailyEl.textContent = dailyScene.title || dailyScene.movie || userProfile.daily_scene_id;
+  }
 }
 </script>
 </body>
