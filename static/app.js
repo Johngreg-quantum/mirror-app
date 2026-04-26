@@ -447,6 +447,7 @@ function showApp() {
   setOn('challengeScreen', false);
   setText('userChipName', authUser.username);
   updateDivDot(0);  // default Bronze until profile loads
+  enterAppMode();
 }
 
 function updateDivDot(points) {

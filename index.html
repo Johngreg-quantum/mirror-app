@@ -614,6 +614,54 @@
     .footer-logo em { font-style: normal; }
     .footer-copy { font-size: 11px; color: rgba(240,237,230,0.18); }
 
+    /* — BOTTOM NAV — */
+    .bottom-nav {
+      display: none;
+      position: fixed;
+      bottom: 0; left: 0; right: 0;
+      z-index: 9999;
+      background: rgba(4,4,8,0.97);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-top: 0.5px solid rgba(200,169,110,0.15);
+      padding: 8px 0 max(12px, env(safe-area-inset-bottom));
+      justify-content: space-around;
+      align-items: flex-start;
+    }
+    .bottom-nav.visible { display: flex; }
+    .bn-tab {
+      display: flex; flex-direction: column; align-items: center;
+      gap: 4px; padding: 4px 12px; cursor: pointer; min-width: 56px;
+      background: none; border: none; outline: none;
+      -webkit-tap-highlight-color: transparent; transition: opacity 0.2s;
+    }
+    .bn-tab:active { opacity: 0.7; }
+    .bn-icon { font-size: 20px; line-height: 1; transition: transform 0.2s; }
+    .bn-tab.active .bn-icon { transform: scale(1.15); }
+    .bn-label {
+      font-family: 'DM Sans', sans-serif; font-size: 9px;
+      letter-spacing: 0.12em; text-transform: uppercase;
+      color: rgba(240,237,230,0.25); transition: color 0.2s; white-space: nowrap;
+    }
+    .bn-tab.active .bn-label { color: #c8a96e; }
+    .bn-dot {
+      width: 4px; height: 4px; border-radius: 50%;
+      background: #c8a96e; opacity: 0; transition: opacity 0.2s; margin-top: 1px;
+    }
+    .bn-tab.active .bn-dot { opacity: 1; }
+    body.app-mode { padding-bottom: 72px; }
+    .app-panel { display: none; min-height: 60vh; padding: 20px 0 0; animation: panelIn 0.22s ease; }
+    .app-panel.active { display: block; }
+    @keyframes panelIn {
+      from { opacity: 0; transform: translateY(8px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    body.app-mode .hero,
+    body.app-mode .site-footer,
+    body.app-mode #howItWorks,
+    body.app-mode #levelsSection,
+    body.app-mode #pricingSection { display: none; }
+
     /* ── FADE UP ── */
     .fade-up { opacity: 0; transform: translateY(24px); transition: opacity 0.6s ease, transform 0.6s ease; }
     .fade-up.visible { opacity: 1; transform: none; }
@@ -1725,5 +1773,48 @@
 <script src="/static/app-leaderboard-orchestration.js"></script>
 <script src="/static/app-level-panel-orchestration.js"></script>
 <script src="/static/app.js"></script>
+
+<nav class="bottom-nav" id="bottomNav">
+  <button class="bn-tab active" data-panel="panelHome" onclick="switchTab(this)">
+    <span class="bn-icon">🎬</span><span class="bn-label">Home</span><span class="bn-dot"></span>
+  </button>
+  <button class="bn-tab" data-panel="panelLevels" onclick="switchTab(this)">
+    <span class="bn-icon">📚</span><span class="bn-label">Levels</span><span class="bn-dot"></span>
+  </button>
+  <button class="bn-tab" data-panel="panelRanks" onclick="switchTab(this)">
+    <span class="bn-icon">🏆</span><span class="bn-label">Ranks</span><span class="bn-dot"></span>
+  </button>
+  <button class="bn-tab" data-panel="panelMissions" onclick="switchTab(this)">
+    <span class="bn-icon">⚡</span><span class="bn-label">Missions</span><span class="bn-dot"></span>
+  </button>
+  <button class="bn-tab" data-panel="panelWords" onclick="switchTab(this)">
+    <span class="bn-icon">📖</span><span class="bn-label">My Words</span><span class="bn-dot"></span>
+  </button>
+</nav>
+
+<div id="appShell" style="display:none; max-width:480px; margin:0 auto; padding:0 16px;">
+  <div class="app-panel active" id="panelHome"></div>
+  <div class="app-panel" id="panelLevels"></div>
+  <div class="app-panel" id="panelRanks"></div>
+  <div class="app-panel" id="panelMissions"></div>
+  <div class="app-panel" id="panelWords"></div>
+</div>
+
+<script>
+function switchTab(tab) {
+  document.querySelectorAll('.bn-tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.app-panel').forEach(p => p.classList.remove('active'));
+  tab.classList.add('active');
+  const panel = document.getElementById(tab.getAttribute('data-panel'));
+  if (panel) panel.classList.add('active');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+function enterAppMode() {
+  document.body.classList.add('app-mode');
+  document.getElementById('bottomNav').classList.add('visible');
+  document.getElementById('appShell').style.display = 'block';
+  document.getElementById('siteNav').style.display = 'none';
+}
+</script>
 </body>
 </html>
