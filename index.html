@@ -1862,7 +1862,65 @@
   </div>
 
   </div>
-  <div class="app-panel" id="panelLevels"></div>
+  <div class="app-panel" id="panelLevels">
+  <div style="padding:16px 4px 12px; font-family:'Bebas Neue',sans-serif; font-size:11px; letter-spacing:0.2em; color:#555;">YOUR JOURNEY</div>
+
+  <!-- Level 1 -->
+  <div id="lvlCard1" style="background:rgba(200,169,110,0.06); border:0.5px solid #c8a96e; border-radius:16px; padding:16px; margin-bottom:12px;">
+    <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:12px;">
+      <div>
+        <div style="font-family:'DM Sans',sans-serif; font-size:9px; letter-spacing:2px; text-transform:uppercase; color:#c8a96e; margin-bottom:4px;">Level 1</div>
+        <div style="font-family:'Georgia',serif; font-size:19px; color:#fff; margin-bottom:3px;">Beginner</div>
+        <div style="font-family:'DM Sans',sans-serif; font-size:11px; color:#555;">Everyday phrases · Present tense · Emotions</div>
+      </div>
+      <div id="lvl1Badge" style="font-family:'DM Sans',sans-serif; font-size:10px; font-weight:700; padding:4px 12px; border-radius:20px; background:rgba(200,169,110,0.12); border:0.5px solid #c8a96e; color:#c8a96e;">In Progress</div>
+    </div>
+    <div style="height:3px; background:rgba(255,255,255,0.06); border-radius:3px; margin-bottom:8px;">
+      <div id="lvl1Bar" style="height:3px; background:#c8a96e; border-radius:3px; width:0%; transition:width 0.6s ease;"></div>
+    </div>
+    <div style="display:flex; justify-content:space-between; align-items:center;">
+      <div id="lvl1Label" style="font-family:'DM Sans',sans-serif; font-size:11px; color:#c8a96e;">0 / 27 scenes</div>
+      <div id="lvl1QuizBtn" onclick="switchTab(document.querySelector('[data-panel=panelMissions]'))" style="display:none; font-family:'DM Sans',sans-serif; font-size:11px; font-weight:700; color:#0d0d0d; background:#c8a96e; border-radius:8px; padding:6px 14px; cursor:pointer;">Take Quiz →</div>
+    </div>
+  </div>
+
+  <!-- Level 2 -->
+  <div id="lvlCard2" style="background:rgba(255,255,255,0.02); border:0.5px solid rgba(255,255,255,0.07); border-radius:16px; padding:16px; margin-bottom:12px; opacity:0.4;">
+    <div style="display:flex; justify-content:space-between; align-items:center;">
+      <div>
+        <div style="font-family:'DM Sans',sans-serif; font-size:9px; letter-spacing:2px; text-transform:uppercase; color:#555; margin-bottom:4px;">Level 2</div>
+        <div style="font-family:'Georgia',serif; font-size:19px; color:#fff; margin-bottom:3px;">Intermediate</div>
+        <div style="font-family:'DM Sans',sans-serif; font-size:11px; color:#444;">Past tense · Storytelling · Conflict</div>
+        <div style="font-family:'DM Sans',sans-serif; font-size:10px; color:#555; margin-top:6px;">🔒 Pass the Level 1 Quiz to unlock 30 new scenes</div>
+      </div>
+      <div style="font-size:28px;">🔒</div>
+    </div>
+  </div>
+
+  <!-- Level 3 -->
+  <div style="background:rgba(255,255,255,0.02); border:0.5px solid rgba(255,255,255,0.07); border-radius:16px; padding:16px; margin-bottom:12px; opacity:0.25;">
+    <div style="display:flex; justify-content:space-between; align-items:center;">
+      <div>
+        <div style="font-family:'DM Sans',sans-serif; font-size:9px; letter-spacing:2px; text-transform:uppercase; color:#555; margin-bottom:4px;">Level 3</div>
+        <div style="font-family:'Georgia',serif; font-size:19px; color:#fff; margin-bottom:3px;">Advanced</div>
+        <div style="font-family:'DM Sans',sans-serif; font-size:11px; color:#444;">Idioms · Sarcasm · Complex dialogue</div>
+      </div>
+      <div style="font-size:28px;">🔒</div>
+    </div>
+  </div>
+
+  <!-- Level 4 -->
+  <div style="background:rgba(255,255,255,0.02); border:0.5px solid rgba(255,255,255,0.07); border-radius:16px; padding:16px; margin-bottom:24px; opacity:0.15;">
+    <div style="display:flex; justify-content:space-between; align-items:center;">
+      <div>
+        <div style="font-family:'DM Sans',sans-serif; font-size:9px; letter-spacing:2px; text-transform:uppercase; color:#555; margin-bottom:4px;">Level 4</div>
+        <div style="font-family:'Georgia',serif; font-size:19px; color:#fff; margin-bottom:3px;">Fluency</div>
+        <div style="font-family:'DM Sans',sans-serif; font-size:11px; color:#444;">Slang · Rapid speech · Accents</div>
+      </div>
+      <div style="font-size:28px;">🔒</div>
+    </div>
+  </div>
+  </div>
   <div class="app-panel" id="panelRanks"></div>
   <div class="app-panel" id="panelMissions"></div>
   <div class="app-panel" id="panelWords"></div>
@@ -1894,6 +1952,19 @@ function enterAppMode() {
   if (xpEl) xpEl.textContent = xp.toLocaleString();
   if (bar) bar.style.width = Math.round((completed / 27) * 100) + '%';
   if (label) label.textContent = completed + ' / 27 scenes';
+  const completed2 = Object.keys(userProgress.best_scores || {}).length;
+  const total = 27;
+  const pct = Math.round((completed2 / total) * 100);
+  const bar2 = document.getElementById('lvl1Bar');
+  const lbl2 = document.getElementById('lvl1Label');
+  const quiz = document.getElementById('lvl1QuizBtn');
+  const badge = document.getElementById('lvl1Badge');
+  if (bar2) bar2.style.width = pct + '%';
+  if (lbl2) lbl2.textContent = completed2 + ' / ' + total + ' scenes';
+  if (completed2 >= total) {
+    if (quiz) quiz.style.display = 'block';
+    if (badge) { badge.textContent = 'Ready for Quiz!'; badge.style.background = '#c8a96e'; badge.style.color = '#0d0d0d'; }
+  }
 }
 </script>
 </body>
