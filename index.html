@@ -1883,28 +1883,17 @@ function enterAppMode() {
   document.getElementById('appShell').style.display = 'block';
   document.getElementById('siteNav').style.display = 'none';
   // update home panel stats from real API data
-  const completed = userProgress && userProgress.best_scores ? Object.keys(userProgress.best_scores).length : 0;
-  const xp = completed * 100;
-  const homeBar = document.getElementById('level1ProgressBar');
-  const homeLabel = document.getElementById('level1ProgressLabel');
-  const homeXpEl = document.getElementById('homeXpVal');
-  if (homeBar) homeBar.style.width = Math.round((completed / 27) * 100) + '%';
-  if (homeLabel) homeLabel.textContent = completed + ' / 27 scenes';
-  if (homeXpEl) homeXpEl.textContent = xp.toLocaleString();
-  // fetch streak from /api/profile (only source that has it)
-  if (authToken) {
-    fetch(API + '/api/profile', { headers: { Authorization: 'Bearer ' + authToken } })
-      .then(r => r.ok ? r.json() : null)
-      .then(profile => {
-        const streakEl = document.getElementById('homeStreakVal');
-        if (streakEl && profile) streakEl.textContent = profile.streak || 0;
-        // also update XP from real points if available
-        if (homeXpEl && profile && profile.total_points != null) {
-          homeXpEl.textContent = profile.total_points.toLocaleString();
-        }
-      })
-      .catch(() => {});
-  }
+  const completed = Object.keys(userProgress.best_scores || {}).length;
+  const streak = (typeof userProfile !== 'undefined') ? (userProfile.streak || 0) : 0;
+  const xp = (typeof userProfile !== 'undefined') ? (userProfile.total_points || 0) : 0;
+  const el = document.getElementById('homeStreakVal');
+  const xpEl = document.getElementById('homeXpVal');
+  const bar = document.getElementById('level1ProgressBar');
+  const label = document.getElementById('level1ProgressLabel');
+  if (el) el.textContent = streak;
+  if (xpEl) xpEl.textContent = xp.toLocaleString();
+  if (bar) bar.style.width = Math.round((completed / 27) * 100) + '%';
+  if (label) label.textContent = completed + ' / 27 scenes';
 }
 </script>
 </body>

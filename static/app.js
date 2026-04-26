@@ -362,6 +362,7 @@ let userProgress = {
   unlocked_scenes: [],
   next_level: { level: 2, required_score: 60, best_score: 0 },
 };
+let userProfile = { streak: 0, total_points: 0 };
 
 let dailyChallenge    = null;
 let countdownInterval = null;
@@ -716,6 +717,12 @@ async function loadProgress() {
     });
     if (r.ok) userProgress = await r.json();
   } catch { /* keep defaults so offline dev still works */ }
+  try {
+    const rp = await fetch(`${API}/api/profile`, {
+      headers: { Authorization: `Bearer ${authToken}` },
+    });
+    if (rp.ok) userProfile = await rp.json();
+  } catch { /* keep defaults */ }
   renderLevelBar();
 }
 
