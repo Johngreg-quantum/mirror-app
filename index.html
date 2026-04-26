@@ -1921,7 +1921,44 @@
     </div>
   </div>
   </div>
-  <div class="app-panel" id="panelRanks"></div>
+  <div class="app-panel" id="panelRanks">
+  <div style="padding:16px 4px 12px; font-family:'Bebas Neue',sans-serif; font-size:11px; letter-spacing:0.2em; color:#555;">THIS WEEK</div>
+
+  <!-- Division card -->
+  <div id="divisionCard" style="border-radius:16px; padding:18px; margin-bottom:16px; border:0.5px solid #c8a96e; background:rgba(200,169,110,0.06);">
+    <div style="font-family:'DM Sans',sans-serif; font-size:9px; letter-spacing:2px; text-transform:uppercase; color:#555; margin-bottom:8px;">Your Division</div>
+    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:14px;">
+      <div>
+        <div id="divName" style="font-family:'Georgia',serif; font-size:28px; color:#c8a96e;">Bronze</div>
+        <div id="divPoints" style="font-family:'DM Sans',sans-serif; font-size:12px; color:#555; margin-top:2px;">450 pts · 50 to Silver</div>
+      </div>
+      <div id="divBadge" style="width:56px; height:56px; border-radius:50%; background:rgba(205,127,50,0.15); border:2px solid #cd7f32; display:flex; align-items:center; justify-content:center; font-size:26px;">🥉</div>
+    </div>
+    <div style="height:4px; background:rgba(255,255,255,0.06); border-radius:4px;">
+      <div id="divBar" style="height:4px; border-radius:4px; background:#cd7f32; width:0%; transition:width 0.8s ease;"></div>
+    </div>
+    <div style="display:flex; justify-content:space-between; margin-top:6px;">
+      <div id="divMin" style="font-family:'DM Sans',sans-serif; font-size:10px; color:#444;">0</div>
+      <div id="divMax" style="font-family:'DM Sans',sans-serif; font-size:10px; color:#444;">499</div>
+    </div>
+  </div>
+
+  <!-- Division ladder -->
+  <div style="font-family:'DM Sans',sans-serif; font-size:9px; letter-spacing:2px; text-transform:uppercase; color:#444; margin-bottom:10px;">Division Ladder</div>
+  <div style="display:flex; flex-direction:column; gap:8px; margin-bottom:20px;">
+    <div class="div-rung" data-div="Bronze"   style="display:flex;align-items:center;gap:12px;background:rgba(255,255,255,0.02);border:0.5px solid rgba(255,255,255,0.06);border-radius:12px;padding:10px 14px;"><span style="font-size:18px;">🥉</span><div style="flex:1"><div style="font-family:'Georgia',serif;font-size:14px;color:#cd7f32;">Bronze</div><div style="font-family:'DM Sans',sans-serif;font-size:10px;color:#555;">0 – 499 pts</div></div><div id="rungBronze" style="font-family:'DM Sans',sans-serif;font-size:10px;color:#555;"></div></div>
+    <div class="div-rung" data-div="Silver"   style="display:flex;align-items:center;gap:12px;background:rgba(255,255,255,0.02);border:0.5px solid rgba(255,255,255,0.06);border-radius:12px;padding:10px 14px;"><span style="font-size:18px;">🥈</span><div style="flex:1"><div style="font-family:'Georgia',serif;font-size:14px;color:#b8b8b8;">Silver</div><div style="font-family:'DM Sans',sans-serif;font-size:10px;color:#555;">500 – 1,999 pts</div></div><div id="rungSilver" style="font-family:'DM Sans',sans-serif;font-size:10px;color:#555;"></div></div>
+    <div class="div-rung" data-div="Gold"     style="display:flex;align-items:center;gap:12px;background:rgba(255,255,255,0.02);border:0.5px solid rgba(255,255,255,0.06);border-radius:12px;padding:10px 14px;"><span style="font-size:18px;">🥇</span><div style="flex:1"><div style="font-family:'Georgia',serif;font-size:14px;color:#c9a84c;">Gold</div><div style="font-family:'DM Sans',sans-serif;font-size:10px;color:#555;">2,000 – 4,999 pts</div></div><div id="rungGold" style="font-family:'DM Sans',sans-serif;font-size:10px;color:#555;"></div></div>
+    <div class="div-rung" data-div="Diamond" style="display:flex;align-items:center;gap:12px;background:rgba(255,255,255,0.02);border:0.5px solid rgba(255,255,255,0.06);border-radius:12px;padding:10px 14px;"><span style="font-size:18px;">💎</span><div style="flex:1"><div style="font-family:'Georgia',serif;font-size:14px;color:#67e8f9;">Diamond</div><div style="font-family:'DM Sans',sans-serif;font-size:10px;color:#555;">5,000 – 9,999 pts</div></div><div id="rungDiamond" style="font-family:'DM Sans',sans-serif;font-size:10px;color:#555;"></div></div>
+    <div class="div-rung" data-div="Director" style="display:flex;align-items:center;gap:12px;background:rgba(255,255,255,0.02);border:0.5px solid rgba(255,255,255,0.06);border-radius:12px;padding:10px 14px;"><span style="font-size:18px;">🎬</span><div style="flex:1"><div style="font-family:'Georgia',serif;font-size:14px;color:#c9a84c;">Director</div><div style="font-family:'DM Sans',sans-serif;font-size:10px;color:#555;">10,000+ pts</div></div><div id="rungDirector" style="font-family:'DM Sans',sans-serif;font-size:10px;color:#555;"></div></div>
+  </div>
+
+  <!-- Scene leaderboard -->
+  <div style="font-family:'DM Sans',sans-serif; font-size:9px; letter-spacing:2px; text-transform:uppercase; color:#444; margin-bottom:10px;">Top Scores · Your Best Scene</div>
+  <div id="sceneLeaderboard" style="background:rgba(255,255,255,0.02); border:0.5px solid rgba(255,255,255,0.07); border-radius:14px; overflow:hidden; margin-bottom:24px;">
+    <div style="padding:14px 16px; font-family:'DM Sans',sans-serif; font-size:12px; color:#555;">Loading scores...</div>
+  </div>
+  </div>
   <div class="app-panel" id="panelMissions"></div>
   <div class="app-panel" id="panelWords"></div>
 </div>
@@ -1965,6 +2002,52 @@ function enterAppMode() {
     if (quiz) quiz.style.display = 'block';
     if (badge) { badge.textContent = 'Ready for Quiz!'; badge.style.background = '#c8a96e'; badge.style.color = '#0d0d0d'; }
   }
+  (async function updateRanksPanel() {
+    if (!userProfile) return;
+    const div = userProfile.division || {};
+    const nextDiv = userProfile.next_division || {};
+    const pts = userProfile.total_points || 0;
+    const toNext = userProfile.points_to_next || 0;
+    const divEmojis = { Bronze:'🥉', Silver:'🥈', Gold:'🥇', Diamond:'💎', Director:'🎬' };
+    const el = (id) => document.getElementById(id);
+    if (el('divName')) { el('divName').textContent = div.name || 'Bronze'; el('divName').style.color = div.color || '#cd7f32'; }
+    if (el('divPoints')) el('divPoints').textContent = pts.toLocaleString() + ' pts · ' + toNext + ' to ' + (nextDiv.name || 'top');
+    if (el('divBadge')) { el('divBadge').textContent = divEmojis[div.name] || '🥉'; el('divBadge').style.borderColor = div.color || '#cd7f32'; }
+    if (el('divBar')) { const range = (div.max||499) - (div.min||0); const fill = Math.min(100, Math.round(((pts - (div.min||0)) / range) * 100)); el('divBar').style.width = fill + '%'; el('divBar').style.background = div.color || '#cd7f32'; }
+    if (el('divMin')) el('divMin').textContent = (div.min||0).toLocaleString();
+    if (el('divMax')) el('divMax').textContent = div.max ? div.max.toLocaleString() : '∞';
+    const order = ['Bronze','Silver','Gold','Diamond','Director'];
+    const userDivIdx = order.indexOf(div.name);
+    order.forEach((d, i) => {
+      const rung = el('rung' + d);
+      if (!rung) return;
+      if (i < userDivIdx) { rung.textContent = '✓'; rung.style.color = '#6aaa2e'; }
+      else if (i === userDivIdx) { rung.textContent = '← You'; rung.style.color = div.color || '#c8a96e'; }
+      else { rung.textContent = '🔒'; }
+    });
+    const bestSceneId = Object.entries(userProgress.best_scores || {}).sort((a,b) => b[1]-a[1])[0];
+    if (bestSceneId) {
+      try {
+        const token = localStorage.getItem('token');
+        const res = await fetch('/api/leaderboard/' + bestSceneId[0], { headers: { Authorization: 'Bearer ' + token }});
+        const data = await res.json();
+        const entries = Array.isArray(data) ? data : (data[bestSceneId[0]] || []);
+        const scene = scenes ? scenes[bestSceneId[0]] : null;
+        const sceneTitle = scene ? (scene.movie || scene.title || bestSceneId[0]) : bestSceneId[0];
+        const lb = el('sceneLeaderboard');
+        if (lb && entries.length) {
+          lb.innerHTML = '<div style="padding:10px 16px 6px;font-family:DM Sans,sans-serif;font-size:10px;letter-spacing:1px;text-transform:uppercase;color:#555;">' + sceneTitle + '</div>' +
+            entries.slice(0,8).map((e,i) => {
+              const isYou = e.username === (userProfile.username || '');
+              return '<div style="display:flex;align-items:center;gap:12px;padding:10px 16px;border-top:0.5px solid rgba(255,255,255,0.04);background:' + (isYou ? 'rgba(200,169,110,0.06)' : 'transparent') + '">' +
+                '<div style="font-family:DM Sans,sans-serif;font-size:12px;color:' + (i===0?'#c8a96e':i===1?'#b8b8b8':i===2?'#cd7f32':'#444') + ';min-width:20px;text-align:center;">' + (i+1) + '</div>' +
+                '<div style="flex:1;font-family:DM Sans,sans-serif;font-size:13px;color:' + (isYou?'#fff':'#aaa') + ';">' + e.username + (isYou?' (you)':'') + '</div>' +
+                '<div style="font-family:DM Sans,sans-serif;font-size:13px;font-weight:700;color:' + (isYou?'#c8a96e':'#888') + ';">' + Math.round(e.sync_score) + '%</div></div>';
+            }).join('');
+        } else if (lb) { lb.innerHTML = '<div style="padding:14px 16px;font-family:DM Sans,sans-serif;font-size:12px;color:#555;">No scores yet — be the first!</div>'; }
+      } catch(e) { console.error('leaderboard fetch failed', e); }
+    }
+  })();
 }
 </script>
 </body>
