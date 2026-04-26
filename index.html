@@ -2038,7 +2038,34 @@
     </div>
   </div>
   </div>
-  <div class="app-panel" id="panelWords"></div>
+  <div class="app-panel" id="panelWords">
+  <div style="padding:16px 4px 4px;">
+    <div style="font-family:'DM Sans',sans-serif; font-size:9px; letter-spacing:2px; text-transform:uppercase; color:#555; margin-bottom:4px;">Your Vocabulary</div>
+    <div style="font-family:'Bebas Neue',sans-serif; font-size:28px; letter-spacing:0.1em; color:#fff; margin-bottom:14px;">My Dictionary</div>
+    <div style="display:flex; gap:8px; margin-bottom:16px;">
+      <div style="flex:1; background:rgba(200,169,110,0.06); border:0.5px solid #c8a96e; border-radius:12px; padding:10px 12px;">
+        <div id="wordsCountVal" style="font-family:'DM Sans',sans-serif; font-size:24px; font-weight:700; color:#c8a96e; line-height:1;">0</div>
+        <div style="font-family:'DM Sans',sans-serif; font-size:9px; letter-spacing:1px; text-transform:uppercase; color:#555; margin-top:3px;">Translations</div>
+      </div>
+      <div style="flex:1; background:rgba(255,255,255,0.02); border:0.5px solid rgba(255,255,255,0.07); border-radius:12px; padding:10px 12px;">
+        <div id="wordsAttemptsVal" style="font-family:'DM Sans',sans-serif; font-size:24px; font-weight:700; color:#fff; line-height:1;">0</div>
+        <div style="font-family:'DM Sans',sans-serif; font-size:9px; letter-spacing:1px; text-transform:uppercase; color:#555; margin-top:3px;">Scenes Tried</div>
+      </div>
+      <div style="flex:1; background:rgba(255,255,255,0.02); border:0.5px solid rgba(255,255,255,0.07); border-radius:12px; padding:10px 12px;">
+        <div id="wordsBestVal" style="font-family:'DM Sans',sans-serif; font-size:24px; font-weight:700; color:#fff; line-height:1;">0%</div>
+        <div style="font-family:'DM Sans',sans-serif; font-size:9px; letter-spacing:1px; text-transform:uppercase; color:#555; margin-top:3px;">Best Score</div>
+      </div>
+    </div>
+  </div>
+
+  <div style="font-family:'DM Sans',sans-serif; font-size:9px; letter-spacing:2px; text-transform:uppercase; color:#444; margin-bottom:10px; padding:0 4px;">Unlocked Translations</div>
+  <div id="wordsUnlockHint" style="display:none; background:rgba(255,255,255,0.02); border:0.5px solid rgba(255,255,255,0.07); border-radius:14px; padding:20px 16px; text-align:center; margin-bottom:16px;">
+    <div style="font-size:28px; margin-bottom:8px;">🔒</div>
+    <div style="font-family:'Georgia',serif; font-size:15px; color:#fff; margin-bottom:6px;">No translations yet</div>
+    <div style="font-family:'DM Sans',sans-serif; font-size:12px; color:#555; line-height:1.6;">Practice any scene 3 times and score 70%+ to unlock its Spanish translation</div>
+  </div>
+  <div id="wordsList" style="display:flex; flex-direction:column; gap:10px; margin-bottom:24px;"></div>
+  </div>
 </div>
 
 <script>
@@ -2173,6 +2200,44 @@ function enterAppMode() {
         window._missionsCountdownTimer = setInterval(() => { if (remaining > 0) { remaining--; const h = Math.floor(remaining/3600); const m = Math.floor((remaining%3600)/60); const s = remaining%60; const cd = document.getElementById('missionsCountdown'); if(cd) cd.textContent = String(h).padStart(2,'0')+':'+String(m).padStart(2,'0')+':'+String(s).padStart(2,'0'); } }, 1000);
       }
     } catch(e) { console.error('daily fetch failed', e); }
+  })();
+  (async function updateWordsPanel() {
+    const bestScores = userProgress ? (userProgress.best_scores || {}) : {};
+    const attempted = Object.keys(bestScores).length;
+    const best = attempted ? Math.round(Math.max(...Object.values(bestScores))) : 0;
+    const attEl = document.getElementById('wordsAttemptsVal');
+    const bestEl = document.getElementById('wordsBestVal');
+    if (attEl) attEl.textContent = attempted;
+    if (bestEl) bestEl.textContent = best + '%';
+    try {
+      const res = await fetch('/api/translations', { headers: { Authorization: 'Bearer ' + authToken }});
+      const translations = await res.json();
+      const ids = Object.keys(translations);
+      const countEl = document.getElementById('wordsCountVal');
+      const hint = document.getElementById('wordsUnlockHint');
+      const list = document.getElementById('wordsList');
+      if (countEl) countEl.textContent = ids.length;
+      if (!ids.length) { if (hint) hint.style.display = 'block'; return; }
+      if (hint) hint.style.display = 'none';
+      if (list) list.innerHTML = ids.map(sid => {
+        const scene = scenes ? scenes[sid] : null;
+        const movie = scene ? (scene.movie || scene.title || sid) : sid;
+        const quote = scene ? (scene.quote || scene.target_line || '') : '';
+        const score = bestScores[sid] ? Math.round(bestScores[sid]) : 0;
+        const translation = translations[sid] || '';
+        return '<div style="background:rgba(255,255,255,0.02);border:0.5px solid rgba(255,255,255,0.07);border-radius:14px;overflow:hidden;">' +
+          '<div style="padding:14px 16px 10px;">' +
+          '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;">' +
+          '<div style="font-family:Georgia,serif;font-size:15px;color:#fff;">' + movie + '</div>' +
+          '<div style="font-family:DM Sans,sans-serif;font-size:11px;font-weight:700;color:#c8a96e;background:rgba(200,169,110,0.1);border:0.5px solid rgba(200,169,110,0.3);border-radius:6px;padding:3px 8px;">' + score + '%</div>' +
+          '</div>' +
+          '<div style="font-family:DM Sans,sans-serif;font-size:12px;color:#888;line-height:1.5;margin-bottom:8px;font-style:italic;">"' + (quote.length > 90 ? quote.slice(0,90)+'…' : quote) + '"</div>' +
+          '<div style="height:0.5px;background:rgba(255,255,255,0.06);margin-bottom:8px;"></div>' +
+          '<div style="font-family:DM Sans,sans-serif;font-size:9px;letter-spacing:1px;text-transform:uppercase;color:#555;margin-bottom:4px;">🇪🇸 Spanish</div>' +
+          '<div style="font-family:DM Sans,sans-serif;font-size:12px;color:#c8a96e;line-height:1.5;">"' + (translation.length > 90 ? translation.slice(0,90)+'…' : translation) + '"</div>' +
+          '</div></div>';
+      }).join('');
+    } catch(e) { console.error('translations fetch failed', e); }
   })();
 }
 </script>

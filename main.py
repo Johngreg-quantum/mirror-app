@@ -974,3 +974,27 @@ async def get_profile(user: dict = Depends(current_user)):
         "daily_done_today":      daily_done_today,
         "daily_scene_id":        get_daily_scene_id(),
     }
+
+
+@app.get("/api/translations")
+async def get_translations(user: dict = Depends(current_user)):
+    """Return {scene_id: spanish_translation} for every scene the user has
+    unlocked translations on (3+ attempts AND best score >= 70%)."""
+    conn = get_conn()
+    cur  = conn.cursor()
+    cur.execute(
+        f"SELECT scene_id, COUNT(*), MAX(sync_score) "
+        f"FROM scores WHERE user_id = {PH} GROUP BY scene_id",
+        (user["id"],),
+    )
+    rows = cur.fetchall()
+    conn.close()
+
+    result: dict[str, str] = {}
+    for r in rows:
+        sid, attempts, best = r[0], int(r[1]), float(r[2] or 0)
+        if attempts >= 3 and best >= 70:
+            translation = SCENES.get(sid, {}).get("translation")
+            if translation:
+                result[sid] = translation
+    return result
