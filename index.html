@@ -1782,6 +1782,29 @@
 <script src="/static/app-level-panel-orchestration.js"></script>
 <script src="/static/app.js"></script>
 
+<div class="quiz-overlay" id="quizOverlay">
+  <div class="quiz-header">
+    <div style="font-family:'Bebas Neue',sans-serif; font-size:18px; letter-spacing:0.15em; color:#c8a96e;">LEVEL 1 QUIZ</div>
+    <button class="quiz-close" onclick="closeQuiz()">✕ Exit</button>
+  </div>
+  <div class="quiz-progress-bar"><div class="quiz-progress-fill" id="quizProgressFill" style="width:0%"></div></div>
+  <div id="quizBody">
+    <div class="quiz-q-label" id="quizQLabel">Question 1 of 10</div>
+    <div class="quiz-question" id="quizQuestion"></div>
+    <div class="quiz-quote" id="quizQuote" style="display:none"></div>
+    <div class="quiz-options" id="quizOptions"></div>
+    <button class="quiz-next" id="quizNext" onclick="quizNext()">Next Question →</button>
+  </div>
+  <div class="quiz-result" id="quizResult">
+    <div class="quiz-result-icon" id="quizResultIcon"></div>
+    <div class="quiz-result-score" id="quizResultScore"></div>
+    <div class="quiz-result-scorelab">Score</div>
+    <div class="quiz-result-title" id="quizResultTitle"></div>
+    <div class="quiz-result-sub" id="quizResultSub"></div>
+    <button class="quiz-result-btn" id="quizResultBtn" onclick="closeQuiz()">Back to Mirror</button>
+  </div>
+</div>
+
 <nav class="bottom-nav" id="bottomNav">
   <button class="bn-tab active" data-panel="panelHome" onclick="switchTab(this)">
     <span class="bn-icon">🎬</span><span class="bn-label">Home</span><span class="bn-dot"></span>
@@ -1908,7 +1931,7 @@
     </div>
     <div style="display:flex; justify-content:space-between; align-items:center;">
       <div id="lvl1Label" style="font-family:'DM Sans',sans-serif; font-size:11px; color:#c8a96e;">0 / 27 scenes</div>
-      <div id="lvl1QuizBtn" onclick="switchTab(document.querySelector('[data-panel=panelMissions]'))" style="display:none; font-family:'DM Sans',sans-serif; font-size:11px; font-weight:700; color:#0d0d0d; background:#c8a96e; border-radius:8px; padding:6px 14px; cursor:pointer;">Take Quiz →</div>
+      <div id="lvl1QuizBtn" onclick="openQuiz()" style="display:none; font-family:'DM Sans',sans-serif; font-size:11px; font-weight:700; color:#0d0d0d; background:#c8a96e; border-radius:8px; padding:6px 14px; cursor:pointer;">Take Quiz →</div>
     </div>
   </div>
 
@@ -2267,6 +2290,121 @@ function enterAppMode() {
       }).join('');
     } catch(e) { console.error('translations fetch failed', e); }
   })();
+}
+
+let quizQuestions = [];
+let quizIndex = 0;
+let quizScore = 0;
+let quizAnswered = false;
+
+function buildQuizQuestions() {
+  const allScenes = Object.entries(scenes || {}).filter(([id, s]) => (s.difficulty || '').toLowerCase() === 'beginner');
+  const practiced = Object.keys((userProgress && userProgress.best_scores) || {});
+  const pool = allScenes.filter(([id]) => practiced.includes(id));
+  const source = pool.length >= 6 ? pool : allScenes;
+  const shuffled = [...source].sort(() => Math.random() - 0.5);
+  const picked = shuffled.slice(0, 10);
+  const allMovies = [...new Set(allScenes.map(([,s]) => s.movie || s.title))];
+  const allActors = [...new Set(allScenes.map(([,s]) => s.actor).filter(Boolean))];
+  return picked.map(([id, scene], i) => {
+    const type = i % 3 === 0 ? 'actor' : i % 3 === 1 ? 'movie' : 'fill';
+    const quote = scene.quote || scene.target_line || '';
+    const movie = scene.movie || scene.title || '';
+    const actor = scene.actor || '';
+    if (type === 'movie') {
+      const wrong = allMovies.filter(m => m !== movie).sort(() => Math.random() - 0.5).slice(0, 3);
+      const opts = [movie, ...wrong].sort(() => Math.random() - 0.5);
+      return { q: 'Which movie is this quote from?', quote, opts, answer: movie, type };
+    } else if (type === 'actor') {
+      const wrong = allActors.filter(a => a !== actor).sort(() => Math.random() - 0.5).slice(0, 3);
+      const opts = [actor, ...wrong].sort(() => Math.random() - 0.5);
+      return { q: 'Who said this line?', quote, opts, answer: actor, type };
+    } else {
+      const words = quote.split(' ');
+      const idx = Math.floor(words.length / 2);
+      const missing = words[idx];
+      const blanked = words.map((w, i) => i === idx ? '_____' : w).join(' ');
+      const fakeWords = ['dream','money','never','always','right','wrong','time','love'].filter(w => w !== missing.toLowerCase());
+      const wrong = fakeWords.sort(() => Math.random() - 0.5).slice(0, 3);
+      const opts = [missing, ...wrong].sort(() => Math.random() - 0.5);
+      return { q: 'Fill in the missing word:', quote: blanked, opts, answer: missing, type };
+    }
+  });
+}
+
+function openQuiz() {
+  if (!scenes || Object.keys(scenes).length === 0) { alert('Scenes not loaded yet. Please try again.'); return; }
+  quizQuestions = buildQuizQuestions();
+  quizIndex = 0; quizScore = 0; quizAnswered = false;
+  document.getElementById('quizResult').classList.remove('visible');
+  document.getElementById('quizBody').style.display = 'block';
+  document.getElementById('quizOverlay').classList.add('open');
+  document.body.style.overflow = 'hidden';
+  renderQuizQuestion();
+}
+
+function closeQuiz() {
+  document.getElementById('quizOverlay').classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+function renderQuizQuestion() {
+  const q = quizQuestions[quizIndex];
+  const total = quizQuestions.length;
+  document.getElementById('quizQLabel').textContent = 'Question ' + (quizIndex + 1) + ' of ' + total;
+  document.getElementById('quizProgressFill').style.width = Math.round((quizIndex / total) * 100) + '%';
+  document.getElementById('quizQuestion').textContent = q.q;
+  const quoteEl = document.getElementById('quizQuote');
+  if (q.quote) { quoteEl.style.display = 'block'; quoteEl.textContent = '"' + q.quote + '"'; }
+  else { quoteEl.style.display = 'none'; }
+  const optsEl = document.getElementById('quizOptions');
+  optsEl.innerHTML = q.opts.map(opt =>
+    '<button class="quiz-option" onclick="quizAnswer(this, \'' + opt.replace(/'/g, "\\'") + '\')">' + opt + '</button>'
+  ).join('');
+  document.getElementById('quizNext').classList.remove('visible');
+  quizAnswered = false;
+}
+
+function quizAnswer(btn, chosen) {
+  if (quizAnswered) return;
+  quizAnswered = true;
+  const correct = quizQuestions[quizIndex].answer;
+  document.querySelectorAll('.quiz-option').forEach(b => {
+    b.disabled = true;
+    if (b.textContent === correct) b.classList.add(chosen === correct ? 'correct' : 'reveal');
+  });
+  if (chosen === correct) { quizScore++; btn.classList.add('correct'); }
+  else { btn.classList.add('wrong'); }
+  const nextBtn = document.getElementById('quizNext');
+  nextBtn.textContent = quizIndex + 1 < quizQuestions.length ? 'Next Question →' : 'See Results →';
+  nextBtn.classList.add('visible');
+}
+
+function quizNext() {
+  quizIndex++;
+  if (quizIndex >= quizQuestions.length) { showQuizResult(); return; }
+  renderQuizQuestion();
+}
+
+function showQuizResult() {
+  document.getElementById('quizBody').style.display = 'none';
+  document.getElementById('quizResult').classList.add('visible');
+  const total = quizQuestions.length;
+  const pct = Math.round((quizScore / total) * 100);
+  const passed = pct >= 70;
+  document.getElementById('quizProgressFill').style.width = '100%';
+  document.getElementById('quizResultScore').textContent = pct + '%';
+  document.getElementById('quizResultIcon').textContent = passed ? '🏆' : '🎬';
+  document.getElementById('quizResultTitle').textContent = passed ? 'LEVEL 2 UNLOCKED' : 'KEEP PRACTICING';
+  document.getElementById('quizResultTitle').style.color = passed ? '#c8a96e' : '#fff';
+  document.getElementById('quizResultSub').textContent = passed
+    ? 'You scored ' + quizScore + '/' + total + '. Incredible — Intermediate scenes are now available!'
+    : 'You scored ' + quizScore + '/' + total + '. You need 70% to unlock Level 2. Keep practicing!';
+  const btn = document.getElementById('quizResultBtn');
+  btn.textContent = passed ? '🎬 Start Level 2' : 'Keep Practicing';
+  btn.onclick = passed
+    ? () => { closeQuiz(); switchTab(document.querySelector('[data-panel=panelLevels]')); }
+    : () => { closeQuiz(); };
 }
 </script>
 </body>
