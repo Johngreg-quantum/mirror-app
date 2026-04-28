@@ -191,7 +191,13 @@ function setOn(id, isOn) {
 }
 
 function setBodyScrollLocked(locked) {
-  document.body.style.overflow = locked ? 'hidden' : '';
+  if (locked) {
+    document.body.style.position = 'fixed';
+    document.body.style.width = '100%';
+  } else {
+    document.body.style.position = '';
+    document.body.style.width = '';
+  }
 }
 
 function isOverlayOpen(id) {
