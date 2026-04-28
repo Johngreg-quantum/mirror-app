@@ -843,7 +843,13 @@
     {
       "level": 3,
       "scenes": [
-        "taken"
+        "taken",
+        "heat",
+        "avengers",
+        "titanic",
+        "basic_instinct",
+        "sixth_sense",
+        "terminator"
       ],
       "unlock_score": 70
     }
