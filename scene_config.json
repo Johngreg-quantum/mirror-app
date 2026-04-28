@@ -405,6 +405,381 @@
         "card_color": "#4a7c8c",
         "poster_image": "/static/posters/the_intern.jpg"
       }
+    },
+    "good_will_hunting": {
+      "movie": "Good Will Hunting",
+      "quote": "It's not your fault.",
+      "year": 1997,
+      "difficulty": "Intermediate",
+      "actor": "Robin Williams",
+      "translation": "No es tu culpa.",
+      "ui": {
+        "youtube_id": "2bs0VkBcPUw",
+        "clip_start": 10,
+        "clip_end": 18,
+        "card_color": "#2c5f8a",
+        "poster_image": "/static/posters/good_will_hunting.jpg"
+      }
+    },
+    "shawshank": {
+      "movie": "The Shawshank Redemption",
+      "quote": "Get busy living, or get busy dying.",
+      "year": 1994,
+      "difficulty": "Intermediate",
+      "actor": "Tim Robbins",
+      "translation": "Ponte a vivir o ponte a morir.",
+      "ui": {
+        "youtube_id": "NmzuHjWmXOc",
+        "clip_start": 5,
+        "clip_end": 12,
+        "card_color": "#5a3e1b",
+        "poster_image": "/static/posters/shawshank.jpg"
+      }
+    },
+    "a_few_good_men": {
+      "movie": "A Few Good Men",
+      "quote": "You can't handle the truth!",
+      "year": 1992,
+      "difficulty": "Intermediate",
+      "actor": "Jack Nicholson",
+      "translation": "¡No puedes manejar la verdad!",
+      "ui": {
+        "youtube_id": "9FnO3igOkOk",
+        "clip_start": 3,
+        "clip_end": 10,
+        "card_color": "#1a2a4a",
+        "poster_image": "/static/posters/a_few_good_men.jpg"
+      }
+    },
+    "dead_poets": {
+      "movie": "Dead Poets Society",
+      "quote": "Carpe diem. Seize the day, boys. Make your lives extraordinary.",
+      "year": 1989,
+      "difficulty": "Intermediate",
+      "actor": "Robin Williams",
+      "translation": "Carpe diem. Aprovecha el día, chicos. Hagan sus vidas extraordinarias.",
+      "ui": {
+        "youtube_id": "vi0Lbjs5ECI",
+        "clip_start": 5,
+        "clip_end": 18,
+        "card_color": "#2a3a1a",
+        "poster_image": "/static/posters/dead_poets.jpg"
+      }
+    },
+    "godfather": {
+      "movie": "The Godfather",
+      "quote": "I'm gonna make him an offer he can't refuse.",
+      "year": 1972,
+      "difficulty": "Intermediate",
+      "actor": "Marlon Brando",
+      "translation": "Le voy a hacer una oferta que no podrá rechazar.",
+      "ui": {
+        "youtube_id": "2M9nh6XKWQM",
+        "clip_start": 4,
+        "clip_end": 12,
+        "card_color": "#1a0a00",
+        "poster_image": "/static/posters/godfather.jpg"
+      }
+    },
+    "dark_knight": {
+      "movie": "The Dark Knight",
+      "quote": "Why so serious? Let's put a smile on that face!",
+      "year": 2008,
+      "difficulty": "Intermediate",
+      "actor": "Heath Ledger",
+      "translation": "¿Por qué tan serio? ¡Pongamos una sonrisa en esa cara!",
+      "ui": {
+        "youtube_id": "u8PxG5zvgOM",
+        "clip_start": 3,
+        "clip_end": 12,
+        "card_color": "#0a0a0a",
+        "poster_image": "/static/posters/dark_knight.jpg"
+      }
+    },
+    "gladiator": {
+      "movie": "Gladiator",
+      "quote": "Are you not entertained? Is that not why you are here?",
+      "year": 2000,
+      "difficulty": "Intermediate",
+      "actor": "Russell Crowe",
+      "translation": "¿No están entretenidos? ¿No es esa la razón por la que están aquí?",
+      "ui": {
+        "youtube_id": "YbycJAWbh2E",
+        "clip_start": 2,
+        "clip_end": 12,
+        "card_color": "#8a6030",
+        "poster_image": "/static/posters/gladiator.jpg"
+      }
+    },
+    "rain_man": {
+      "movie": "Rain Man",
+      "quote": "I'm an excellent driver. I drove slow on the driveway.",
+      "year": 1988,
+      "difficulty": "Intermediate",
+      "actor": "Dustin Hoffman",
+      "translation": "Soy un excelente conductor. Manejé despacio por el camino de entrada.",
+      "ui": {
+        "youtube_id": "plWMbTLMBSQ",
+        "clip_start": 3,
+        "clip_end": 13,
+        "card_color": "#3a5a3a",
+        "poster_image": "/static/posters/rain_man.jpg"
+      }
+    },
+    "as_good_as_it_gets": {
+      "movie": "As Good as It Gets",
+      "quote": "You make me want to be a better man.",
+      "year": 1997,
+      "difficulty": "Intermediate",
+      "actor": "Jack Nicholson",
+      "translation": "Me haces querer ser un mejor hombre.",
+      "ui": {
+        "youtube_id": "AYXSqRSHFsQ",
+        "clip_start": 4,
+        "clip_end": 11,
+        "card_color": "#5a2a1a",
+        "poster_image": "/static/posters/as_good_as_it_gets.jpg"
+      }
+    },
+    "rocky": {
+      "movie": "Rocky",
+      "quote": "Yo, Adrian! I did it!",
+      "year": 1976,
+      "difficulty": "Intermediate",
+      "actor": "Sylvester Stallone",
+      "translation": "¡Oye, Adrian! ¡Lo logré!",
+      "ui": {
+        "youtube_id": "Q0iCvMDfXrA",
+        "clip_start": 2,
+        "clip_end": 10,
+        "card_color": "#8a1a1a",
+        "poster_image": "/static/posters/rocky.jpg"
+      }
+    },
+    "notting_hill": {
+      "movie": "Notting Hill",
+      "quote": "I'm also just a girl, standing in front of a boy, asking him to love her.",
+      "year": 1999,
+      "difficulty": "Intermediate",
+      "actor": "Julia Roberts",
+      "translation": "También soy solo una chica parada frente a un chico pidiéndole que la ame.",
+      "ui": {
+        "youtube_id": "Wp3dnPvF9ZU",
+        "clip_start": 5,
+        "clip_end": 16,
+        "card_color": "#3a1a5a",
+        "poster_image": "/static/posters/notting_hill.jpg"
+      }
+    },
+    "whiplash": {
+      "movie": "Whiplash",
+      "quote": "Not quite my tempo.",
+      "year": 2014,
+      "difficulty": "Intermediate",
+      "actor": "J.K. Simmons",
+      "translation": "No es exactamente mi tempo.",
+      "ui": {
+        "youtube_id": "7vSMcCH6cEc",
+        "clip_start": 2,
+        "clip_end": 9,
+        "card_color": "#1a1a1a",
+        "poster_image": "/static/posters/whiplash.jpg"
+      }
+    },
+    "la_la_land": {
+      "movie": "La La Land",
+      "quote": "Here's to the fools who dream, crazy as they may seem.",
+      "year": 2016,
+      "difficulty": "Intermediate",
+      "actor": "Emma Stone",
+      "translation": "Por los locos que sueñan, por locos que parezcan.",
+      "ui": {
+        "youtube_id": "6uyUfMKCrhA",
+        "clip_start": 4,
+        "clip_end": 14,
+        "card_color": "#1a1a4a",
+        "poster_image": "/static/posters/la_la_land.jpg"
+      }
+    },
+    "breakfast_club": {
+      "movie": "The Breakfast Club",
+      "quote": "We're all pretty bizarre. Some of us are just better at hiding it.",
+      "year": 1985,
+      "difficulty": "Intermediate",
+      "actor": "Andrew McCarthy",
+      "translation": "Todos somos bastante raros. Algunos simplemente somos mejores escondiéndolo.",
+      "ui": {
+        "youtube_id": "BSFpQqSEeYI",
+        "clip_start": 3,
+        "clip_end": 12,
+        "card_color": "#8a5a1a",
+        "poster_image": "/static/posters/breakfast_club.jpg"
+      }
+    },
+    "ferris_bueller": {
+      "movie": "Ferris Bueller's Day Off",
+      "quote": "Life moves pretty fast. If you don't stop and look around once in a while, you could miss it.",
+      "year": 1986,
+      "difficulty": "Intermediate",
+      "actor": "Matthew Broderick",
+      "translation": "La vida pasa muy rápido. Si no te detienes a mirar alrededor de vez en cuando, podrías perdértela.",
+      "ui": {
+        "youtube_id": "umFqCMbLkSU",
+        "clip_start": 2,
+        "clip_end": 14,
+        "card_color": "#1a5a2a",
+        "poster_image": "/static/posters/ferris_bueller.jpg"
+      }
+    },
+    "legally_blonde": {
+      "movie": "Legally Blonde",
+      "quote": "What, like it's hard?",
+      "year": 2001,
+      "difficulty": "Intermediate",
+      "actor": "Reese Witherspoon",
+      "translation": "¿Qué, como si fuera difícil?",
+      "ui": {
+        "youtube_id": "T3xPSGvpMgE",
+        "clip_start": 3,
+        "clip_end": 9,
+        "card_color": "#d4548a",
+        "poster_image": "/static/posters/legally_blonde.jpg"
+      }
+    },
+    "wall_street": {
+      "movie": "Wall Street",
+      "quote": "Greed, for lack of a better word, is good.",
+      "year": 1987,
+      "difficulty": "Intermediate",
+      "actor": "Michael Douglas",
+      "translation": "La codicia, a falta de una palabra mejor, es buena.",
+      "ui": {
+        "youtube_id": "VVxYOQS6ggk",
+        "clip_start": 4,
+        "clip_end": 13,
+        "card_color": "#2a1a0a",
+        "poster_image": "/static/posters/wall_street.jpg"
+      }
+    },
+    "wolf_of_wall_street": {
+      "movie": "The Wolf of Wall Street",
+      "quote": "I am not leaving! The show goes on!",
+      "year": 2013,
+      "difficulty": "Intermediate",
+      "actor": "Leonardo DiCaprio",
+      "translation": "¡No me voy! ¡El espectáculo continúa!",
+      "ui": {
+        "youtube_id": "K5_EBAzJ6U8",
+        "clip_start": 3,
+        "clip_end": 11,
+        "card_color": "#0a2a5a",
+        "poster_image": "/static/posters/wolf_of_wall_street.jpg"
+      }
+    },
+    "interstellar": {
+      "movie": "Interstellar",
+      "quote": "We used to look up at the sky and wonder at our place in the stars. Now we just look down and worry about our place in the dirt.",
+      "year": 2014,
+      "difficulty": "Intermediate",
+      "actor": "Matthew McConaughey",
+      "translation": "Solíamos mirar al cielo y preguntarnos nuestro lugar en las estrellas. Ahora solo miramos hacia abajo y nos preocupamos por nuestro lugar en la tierra.",
+      "ui": {
+        "youtube_id": "2LqzF5WauAw",
+        "clip_start": 5,
+        "clip_end": 18,
+        "card_color": "#0a0a2a",
+        "poster_image": "/static/posters/interstellar.jpg"
+      }
+    },
+    "schindlers_list": {
+      "movie": "Schindler's List",
+      "quote": "Whoever saves one life saves the world entire.",
+      "year": 1993,
+      "difficulty": "Intermediate",
+      "actor": "Liam Neeson",
+      "translation": "Quien salva una vida salva al mundo entero.",
+      "ui": {
+        "youtube_id": "gG22M0Da2ME",
+        "clip_start": 3,
+        "clip_end": 11,
+        "card_color": "#1a1a1a",
+        "poster_image": "/static/posters/schindlers_list.jpg"
+      }
+    },
+    "good_morning_vietnam": {
+      "movie": "Good Morning, Vietnam",
+      "quote": "Goooood morning, Vietnam! It's 0600 hours. What does the O stand for? O my God, it's early!",
+      "year": 1987,
+      "difficulty": "Intermediate",
+      "actor": "Robin Williams",
+      "translation": "¡Bueeenos días, Vietnam! Son las 6:00. ¿Para qué es la O? ¡Oh, Dios mío, es temprano!",
+      "ui": {
+        "youtube_id": "Em2M5-F9M8k",
+        "clip_start": 2,
+        "clip_end": 16,
+        "card_color": "#5a3a1a",
+        "poster_image": "/static/posters/good_morning_vietnam.jpg"
+      }
+    },
+    "the_truman_show": {
+      "movie": "The Truman Show",
+      "quote": "In case I don't see ya, good afternoon, good evening, and good night!",
+      "year": 1998,
+      "difficulty": "Intermediate",
+      "actor": "Jim Carrey",
+      "translation": "Por si no te veo, ¡buenas tardes, buenas noches y buenas noches!",
+      "ui": {
+        "youtube_id": "dlnmQbPGuls",
+        "clip_start": 3,
+        "clip_end": 12,
+        "card_color": "#2a5a8a",
+        "poster_image": "/static/posters/the_truman_show.jpg"
+      }
+    },
+    "braveheart": {
+      "movie": "Braveheart",
+      "quote": "They may take our lives, but they'll never take our freedom!",
+      "year": 1995,
+      "difficulty": "Intermediate",
+      "actor": "Mel Gibson",
+      "translation": "Pueden quitarnos la vida, ¡pero jamás nos quitarán la libertad!",
+      "ui": {
+        "youtube_id": "lEOF4sCWmKc",
+        "clip_start": 3,
+        "clip_end": 12,
+        "card_color": "#1a3a1a",
+        "poster_image": "/static/posters/braveheart.jpg"
+      }
+    },
+    "forrest_gump_box": {
+      "movie": "Forrest Gump",
+      "quote": "Mama always said life was like a box of chocolates. You never know what you're gonna get.",
+      "year": 1994,
+      "difficulty": "Intermediate",
+      "actor": "Tom Hanks",
+      "translation": "Mamá siempre decía que la vida era como una caja de chocolates. Nunca sabes lo que te va a tocar.",
+      "ui": {
+        "youtube_id": "CJh59vZ8ccc",
+        "clip_start": 2,
+        "clip_end": 14,
+        "card_color": "#8a6a2a",
+        "poster_image": "/static/posters/forrest_gump.jpg"
+      }
+    },
+    "titanic_king": {
+      "movie": "Titanic",
+      "quote": "I'm the king of the world!",
+      "year": 1997,
+      "difficulty": "Intermediate",
+      "actor": "Leonardo DiCaprio",
+      "translation": "¡Soy el rey del mundo!",
+      "ui": {
+        "youtube_id": "BEctTMSRmak",
+        "clip_start": 2,
+        "clip_end": 8,
+        "card_color": "#0a2a4a",
+        "poster_image": "/static/posters/titanic.jpg"
+      }
     }
   },
   "levels": [
@@ -437,12 +812,31 @@
     {
       "level": 2,
       "scenes": [
-        "heat",
-        "avengers",
-        "titanic",
-        "basic_instinct",
-        "sixth_sense",
-        "terminator"
+        "good_will_hunting",
+        "shawshank",
+        "a_few_good_men",
+        "dead_poets",
+        "godfather",
+        "dark_knight",
+        "gladiator",
+        "rain_man",
+        "as_good_as_it_gets",
+        "rocky",
+        "notting_hill",
+        "whiplash",
+        "la_la_land",
+        "breakfast_club",
+        "ferris_bueller",
+        "legally_blonde",
+        "wall_street",
+        "wolf_of_wall_street",
+        "interstellar",
+        "schindlers_list",
+        "good_morning_vietnam",
+        "the_truman_show",
+        "braveheart",
+        "forrest_gump_box",
+        "titanic_king"
       ],
       "unlock_score": 60
     },
