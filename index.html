@@ -999,6 +999,64 @@
                   0 0 80px rgba(200,169,110,0.2) !important;
       border-color: rgba(200,169,110,0.6) !important;
     }
+
+    /* Levels Gateway */
+    .gw-card { position:relative; border-radius:20px; overflow:hidden; cursor:pointer; margin-bottom:12px; transition:transform 0.2s ease; }
+    .gw-card:hover { transform:translateY(-2px); }
+    .gw-card.open { transform:none; }
+    .gw-closed { position:relative; height:130px; overflow:hidden; }
+    .gw-poster-strip { position:absolute; inset:0; display:flex; gap:3px; padding:3px; }
+    .gw-ps { flex:1; border-radius:8px; overflow:hidden; transition:transform 0.4s ease; }
+    .gw-card:hover .gw-ps { transform:scale(1.04); }
+    .gw-ps img { width:100%; height:100%; object-fit:cover; display:block; filter:brightness(0.45); }
+    .gw-ps-color { width:100%; height:100%; }
+    .gw-strip-overlay { position:absolute; inset:0; background:linear-gradient(to top, rgba(8,8,8,0.93) 0%, rgba(8,8,8,0.4) 55%, rgba(8,8,8,0.2) 100%); }
+    .gw-content { position:relative; z-index:2; padding:12px 16px 14px; width:100%; }
+    .gw-top { display:flex; align-items:center; justify-content:space-between; margin-bottom:8px; }
+    .gw-level-tag { font-family:'DM Sans',sans-serif; font-size:9px; letter-spacing:2px; text-transform:uppercase; color:rgba(200,169,110,0.7); margin-bottom:3px; }
+    .gw-title { font-family:'Bebas Neue',sans-serif; font-size:26px; letter-spacing:0.08em; color:#fff; line-height:1; }
+    .gw-meta { font-family:'DM Sans',sans-serif; font-size:10px; color:rgba(255,255,255,0.3); margin-top:2px; }
+    .gw-arrow { width:36px; height:36px; border-radius:50%; background:rgba(200,169,110,0.1); border:0.5px solid rgba(200,169,110,0.3); display:flex; align-items:center; justify-content:center; font-size:14px; transition:transform 0.35s ease, background 0.2s; flex-shrink:0; color:#c8a96e; }
+    .gw-card.open .gw-arrow { transform:rotate(90deg); background:#c8a96e; color:#0a0a0a; }
+    .gw-prog { height:2px; background:rgba(255,255,255,0.07); border-radius:2px; margin-top:10px; }
+    .gw-prog-fill { height:2px; background:#c8a96e; border-radius:2px; transition:width 0.6s ease; }
+    .gw-prog-label { font-family:'DM Sans',sans-serif; font-size:10px; color:rgba(200,169,110,0.6); text-align:right; margin-top:4px; }
+    .gw-panel { max-height:0; overflow:hidden; transition:max-height 0.5s cubic-bezier(0.4,0,0.2,1); background:#0d0d0d; }
+    .gw-card.open .gw-panel { max-height:2000px; }
+    .gw-panel-inner { padding:14px; }
+    .gw-scene-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-bottom:14px; }
+    .gw-tile { position:relative; border-radius:12px; overflow:hidden; aspect-ratio:2/3; cursor:pointer; transition:transform 0.25s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.25s ease; background:#111; }
+    .gw-tile:hover { transform:translateY(-5px) scale(1.04); box-shadow:0 16px 32px rgba(0,0,0,0.7), 0 0 0 1px rgba(200,169,110,0.5); z-index:5; }
+    .gw-tile.t-done:hover { box-shadow:0 16px 32px rgba(0,0,0,0.7), 0 0 0 1.5px #6aaa2e; }
+    .gw-tile.t-current { box-shadow:0 0 0 1.5px #c8a96e, 0 6px 20px rgba(200,169,110,0.2); }
+    .gw-tile.t-current:hover { box-shadow:0 16px 32px rgba(0,0,0,0.7), 0 0 0 1.5px #c8a96e, 0 0 24px rgba(200,169,110,0.25); }
+    .gw-tile.t-locked { opacity:0.4; cursor:default; }
+    .gw-tile.t-locked:hover { transform:none; box-shadow:none; }
+    .gw-tile img { width:100%; height:100%; object-fit:cover; display:block; transition:transform 0.3s ease; }
+    .gw-tile:hover img { transform:scale(1.06); }
+    .gw-tile-grad { position:absolute; inset:0; background:linear-gradient(to top, rgba(0,0,0,0.88) 0%, rgba(0,0,0,0.2) 55%, transparent 100%); }
+    .gw-check { position:absolute; top:7px; right:7px; width:18px; height:18px; border-radius:50%; background:#6aaa2e; border:1.5px solid rgba(255,255,255,0.8); display:flex; align-items:center; justify-content:center; font-size:8px; font-weight:700; }
+    .gw-now { position:absolute; top:7px; left:7px; background:#c8a96e; border-radius:4px; padding:2px 5px; font-size:7px; font-weight:700; letter-spacing:1px; text-transform:uppercase; color:#0a0a0a; }
+    .gw-tile-info { position:absolute; bottom:0; left:0; right:0; padding:7px 8px; transition:transform 0.25s ease; }
+    .gw-tile:hover .gw-tile-info { transform:translateY(-2px); }
+    .gw-tile-title { font-family:'DM Sans',sans-serif; font-size:9px; font-weight:600; color:#fff; line-height:1.3; margin-bottom:3px; }
+    .gw-tile-score { display:inline-flex; align-items:center; border-radius:4px; padding:1px 5px; font-family:'DM Sans',sans-serif; font-size:8px; font-weight:700; }
+    .gw-tile-score.sc-gold { background:rgba(200,169,110,0.9); color:#0a0a0a; }
+    .gw-tile-score.sc-green { background:rgba(106,170,46,0.9); color:#fff; }
+    .gw-quiz-bar { border-radius:12px; overflow:hidden; cursor:pointer; }
+    .gw-quiz-inner { display:flex; align-items:center; justify-content:space-between; padding:14px 16px; background:rgba(200,169,110,0.08); border:0.5px solid rgba(200,169,110,0.15); transition:background 0.2s; }
+    .gw-quiz-bar.qb-ready .gw-quiz-inner { background:#c8a96e; border-color:#c8a96e; }
+    .gw-quiz-inner:hover { background:rgba(200,169,110,0.15); }
+    .gw-quiz-bar.qb-ready .gw-quiz-inner:hover { background:#d4b97e; }
+    .gw-ql { font-family:'DM Sans',sans-serif; font-size:9px; letter-spacing:2px; text-transform:uppercase; color:rgba(200,169,110,0.4); margin-bottom:2px; }
+    .gw-quiz-bar.qb-ready .gw-ql { color:rgba(10,10,10,0.6); }
+    .gw-qt { font-family:'Bebas Neue',sans-serif; font-size:20px; letter-spacing:0.08em; color:rgba(200,169,110,0.4); }
+    .gw-quiz-bar.qb-ready .gw-qt { color:#0a0a0a; }
+    .gw-locked-card { border-radius:20px; overflow:hidden; border:0.5px solid rgba(255,255,255,0.06); background:rgba(255,255,255,0.015); padding:22px 18px; display:flex; align-items:center; gap:16px; margin-bottom:12px; }
+    .glc-icon { font-size:28px; }
+    .glc-num { font-family:'DM Sans',sans-serif; font-size:9px; letter-spacing:2px; text-transform:uppercase; color:#444; margin-bottom:4px; }
+    .glc-title { font-family:'Playfair Display',serif; font-style:italic; font-size:19px; color:rgba(255,255,255,0.4); margin-bottom:3px; }
+    .glc-sub { font-family:'DM Sans',sans-serif; font-size:10px; color:#333; }
   </style>
   <script type="module" src="https://unpkg.com/@splinetool/viewer@1.12.90/build/spline-viewer.js"></script>
 </head>
@@ -1916,61 +1974,68 @@
 
   </div>
   <div class="app-panel" id="panelLevels">
-  <div style="padding:16px 4px 12px; font-family:'Bebas Neue',sans-serif; font-size:11px; letter-spacing:0.2em; color:#555;">YOUR JOURNEY</div>
+  <div style="padding:16px 4px 12px;">
+    <div style="font-family:'DM Sans',sans-serif;font-size:9px;letter-spacing:2px;text-transform:uppercase;color:#555;margin-bottom:4px;">Your Journey</div>
+    <div style="font-family:'Bebas Neue',sans-serif;font-size:32px;letter-spacing:0.08em;color:#fff;margin-bottom:2px;">LEVELS</div>
+    <div style="font-family:'DM Sans',sans-serif;font-size:11px;color:rgba(255,255,255,0.25);">Act scenes · Pass the quiz · Level up</div>
+  </div>
 
-  <!-- Level 1 -->
-  <div id="lvlCard1" style="background:rgba(200,169,110,0.06); border:0.5px solid #c8a96e; border-radius:16px; padding:16px; margin-bottom:12px;">
-    <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:12px;">
-      <div>
-        <div style="font-family:'DM Sans',sans-serif; font-size:9px; letter-spacing:2px; text-transform:uppercase; color:#c8a96e; margin-bottom:4px;">Level 1</div>
-        <div style="font-family:'Georgia',serif; font-size:19px; color:#fff; margin-bottom:3px;">Beginner</div>
-        <div style="font-family:'DM Sans',sans-serif; font-size:11px; color:#555;">Everyday phrases · Present tense · Emotions</div>
+  <!-- SPLINE 3D EMBED — John will add his Spline URL here -->
+  <div id="levelsSpline" style="width:100%;height:180px;border-radius:16px;overflow:hidden;margin-bottom:16px;background:#0d0d0d;display:flex;align-items:center;justify-content:center;">
+    <div style="font-family:'DM Sans',sans-serif;font-size:10px;letter-spacing:2px;text-transform:uppercase;color:#333;">3D Object · Spline</div>
+  </div>
+
+  <!-- LEVEL 1 GATEWAY -->
+  <div class="gw-card" id="gwLevel1">
+    <div class="gw-closed">
+      <div class="gw-poster-strip" id="gwStrip1"></div>
+      <div class="gw-strip-overlay"></div>
+      <div class="gw-content">
+        <div class="gw-top">
+          <div>
+            <div class="gw-level-tag">Level 1</div>
+            <div class="gw-title">BEGINNER</div>
+            <div class="gw-meta">Everyday phrases · Present tense · Emotions</div>
+          </div>
+          <div class="gw-arrow" id="gwArr1">▶</div>
+        </div>
+        <div class="gw-prog"><div class="gw-prog-fill" id="gwProg1" style="width:0%"></div></div>
+        <div class="gw-prog-label" id="gwProgLabel1">0 / 20 scenes</div>
       </div>
-      <div id="lvl1Badge" style="font-family:'DM Sans',sans-serif; font-size:10px; font-weight:700; padding:4px 12px; border-radius:20px; background:rgba(200,169,110,0.12); border:0.5px solid #c8a96e; color:#c8a96e;">In Progress</div>
     </div>
-    <div style="height:3px; background:rgba(255,255,255,0.06); border-radius:3px; margin-bottom:8px;">
-      <div id="lvl1Bar" style="height:3px; background:#c8a96e; border-radius:3px; width:0%; transition:width 0.6s ease;"></div>
-    </div>
-    <div style="display:flex; justify-content:space-between; align-items:center;">
-      <div id="lvl1Label" style="font-family:'DM Sans',sans-serif; font-size:11px; color:#c8a96e;">0 / 27 scenes</div>
-      <div id="lvl1QuizBtn" onclick="openQuiz()" style="display:none; font-family:'DM Sans',sans-serif; font-size:11px; font-weight:700; color:#0d0d0d; background:#c8a96e; border-radius:8px; padding:6px 14px; cursor:pointer;">Take Quiz →</div>
+    <div class="gw-panel">
+      <div class="gw-panel-inner">
+        <div class="gw-scene-grid" id="gwGrid1"></div>
+        <div class="gw-quiz-bar" id="gwQuizBar1" onclick="openQuiz()">
+          <div class="gw-quiz-inner">
+            <div>
+              <div class="gw-ql" id="gwQuizLabel1">Complete all 20 scenes to unlock</div>
+              <div class="gw-qt">Take Level 1 Quiz →</div>
+            </div>
+            <div style="font-size:20px;">📋</div>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 
-  <!-- Level 2 -->
-  <div id="lvlCard2" style="background:rgba(255,255,255,0.02); border:0.5px solid rgba(255,255,255,0.07); border-radius:16px; padding:16px; margin-bottom:12px; opacity:0.4;">
-    <div style="display:flex; justify-content:space-between; align-items:center;">
-      <div>
-        <div style="font-family:'DM Sans',sans-serif; font-size:9px; letter-spacing:2px; text-transform:uppercase; color:#555; margin-bottom:4px;">Level 2</div>
-        <div style="font-family:'Georgia',serif; font-size:19px; color:#fff; margin-bottom:3px;">Intermediate</div>
-        <div style="font-family:'DM Sans',sans-serif; font-size:11px; color:#444;">Past tense · Storytelling · Conflict</div>
-        <div style="font-family:'DM Sans',sans-serif; font-size:10px; color:#555; margin-top:6px;">🔒 Pass the Level 1 Quiz to unlock 30 new scenes</div>
-      </div>
-      <div style="font-size:28px;">🔒</div>
+  <!-- LEVEL 2 LOCKED -->
+  <div class="gw-locked-card" style="opacity:0.45;">
+    <div class="glc-icon">🔒</div>
+    <div>
+      <div class="glc-num">Level 2 · 20 scenes</div>
+      <div class="glc-title">Intermediate</div>
+      <div class="glc-sub">Pass the Level 1 Quiz to unlock · Past tense · Conflict · Storytelling</div>
     </div>
   </div>
 
-  <!-- Level 3 -->
-  <div style="background:rgba(255,255,255,0.02); border:0.5px solid rgba(255,255,255,0.07); border-radius:16px; padding:16px; margin-bottom:12px; opacity:0.25;">
-    <div style="display:flex; justify-content:space-between; align-items:center;">
-      <div>
-        <div style="font-family:'DM Sans',sans-serif; font-size:9px; letter-spacing:2px; text-transform:uppercase; color:#555; margin-bottom:4px;">Level 3</div>
-        <div style="font-family:'Georgia',serif; font-size:19px; color:#fff; margin-bottom:3px;">Advanced</div>
-        <div style="font-family:'DM Sans',sans-serif; font-size:11px; color:#444;">Idioms · Sarcasm · Complex dialogue</div>
-      </div>
-      <div style="font-size:28px;">🔒</div>
-    </div>
-  </div>
-
-  <!-- Level 4 -->
-  <div style="background:rgba(255,255,255,0.02); border:0.5px solid rgba(255,255,255,0.07); border-radius:16px; padding:16px; margin-bottom:24px; opacity:0.15;">
-    <div style="display:flex; justify-content:space-between; align-items:center;">
-      <div>
-        <div style="font-family:'DM Sans',sans-serif; font-size:9px; letter-spacing:2px; text-transform:uppercase; color:#555; margin-bottom:4px;">Level 4</div>
-        <div style="font-family:'Georgia',serif; font-size:19px; color:#fff; margin-bottom:3px;">Fluency</div>
-        <div style="font-family:'DM Sans',sans-serif; font-size:11px; color:#444;">Slang · Rapid speech · Accents</div>
-      </div>
-      <div style="font-size:28px;">🔒</div>
+  <!-- LEVEL 3 LOCKED -->
+  <div class="gw-locked-card" style="opacity:0.2;">
+    <div class="glc-icon">🔒</div>
+    <div>
+      <div class="glc-num">Level 3 · Coming soon</div>
+      <div class="glc-title">Advanced</div>
+      <div class="glc-sub">Complete Level 2 to unlock · Idioms · Sarcasm · Accents</div>
     </div>
   </div>
   </div>
@@ -2326,6 +2391,7 @@ function enterAppMode() {
       }).join('');
     } catch(e) { console.error('translations fetch failed', e); }
   })();
+  buildGatewayLevel1();
 }
 
 let quizQuestions = [];
@@ -2450,6 +2516,70 @@ function showQuizResult() {
       headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + authToken },
       body: JSON.stringify({ quiz: 'level1', score: pct })
     }).catch(() => {});
+  }
+}
+
+document.getElementById('gwLevel1').addEventListener('click', function(e) {
+  if (e.target.closest('.gw-panel') || e.target.closest('.gw-quiz-bar')) return;
+  this.classList.toggle('open');
+});
+
+function buildGatewayLevel1() {
+  const bestScores = (userProgress && userProgress.best_scores) || {};
+  const level1Scenes = (typeof LEVEL1_SCENES !== 'undefined') ? LEVEL1_SCENES : [];
+  const allScenes = scenes || {};
+  const begannerScenes = Object.entries(allScenes).filter(([id,s]) => (s.difficulty||'').toLowerCase() === 'beginner');
+  const total = begannerScenes.length;
+  const completed = begannerScenes.filter(([id]) => bestScores[id]).length;
+  const pct = total > 0 ? Math.round((completed/total)*100) : 0;
+
+  const prog = document.getElementById('gwProg1');
+  const label = document.getElementById('gwProgLabel1');
+  if (prog) prog.style.width = pct + '%';
+  if (label) label.textContent = completed + ' / ' + total + ' scenes';
+
+  const quizBar = document.getElementById('gwQuizBar1');
+  const quizLabel = document.getElementById('gwQuizLabel1');
+  if (completed >= total) {
+    if (quizBar) quizBar.classList.add('qb-ready');
+    if (quizLabel) quizLabel.textContent = 'Ready — take the quiz now';
+  }
+
+  const strip = document.getElementById('gwStrip1');
+  if (strip) {
+    const stripScenes = begannerScenes.slice(0,6);
+    strip.innerHTML = stripScenes.map(([id,s]) => {
+      const poster = (s.ui && s.ui.poster_image) ? s.ui.poster_image : '';
+      const color = (s.ui && s.ui.card_color) ? s.ui.card_color : '#1a1a1a';
+      return '<div class="gw-ps">' +
+        (poster ? '<img src="'+poster+'" onerror="this.style.display=\'none\'">' : '') +
+        '<div class="gw-ps-color" style="background:linear-gradient(160deg,'+color+',#080808);'+(poster?'display:none':'')+'"></div>' +
+        '</div>';
+    }).join('');
+  }
+
+  const grid = document.getElementById('gwGrid1');
+  if (grid) {
+    grid.innerHTML = begannerScenes.map(([id,s]) => {
+      const score = bestScores[id] ? Math.round(bestScores[id]) : null;
+      const isDone = score !== null && score >= 60;
+      const isCurrent = !isDone && Object.keys(bestScores).length > 0 && !isDone;
+      const isLocked = !score && !isCurrent;
+      const poster = (s.ui && s.ui.poster_image) ? s.ui.poster_image : '';
+      const color = (s.ui && s.ui.card_color) ? s.ui.card_color : '#1a1a1a';
+      const cls = isDone ? 't-done' : (score ? 't-current' : 't-locked');
+      return '<div class="gw-tile '+cls+'" onclick="if(typeof openModal===\'function\') openModal(\''+id+'\', scenes[\''+id+'\'])">' +
+        (poster ? '<img src="'+poster+'" onerror="this.style.background=\''+color+'\';this.style.display=\'none\'">' : '') +
+        '<div style="position:absolute;inset:0;background:linear-gradient(160deg,'+color+',#080808);z-index:-1;"></div>' +
+        '<div class="gw-tile-grad"></div>' +
+        (isDone ? '<div class="gw-check">✓</div>' : '') +
+        (score && !isDone ? '<div class="gw-now">Now</div>' : '') +
+        '<div class="gw-tile-info">' +
+          '<div class="gw-tile-title">'+(s.movie||s.title||id)+'</div>' +
+          (score ? '<div class="gw-tile-score '+(isDone?'sc-green':'sc-gold')+'">'+score+'%</div>' : '') +
+        '</div>' +
+      '</div>';
+    }).join('');
   }
 }
 </script>
