@@ -2392,6 +2392,23 @@ function enterAppMode() {
     } catch(e) { console.error('translations fetch failed', e); }
   })();
   buildGatewayLevel1();
+
+  // Force body scroll reset — prior auth-modal lock and Spline injection can leave body frozen
+  document.body.style.overflow = '';
+  document.body.style.position = '';
+  document.body.style.height = '';
+  document.body.style.top = '';
+  document.documentElement.style.overflow = '';
+
+  // Safety net for late style injection (e.g. Spline viewer sets overflow: hidden async)
+  setTimeout(function() {
+    document.body.style.overflow = '';
+    document.body.style.position = '';
+    document.body.style.height = '';
+    document.body.style.top = '';
+    document.documentElement.style.overflow = '';
+    window.scrollTo(0, 0);
+  }, 300);
 }
 
 let quizQuestions = [];
