@@ -669,7 +669,7 @@
     body.app-mode #appScreen { display: block !important; }
     body.app-mode .lb-section { display: none; }
     body.app-mode #heroFeatured { display: block; }
-    body.app-mode #scenesGrid { display: none; }
+    body.app-mode #scenesGrid { display: none !important; }
 
     .quiz-overlay { display:none; position:fixed; inset:0; z-index:99999; background:rgba(4,4,8,0.97); overflow-y:auto; padding:24px 20px 40px; box-sizing:border-box; }
     .quiz-overlay.open { display:block; }
@@ -2209,8 +2209,6 @@ function switchTab(tab) {
     const hp = document.getElementById('panelHome');
     if (hp) hp.classList.add('active');
   } else if (panel === 'panelLevels') {
-    const scenesGrid = document.getElementById('scenesGrid');
-    if (scenesGrid) { scenesGrid.style.display = 'block'; }
     if (appShell) { appShell.style.display = 'block'; }
     const lp = document.getElementById('panelLevels');
     if (lp) lp.classList.add('active');
