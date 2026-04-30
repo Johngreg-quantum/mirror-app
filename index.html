@@ -705,6 +705,15 @@
     .quiz-result-score { font-family:'Georgia',serif; font-size:56px; color:#c8a96e; margin-bottom:4px; }
     .quiz-result-scorelab { font-family:'DM Sans',sans-serif; font-size:11px; letter-spacing:2px; text-transform:uppercase; color:#555; margin-bottom:32px; }
     .quiz-result-btn { display:inline-block; background:#c8a96e; border:none; border-radius:12px; padding:14px 32px; font-family:'DM Sans',sans-serif; font-size:14px; font-weight:700; color:#0d0d0d; cursor:pointer; }
+    @keyframes victoryPulse {
+      from { transform: scale(1); filter: brightness(1); }
+      to { transform: scale(1.15); filter: brightness(1.3) drop-shadow(0 0 20px #c8a96e); }
+    }
+    .quiz-result.visible { animation: resultFadeIn 0.5s ease; }
+    @keyframes resultFadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
 
     /* ── FADE UP ── */
     .fade-up { opacity: 0; transform: translateY(24px); transition: opacity 0.6s ease, transform 0.6s ease; }
@@ -1864,6 +1873,9 @@
   </div>
   <div class="quiz-result" id="quizResult">
     <div class="quiz-result-icon" id="quizResultIcon"></div>
+    <video id="quizVictoryVideo" style="display:none;width:100%;max-width:320px;border-radius:16px;margin:0 auto 16px;display:none;" autoplay playsinline muted loop>
+      <source src="/static/victory.mp4" type="video/mp4">
+    </video>
     <div class="quiz-result-score" id="quizResultScore"></div>
     <div class="quiz-result-scorelab">Score</div>
     <div class="quiz-result-title" id="quizResultTitle"></div>
@@ -2422,10 +2434,29 @@ function buildQuizQuestions() {
   const pool = allScenes.filter(([id]) => practiced.includes(id));
   const source = pool.length >= 6 ? pool : allScenes;
   const shuffled = [...source].sort(() => Math.random() - 0.5);
-  const picked = shuffled.slice(0, 10);
+  const picked = shuffled.slice(0, 7);
   const allMovies = [...new Set(allScenes.map(([,s]) => s.movie || s.title))];
   const allActors = [...new Set(allScenes.map(([,s]) => s.actor).filter(Boolean))];
-  return picked.map(([id, scene], i) => {
+
+  const verbBank = [
+    { en: 'convince', es: 'convencer' }, { en: 'desperate', es: 'desesperado' },
+    { en: 'apologize', es: 'disculparse' }, { en: 'survive', es: 'sobrevivir' },
+    { en: 'disappear', es: 'desaparecer' }, { en: 'refuse', es: 'rechazar' },
+    { en: 'achieve', es: 'lograr' }, { en: 'believe', es: 'creer' },
+    { en: 'remember', es: 'recordar' }, { en: 'discover', es: 'descubrir' },
+    { en: 'escape', es: 'escapar' }, { en: 'protect', es: 'proteger' },
+    { en: 'destroy', es: 'destruir' }, { en: 'fight', es: 'pelear' },
+    { en: 'search', es: 'buscar' }, { en: 'hide', es: 'esconder' },
+    { en: 'choose', es: 'elegir' }, { en: 'promise', es: 'prometer' },
+    { en: 'forgive', es: 'perdonar' }, { en: 'challenge', es: 'desafiar' },
+    { en: 'accept', es: 'aceptar' }, { en: 'ignore', es: 'ignorar' },
+    { en: 'pretend', es: 'fingir' }, { en: 'confess', es: 'confesar' },
+    { en: 'succeed', es: 'tener éxito' }, { en: 'fail', es: 'fallar' },
+    { en: 'inspire', es: 'inspirar' }, { en: 'imagine', es: 'imaginar' },
+    { en: 'complain', es: 'quejarse' }, { en: 'demand', es: 'exigir' }
+  ];
+
+  const sceneQuestions = picked.map(([id, scene], i) => {
     const type = i % 3 === 0 ? 'actor' : i % 3 === 1 ? 'movie' : 'fill';
     const quote = scene.quote || scene.target_line || '';
     const movie = scene.movie || scene.title || '';
@@ -2442,13 +2473,29 @@ function buildQuizQuestions() {
       const words = quote.split(' ');
       const idx = Math.floor(words.length / 2);
       const missing = words[idx];
-      const blanked = words.map((w, i) => i === idx ? '_____' : w).join(' ');
+      const blanked = words.map((w, j) => j === idx ? '_____' : w).join(' ');
       const fakeWords = ['dream','money','never','always','right','wrong','time','love'].filter(w => w !== missing.toLowerCase());
       const wrong = fakeWords.sort(() => Math.random() - 0.5).slice(0, 3);
       const opts = [missing, ...wrong].sort(() => Math.random() - 0.5);
       return { q: 'Fill in the missing word:', quote: blanked, opts, answer: missing, type };
     }
   });
+
+  const shuffledVerbs = [...verbBank].sort(() => Math.random() - 0.5);
+  const verbQuestions = shuffledVerbs.slice(0, 3).map((v, i) => {
+    const direction = i % 2 === 0 ? 'en_to_es' : 'es_to_en';
+    const question = direction === 'en_to_es'
+      ? 'What does "' + v.en + '" mean in Spanish?'
+      : '¿Cómo se dice "' + v.es + '" en inglés?';
+    const answer = direction === 'en_to_es' ? v.es : v.en;
+    const pool = direction === 'en_to_es'
+      ? verbBank.filter(x => x.es !== v.es).sort(() => Math.random() - 0.5).slice(0, 3).map(x => x.es)
+      : verbBank.filter(x => x.en !== v.en).sort(() => Math.random() - 0.5).slice(0, 3).map(x => x.en);
+    const opts = [answer, ...pool].sort(() => Math.random() - 0.5);
+    return { q: question, quote: null, opts, answer, type: 'verb' };
+  });
+
+  return [...sceneQuestions, ...verbQuestions].sort(() => Math.random() - 0.5);
 }
 
 function openQuiz() {
@@ -2510,29 +2557,46 @@ function quizNext() {
 
 function showQuizResult() {
   document.getElementById('quizBody').style.display = 'none';
-  document.getElementById('quizResult').classList.add('visible');
+  const result = document.getElementById('quizResult');
+  result.classList.add('visible');
   const total = quizQuestions.length;
   const pct = Math.round((quizScore / total) * 100);
   const passed = pct >= 70;
   document.getElementById('quizProgressFill').style.width = '100%';
   document.getElementById('quizResultScore').textContent = pct + '%';
-  document.getElementById('quizResultIcon').textContent = passed ? '🏆' : '🎬';
   document.getElementById('quizResultTitle').textContent = passed ? 'LEVEL 2 UNLOCKED' : 'KEEP PRACTICING';
   document.getElementById('quizResultTitle').style.color = passed ? '#c8a96e' : '#fff';
   document.getElementById('quizResultSub').textContent = passed
     ? 'You scored ' + quizScore + '/' + total + '. Incredible — Intermediate scenes are now available!'
     : 'You scored ' + quizScore + '/' + total + '. You need 70% to unlock Level 2. Keep practicing!';
   const btn = document.getElementById('quizResultBtn');
-  btn.textContent = passed ? '🎬 Start Level 2' : 'Keep Practicing';
+  btn.textContent = passed ? '🎬 Start Level 2' : 'Try Again';
   btn.onclick = passed
     ? () => { closeQuiz(); switchTab(document.querySelector('[data-panel=panelLevels]')); }
-    : () => { closeQuiz(); };
+    : () => { openQuiz(); };
+
   if (passed) {
     fetch('/api/quiz-pass', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + authToken },
       body: JSON.stringify({ quiz: 'level1', score: pct })
     }).catch(() => {});
+    const icon = document.getElementById('quizResultIcon');
+    if (icon) {
+      const video = document.getElementById('quizVictoryVideo');
+      if (video) {
+        icon.style.display = 'none';
+        video.style.display = 'block';
+        video.currentTime = 0;
+        video.play().catch(() => {});
+      } else {
+        icon.innerHTML = '<div style="font-size:80px;animation:victoryPulse 1s ease-in-out infinite alternate;">✨</div>';
+      }
+    }
+    result.style.background = 'radial-gradient(ellipse at center, rgba(200,169,110,0.08) 0%, transparent 70%)';
+  } else {
+    const icon = document.getElementById('quizResultIcon');
+    if (icon) icon.textContent = '🎬';
   }
 }
 
