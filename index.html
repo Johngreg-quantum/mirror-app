@@ -206,8 +206,9 @@
     }
     .hero-spline-bg {
       position: absolute;
-      inset: 0;
-      width: 100%;
+      top: 0;
+      right: 0;
+      width: 60%;
       height: 100%;
       z-index: 0;
       pointer-events: none;
@@ -246,14 +247,15 @@
       0%, 100% { opacity: 1; transform: scale(1); }
       50%       { opacity: 0.5; transform: scale(0.8); }
     }
-    .hero-badge-text { font-size: 11px; color: var(--gold); letter-spacing: 0.05em; }
+    .hero-badge-text { font-size: 11px; color: #d4874a; letter-spacing: 0.05em; }
     .hero-eyebrow { display: none; }
 
     .hero-title {
       font-family: 'Bebas Neue', sans-serif;
       font-size: clamp(72px, 9vw, 116px);
       line-height: 0.92;
-      color: #f0ede6;
+      color: #f5f0e8;
+      text-shadow: 0 0 40px rgba(210, 100, 40, 0.3);
       margin: 0;
       letter-spacing: 0.02em;
     }
@@ -264,14 +266,12 @@
       font-size: clamp(72px, 9vw, 116px);
       line-height: 0.92;
       display: block;
-      background: linear-gradient(135deg, #c8a96e 0%, #e8c98e 50%, #c8a96e 100%);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
+      color: #d4622a;
+      text-shadow: 0 0 60px rgba(220, 80, 30, 0.5);
     }
     .hero-subtitle {
       font-size: 15px;
-      color: rgba(240,237,230,0.42);
+      color: #c4a882;
       font-weight: 300;
       max-width: 420px;
       line-height: 1.75;
@@ -335,6 +335,10 @@
     spline-viewer .logo {
       display: none !important;
       opacity: 0 !important;
+    }
+    spline-viewer::part(watermark),
+    spline-viewer::part(logo) {
+      display: none !important;
     }
     .poster-fan { display: none; }
     .float-card { display: none; }
