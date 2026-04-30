@@ -331,20 +331,6 @@
     .proof-text strong { color: var(--text-primary); }
 
     /* Poster stack */
-    .hero-visual {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      position: relative;
-      height: 520px;
-      min-height: 520px;
-    }
-    .hero-visual spline-viewer {
-      --background-color: transparent;
-      border-radius: 20px;
-      background: transparent !important;
-    }
-    .hero-visual spline-viewer::part(logo),
     spline-viewer #logo,
     spline-viewer .logo {
       display: none !important;
@@ -1013,7 +999,6 @@
         min-height: auto;
       }
       .hero-title, .hero-title-scene { font-size: 64px; }
-      .hero-visual { height: 420px; min-height: 420px; }
       .stats-inner { grid-template-columns: repeat(2, 1fr); padding: 0 24px; }
       .hiw-grid, .clv-grid { grid-template-columns: 1fr; }
       .pricing-grid { grid-template-columns: 1fr; max-width: 100%; }
