@@ -336,10 +336,9 @@
       display: none !important;
       opacity: 0 !important;
     }
-    spline-viewer::part(watermark),
-    spline-viewer::part(logo) {
-      display: none !important;
-    }
+    spline-viewer::part(watermark) { display: none !important; }
+    spline-viewer::part(logo) { display: none !important; }
+    spline-viewer > div[style*="bottom"] { display: none !important; }
     .poster-fan { display: none; }
     .float-card { display: none; }
     .poster-stack { position: relative; width: 220px; height: 290px; }
