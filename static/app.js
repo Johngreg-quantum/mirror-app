@@ -2065,6 +2065,14 @@ const _origLoadScenes = loadScenes;
 loadScenes = async function() {
   await _origLoadScenes();
   renderCarousel();
+  if (typeof buildGatewayLevel1 === 'function') buildGatewayLevel1();
+};
+
+// Also rebuild the gateway whenever progress reloads (best_scores can change after submit)
+const _origLoadProgress = loadProgress;
+loadProgress = async function() {
+  await _origLoadProgress();
+  if (typeof buildGatewayLevel1 === 'function') buildGatewayLevel1();
 };
 
 // ══════════════════════════════════════════════
