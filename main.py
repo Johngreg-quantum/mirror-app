@@ -1008,6 +1008,16 @@ async def quiz_pass(payload: dict, user: dict = Depends(current_user)):
     return {"unlocked": True}
 
 
+@app.get("/api/debug/quiz-status")
+async def debug_quiz(user: dict = Depends(current_user)):
+    conn = get_conn()
+    cur = conn.cursor()
+    cur.execute(f"SELECT COUNT(*) FROM scores WHERE user_id = {PH} AND transcription = '[quiz pass]'", (user['id'],))
+    count = cur.fetchone()[0]
+    conn.close()
+    return {"quiz_pass_rows": count, "user_id": user['id'], "username": user['username']}
+
+
 @app.get("/api/translations")
 async def get_translations(user: dict = Depends(current_user)):
     """Return {scene_id: spanish_translation} for every scene the user has
