@@ -327,6 +327,12 @@ function getScenePoster(sceneId) {
   return (typeof poster === 'string') ? poster : '';
 }
 
+function getSceneBackdrop(sceneId) {
+  const backdrop = getSceneUiMeta(sceneId).backdrop_image;
+  if (typeof backdrop === 'string' && backdrop) return backdrop;
+  return getScenePoster(sceneId);
+}
+
 function getScenePlaybackMeta(sceneId) {
   const ytRaw = getSceneYouTubeId(sceneId);
   const times = getSceneTimes(sceneId);
@@ -1874,10 +1880,10 @@ function renderHeroFeatured() {
   const s = dailyChallenge.scene || scenes[sid];
   if (!s) return;
 
-  const poster = getScenePoster(sid);
+  const heroImg = getSceneBackdrop(sid);
   const posterImg = document.getElementById('heroPosterImg');
-  if (posterImg && poster) {
-    posterImg.src = poster;
+  if (posterImg && heroImg) {
+    posterImg.src = heroImg;
     posterImg.alt = s.movie;
   }
 
