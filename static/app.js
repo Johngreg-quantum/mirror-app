@@ -755,7 +755,11 @@ async function loadProgress() {
     const r = await fetch(`${API}/api/progress`, {
       headers: { Authorization: `Bearer ${authToken}` },
     });
-    if (r.ok) userProgress = await r.json();
+    if (r.ok) {
+      const data = await r.json();
+      userProgress = data;
+      if (data.quiz_passed) userProgress._quizPassed = true;
+    }
   } catch { /* keep defaults so offline dev still works */ }
   try {
     const rp = await fetch(`${API}/api/profile`, {

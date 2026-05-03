@@ -2652,6 +2652,7 @@ function showQuizResult() {
       headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + authToken },
       body: JSON.stringify({ quiz: 'level1', score: pct })
     }).catch(() => {});
+    if (typeof userProgress !== 'undefined') userProgress._quizPassed = true;
     checkLevel2Unlock();
     const icon = document.getElementById('quizResultIcon');
     if (icon) {
@@ -2812,10 +2813,12 @@ function checkLevel2Unlock() {
   const bestScores = (userProgress && userProgress.best_scores) || {};
   const allScenes = scenes || {};
   const level1Scenes = Object.entries(allScenes).filter(([id, s]) => (s.difficulty || '').toLowerCase() === 'beginner');
-  const anyPassed = level1Scenes.some(([id]) => bestScores[id] && bestScores[id] >= 60);
+  const quizPassed = userProgress && userProgress._quizPassed;
+  const hasHighScore = level1Scenes.some(([id]) => bestScores[id] && bestScores[id] >= 70);
+  const shouldUnlock = quizPassed || hasHighScore;
   const locked = document.getElementById('gwLevel2Locked');
   const unlocked = document.getElementById('gwLevel2');
-  if (anyPassed) {
+  if (shouldUnlock) {
     if (locked) locked.style.display = 'none';
     if (unlocked) {
       unlocked.style.display = 'block';

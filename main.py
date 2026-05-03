@@ -591,6 +591,12 @@ async def get_progress(user: dict = Depends(current_user)):
         (user["id"],),
     )
     best: dict[str, float] = {row[0]: float(row[1] or 0) for row in cur.fetchall()}
+    cur.execute(
+        f"SELECT COUNT(*) FROM scores WHERE user_id = {PH} AND transcription = '[quiz pass]'",
+        (user["id"],),
+    )
+    quiz_row = cur.fetchone()
+    quiz_passed = bool(quiz_row and quiz_row[0] > 0)
     conn.close()
 
     # Walk levels in order; each requires a qualifying score on the previous
@@ -624,6 +630,7 @@ async def get_progress(user: dict = Depends(current_user)):
         "best_scores":     best,
         "unlocked_scenes": unlocked,
         "next_level":      next_level,
+        "quiz_passed":     quiz_passed,
     }
 
 
