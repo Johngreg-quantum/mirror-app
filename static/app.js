@@ -471,10 +471,33 @@ function clearAuth() {
 }
 
 function logout() {
-  clearAuth();
-  scenes      = {};
-  activeLbTab = null;
-  showAuthScreen();
+  authToken = null;
+  userProfile = null;
+  if (typeof userProgress !== 'undefined') userProgress = { level: 1, best_scores: {}, unlocked_scenes: [], next_level: { level: 2, required_score: 60, best_score: 0 } };
+  localStorage.removeItem('mirror_token');
+  sessionStorage.clear();
+  document.body.classList.remove('app-mode');
+  document.body.style.overflow = '';
+  document.body.style.position = '';
+  document.body.style.height = '';
+  document.body.style.top = '';
+  document.documentElement.style.overflow = '';
+  const bottomNav = document.getElementById('bottomNav');
+  if (bottomNav) bottomNav.classList.remove('visible');
+  const appShell = document.getElementById('appShell');
+  if (appShell) appShell.style.display = 'none';
+  const siteNav = document.getElementById('siteNav');
+  if (siteNav) siteNav.style.display = '';
+  const scenesGrid = document.getElementById('scenesGrid');
+  if (scenesGrid) scenesGrid.style.display = 'none';
+  const lbSection = document.querySelector('.lb-section');
+  if (lbSection) lbSection.style.display = 'none';
+  const heroFeatured = document.getElementById('heroFeatured');
+  if (heroFeatured) heroFeatured.style.display = 'none';
+  const appScreen = document.getElementById('appScreen');
+  if (appScreen) appScreen.style.display = 'none';
+  window.scrollTo(0, 0);
+  window.location.href = '/';
 }
 
 async function enterAuthenticatedApp(options = {}) {
