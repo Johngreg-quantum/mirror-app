@@ -2639,10 +2639,12 @@ document.getElementById('gwLevel1').addEventListener('click', function(e) {
 });
 
 function buildGatewayLevel1() {
+  console.log('buildGatewayLevel1 called, scenes:', Object.keys(scenes||{}).length, 'bestScores:', Object.keys((userProgress&&userProgress.best_scores)||{}).length);
   const bestScores = (userProgress && userProgress.best_scores) || {};
   const level1Scenes = (typeof LEVEL1_SCENES !== 'undefined') ? LEVEL1_SCENES : [];
   const allScenes = scenes || {};
   const begannerScenes = Object.entries(allScenes).filter(([id,s]) => (s.difficulty||'').toLowerCase() === 'beginner');
+  console.log('beginner scenes found:', begannerScenes.length);
   const total = begannerScenes.length;
   const completed = begannerScenes.filter(([id]) => bestScores[id]).length;
   const pct = total > 0 ? Math.round((completed/total)*100) : 0;
