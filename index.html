@@ -2642,21 +2642,17 @@ document.getElementById('gwLevel1').addEventListener('click', function(e) {
 });
 
 function buildGatewayLevel1() {
-  console.log('buildGatewayLevel1 called, scenes:', Object.keys(scenes||{}).length, 'bestScores:', Object.keys((userProgress&&userProgress.best_scores)||{}).length);
   const bestScores = (userProgress && userProgress.best_scores) || {};
   const level1Scenes = (typeof LEVEL1_SCENES !== 'undefined') ? LEVEL1_SCENES : [];
   let allScenes = scenes || {};
   if (allScenes && allScenes.scenes && typeof allScenes.scenes === 'object') {
     allScenes = allScenes.scenes;
   }
-  const sampleKey = Object.keys(allScenes)[0];
-  if (sampleKey) console.log('sample scene', sampleKey, 'keys:', Object.keys(allScenes[sampleKey] || {}));
   const begannerScenes = Object.entries(allScenes).filter(([id,s]) => {
     const diff = String((s && s.difficulty) || '').toLowerCase();
     const lvl = (s && s.level);
     return diff === 'beginner' || lvl === 1 || lvl === '1';
   });
-  console.log('beginner scenes found:', begannerScenes.length);
   const total = begannerScenes.length;
   const completed = begannerScenes.filter(([id]) => bestScores[id]).length;
   const pct = total > 0 ? Math.round((completed/total)*100) : 0;
