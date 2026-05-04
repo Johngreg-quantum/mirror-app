@@ -1111,6 +1111,65 @@
     .glc-num { font-family:'DM Sans',sans-serif; font-size:9px; letter-spacing:2px; text-transform:uppercase; color:#444; margin-bottom:4px; }
     .glc-title { font-family:'Playfair Display',serif; font-style:italic; font-size:19px; color:rgba(255,255,255,0.4); margin-bottom:3px; }
     .glc-sub { font-family:'DM Sans',sans-serif; font-size:10px; color:#333; }
+
+    /* ── MY WORDS PANEL ── */
+    #panelWords { background: #060810; overflow-y: auto; }
+
+    #wordsTitle { font-family: 'Bebas Neue', sans-serif; font-size: 2.4rem; letter-spacing: 0.14em; background: linear-gradient(135deg, #c8a96e 0%, #e8cfa0 45%, #9a7d4e 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+
+    #wordsProgressBar { height: 1px; background: rgba(255,255,255,0.05); border-radius: 2px; margin: 1rem 1.5rem 0; overflow: hidden; }
+    #wordsProgressFill { height: 100%; background: linear-gradient(90deg, #6a5230, #c8a96e, #e8d090); border-radius: 2px; transition: width 0.8s cubic-bezier(0.4,0,0.2,1); width: 0%; }
+
+    #wordsScenePills { display: flex; gap: 0.4rem; padding: 1rem 1.5rem 0; overflow-x: auto; scrollbar-width: none; }
+    .words-scene-pill { flex-shrink: 0; padding: 0.35rem 0.8rem; border-radius: 100px; border: none; font-size: 0.7rem; font-family: 'DM Sans', sans-serif; cursor: pointer; background: rgba(255,255,255,0.03); outline: 1px solid rgba(255,255,255,0.08); color: rgba(255,255,255,0.35); transition: all 0.2s ease; }
+    .words-scene-pill.active { background: rgba(0,120,255,0.12); outline: 1px solid rgba(0,150,255,0.35); color: rgba(100,180,255,0.9); }
+
+    #wordsCardZone { display: flex; flex-direction: column; align-items: center; padding: 2rem 1.5rem 0; gap: 1rem; }
+
+    #wordsCard { width: 100%; max-width: 340px; height: 240px; perspective: 1200px; }
+    #wordsCardInner { width: 100%; height: 100%; position: relative; transform-style: preserve-3d; transition: transform 0.55s cubic-bezier(0.4,0,0.2,1); cursor: pointer; }
+    #wordsCardInner.flipped { transform: rotateY(180deg); }
+    #wordsCardInner.exit-right { transform: translateX(140%) rotate(15deg); opacity: 0; transition: all 0.5s cubic-bezier(0.4,0,1,1); }
+    #wordsCardInner.exit-left { transform: translateX(-140%) rotate(-15deg); opacity: 0; transition: all 0.5s cubic-bezier(0.4,0,1,1); }
+
+    .words-face { position: absolute; width: 100%; height: 100%; backface-visibility: hidden; -webkit-backface-visibility: hidden; border-radius: 28px; border: 1px solid rgba(255,255,255,0.07); overflow: hidden; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 1.6rem; box-sizing: border-box; }
+
+    #wordsCardFront { background: linear-gradient(145deg, rgba(15,25,45,0.55), rgba(5,10,20,0.35)); backdrop-filter: blur(28px) saturate(145%); -webkit-backdrop-filter: blur(28px) saturate(145%); box-shadow: 0 24px 64px rgba(0,0,0,0.75), inset 0 1px 1px rgba(255,255,255,0.07), 0 0 0 0.5px rgba(0,150,255,0.08); }
+    #wordsCardFront::before { content:''; position:absolute; inset:0; border-radius:inherit; background: linear-gradient(120deg, rgba(0,180,255,0.24), rgba(0,60,255,0.15), transparent 40%, transparent 60%, rgba(0,210,255,0.2)); opacity:0.65; pointer-events:none; }
+    #wordsCardFront::after { content:''; position:absolute; top:0; left:10%; width:80%; height:42%; background: radial-gradient(ellipse at top, rgba(255,255,255,0.14), transparent 70%); opacity:0.45; pointer-events:none; }
+
+    #wordsCardBack { background: linear-gradient(145deg, rgba(25,18,8,0.6), rgba(10,8,3,0.4)); backdrop-filter: blur(28px) saturate(145%); -webkit-backdrop-filter: blur(28px) saturate(145%); box-shadow: 0 24px 64px rgba(0,0,0,0.75), inset 0 1px 1px rgba(200,169,110,0.1), 0 0 0 0.5px rgba(200,169,110,0.12); transform: rotateY(180deg); }
+    #wordsCardBack::before { content:''; position:absolute; inset:0; border-radius:inherit; background: linear-gradient(120deg, rgba(200,169,110,0.24), rgba(150,100,30,0.14), transparent 40%, transparent 60%, rgba(220,180,80,0.2)); opacity:0.65; pointer-events:none; }
+    #wordsCardBack::after { content:''; position:absolute; top:0; left:10%; width:80%; height:42%; background: radial-gradient(ellipse at top, rgba(255,255,255,0.14), transparent 70%); opacity:0.45; pointer-events:none; }
+
+    .words-stars { display: flex; gap: 6px; margin-bottom: 1.1rem; position: relative; z-index: 1; }
+    .words-star { font-size: 14px; color: rgba(255,255,255,0.1); transition: all 0.35s ease; }
+    .words-star.lit { color: #c8a96e; filter: drop-shadow(0 0 4px rgba(200,169,110,0.6)); }
+
+    .words-type-badge { padding: 0.18rem 0.6rem; border-radius: 100px; font-size: 0.58rem; letter-spacing: 0.12em; font-weight: 600; text-transform: uppercase; margin-bottom: 0.75rem; position: relative; z-index: 1; }
+
+    #wordsEnWord { font-family: 'Playfair Display', serif; font-size: 2.5rem; font-weight: 700; color: #fff; text-align: center; line-height: 1.1; margin-bottom: 0.55rem; position: relative; z-index: 1; text-shadow: 0 2px 20px rgba(0,0,0,0.5); }
+    #wordsPhonetic { font-size: 0.73rem; color: rgba(255,255,255,0.28); font-style: italic; position: relative; z-index: 1; }
+    .words-tap-hint { position: absolute; bottom: 14px; font-size: 0.58rem; color: rgba(255,255,255,0.15); letter-spacing: 0.1em; }
+
+    #wordsEsWord { font-family: 'Playfair Display', serif; font-size: 2.4rem; font-weight: 700; color: #c8a96e; text-align: center; line-height: 1.1; margin-bottom: 0.8rem; position: relative; z-index: 1; text-shadow: 0 2px 24px rgba(200,140,30,0.3); }
+    #wordsExample { font-size: 0.74rem; color: rgba(255,255,255,0.38); text-align: center; line-height: 1.65; font-style: italic; max-width: 210px; position: relative; z-index: 1; }
+
+    #wordsActions { display: flex; gap: 0.75rem; width: 100%; max-width: 340px; opacity: 0; transform: translateY(10px); transition: all 0.32s ease; pointer-events: none; }
+    #wordsActions.visible { opacity: 1; transform: translateY(0); pointer-events: auto; }
+
+    #wordsAgainBtn, #wordsGotItBtn { flex: 1; padding: 0.85rem; border-radius: 18px; border: none; font-size: 0.85rem; font-weight: 500; font-family: 'DM Sans', sans-serif; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 7px; backdrop-filter: blur(16px); transition: all 0.18s ease; }
+    #wordsAgainBtn { background: linear-gradient(145deg, rgba(20,8,8,0.6), rgba(10,3,3,0.4)); outline: 1px solid rgba(255,80,80,0.18); color: rgba(255,110,110,0.85); }
+    #wordsGotItBtn { background: linear-gradient(145deg, rgba(25,18,5,0.65), rgba(12,9,2,0.45)); outline: 1px solid rgba(200,169,110,0.28); color: #c8a96e; }
+    #wordsAgainBtn:hover, #wordsGotItBtn:hover { transform: scale(1.03); }
+    #wordsAgainBtn:active, #wordsGotItBtn:active { transform: scale(0.97); }
+
+    #wordsRemaining { font-size: 0.65rem; color: rgba(255,255,255,0.15); letter-spacing: 0.05em; }
+
+    #wordsMasteredList { padding: 2rem 1.5rem 2.5rem; }
+    .words-mastered-label { font-family: 'Bebas Neue', sans-serif; font-size: 0.85rem; letter-spacing: 0.14em; color: rgba(200,169,110,0.4); margin-bottom: 0.65rem; }
+    .words-mastered-pills { display: flex; flex-wrap: wrap; gap: 0.38rem; }
+    .words-mastered-pill { padding: 0.2rem 0.6rem; border-radius: 100px; background: rgba(200,169,110,0.07); outline: 0.5px solid rgba(200,169,110,0.2); font-size: 0.68rem; color: rgba(200,169,110,0.75); }
   </style>
   <script type="module" src="https://unpkg.com/@splinetool/viewer@1.12.90/build/spline-viewer.js"></script>
 </head>
@@ -2241,32 +2300,40 @@
   </div>
   </div>
   <div class="app-panel" id="panelWords">
-  <div style="padding:16px 4px 4px;">
-    <div style="font-family:'DM Sans',sans-serif; font-size:9px; letter-spacing:2px; text-transform:uppercase; color:#555; margin-bottom:4px;">Your Vocabulary</div>
-    <div style="font-family:'Bebas Neue',sans-serif; font-size:28px; letter-spacing:0.1em; color:#fff; margin-bottom:14px;">My Dictionary</div>
-    <div style="display:flex; gap:8px; margin-bottom:16px;">
-      <div style="flex:1; background:rgba(200,169,110,0.06); border:0.5px solid #c8a96e; border-radius:12px; padding:10px 12px;">
-        <div id="wordsCountVal" style="font-family:'DM Sans',sans-serif; font-size:24px; font-weight:700; color:#c8a96e; line-height:1;">0</div>
-        <div style="font-family:'DM Sans',sans-serif; font-size:9px; letter-spacing:1px; text-transform:uppercase; color:#555; margin-top:3px;">Translations</div>
+    <div id="wordsHeader">
+      <div id="wordsTitleRow">
+        <span id="wordsTitle">MY WORDS</span>
+        <span id="wordsMasteredCount">0/0 mastered</span>
       </div>
-      <div style="flex:1; background:rgba(255,255,255,0.02); border:0.5px solid rgba(255,255,255,0.07); border-radius:12px; padding:10px 12px;">
-        <div id="wordsAttemptsVal" style="font-family:'DM Sans',sans-serif; font-size:24px; font-weight:700; color:#fff; line-height:1;">0</div>
-        <div style="font-family:'DM Sans',sans-serif; font-size:9px; letter-spacing:1px; text-transform:uppercase; color:#555; margin-top:3px;">Scenes Tried</div>
-      </div>
-      <div style="flex:1; background:rgba(255,255,255,0.02); border:0.5px solid rgba(255,255,255,0.07); border-radius:12px; padding:10px 12px;">
-        <div id="wordsBestVal" style="font-family:'DM Sans',sans-serif; font-size:24px; font-weight:700; color:#fff; line-height:1;">0%</div>
-        <div style="font-family:'DM Sans',sans-serif; font-size:9px; letter-spacing:1px; text-transform:uppercase; color:#555; margin-top:3px;">Best Score</div>
-      </div>
+      <div id="wordsProgressBar"><div id="wordsProgressFill"></div></div>
+      <div id="wordsScenePills"></div>
     </div>
-  </div>
 
-  <div style="font-family:'DM Sans',sans-serif; font-size:9px; letter-spacing:2px; text-transform:uppercase; color:#444; margin-bottom:10px; padding:0 4px;">Unlocked Translations</div>
-  <div id="wordsUnlockHint" style="display:none; background:rgba(255,255,255,0.02); border:0.5px solid rgba(255,255,255,0.07); border-radius:14px; padding:20px 16px; text-align:center; margin-bottom:16px;">
-    <div style="font-size:28px; margin-bottom:8px;">🔒</div>
-    <div style="font-family:'Georgia',serif; font-size:15px; color:#fff; margin-bottom:6px;">No translations yet</div>
-    <div style="font-family:'DM Sans',sans-serif; font-size:12px; color:#555; line-height:1.6;">Practice any scene 3 times and score 70%+ to unlock its Spanish translation</div>
-  </div>
-  <div id="wordsList" style="display:flex; flex-direction:column; gap:10px; margin-bottom:24px;"></div>
+    <div id="wordsCardZone">
+      <div id="wordsCard">
+        <div id="wordsCardInner">
+          <div id="wordsCardFront">
+            <div id="wordsStarsFront" class="words-stars"></div>
+            <div id="wordsTypeBadge"></div>
+            <div id="wordsEnWord"></div>
+            <div id="wordsPhonetic"></div>
+            <div class="words-tap-hint">TAP TO REVEAL</div>
+          </div>
+          <div id="wordsCardBack">
+            <div id="wordsStarsBack" class="words-stars"></div>
+            <div id="wordsEsWord"></div>
+            <div id="wordsExample"></div>
+          </div>
+        </div>
+      </div>
+      <div id="wordsActions">
+        <button id="wordsAgainBtn">✕ Again</button>
+        <button id="wordsGotItBtn">✓ Got it</button>
+      </div>
+      <div id="wordsRemaining"></div>
+    </div>
+
+    <div id="wordsMasteredList"></div>
   </div>
 </div>
 
@@ -2304,6 +2371,9 @@ function switchTab(tab) {
     if (appShell) appShell.style.display = 'block';
     const wp = document.getElementById('panelWords');
     if (wp) wp.classList.add('active');
+    if (typeof userProfile !== 'undefined' && userProfile && typeof WordsController !== 'undefined') {
+      WordsController.init();
+    }
   }
 
   window.scrollTo({ top: 0, behavior: 'smooth' });

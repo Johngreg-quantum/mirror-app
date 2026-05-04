@@ -21,6 +21,7 @@ from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 import openai
+import httpx
 from jose import JWTError, jwt
 from passlib.context import CryptContext
 from dotenv import load_dotenv
@@ -370,6 +371,54 @@ def init_db():
                 scene_id            TEXT NOT NULL,
                 score_to_beat       REAL NOT NULL,
                 created_at          TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
+
+    # Vocab tables (shared schema across PG and SQLite)
+    if USE_PG:
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS word_vocab (
+                id         SERIAL PRIMARY KEY,
+                scene_id   TEXT,
+                word_en    TEXT,
+                word_es    TEXT,
+                phonetic   TEXT,
+                example    TEXT,
+                word_type  TEXT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS word_mastery (
+                user_id       INTEGER,
+                scene_id      TEXT,
+                word_en       TEXT,
+                correct_count INTEGER DEFAULT 0,
+                updated_at    TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                PRIMARY KEY (user_id, scene_id, word_en)
+            )
+        """)
+    else:
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS word_vocab (
+                id         INTEGER PRIMARY KEY AUTOINCREMENT,
+                scene_id   TEXT,
+                word_en    TEXT,
+                word_es    TEXT,
+                phonetic   TEXT,
+                example    TEXT,
+                word_type  TEXT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS word_mastery (
+                user_id       INTEGER,
+                scene_id      TEXT,
+                word_en       TEXT,
+                correct_count INTEGER DEFAULT 0,
+                updated_at    TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                PRIMARY KEY (user_id, scene_id, word_en)
             )
         """)
 
@@ -1030,3 +1079,162 @@ async def get_translations(user: dict = Depends(current_user)):
             if translation:
                 result[sid] = translation
     return result
+
+
+@app.post("/api/vocab/mastery")
+async def post_vocab_mastery(payload: dict, user: dict = Depends(current_user)):
+    """Record a vocabulary answer. correct=True increments correct_count
+    (capped at 3); correct=False is a no-op so failed attempts don't reset
+    progress."""
+    scene_id = payload.get("scene_id", "")
+    word_en  = payload.get("word_en", "")
+    correct  = bool(payload.get("correct", False))
+    if not scene_id or not word_en:
+        raise HTTPException(400, "scene_id and word_en are required")
+    if not correct:
+        return {"correct_count": 0, "noop": True}
+
+    conn = get_conn()
+    cur  = conn.cursor()
+    cur.execute(
+        f"SELECT correct_count FROM word_mastery "
+        f"WHERE user_id = {PH} AND scene_id = {PH} AND word_en = {PH}",
+        (user["id"], scene_id, word_en),
+    )
+    row = cur.fetchone()
+    if row is None:
+        new_count = 1
+        cur.execute(
+            f"INSERT INTO word_mastery (user_id, scene_id, word_en, correct_count) "
+            f"VALUES ({PH}, {PH}, {PH}, {PH})",
+            (user["id"], scene_id, word_en, new_count),
+        )
+    else:
+        new_count = min(int(row[0]) + 1, 3)
+        cur.execute(
+            f"UPDATE word_mastery SET correct_count = {PH}, updated_at = CURRENT_TIMESTAMP "
+            f"WHERE user_id = {PH} AND scene_id = {PH} AND word_en = {PH}",
+            (new_count, user["id"], scene_id, word_en),
+        )
+    conn.commit()
+    conn.close()
+    return {"correct_count": new_count, "noop": False}
+
+
+@app.get("/api/vocab/mastery")
+async def get_vocab_mastery(scene_id: str, user: dict = Depends(current_user)):
+    """Return {word_en: correct_count} for the authenticated user on a scene."""
+    conn = get_conn()
+    cur  = conn.cursor()
+    cur.execute(
+        f"SELECT word_en, correct_count FROM word_mastery "
+        f"WHERE user_id = {PH} AND scene_id = {PH}",
+        (user["id"], scene_id),
+    )
+    rows = cur.fetchall()
+    conn.close()
+    return {r[0]: int(r[1]) for r in rows}
+
+
+@app.get("/api/vocab/{scene_id}")
+async def get_vocab(scene_id: str, user: dict = Depends(current_user)):
+    """Return 8 vocabulary items for a scene. Uses word_vocab as a cache;
+    on miss, asks Claude for the list and persists it."""
+    if scene_id not in SCENES:
+        raise HTTPException(404, "Scene not found")
+
+    conn = get_conn()
+    cur  = conn.cursor()
+    cur.execute(
+        f"SELECT word_en, word_es, phonetic, example, word_type "
+        f"FROM word_vocab WHERE scene_id = {PH} ORDER BY id ASC",
+        (scene_id,),
+    )
+    rows = cur.fetchall()
+    if len(rows) >= 8:
+        conn.close()
+        return [
+            {"en": r[0], "es": r[1], "phonetic": r[2], "example": r[3], "type": r[4]}
+            for r in rows[:8]
+        ]
+
+    api_key = os.getenv("ANTHROPIC_API_KEY")
+    if not api_key:
+        conn.close()
+        raise HTTPException(500, "ANTHROPIC_API_KEY environment variable is not set")
+
+    prompt = (
+        f"Generate exactly 8 key English vocabulary words from the movie scene "
+        f"'{scene_id}' for Spanish-speaking ESL learners. Return ONLY a JSON array: "
+        f"[{{\"en\":\"word\",\"es\":\"español\",\"phonetic\":\"/fəˈnɛtɪk/\","
+        f"\"example\":\"Short cinematic example sentence.\",\"type\":\"verb\"}}] "
+        f"Types: verb, noun, adj, adv."
+    )
+
+    try:
+        async with httpx.AsyncClient(timeout=30.0) as client:
+            resp = await client.post(
+                "https://api.anthropic.com/v1/messages",
+                headers={
+                    "x-api-key":         api_key,
+                    "anthropic-version": "2023-06-01",
+                    "content-type":      "application/json",
+                },
+                json={
+                    "model":      "claude-sonnet-4-20250514",
+                    "max_tokens": 1000,
+                    "messages":   [{"role": "user", "content": prompt}],
+                },
+            )
+            resp.raise_for_status()
+    except httpx.HTTPError as e:
+        conn.close()
+        raise HTTPException(502, f"Anthropic API error: {e}")
+
+    data = resp.json()
+    try:
+        text = data["content"][0]["text"]
+    except (KeyError, IndexError, TypeError):
+        conn.close()
+        raise HTTPException(502, "Unexpected Anthropic response shape")
+
+    cleaned = text.strip()
+    if cleaned.startswith("```"):
+        cleaned = re.sub(r"^```(?:json)?\s*", "", cleaned)
+        cleaned = re.sub(r"\s*```$", "", cleaned)
+
+    try:
+        words = json.loads(cleaned)
+    except json.JSONDecodeError:
+        m = re.search(r"\[[\s\S]*\]", text)
+        if not m:
+            conn.close()
+            raise HTTPException(500, "Failed to parse vocab JSON from model response")
+        try:
+            words = json.loads(m.group(0))
+        except json.JSONDecodeError:
+            conn.close()
+            raise HTTPException(500, "Failed to parse vocab JSON from model response")
+
+    if not isinstance(words, list) or not words:
+        conn.close()
+        raise HTTPException(500, "Model returned no vocab items")
+
+    for w in words:
+        if not isinstance(w, dict):
+            continue
+        cur.execute(
+            f"INSERT INTO word_vocab (scene_id, word_en, word_es, phonetic, example, word_type) "
+            f"VALUES ({PH}, {PH}, {PH}, {PH}, {PH}, {PH})",
+            (
+                scene_id,
+                w.get("en", ""),
+                w.get("es", ""),
+                w.get("phonetic", ""),
+                w.get("example", ""),
+                w.get("type", ""),
+            ),
+        )
+    conn.commit()
+    conn.close()
+    return words

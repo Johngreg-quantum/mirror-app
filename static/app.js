@@ -2148,3 +2148,272 @@ enterAuthenticatedApp = async function(options) {
   await _origEnterAuth(options);
   renderWeakWords();
 };
+
+// ══════════════════════════════════════════════
+// MY WORDS — flashcard controller
+// ══════════════════════════════════════════════
+const TYPE_COLORS = { verb: '#c8a96e', noun: '#64b4ff', adj: '#b464ff', adv: '#64dc96' };
+
+const WordsController = {
+  scenes:         [],
+  sceneIdx:       0,
+  vocab:          [],
+  queue:          [],
+  mastery:        {},
+  isFlipped:      false,
+  exitInProgress: false,
+
+  init() {
+    if (typeof userProfile === 'undefined' || !userProfile) return;
+    const ids = userProfile.translations_unlocked || [];
+    this.scenes = ids.map(id => ({
+      id,
+      movie: (scenes && scenes[id] && (scenes[id].movie || scenes[id].title)) || id,
+    }));
+    this.sceneIdx = 0;
+    this.mastery  = {};
+    this._buildPills();
+    if (!this.scenes.length) { this._renderEmpty(); return; }
+    this.loadScene(this.scenes[0].id);
+  },
+
+  _buildPills() {
+    const cont = document.getElementById('wordsScenePills');
+    if (!cont) return;
+    cont.innerHTML = this.scenes.map((s, i) =>
+      `<button class="words-scene-pill${i === this.sceneIdx ? ' active' : ''}" data-idx="${i}">${s.movie}</button>`
+    ).join('');
+    cont.querySelectorAll('.words-scene-pill').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const idx = parseInt(btn.dataset.idx, 10);
+        if (idx === this.sceneIdx) return;
+        this.sceneIdx = idx;
+        cont.querySelectorAll('.words-scene-pill').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        this.loadScene(this.scenes[idx].id);
+      });
+    });
+  },
+
+  async loadScene(sceneId) {
+    try {
+      const r = await fetch(`${API}/api/vocab/${sceneId}`, {
+        headers: { Authorization: `Bearer ${authToken}` },
+      });
+      if (!r.ok) return;
+      this.vocab = await r.json();
+      this.queue = this._shuffle(this.vocab.map((_, i) => i));
+      await this.fetchMastery(sceneId);
+      this.renderCard();
+      this.updateProgress();
+    } catch { /* silent */ }
+  },
+
+  async fetchMastery(sceneId) {
+    try {
+      const r = await fetch(`${API}/api/vocab/mastery?scene_id=${encodeURIComponent(sceneId)}`, {
+        headers: { Authorization: `Bearer ${authToken}` },
+      });
+      if (!r.ok) return;
+      const data = await r.json();
+      Object.assign(this.mastery, data);
+      this.updateStars();
+    } catch { /* silent */ }
+  },
+
+  renderCard() {
+    if (!this.queue.length) { this.showAllMastered(); return; }
+    const word = this.vocab[this.queue[0]];
+    if (!word) { this.showAllMastered(); return; }
+
+    const en = document.getElementById('wordsEnWord');
+    const ph = document.getElementById('wordsPhonetic');
+    const es = document.getElementById('wordsEsWord');
+    const ex = document.getElementById('wordsExample');
+    const tb = document.getElementById('wordsTypeBadge');
+    if (en) en.textContent = word.en       || '';
+    if (ph) ph.textContent = word.phonetic || '';
+    if (es) es.textContent = word.es       || '';
+    if (ex) ex.textContent = word.example  || '';
+    if (tb) {
+      const t = (word.type || '').toLowerCase();
+      const c = TYPE_COLORS[t] || '#888';
+      tb.textContent       = (word.type || '').toUpperCase();
+      tb.className         = 'words-type-badge';
+      tb.style.color       = c;
+      tb.style.background  = `${c}26`;
+      tb.style.outline     = `0.5px solid ${c}55`;
+    }
+
+    const inner = document.getElementById('wordsCardInner');
+    const acts  = document.getElementById('wordsActions');
+    const rem   = document.getElementById('wordsRemaining');
+    if (inner) {
+      inner.classList.remove('flipped', 'exit-left', 'exit-right');
+      this.isFlipped = false;
+    }
+    if (acts) acts.classList.remove('visible');
+    if (rem)  rem.textContent = `${this.queue.length} remaining`;
+    this.updateStars();
+  },
+
+  updateStars() {
+    if (!this.queue.length) return;
+    const word = this.vocab[this.queue[0]];
+    if (!word) return;
+    const count = Math.max(0, Math.min(3, this.mastery[word.en] || 0));
+    ['wordsStarsFront', 'wordsStarsBack'].forEach(id => {
+      const c = document.getElementById(id);
+      if (!c) return;
+      c.innerHTML = '';
+      for (let i = 0; i < 3; i++) {
+        const sp = document.createElement('span');
+        sp.className   = 'words-star' + (i < count ? ' lit' : '');
+        sp.textContent = '★';
+        c.appendChild(sp);
+      }
+    });
+  },
+
+  updateProgress() {
+    const total    = this.vocab.length;
+    const mastered = this.vocab.filter(w => (this.mastery[w.en] || 0) >= 3).length;
+    const fill = document.getElementById('wordsProgressFill');
+    const lab  = document.getElementById('wordsMasteredCount');
+    if (fill) fill.style.width = total ? (mastered / total * 100) + '%' : '0%';
+    if (lab)  lab.textContent  = `${mastered}/${total} mastered`;
+
+    const list = document.getElementById('wordsMasteredList');
+    if (!list) return;
+    const masteredWords = this.vocab.filter(w => (this.mastery[w.en] || 0) >= 3);
+    if (!masteredWords.length) { list.innerHTML = ''; return; }
+    list.innerHTML =
+      '<div class="words-mastered-label">MASTERED</div>' +
+      '<div class="words-mastered-pills">' +
+      masteredWords.map(w => `<span class="words-mastered-pill">${w.en}</span>`).join('') +
+      '</div>';
+  },
+
+  flipCard() {
+    if (this.exitInProgress) return;
+    if (!this.queue.length)  return;
+    this.isFlipped = !this.isFlipped;
+    const inner = document.getElementById('wordsCardInner');
+    const acts  = document.getElementById('wordsActions');
+    if (inner) inner.classList.toggle('flipped', this.isFlipped);
+    if (acts)  acts.classList.toggle('visible',  this.isFlipped);
+  },
+
+  animateExit(dir, callback) {
+    if (this.exitInProgress) return;
+    this.exitInProgress = true;
+    const inner = document.getElementById('wordsCardInner');
+    const acts  = document.getElementById('wordsActions');
+    if (inner) inner.classList.remove('flipped');
+    if (acts)  acts.classList.remove('visible');
+    this.isFlipped = false;
+    const cls = dir === 'right' ? 'exit-right' : 'exit-left';
+    if (inner) inner.classList.add(cls);
+    setTimeout(() => {
+      if (inner) inner.classList.remove(cls);
+      this.exitInProgress = false;
+      if (typeof callback === 'function') callback();
+      this.renderCard();
+    }, 500);
+  },
+
+  gotIt() {
+    if (!this.queue.length) return;
+    const word = this.vocab[this.queue[0]];
+    if (!word) return;
+    const newCount = Math.min((this.mastery[word.en] || 0) + 1, 3);
+    this.mastery[word.en] = newCount;
+    const sceneId = this.scenes[this.sceneIdx] && this.scenes[this.sceneIdx].id;
+    fetch(`${API}/api/vocab/mastery`, {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${authToken}` },
+      body:    JSON.stringify({ scene_id: sceneId, word_en: word.en, correct: true }),
+    }).catch(() => {});
+    this.updateProgress();
+    this.animateExit('right', () => {
+      if (newCount >= 3) this.queue.shift();
+      else               this.queue.push(this.queue.shift());
+    });
+  },
+
+  again() {
+    if (!this.queue.length) return;
+    const word = this.vocab[this.queue[0]];
+    if (!word) return;
+    const sceneId = this.scenes[this.sceneIdx] && this.scenes[this.sceneIdx].id;
+    fetch(`${API}/api/vocab/mastery`, {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${authToken}` },
+      body:    JSON.stringify({ scene_id: sceneId, word_en: word.en, correct: false }),
+    }).catch(() => {});
+    this.animateExit('left', () => {
+      this.queue.push(this.queue.shift());
+    });
+  },
+
+  showAllMastered() {
+    const inner = document.getElementById('wordsCardInner');
+    const acts  = document.getElementById('wordsActions');
+    const rem   = document.getElementById('wordsRemaining');
+    if (acts) acts.classList.remove('visible');
+    if (rem)  rem.textContent = '';
+    if (!inner) return;
+    inner.classList.remove('flipped', 'exit-left', 'exit-right');
+    inner.innerHTML =
+      '<div class="words-face" style="background:linear-gradient(145deg, rgba(25,18,8,0.6), rgba(10,8,3,0.4)); gap:1rem;">' +
+        '<div style="font-size:36px; letter-spacing:8px; color:#c8a96e;">★★★</div>' +
+        '<div style="font-family:\'Bebas Neue\',sans-serif; font-size:1.4rem; letter-spacing:0.18em; color:#fff;">ALL MASTERED</div>' +
+        '<button id="wordsRestartBtn" style="margin-top:0.5rem; padding:0.6rem 1.2rem; border-radius:18px; border:none; outline:1px solid rgba(200,169,110,0.35); background:rgba(200,169,110,0.1); color:#c8a96e; font-family:\'DM Sans\',sans-serif; cursor:pointer;">Restart</button>' +
+      '</div>';
+    const rb = document.getElementById('wordsRestartBtn');
+    if (rb) rb.addEventListener('click', (e) => { e.stopPropagation(); this.init(); });
+  },
+
+  _renderEmpty() {
+    const inner = document.getElementById('wordsCardInner');
+    const acts  = document.getElementById('wordsActions');
+    const rem   = document.getElementById('wordsRemaining');
+    if (acts) acts.classList.remove('visible');
+    if (rem)  rem.textContent = '';
+    if (!inner) return;
+    inner.classList.remove('flipped', 'exit-left', 'exit-right');
+    inner.innerHTML =
+      '<div class="words-face" style="background:linear-gradient(145deg, rgba(15,25,45,0.55), rgba(5,10,20,0.35)); gap:0.5rem;">' +
+        '<div style="font-size:30px; margin-bottom:6px;">🔒</div>' +
+        '<div style="font-family:\'Bebas Neue\',sans-serif; font-size:1.2rem; letter-spacing:0.18em; color:#fff;">NO VOCAB YET</div>' +
+        '<div style="font-size:0.74rem; color:rgba(255,255,255,0.4); text-align:center; max-width:240px; line-height:1.5;">Practice any scene 3 times and score 70%+ to unlock its vocabulary deck.</div>' +
+      '</div>';
+  },
+
+  _shuffle(arr) {
+    const a = arr.slice();
+    for (let i = a.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [a[i], a[j]] = [a[j], a[i]];
+    }
+    return a;
+  },
+};
+
+function wireWordsControls() {
+  const card = document.getElementById('wordsCard');
+  if (card) card.addEventListener('click', () => WordsController.flipCard());
+  const got = document.getElementById('wordsGotItBtn');
+  if (got)  got.addEventListener('click', (e) => { e.stopPropagation(); WordsController.gotIt(); });
+  const ag  = document.getElementById('wordsAgainBtn');
+  if (ag)   ag.addEventListener('click',  (e) => { e.stopPropagation(); WordsController.again(); });
+}
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', wireWordsControls);
+} else {
+  wireWordsControls();
+}
+
+// Expose globally so the inline switchTab() in index.html can call init()
+window.WordsController = WordsController;
