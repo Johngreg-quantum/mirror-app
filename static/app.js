@@ -2196,17 +2196,34 @@ const WordsController = {
   },
 
   async loadScene(sceneId) {
+    if (this.loading) return;
+    this.loading = true;
     try {
       const r = await fetch(`${API}/api/vocab/${sceneId}`, {
         headers: { Authorization: `Bearer ${authToken}` },
       });
-      if (!r.ok) return;
+      if (!r.ok) throw new Error('vocab fetch failed: ' + r.status);
       this.vocab = await r.json();
       this.queue = this._shuffle(this.vocab.map((_, i) => i));
       await this.fetchMastery(sceneId);
       this.renderCard();
       this.updateProgress();
-    } catch { /* silent */ }
+      this.loading = false;
+    } catch {
+      this.vocab = [
+        {en:"choose",   es:"elegir",     phonetic:"/tʃuːz/",       example:"You have to choose your path.",      type:"verb"},
+        {en:"believe",  es:"creer",      phonetic:"/bɪˈliːv/",     example:"I believe in you.",                   type:"verb"},
+        {en:"escape",   es:"escapar",    phonetic:"/ɪˈskeɪp/",     example:"There is no escape.",                 type:"verb"},
+        {en:"reality",  es:"realidad",   phonetic:"/riˈæləti/",    example:"What is reality?",                    type:"noun"},
+        {en:"illusion", es:"ilusión",    phonetic:"/ɪˈluːʒən/",    example:"It was all an illusion.",             type:"noun"},
+        {en:"free",     es:"libre",      phonetic:"/friː/",        example:"Your mind must be free.",             type:"adj"},
+        {en:"truth",    es:"verdad",     phonetic:"/truːθ/",       example:"The truth will shock you.",           type:"noun"},
+        {en:"discover", es:"descubrir",  phonetic:"/dɪˈskʌvər/",   example:"She had to discover it herself.",     type:"verb"},
+      ];
+      this.queue = [0,1,2,3,4,5,6,7];
+      this.renderCard();
+      this.loading = false;
+    }
   },
 
   async fetchMastery(sceneId) {
