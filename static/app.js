@@ -759,6 +759,7 @@ async function loadProgress() {
       const data = await r.json();
       userProgress = data;
       if (data.quiz_passed) userProgress._quizPassed = true;
+      if (typeof checkLevel2Unlock === 'function') checkLevel2Unlock();
     }
   } catch { /* keep defaults so offline dev still works */ }
   try {

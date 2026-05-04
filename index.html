@@ -2474,7 +2474,7 @@ function enterAppMode() {
     } catch(e) { console.error('translations fetch failed', e); }
   })();
   buildGatewayLevel1();
-  checkLevel2Unlock();
+  setTimeout(function() { checkLevel2Unlock(); }, 500);
 
   // Force body scroll reset — prior auth-modal lock and Spline injection can leave body frozen
   document.body.style.overflow = '';
@@ -2810,6 +2810,7 @@ function buildGatewayLevel2() {
 }
 
 function checkLevel2Unlock() {
+  console.log('checkLevel2Unlock called, _quizPassed:', userProgress && userProgress._quizPassed, 'bestScores:', Object.keys((userProgress&&userProgress.best_scores)||{}).length);
   const bestScores = (userProgress && userProgress.best_scores) || {};
   const allScenes = scenes || {};
   const level1Scenes = Object.entries(allScenes).filter(([id, s]) => (s.difficulty || '').toLowerCase() === 'beginner');
