@@ -2810,7 +2810,6 @@ function buildGatewayLevel2() {
 }
 
 function checkLevel2Unlock() {
-  console.log('checkLevel2Unlock called, _quizPassed:', userProgress && userProgress._quizPassed, 'bestScores:', Object.keys((userProgress&&userProgress.best_scores)||{}).length);
   const bestScores = (userProgress && userProgress.best_scores) || {};
   const allScenes = scenes || {};
   const level1Scenes = Object.entries(allScenes).filter(([id, s]) => (s.difficulty || '').toLowerCase() === 'beginner');
