@@ -8,6 +8,7 @@ import difflib
 import hashlib
 import logging
 import tempfile
+import traceback
 
 logger = logging.getLogger(__name__)
 from collections import defaultdict, deque
@@ -1181,15 +1182,27 @@ async def get_vocab(scene_id: str, user: dict = Depends(current_user)):
                     "content-type":      "application/json",
                 },
                 json={
-                    "model":      "claude-sonnet-4-20250514",
+                    "model":      "claude-sonnet-4-6",
                     "max_tokens": 1000,
                     "messages":   [{"role": "user", "content": prompt}],
                 },
             )
             resp.raise_for_status()
     except httpx.HTTPError as e:
+        body = ""
+        try:
+            body = e.response.text if hasattr(e, "response") and e.response is not None else ""
+        except Exception:
+            body = ""
+        print(f"VOCAB ENDPOINT ERROR (httpx): {e} | body={body[:500]}")
+        traceback.print_exc()
         conn.close()
         raise HTTPException(502, f"Anthropic API error: {e}")
+    except Exception as e:
+        print(f"VOCAB ENDPOINT ERROR: {e}")
+        traceback.print_exc()
+        conn.close()
+        raise
 
     data = resp.json()
     try:
