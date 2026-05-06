@@ -2190,7 +2190,9 @@ const WordsController = {
         this.sceneIdx = idx;
         cont.querySelectorAll('.words-scene-pill').forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
-        this.loadScene(this.scenes[idx].id);
+        const targetId = this.scenes[idx].id;
+        console.log('[WordsController] pill click → loadScene scene_id:', JSON.stringify(targetId), 'idx:', idx, 'movie:', this.scenes[idx].movie);
+        this.loadScene(targetId);
       });
     });
   },
@@ -2198,18 +2200,26 @@ const WordsController = {
   async loadScene(sceneId) {
     if (this.loading) return;
     this.loading = true;
+    const url = `${API}/api/vocab/${sceneId}`;
+    let status = null;
+    let bodyText = null;
     try {
-      const r = await fetch(`${API}/api/vocab/${sceneId}`, {
+      const r = await fetch(url, {
         headers: { Authorization: `Bearer ${authToken}` },
       });
-      if (!r.ok) throw new Error('vocab fetch failed: ' + r.status);
+      status = r.status;
+      if (!r.ok) {
+        try { bodyText = await r.text(); } catch { /* ignore */ }
+        throw new Error('vocab fetch failed: ' + r.status);
+      }
       this.vocab = await r.json();
       this.queue = this._shuffle(this.vocab.map((_, i) => i));
       await this.fetchMastery(sceneId);
       this.renderCard();
       this.updateProgress();
       this.loading = false;
-    } catch {
+    } catch (err) {
+      console.error('[WordsController] loadScene failed', { url, status, bodyText: bodyText && bodyText.slice(0, 500), error: err && (err.message || err) });
       this.vocab = [
         {en:"choose",   es:"elegir",     phonetic:"/tʃuːz/",       example:"You have to choose your path.",      type:"verb"},
         {en:"believe",  es:"creer",      phonetic:"/bɪˈliːv/",     example:"I believe in you.",                   type:"verb"},

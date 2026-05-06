@@ -1126,8 +1126,8 @@
 
     #wordsCardZone { display: flex; flex-direction: column; align-items: center; padding: 2rem 1.5rem 0; gap: 1rem; }
 
-    #wordsCard { width: 100%; max-width: 340px; height: 240px; perspective: 1200px; background: transparent; }
-    #wordsCardInner { width: 100%; height: 100%; position: relative; transform-style: preserve-3d; transition: transform 0.55s cubic-bezier(0.4,0,0.2,1); cursor: pointer; }
+    #wordsCard { width: 100%; max-width: 340px; height: 240px; perspective: 1200px; -webkit-perspective: 1200px; background: transparent; }
+    #wordsCardInner { width: 100%; height: 100%; position: relative; transform-style: preserve-3d; -webkit-transform-style: preserve-3d; transition: transform 0.55s cubic-bezier(0.4,0,0.2,1); cursor: pointer; }
     #wordsCardInner.flipped { transform: rotateY(180deg); }
     #wordsCardInner.exit-right { transform: translateX(140%) rotate(15deg); opacity: 0; transition: all 0.5s cubic-bezier(0.4,0,1,1); }
     #wordsCardInner.exit-left { transform: translateX(-140%) rotate(-15deg); opacity: 0; transition: all 0.5s cubic-bezier(0.4,0,1,1); }
@@ -2312,14 +2312,14 @@
     <div id="wordsCardZone">
       <div id="wordsCard">
         <div id="wordsCardInner">
-          <div id="wordsCardFront">
+          <div id="wordsCardFront" class="words-face">
             <div id="wordsStarsFront" class="words-stars"></div>
             <div id="wordsTypeBadge"></div>
             <div id="wordsEnWord"></div>
             <div id="wordsPhonetic"></div>
             <div class="words-tap-hint">TAP TO REVEAL</div>
           </div>
-          <div id="wordsCardBack">
+          <div id="wordsCardBack" class="words-face">
             <div id="wordsStarsBack" class="words-stars"></div>
             <div id="wordsEsWord"></div>
             <div id="wordsExample"></div>
