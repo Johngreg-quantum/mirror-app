@@ -1000,11 +1000,11 @@ async def get_ranks_social(user: dict = Depends(current_user)):
     conn = get_conn()
     cur  = conn.cursor()
 
-    # Current user's points + streak
-    cur.execute(f"SELECT COALESCE(points, 0), COALESCE(streak, 0) FROM users WHERE id = {PH}", (user["id"],))
+    # Current user's points + streak — same query/pattern as /api/profile
+    cur.execute(f"SELECT points, streak FROM users WHERE id = {PH}", (user["id"],))
     row = cur.fetchone()
-    my_points = int(row[0]) if row else 0
-    streak    = int(row[1]) if row else 0
+    my_points = int(row[0]) if row and row[0] else 0
+    streak    = int(row[1]) if row and row[1] else 0
 
     # Percentile — share of users with strictly fewer points than me
     cur.execute("SELECT COUNT(*) FROM users")
@@ -1017,13 +1017,14 @@ async def get_ranks_social(user: dict = Depends(current_user)):
     percentile  = round((lower_count / total_users) * 100) if total_users else 50
     percentile  = max(1, min(99, percentile))
 
-    # Weekly XP — sum tier points from this week's submissions (UTC, week starts Monday)
-    now            = datetime.now(timezone.utc)
-    week_start     = (now - timedelta(days=now.weekday())).replace(hour=0, minute=0, second=0, microsecond=0)
-    week_start_str = week_start.strftime("%Y-%m-%d %H:%M:%S")
+    # Weekly XP — rolling 7 days. The `scores` table has no points column, so
+    # we re-derive XP from `sync_score` via the score-tier portion of
+    # calc_points() (omitting the +10 first-attempt bonus). Date cutoff is
+    # computed in Python so the query works on both Postgres and SQLite.
+    seven_days_ago = (datetime.now(timezone.utc) - timedelta(days=7)).strftime("%Y-%m-%d %H:%M:%S")
     cur.execute(
         f"SELECT sync_score FROM scores WHERE user_id = {PH} AND created_at >= {PH}",
-        (user["id"], week_start_str),
+        (user["id"], seven_days_ago),
     )
     weekly_xp = sum(_tier_points(float(r[0] or 0)) for r in cur.fetchall())
 
@@ -1089,6 +1090,7 @@ async def get_ranks_social(user: dict = Depends(current_user)):
         leaderboard.append({**entry, "is_me": uid == user["id"]})
 
     conn.close()
+    print(f"[ranks/social] user_id={user['id']} username={user.get('username')} streak={streak} weekly_xp={weekly_xp} words_mastered={words_mastered} scenes_completed={scenes_completed} my_points={my_points} percentile={percentile}")
     return {
         "percentile":       percentile,
         "weekly_xp":        weekly_xp,
