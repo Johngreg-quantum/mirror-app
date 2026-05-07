@@ -1000,18 +1000,19 @@ async def get_ranks_social(user: dict = Depends(current_user)):
     conn = get_conn()
     cur  = conn.cursor()
 
-    # Current user's points + streak — same query/pattern as /api/profile
-    cur.execute(f"SELECT points, streak FROM users WHERE id = {PH}", (user["id"],))
+    # Current user's points + streak — exact same query/logic as /api/profile
+    cur.execute(f"SELECT points, streak, last_daily FROM users WHERE id = {PH}", (user["id"],))
     row = cur.fetchone()
-    my_points = int(row[0]) if row and row[0] else 0
-    streak    = int(row[1]) if row and row[1] else 0
+    total_points   = int(row[0]) if row and row[0] else 0
+    streak         = int(row[1]) if row and row[1] else 0
+    last_daily     = row[2] if row else None  # noqa: F841 (kept for parity with /api/profile)
 
     # Percentile — share of users with strictly fewer points than me
     cur.execute("SELECT COUNT(*) FROM users")
     total_users = int(cur.fetchone()[0] or 0)
     cur.execute(
         f"SELECT COUNT(*) FROM users WHERE COALESCE(points, 0) < {PH}",
-        (my_points,),
+        (total_points,),
     )
     lower_count = int(cur.fetchone()[0] or 0)
     percentile  = round((lower_count / total_users) * 100) if total_users else 50
@@ -1090,7 +1091,7 @@ async def get_ranks_social(user: dict = Depends(current_user)):
         leaderboard.append({**entry, "is_me": uid == user["id"]})
 
     conn.close()
-    print(f"[ranks/social] user_id={user['id']} username={user.get('username')} streak={streak} weekly_xp={weekly_xp} words_mastered={words_mastered} scenes_completed={scenes_completed} my_points={my_points} percentile={percentile}")
+    print(f"[ranks/social] uid={user['id']} streak={streak} weekly_xp={weekly_xp}")
     return {
         "percentile":       percentile,
         "weekly_xp":        weekly_xp,
