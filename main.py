@@ -984,6 +984,123 @@ async def get_leaderboard():
     return result
 
 
+def _tier_points(score: float) -> int:
+    """Score-tier portion of calc_points (omits first-attempt bonus)."""
+    if score >= 100: return 100
+    if score >= 95:  return 75
+    if score >= 85:  return 50
+    if score >= 70:  return 25
+    return 0
+
+
+@app.get("/api/ranks/social")
+async def get_ranks_social(user: dict = Depends(current_user)):
+    """Aggregated stats for the social/ranks panel: percentile, weekly XP,
+    scenes/words progress, recent feed, top-3, and leaderboard."""
+    conn = get_conn()
+    cur  = conn.cursor()
+
+    # Current user's points + streak
+    cur.execute(f"SELECT COALESCE(points, 0), COALESCE(streak, 0) FROM users WHERE id = {PH}", (user["id"],))
+    row = cur.fetchone()
+    my_points = int(row[0]) if row else 0
+    streak    = int(row[1]) if row else 0
+
+    # Percentile — share of users with strictly fewer points than me
+    cur.execute("SELECT COUNT(*) FROM users")
+    total_users = int(cur.fetchone()[0] or 0)
+    cur.execute(
+        f"SELECT COUNT(*) FROM users WHERE COALESCE(points, 0) < {PH}",
+        (my_points,),
+    )
+    lower_count = int(cur.fetchone()[0] or 0)
+    percentile  = round((lower_count / total_users) * 100) if total_users else 50
+    percentile  = max(1, min(99, percentile))
+
+    # Weekly XP — sum tier points from this week's submissions (UTC, week starts Monday)
+    now            = datetime.now(timezone.utc)
+    week_start     = (now - timedelta(days=now.weekday())).replace(hour=0, minute=0, second=0, microsecond=0)
+    week_start_str = week_start.strftime("%Y-%m-%d %H:%M:%S")
+    cur.execute(
+        f"SELECT sync_score FROM scores WHERE user_id = {PH} AND created_at >= {PH}",
+        (user["id"], week_start_str),
+    )
+    weekly_xp = sum(_tier_points(float(r[0] or 0)) for r in cur.fetchall())
+
+    # Scenes completed — distinct scenes whose best score >= 60
+    cur.execute(
+        f"SELECT scene_id FROM scores WHERE user_id = {PH} "
+        f"GROUP BY scene_id HAVING MAX(sync_score) >= 60",
+        (user["id"],),
+    )
+    scenes_completed = len(cur.fetchall())
+
+    # Words mastered
+    cur.execute(
+        f"SELECT COUNT(*) FROM word_mastery WHERE user_id = {PH} AND correct_count >= 3",
+        (user["id"],),
+    )
+    words_mastered = int(cur.fetchone()[0] or 0)
+
+    # Feed — 10 most recent submissions across all users
+    cur.execute(
+        "SELECT s.scene_id, s.sync_score, s.created_at, COALESCE(u.username, s.username) "
+        "FROM scores s LEFT JOIN users u ON s.user_id = u.id "
+        "ORDER BY s.created_at DESC LIMIT 10"
+    )
+    feed = []
+    for r in cur.fetchall():
+        sid     = r[0] or ""
+        score   = float(r[1] or 0)
+        created = r[2]
+        uname   = r[3] or "guest"
+        feed.append({
+            "username":   uname,
+            "initials":   (uname[:2].upper() if uname else "??"),
+            "action":     "completed" if score >= 60 else "practiced",
+            "scene_id":   sid,
+            "score":      round(score, 1),
+            "points":     _tier_points(score),
+            "created_at": created.isoformat() if hasattr(created, "isoformat") else created,
+        })
+
+    # Top 10 leaderboard (and slice the first 3 for the podium)
+    cur.execute(
+        "SELECT id, username, COALESCE(points, 0) FROM users "
+        "ORDER BY COALESCE(points, 0) DESC LIMIT 10"
+    )
+    top_rows    = cur.fetchall()
+    top3        = []
+    leaderboard = []
+    for i, r in enumerate(top_rows):
+        uid   = int(r[0])
+        uname = r[1] or ""
+        pts   = int(r[2])
+        div   = get_division(pts)
+        entry = {
+            "username":       uname,
+            "initials":       (uname[:2].upper() if uname else "??"),
+            "total_points":   pts,
+            "division_name":  div["name"],
+            "division_color": div["color"],
+        }
+        if i < 3:
+            top3.append(entry)
+        leaderboard.append({**entry, "is_me": uid == user["id"]})
+
+    conn.close()
+    return {
+        "percentile":       percentile,
+        "weekly_xp":        weekly_xp,
+        "scenes_completed": scenes_completed,
+        "words_mastered":   words_mastered,
+        "streak":           streak,
+        "feed":             feed,
+        "top3":             top3,
+        "leaderboard":      leaderboard,
+    }
+
+
 @app.get("/api/profile")
 async def get_profile(user: dict = Depends(current_user)):
     """Return the authenticated user's points, division, and scene stats."""

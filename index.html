@@ -1170,6 +1170,92 @@
     .words-mastered-label { font-family: 'Bebas Neue', sans-serif; font-size: 0.85rem; letter-spacing: 0.14em; color: rgba(200,169,110,0.4); margin-bottom: 0.65rem; }
     .words-mastered-pills { display: flex; flex-wrap: wrap; gap: 0.38rem; }
     .words-mastered-pill { padding: 0.2rem 0.6rem; border-radius: 100px; background: rgba(200,169,110,0.07); outline: 0.5px solid rgba(200,169,110,0.2); font-size: 0.68rem; color: rgba(200,169,110,0.75); }
+
+    /* ── RANKS PANEL ── */
+    #panelRanks { background: #080808; overflow-y: auto; font-family: 'DM Sans', sans-serif; }
+
+    #ranksTitleRow { display: flex; justify-content: space-between; align-items: baseline; padding: 1.6rem 1rem 0.4rem; }
+    #ranksTitle { font-family: 'Bebas Neue', sans-serif; font-size: 2rem; letter-spacing: 0.1em; background: linear-gradient(135deg, #c8a96e, #e8cfa0, #9a7d4e); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    #ranksLeagueLabel { font-size: 0.62rem; color: rgba(255,255,255,0.25); letter-spacing: 0.05em; }
+
+    #ranksTabRow { display: flex; border-bottom: 1px solid rgba(255,255,255,0.07); }
+    .ranks-tab { flex: 1; padding: 0.65rem 0; font-size: 0.72rem; letter-spacing: 0.06em; text-align: center; color: rgba(255,255,255,0.3); background: none; border: none; cursor: pointer; font-family: 'Bebas Neue', sans-serif; transition: all 0.2s; }
+    .ranks-tab.active { color: #c8a96e; border-bottom: 2px solid #c8a96e; }
+
+    .ranks-section { display: none; }
+    .ranks-section.active { display: block; }
+
+    #ranksSocialHero { text-align: center; padding: 1.5rem 1.5rem 0.3rem; }
+    #ranksPctSub { font-size: 0.72rem; color: rgba(255,255,255,0.3); margin-bottom: 0.2rem; letter-spacing: 0.05em; }
+    #ranksPctNum { font-family: 'Bebas Neue', sans-serif; font-size: 5rem; line-height: 1; background: linear-gradient(135deg, #c8a96e, #e8cfa0); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    #ranksPctLabel { font-size: 0.72rem; color: rgba(255,255,255,0.35); margin-top: 0.15rem; }
+
+    #ranksDotsRow { display: flex; justify-content: center; flex-wrap: wrap; gap: 4px; padding: 0.8rem 1.5rem; }
+    .ranks-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+    .ranks-dot-on { background: #c8a96e; }
+    .ranks-dot-off { background: rgba(255,255,255,0.1); }
+
+    #ranksMotivation { margin: 0 1rem 1rem; background: rgba(255,255,255,0.03); border: 0.5px solid rgba(255,255,255,0.07); border-radius: 14px; padding: 0.9rem 1rem; display: flex; align-items: center; gap: 12px; }
+    #ranksMotivationIcon { font-size: 1.6rem; }
+    #ranksMotivationTitle { font-size: 0.8rem; font-weight: 500; color: rgba(255,255,255,0.8); }
+    #ranksMotivationSub { font-size: 0.68rem; color: rgba(255,255,255,0.35); margin-top: 2px; }
+
+    #ranksStatGrid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; padding: 0 1rem 1rem; }
+    .ranks-stat-card { background: rgba(255,255,255,0.04); border: 0.5px solid rgba(255,255,255,0.08); border-radius: 14px; padding: 0.85rem 1rem; }
+    .ranks-stat-num { font-size: 1.5rem; font-weight: 500; color: #c8a96e; line-height: 1; }
+    .ranks-stat-lbl { font-size: 0.6rem; color: rgba(255,255,255,0.3); margin-top: 3px; letter-spacing: 0.04em; }
+
+    #ranksShareBtn { display: block; margin: 0 1rem 1rem; padding: 0.85rem; background: linear-gradient(135deg, rgba(200,169,110,0.15), rgba(200,169,110,0.08)); border: 1px solid rgba(200,169,110,0.3); border-radius: 14px; font-family: 'Bebas Neue', sans-serif; font-size: 1rem; letter-spacing: 0.1em; color: #c8a96e; text-align: center; cursor: pointer; width: calc(100% - 2rem); transition: all 0.2s; }
+    #ranksShareBtn:hover { background: rgba(200,169,110,0.15); }
+
+    .ranks-divider-label { font-family: 'Bebas Neue', sans-serif; font-size: 0.75rem; letter-spacing: 0.14em; color: rgba(200,169,110,0.35); padding: 0.9rem 1rem 0.4rem; }
+
+    .ranks-feed-item { display: flex; align-items: flex-start; gap: 10px; padding: 0.85rem 1rem; border-bottom: 0.5px solid rgba(255,255,255,0.05); }
+    .ranks-avatar { width: 36px; height: 36px; border-radius: 50%; background: rgba(200,169,110,0.12); border: 1px solid rgba(200,169,110,0.22); display: flex; align-items: center; justify-content: center; font-size: 0.68rem; font-weight: 500; color: #c8a96e; flex-shrink: 0; }
+    .ranks-feed-name { font-size: 0.8rem; font-weight: 500; color: rgba(255,255,255,0.85); }
+    .ranks-feed-text { font-size: 0.72rem; color: rgba(255,255,255,0.4); margin-top: 2px; line-height: 1.5; }
+    .ranks-feed-time { font-size: 0.6rem; color: rgba(255,255,255,0.2); flex-shrink: 0; padding-top: 2px; }
+    .ranks-feed-badge { display: inline-flex; align-items: center; gap: 4px; padding: 0.18rem 0.5rem; border-radius: 100px; font-size: 0.6rem; font-weight: 600; margin-top: 5px; }
+    .badge-fire { background: rgba(255,120,30,0.12); color: #ff8c3a; border: 0.5px solid rgba(255,120,30,0.2); }
+    .badge-gold-pill { background: rgba(200,169,110,0.12); color: #c8a96e; border: 0.5px solid rgba(200,169,110,0.2); }
+    .badge-blue-pill { background: rgba(100,180,255,0.1); color: #64b4ff; border: 0.5px solid rgba(100,180,255,0.2); }
+
+    #ranksPodium { display: flex; align-items: flex-end; justify-content: center; padding: 1.5rem 1rem 0; height: 200px; }
+    .podium-col { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 5px; }
+    .podium-uname { font-size: 0.68rem; font-weight: 500; text-align: center; }
+    .podium-av { border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 500; }
+    .podium-xp { font-size: 0.62rem; }
+    .podium-bar { width: 100%; border-radius: 8px 8px 0 0; display: flex; align-items: center; justify-content: center; }
+    .podium-num { font-family: 'Bebas Neue', sans-serif; opacity: 0.45; }
+
+    #ranksYouRow { margin: 1rem 1rem 0; background: rgba(200,169,110,0.06); border: 1px solid rgba(200,169,110,0.18); border-radius: 14px; padding: 0.8rem 1rem; display: flex; align-items: center; gap: 10px; }
+
+    .ranks-lb-row { display: flex; align-items: center; gap: 10px; padding: 0.65rem 1rem; border-bottom: 0.5px solid rgba(255,255,255,0.04); }
+    .ranks-lb-row.is-me { background: rgba(200,169,110,0.06); border-left: 2px solid #c8a96e; }
+    .ranks-lb-rank { font-family: 'Bebas Neue', sans-serif; font-size: 1rem; width: 22px; text-align: center; }
+    .ranks-lb-av { width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.62rem; font-weight: 500; flex-shrink: 0; }
+    .ranks-lb-name { flex: 1; font-size: 0.8rem; color: rgba(255,255,255,0.75); }
+    .ranks-lb-pts { font-size: 0.78rem; color: #c8a96e; font-weight: 500; }
+
+    #ranksLbFooter { text-align: center; padding: 1rem; font-size: 0.6rem; color: rgba(255,255,255,0.15); letter-spacing: 0.05em; }
+
+    .ranks-reward-card { margin: 0 1rem 0.75rem; background: linear-gradient(135deg, rgba(20,15,5,0.9), rgba(10,8,2,0.8)); border: 1px solid rgba(200,169,110,0.2); border-radius: 18px; padding: 1.1rem 1.2rem; }
+    .ranks-reward-card.locked { opacity: 0.5; }
+    .ranks-reward-top { display: flex; align-items: center; gap: 10px; margin-bottom: 0.6rem; }
+    .ranks-reward-icon { font-size: 1.8rem; }
+    .ranks-reward-title { font-family: 'Bebas Neue', sans-serif; font-size: 1.1rem; color: #c8a96e; line-height: 1; letter-spacing: 0.06em; }
+    .ranks-reward-sub { font-size: 0.65rem; color: rgba(255,255,255,0.3); }
+    .ranks-reward-cost { margin-left: auto; text-align: right; }
+    .ranks-reward-cost-num { font-family: 'Bebas Neue', sans-serif; font-size: 1.1rem; color: #c8a96e; }
+    .ranks-reward-cost-lbl { font-size: 0.6rem; color: rgba(255,255,255,0.3); }
+    .ranks-progress-bar { background: rgba(255,255,255,0.04); border-radius: 8px; height: 5px; overflow: hidden; }
+    .ranks-progress-fill { height: 100%; background: linear-gradient(90deg, #6a5230, #c8a96e); border-radius: 8px; transition: width 0.8s ease; }
+    .ranks-progress-labels { display: flex; justify-content: space-between; margin-top: 4px; }
+    .ranks-progress-cur { font-size: 0.6rem; color: rgba(255,255,255,0.25); }
+    .ranks-progress-rem { font-size: 0.6rem; color: rgba(200,169,110,0.5); }
+
+    #ranksRewardsIntro { padding: 1rem 1rem 0.75rem; font-size: 0.68rem; color: rgba(255,255,255,0.3); line-height: 1.6; }
+    #ranksRewardsBeta { text-align: center; padding: 1rem; font-size: 0.62rem; color: rgba(255,255,255,0.15); }
   </style>
   <script type="module" src="https://unpkg.com/@splinetool/viewer@1.12.90/build/spline-viewer.js"></script>
 </head>
@@ -2183,42 +2269,56 @@
   </div>
   </div>
   <div class="app-panel" id="panelRanks">
-  <div style="padding:16px 4px 12px; font-family:'Bebas Neue',sans-serif; font-size:11px; letter-spacing:0.2em; color:#555;">THIS WEEK</div>
-
-  <!-- Division card -->
-  <div id="divisionCard" style="border-radius:16px; padding:18px; margin-bottom:16px; border:0.5px solid #c8a96e; background:rgba(200,169,110,0.06);">
-    <div style="font-family:'DM Sans',sans-serif; font-size:9px; letter-spacing:2px; text-transform:uppercase; color:#555; margin-bottom:8px;">Your Division</div>
-    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:14px;">
-      <div>
-        <div id="divName" style="font-family:'Georgia',serif; font-size:28px; color:#c8a96e;">Bronze</div>
-        <div id="divPoints" style="font-family:'DM Sans',sans-serif; font-size:12px; color:#555; margin-top:2px;">450 pts · 50 to Silver</div>
+    <div id="ranksHeader">
+      <div id="ranksTitleRow">
+        <span id="ranksTitle">RANKS</span>
+        <span id="ranksLeagueLabel">GOLD LEAGUE</span>
       </div>
-      <div id="divBadge" style="width:56px; height:56px; border-radius:50%; background:rgba(205,127,50,0.15); border:2px solid #cd7f32; display:flex; align-items:center; justify-content:center; font-size:26px;">🥉</div>
+      <div id="ranksTabRow">
+        <button class="ranks-tab active" data-tab="feed">FEED</button>
+        <button class="ranks-tab" data-tab="standings">STANDINGS</button>
+        <button class="ranks-tab" data-tab="rewards">REWARDS</button>
+      </div>
     </div>
-    <div style="height:4px; background:rgba(255,255,255,0.06); border-radius:4px;">
-      <div id="divBar" style="height:4px; border-radius:4px; background:#cd7f32; width:0%; transition:width 0.8s ease;"></div>
-    </div>
-    <div style="display:flex; justify-content:space-between; margin-top:6px;">
-      <div id="divMin" style="font-family:'DM Sans',sans-serif; font-size:10px; color:#444;">0</div>
-      <div id="divMax" style="font-family:'DM Sans',sans-serif; font-size:10px; color:#444;">499</div>
-    </div>
-  </div>
 
-  <!-- Division ladder -->
-  <div style="font-family:'DM Sans',sans-serif; font-size:9px; letter-spacing:2px; text-transform:uppercase; color:#444; margin-bottom:10px;">Division Ladder</div>
-  <div style="display:flex; flex-direction:column; gap:8px; margin-bottom:20px;">
-    <div class="div-rung" data-div="Bronze"   style="display:flex;align-items:center;gap:12px;background:rgba(255,255,255,0.02);border:0.5px solid rgba(255,255,255,0.06);border-radius:12px;padding:10px 14px;"><span style="font-size:18px;">🥉</span><div style="flex:1"><div style="font-family:'Georgia',serif;font-size:14px;color:#cd7f32;">Bronze</div><div style="font-family:'DM Sans',sans-serif;font-size:10px;color:#555;">0 – 499 pts</div></div><div id="rungBronze" style="font-family:'DM Sans',sans-serif;font-size:10px;color:#555;"></div></div>
-    <div class="div-rung" data-div="Silver"   style="display:flex;align-items:center;gap:12px;background:rgba(255,255,255,0.02);border:0.5px solid rgba(255,255,255,0.06);border-radius:12px;padding:10px 14px;"><span style="font-size:18px;">🥈</span><div style="flex:1"><div style="font-family:'Georgia',serif;font-size:14px;color:#b8b8b8;">Silver</div><div style="font-family:'DM Sans',sans-serif;font-size:10px;color:#555;">500 – 1,999 pts</div></div><div id="rungSilver" style="font-family:'DM Sans',sans-serif;font-size:10px;color:#555;"></div></div>
-    <div class="div-rung" data-div="Gold"     style="display:flex;align-items:center;gap:12px;background:rgba(255,255,255,0.02);border:0.5px solid rgba(255,255,255,0.06);border-radius:12px;padding:10px 14px;"><span style="font-size:18px;">🥇</span><div style="flex:1"><div style="font-family:'Georgia',serif;font-size:14px;color:#c9a84c;">Gold</div><div style="font-family:'DM Sans',sans-serif;font-size:10px;color:#555;">2,000 – 4,999 pts</div></div><div id="rungGold" style="font-family:'DM Sans',sans-serif;font-size:10px;color:#555;"></div></div>
-    <div class="div-rung" data-div="Diamond" style="display:flex;align-items:center;gap:12px;background:rgba(255,255,255,0.02);border:0.5px solid rgba(255,255,255,0.06);border-radius:12px;padding:10px 14px;"><span style="font-size:18px;">💎</span><div style="flex:1"><div style="font-family:'Georgia',serif;font-size:14px;color:#67e8f9;">Diamond</div><div style="font-family:'DM Sans',sans-serif;font-size:10px;color:#555;">5,000 – 9,999 pts</div></div><div id="rungDiamond" style="font-family:'DM Sans',sans-serif;font-size:10px;color:#555;"></div></div>
-    <div class="div-rung" data-div="Director" style="display:flex;align-items:center;gap:12px;background:rgba(255,255,255,0.02);border:0.5px solid rgba(255,255,255,0.06);border-radius:12px;padding:10px 14px;"><span style="font-size:18px;">🎬</span><div style="flex:1"><div style="font-family:'Georgia',serif;font-size:14px;color:#c9a84c;">Director</div><div style="font-family:'DM Sans',sans-serif;font-size:10px;color:#555;">10,000+ pts</div></div><div id="rungDirector" style="font-family:'DM Sans',sans-serif;font-size:10px;color:#555;"></div></div>
-  </div>
+    <div id="ranksFeed" class="ranks-section active">
+      <div id="ranksSocialHero">
+        <div id="ranksPctSub">YOU'RE BETTER THAN</div>
+        <div id="ranksPctNum">–%</div>
+        <div id="ranksPctLabel">of Mirror users this month</div>
+      </div>
+      <div id="ranksDotsRow"></div>
+      <div id="ranksMotivation">
+        <div id="ranksMotivationIcon">🎬</div>
+        <div>
+          <div id="ranksMotivationTitle">Consistency is your superpower.</div>
+          <div id="ranksMotivationSub">You're showing up when most people don't.</div>
+        </div>
+      </div>
+      <div id="ranksStatGrid">
+        <div class="ranks-stat-card"><div class="ranks-stat-num" id="rStat1">–</div><div class="ranks-stat-lbl">SCENES COMPLETED</div></div>
+        <div class="ranks-stat-card"><div class="ranks-stat-num" id="rStat2">–</div><div class="ranks-stat-lbl">DAY STREAK</div></div>
+        <div class="ranks-stat-card"><div class="ranks-stat-num" id="rStat3">–</div><div class="ranks-stat-lbl">WEEKLY XP</div></div>
+        <div class="ranks-stat-card"><div class="ranks-stat-num" id="rStat4">–</div><div class="ranks-stat-lbl">WORDS MASTERED</div></div>
+      </div>
+      <button id="ranksShareBtn">SHARE MY PROGRESS</button>
+      <div class="ranks-divider-label">FRIEND ACTIVITY</div>
+      <div id="ranksFeedList"></div>
+    </div>
 
-  <!-- Scene leaderboard -->
-  <div style="font-family:'DM Sans',sans-serif; font-size:9px; letter-spacing:2px; text-transform:uppercase; color:#444; margin-bottom:10px;">Top Scores · Your Best Scene</div>
-  <div id="sceneLeaderboard" style="background:rgba(255,255,255,0.02); border:0.5px solid rgba(255,255,255,0.07); border-radius:14px; overflow:hidden; margin-bottom:24px;">
-    <div style="padding:14px 16px; font-family:'DM Sans',sans-serif; font-size:12px; color:#555;">Loading scores...</div>
-  </div>
+    <div id="ranksStandings" class="ranks-section">
+      <div id="ranksPodium"></div>
+      <div id="ranksYouRow"></div>
+      <div class="ranks-divider-label">FULL STANDINGS</div>
+      <div id="ranksLbList"></div>
+      <div id="ranksLbFooter">RESETS EVERY MONDAY</div>
+    </div>
+
+    <div id="ranksRewards" class="ranks-section">
+      <div id="ranksRewardsIntro">Earn XP by practicing scenes. Redeem for real cinema rewards.</div>
+      <div id="ranksRewardsList"></div>
+      <div id="ranksRewardsBeta">Rewards are in early beta. Cinema partnerships coming soon.</div>
+    </div>
   </div>
   <div class="app-panel" id="panelMissions">
   <div style="padding:16px 4px 12px; display:flex; justify-content:space-between; align-items:flex-end;">
@@ -2365,6 +2465,7 @@ function switchTab(tab) {
     if (lp) lp.classList.add('active');
   } else if (panel === 'panelRanks') {
     if (lbSection) lbSection.style.display = 'block';
+    if (typeof RanksController !== 'undefined') RanksController.init();
   } else if (panel === 'panelMissions') {
     if (heroFeatured) heroFeatured.style.display = 'block';
   } else if (panel === 'panelWords') {

@@ -2444,3 +2444,215 @@ if (document.readyState === 'loading') {
 
 // Expose globally so the inline switchTab() in index.html can call init()
 window.WordsController = WordsController;
+
+// ══════════════════════════════════════════════
+// RANKS — social/standings/rewards controller
+// ══════════════════════════════════════════════
+const RanksController = {
+  data: null,
+  loaded: false,
+
+  init() {
+    this.bindTabs();
+    this.bindShare();
+    if (!this.loaded) this.load();
+  },
+
+  bindTabs() {
+    document.querySelectorAll('.ranks-tab').forEach(tab => {
+      tab.onclick = () => {
+        document.querySelectorAll('.ranks-tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.ranks-section').forEach(s => s.classList.remove('active'));
+        tab.classList.add('active');
+        const target = tab.dataset.tab;
+        if (target === 'feed') document.getElementById('ranksFeed').classList.add('active');
+        if (target === 'standings') document.getElementById('ranksStandings').classList.add('active');
+        if (target === 'rewards') document.getElementById('ranksRewards').classList.add('active');
+      };
+    });
+  },
+
+  bindShare() {
+    const btn = document.getElementById('ranksShareBtn');
+    if (btn) btn.onclick = () => this.shareProgress();
+  },
+
+  async load() {
+    const authToken = localStorage.getItem('mirror_token');
+    if (!authToken) return;
+    try {
+      const res = await fetch('/api/ranks/social', { headers: { 'Authorization': 'Bearer ' + authToken } });
+      if (!res.ok) return;
+      this.data = await res.json();
+      this.loaded = true;
+      this.render();
+    } catch(e) { console.error('RanksController load error', e); }
+  },
+
+  render() {
+    const d = this.data;
+    if (!d) return;
+    this.renderFeed(d);
+    this.renderStandings(d);
+    this.renderRewards(d);
+  },
+
+  renderFeed(d) {
+    document.getElementById('ranksPctNum').textContent = d.percentile + '%';
+    document.getElementById('rStat1').textContent = d.scenes_completed;
+    document.getElementById('rStat2').textContent = d.streak;
+    document.getElementById('rStat3').textContent = d.weekly_xp.toLocaleString();
+    document.getElementById('rStat4').textContent = d.words_mastered;
+
+    const dotsEl = document.getElementById('ranksDotsRow');
+    if (dotsEl) {
+      const total = 15;
+      const lit = Math.round((d.percentile / 100) * total);
+      dotsEl.innerHTML = Array.from({length: total}, (_, i) =>
+        `<span class="ranks-dot ${i < lit ? 'ranks-dot-on' : 'ranks-dot-off'}"></span>`
+      ).join('');
+    }
+
+    const motivations = [
+      { title: 'Consistency is your superpower.', sub: "You're showing up when most people don't." },
+      { title: 'The camera is always rolling.',   sub: 'Every practice makes you a better actor.' },
+      { title: 'Stars are made through repetition.', sub: 'Keep going — the Director sees everything.' },
+    ];
+    const m = motivations[Math.floor(Math.random() * motivations.length)];
+    document.getElementById('ranksMotivationTitle').textContent = m.title;
+    document.getElementById('ranksMotivationSub').textContent = m.sub;
+
+    const feedEl = document.getElementById('ranksFeedList');
+    if (!feedEl || !d.feed) return;
+    const timeAgo = (iso) => {
+      const diff = (Date.now() - new Date(iso)) / 1000;
+      if (diff < 60) return 'just now';
+      if (diff < 3600) return Math.floor(diff/60) + 'm ago';
+      if (diff < 86400) return Math.floor(diff/3600) + 'h ago';
+      return Math.floor(diff/86400) + 'd ago';
+    };
+    feedEl.innerHTML = d.feed.map(f => {
+      const score = Math.round(f.score);
+      const badge = score >= 90 ? '<span class="ranks-feed-badge badge-gold-pill">★ ' + score + '%</span>'
+                  : score >= 70 ? '<span class="ranks-feed-badge badge-blue-pill">' + score + '%</span>'
+                  : '<span class="ranks-feed-badge badge-fire">🔥 ' + score + '%</span>';
+      return `<div class="ranks-feed-item">
+        <div class="ranks-avatar">${f.initials}</div>
+        <div style="flex:1;">
+          <div class="ranks-feed-name">${f.username}</div>
+          <div class="ranks-feed-text">practiced <em style="color:rgba(255,255,255,0.55)">${f.scene_id.replace(/_/g,' ')}</em></div>
+          ${badge}
+        </div>
+        <div class="ranks-feed-time">${timeAgo(f.created_at)}</div>
+      </div>`;
+    }).join('');
+  },
+
+  renderStandings(d) {
+    const podiumEl = document.getElementById('ranksPodium');
+    const lbEl     = document.getElementById('ranksLbList');
+    const youEl    = document.getElementById('ranksYouRow');
+    if (!d.top3 || !podiumEl) return;
+
+    const podiumOrder = [d.top3[1], d.top3[0], d.top3[2]].filter(Boolean);
+    const heights    = ['70px', '105px', '50px'];
+    const sizes      = ['42px', '52px', '38px'];
+    const colors     = ['#b8b8b8', '#c8a96e', '#cd7f32'];
+    const labels     = ['2', '1', '3'];
+    const fontSizes  = ['2.4rem', '2.8rem', '2.1rem'];
+    const rankLabels = ['', 'CHAMPION', ''];
+
+    podiumEl.innerHTML = podiumOrder.map((u, i) => `
+      <div class="podium-col">
+        ${rankLabels[i] ? `<div style="font-family:'Bebas Neue',sans-serif;font-size:0.58rem;color:rgba(200,169,110,0.55);letter-spacing:0.1em;">${rankLabels[i]}</div>` : ''}
+        <div class="podium-uname" style="color:${colors[i]}">${u.username.substring(0,8)}</div>
+        <div class="podium-av" style="width:${sizes[i]};height:${sizes[i]};background:${colors[i]}22;border:2px solid ${colors[i]};font-size:0.72rem;color:${colors[i]}">${u.initials}</div>
+        <div class="podium-xp" style="color:${colors[i]}">${u.total_points.toLocaleString()} xp</div>
+        <div class="podium-bar" style="height:${heights[i]};background:linear-gradient(180deg,${colors[i]}30,${colors[i]}0d);border-top:2px solid ${colors[i]};border-left:1px solid ${colors[i]}33;border-right:1px solid ${colors[i]}33;">
+          <div class="podium-num" style="font-size:${fontSizes[i]};color:${colors[i]}">${labels[i]}</div>
+        </div>
+      </div>
+    `).join('');
+
+    if (!d.leaderboard || !lbEl) return;
+    const rankColors = ['#c8a96e','#b8b8b8','#cd7f32'];
+    lbEl.innerHTML = d.leaderboard.map((u, i) => {
+      const rank = i + 1;
+      const rc   = rank <= 3 ? rankColors[rank-1] : 'rgba(255,255,255,0.2)';
+      const avBg = rank <= 3 ? `${rc}22` : 'rgba(255,255,255,0.05)';
+      return `<div class="ranks-lb-row ${u.is_me ? 'is-me' : ''}">
+        <div class="ranks-lb-rank" style="color:${rc}">${u.is_me ? 'YOU' : rank}</div>
+        <div class="ranks-lb-av" style="background:${avBg};color:${rc};border:1px solid ${rc}44">${u.initials}</div>
+        <div class="ranks-lb-name" style="${u.is_me ? 'color:#c8a96e' : ''}">${u.username}</div>
+        <div class="ranks-lb-pts">${u.total_points.toLocaleString()} xp</div>
+      </div>`;
+    }).join('');
+
+    const me     = d.leaderboard.find(u => u.is_me);
+    const myRank = me ? d.leaderboard.indexOf(me) + 1 : null;
+    if (me && youEl) {
+      const toTop3 = myRank > 3 ? d.leaderboard[2].total_points - me.total_points : 0;
+      youEl.innerHTML = `
+        <div class="ranks-lb-rank" style="color:rgba(200,169,110,0.4);font-family:'Bebas Neue',sans-serif;font-size:1rem;">${myRank}</div>
+        <div class="ranks-lb-av" style="width:32px;height:32px;background:rgba(200,169,110,0.15);border:1px solid rgba(200,169,110,0.35);color:#c8a96e;font-size:0.68rem;">${me.initials}</div>
+        <div style="flex:1;">
+          <div style="font-size:0.8rem;color:#c8a96e;font-weight:500;">You (${me.username})</div>
+          ${toTop3 > 0 ? `<div style="font-size:0.62rem;color:rgba(255,255,255,0.3);margin-top:1px;">${toTop3.toLocaleString()} xp to top 3</div>` : '<div style="font-size:0.62rem;color:#c8a96e;margin-top:1px;">You\'re in the top 3!</div>'}
+        </div>
+        <div style="text-align:right;">
+          <div style="font-size:0.85rem;color:#c8a96e;font-weight:500;">${me.total_points.toLocaleString()} xp</div>
+        </div>`;
+    }
+  },
+
+  renderRewards(d) {
+    const weeklyXp = d ? d.weekly_xp : 0;
+    const userXp   = userProfile ? userProfile.total_points : 0;
+    const rewards  = [
+      { icon:'🎬', title:'$5 CINEMA GIFT CARD', sub:'AMC · Regal · Cinemark', cost:5000  },
+      { icon:'🍿', title:'FREE POPCORN',         sub:'Partner cinemas only',  cost:2500  },
+      { icon:'🏆', title:'DIRECTOR BADGE',       sub:'Exclusive profile flair', cost:10000 },
+    ];
+    const el = document.getElementById('ranksRewardsList');
+    if (!el) return;
+    el.innerHTML = rewards.map(r => {
+      const pct       = Math.min(100, Math.round((userXp / r.cost) * 100));
+      const remaining = Math.max(0, r.cost - userXp);
+      const locked    = userXp < r.cost;
+      return `<div class="ranks-reward-card ${locked ? 'locked' : ''}">
+        <div class="ranks-reward-top">
+          <div class="ranks-reward-icon">${r.icon}</div>
+          <div>
+            <div class="ranks-reward-title">${r.title}</div>
+            <div class="ranks-reward-sub">${r.sub}</div>
+          </div>
+          <div class="ranks-reward-cost">
+            <div class="ranks-reward-cost-num">${r.cost.toLocaleString()}</div>
+            <div class="ranks-reward-cost-lbl">XP</div>
+          </div>
+        </div>
+        <div class="ranks-progress-bar"><div class="ranks-progress-fill" style="width:${pct}%"></div></div>
+        <div class="ranks-progress-labels">
+          <span class="ranks-progress-cur">${userXp.toLocaleString()} / ${r.cost.toLocaleString()} XP</span>
+          <span class="ranks-progress-rem">${remaining > 0 ? remaining.toLocaleString() + ' to go' : '✓ Unlocked'}</span>
+        </div>
+      </div>`;
+    }).join('');
+  },
+
+  shareProgress() {
+    const d = this.data;
+    if (!d) return;
+    const text = `I'm better than ${d.percentile}% of Mirror users! 🎬 ${d.scenes_completed} scenes completed · ${d.streak}-day streak · ${d.weekly_xp} XP this week. Practice English with iconic movie scenes → mirror-app-z8wr.onrender.com`;
+    if (navigator.share) {
+      navigator.share({ text });
+    } else {
+      navigator.clipboard.writeText(text).then(() => {
+        const btn = document.getElementById('ranksShareBtn');
+        if (btn) { btn.textContent = 'COPIED TO CLIPBOARD'; setTimeout(() => btn.textContent = 'SHARE MY PROGRESS', 2000); }
+      });
+    }
+  },
+};
+
+window.RanksController = RanksController;
