@@ -2464,7 +2464,9 @@ function switchTab(tab) {
     const lp = document.getElementById('panelLevels');
     if (lp) lp.classList.add('active');
   } else if (panel === 'panelRanks') {
-    if (lbSection) lbSection.style.display = 'block';
+    if (appShell) appShell.style.display = 'block';
+    const rp = document.getElementById('panelRanks');
+    if (rp) rp.classList.add('active');
     if (typeof RanksController !== 'undefined') RanksController.init();
   } else if (panel === 'panelMissions') {
     if (heroFeatured) heroFeatured.style.display = 'block';
