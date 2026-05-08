@@ -1256,6 +1256,16 @@
 
     #ranksRewardsIntro { padding: 1rem 1rem 0.75rem; font-size: 0.68rem; color: rgba(255,255,255,0.3); line-height: 1.6; }
     #ranksRewardsBeta { text-align: center; padding: 1rem; font-size: 0.62rem; color: rgba(255,255,255,0.15); }
+
+    /* ── LEVEL 1 QUIZ (redesigned) ── */
+    .quiz-opt { width:100%; padding:0.8rem 1rem; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.1); border-radius:12px; color:rgba(255,255,255,0.8); font-size:0.88rem; text-align:left; cursor:pointer; transition:all 0.2s; font-family:'DM Sans',sans-serif; }
+    .quiz-opt:hover { background:rgba(255,255,255,0.07); }
+    .quiz-word-tile { padding:0.45rem 0.85rem; background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.15); border-radius:100px; color:#fff; font-size:0.85rem; cursor:pointer; transition:all 0.2s; font-family:'DM Sans',sans-serif; white-space:nowrap; }
+    .quiz-word-tile:hover { background:rgba(200,169,110,0.1); border-color:rgba(200,169,110,0.3); }
+    .quiz-word-slot { padding:0.45rem 0.85rem; background:rgba(200,169,110,0.08); border:1px solid rgba(200,169,110,0.25); border-radius:100px; color:#c8a96e; font-size:0.85rem; cursor:pointer; font-family:'DM Sans',sans-serif; white-space:nowrap; }
+    .quiz-breakdown-card { background:rgba(255,255,255,0.04); border:0.5px solid rgba(255,255,255,0.08); border-radius:12px; padding:0.75rem; }
+    .quiz-breakdown-num { font-size:1.4rem; font-weight:500; color:#c8a96e; }
+    .quiz-breakdown-lbl { font-size:0.6rem; color:rgba(255,255,255,0.3); margin-top:2px; letter-spacing:0.04em; }
   </style>
   <script type="module" src="https://unpkg.com/@splinetool/viewer@1.12.90/build/spline-viewer.js"></script>
 </head>
@@ -2041,29 +2051,66 @@
 <script src="/static/app.js"></script>
 
 <div class="quiz-overlay" id="quizOverlay">
-  <div class="quiz-header">
-    <div style="font-family:'Bebas Neue',sans-serif; font-size:18px; letter-spacing:0.15em; color:#c8a96e;">LEVEL 1 QUIZ</div>
-    <button class="quiz-close" onclick="closeQuiz()">✕ Exit</button>
+<div id="quizInner" style="max-width:480px; margin:0 auto; padding:0 0 2rem;">
+
+  <!-- Header -->
+  <div style="display:flex; justify-content:space-between; align-items:center; padding:1.2rem 1.5rem 0.8rem;">
+    <div id="quizHeaderTitle" style="font-family:'Bebas Neue',sans-serif; font-size:1.4rem; letter-spacing:0.1em; color:#c8a96e;">LEVEL 1 QUIZ</div>
+    <button id="quizCloseBtn" style="background:none; border:0.5px solid rgba(255,255,255,0.15); border-radius:8px; color:rgba(255,255,255,0.4); padding:0.4rem 0.8rem; cursor:pointer; font-size:0.75rem; font-family:'DM Sans',sans-serif;">✕ EXIT</button>
   </div>
-  <div class="quiz-progress-bar"><div class="quiz-progress-fill" id="quizProgressFill" style="width:0%"></div></div>
-  <div id="quizBody">
-    <div class="quiz-q-label" id="quizQLabel">Question 1 of 10</div>
-    <div class="quiz-question" id="quizQuestion"></div>
-    <div class="quiz-quote" id="quizQuote" style="display:none"></div>
-    <div class="quiz-options" id="quizOptions"></div>
-    <button class="quiz-next" id="quizNext" onclick="quizNext()">Next Question →</button>
+
+  <!-- Progress bar -->
+  <div style="height:3px; background:rgba(255,255,255,0.08); margin:0 1.5rem;">
+    <div id="quizProgressFill" style="height:100%; background:linear-gradient(90deg,#6a5230,#c8a96e); width:0%; transition:width 0.4s ease; border-radius:2px;"></div>
   </div>
-  <div class="quiz-result" id="quizResult">
-    <div class="quiz-result-icon" id="quizResultIcon"></div>
-    <video id="quizVictoryVideo" style="display:none;width:100%;max-width:320px;border-radius:16px;margin:0 auto 16px;display:none;" autoplay playsinline muted loop>
-      <source src="/static/victory.mp4" type="video/mp4">
-    </video>
-    <div class="quiz-result-score" id="quizResultScore"></div>
-    <div class="quiz-result-scorelab">Score</div>
-    <div class="quiz-result-title" id="quizResultTitle"></div>
-    <div class="quiz-result-sub" id="quizResultSub"></div>
-    <button class="quiz-result-btn" id="quizResultBtn" onclick="closeQuiz()">Back to Mirror</button>
+
+  <!-- Combo badge -->
+  <div id="quizComboBadge" style="display:none; text-align:center; padding:0.5rem; font-family:'Bebas Neue',sans-serif; font-size:1.1rem; letter-spacing:0.1em; color:#ff8c3a;">COMBO x<span id="quizComboNum">3</span></div>
+
+  <!-- Scene poster -->
+  <div style="padding:1rem 1.5rem 0;">
+    <div id="quizPosterWrap" style="width:100%; height:160px; border-radius:16px; overflow:hidden; background:rgba(255,255,255,0.04); border:0.5px solid rgba(255,255,255,0.08); position:relative;">
+      <img id="quizPosterImg" src="" alt="" style="width:100%; height:100%; object-fit:cover; display:block;">
+      <div id="quizPosterOverlay" style="position:absolute; inset:0; background:linear-gradient(to top, rgba(0,0,0,0.7), transparent); display:flex; align-items:flex-end; padding:0.7rem 0.9rem;">
+        <div id="quizPosterMovie" style="font-family:'Bebas Neue',sans-serif; font-size:1rem; letter-spacing:0.08em; color:#c8a96e;"></div>
+      </div>
+    </div>
   </div>
+
+  <!-- Question body -->
+  <div style="padding:1rem 1.5rem 0;">
+    <div id="quizQuestionNum" style="font-size:0.65rem; color:rgba(255,255,255,0.3); letter-spacing:0.08em; margin-bottom:0.4rem;"></div>
+    <div id="quizQuestionType" style="display:inline-block; font-size:0.6rem; letter-spacing:0.1em; font-weight:600; text-transform:uppercase; padding:0.15rem 0.5rem; border-radius:100px; margin-bottom:0.75rem; background:rgba(200,169,110,0.12); color:#c8a96e; border:0.5px solid rgba(200,169,110,0.2);"></div>
+    <div id="quizQuestionText" style="font-size:1rem; color:#fff; line-height:1.6; margin-bottom:1.2rem; font-weight:500; white-space:pre-line;"></div>
+
+    <!-- Multiple choice options -->
+    <div id="quizOptions" style="display:flex; flex-direction:column; gap:0.65rem;"></div>
+
+    <!-- Word ordering (Ordena las palabras) -->
+    <div id="quizWordOrder" style="display:none;">
+      <div id="quizWordSlots" style="display:flex; flex-wrap:wrap; gap:6px; min-height:44px; padding:0.6rem; background:rgba(255,255,255,0.03); border:1px dashed rgba(255,255,255,0.12); border-radius:12px; margin-bottom:0.75rem; align-items:center;"></div>
+      <div id="quizWordBank" style="display:flex; flex-wrap:wrap; gap:6px;"></div>
+    </div>
+  </div>
+
+  <!-- Feedback -->
+  <div id="quizFeedback" style="display:none; margin:0.8rem 1.5rem 0; padding:0.85rem 1rem; border-radius:12px; font-size:0.85rem; line-height:1.5;"></div>
+
+  <!-- Next button -->
+  <div style="padding:0.8rem 1.5rem 0;">
+    <button id="quizNextBtn" style="display:none; width:100%; padding:0.9rem; background:linear-gradient(135deg,rgba(200,169,110,0.15),rgba(200,169,110,0.08)); border:1px solid rgba(200,169,110,0.3); border-radius:14px; font-family:'Bebas Neue',sans-serif; font-size:1rem; letter-spacing:0.1em; color:#c8a96e; cursor:pointer;">NEXT →</button>
+  </div>
+
+  <!-- Results screen -->
+  <div id="quizResults" style="display:none; padding:2rem 1.5rem; text-align:center;">
+    <div id="quizResultIcon" style="font-size:3rem; margin-bottom:0.8rem;"></div>
+    <div id="quizResultTitle" style="font-family:'Bebas Neue',sans-serif; font-size:2.5rem; letter-spacing:0.1em; color:#c8a96e; margin-bottom:0.4rem;"></div>
+    <div id="quizResultScore" style="font-size:1rem; color:rgba(255,255,255,0.5); margin-bottom:1.5rem;"></div>
+    <div id="quizBreakdown" style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:1.5rem; text-align:left;"></div>
+    <button id="quizDoneBtn" style="padding:0.9rem 2rem; background:linear-gradient(135deg,rgba(200,169,110,0.15),rgba(200,169,110,0.08)); border:1px solid rgba(200,169,110,0.3); border-radius:14px; font-family:'Bebas Neue',sans-serif; font-size:1rem; letter-spacing:0.1em; color:#c8a96e; cursor:pointer;">CONTINUE →</button>
+  </div>
+
+</div>
 </div>
 
 <nav class="bottom-nav" id="bottomNav">
