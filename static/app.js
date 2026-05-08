@@ -2656,3 +2656,272 @@ const RanksController = {
 };
 
 window.RanksController = RanksController;
+
+// ══════════════════════════════════════════════
+// LEVEL 1 QUIZ — flashcard / multi-format quiz controller
+// ══════════════════════════════════════════════
+const QuizController = {
+  questions: [], current: 0, score: 0, combo: 0, answered: false,
+  typeScores: { movie_id: [0,0], word_order: [0,0], definition: [0,0], verb: [0,0] },
+  wordSlots: [], wordBank: [],
+
+  SCENES: [
+    {id:'forrest_gump', movie:'Forrest Gump', quote:"Life is like a box of chocolates.", actor:'Tom Hanks', verb:{en:'to run',es:'correr'}, sentence:['Life','is','like','a','box','of','chocolates']},
+    {id:'home_alone', movie:'Home Alone', quote:"Keep the change, ya filthy animal.", actor:'Macaulay Culkin', verb:{en:'to protect',es:'proteger'}, sentence:['Keep','the','change']},
+    {id:'social_network', movie:'The Social Network', quote:"A million dollars isn't cool.", actor:'Justin Timberlake', verb:{en:'to create',es:'crear'}, sentence:['A','million','dollars','is','cool']},
+    {id:'cast_away', movie:'Cast Away', quote:"I have made fire!", actor:'Tom Hanks', verb:{en:'to survive',es:'sobrevivir'}, sentence:['I','have','made','fire']},
+    {id:'fight_club', movie:'Fight Club', quote:"The first rule of Fight Club is you do not talk about Fight Club.", actor:'Brad Pitt', verb:{en:'to fight',es:'pelear'}, sentence:['You','do','not','talk']},
+    {id:'seven', movie:'Se7en', quote:"What's in the box?", actor:'Brad Pitt', verb:{en:'to discover',es:'descubrir'}, sentence:['What','is','in','the','box']},
+    {id:'the_matrix', movie:'The Matrix', quote:"There is no spoon.", actor:'Keanu Reeves', verb:{en:'to choose',es:'elegir'}, sentence:['There','is','no','spoon']},
+    {id:'men_in_black', movie:'Men in Black', quote:"I make this look good.", actor:'Will Smith', verb:{en:'to protect',es:'proteger'}, sentence:['I','make','this','look','good']},
+    {id:'top_gun', movie:'Top Gun', quote:"I feel the need, the need for speed!", actor:'Tom Cruise', verb:{en:'to fly',es:'volar'}, sentence:['I','feel','the','need']},
+    {id:'back_to_the_future', movie:'Back to the Future', quote:"Roads? Where we're going we don't need roads.", actor:'Christopher Lloyd', verb:{en:'to travel',es:'viajar'}, sentence:['We','do','not','need','roads']},
+    {id:'the_blind_side', movie:'The Blind Side', quote:"You're changing that boy's life.", actor:'Sandra Bullock', verb:{en:'to change',es:'cambiar'}, sentence:['You','are','changing','his','life']},
+    {id:'clueless', movie:'Clueless', quote:"As if!", actor:'Alicia Silverstone', verb:{en:'to argue',es:'discutir'}, sentence:['As','if']},
+    {id:'the_intern', movie:'The Intern', quote:"Experience never gets old.", actor:'Robert De Niro', verb:{en:'to learn',es:'aprender'}, sentence:['Experience','never','gets','old']},
+    {id:'mystic_river', movie:'Mystic River', quote:"Is that my daughter in there?", actor:'Sean Penn', verb:{en:'to lose',es:'perder'}, sentence:['Is','that','my','daughter']},
+    {id:'mrs_doubtfire', movie:'Mrs. Doubtfire', quote:"Help is on the way, dear.", actor:'Robin Williams', verb:{en:'to help',es:'ayudar'}, sentence:['Help','is','on','the','way']},
+    {id:'jerry_maguire', movie:'Jerry Maguire', quote:"You had me at hello.", actor:'Renée Zellweger', verb:{en:'to love',es:'amar'}, sentence:['You','had','me','at','hello']},
+    {id:'apollo_13', movie:'Apollo 13', quote:"Houston, we have a problem.", actor:'Tom Hanks', verb:{en:'to solve',es:'resolver'}, sentence:['We','have','a','problem']},
+    {id:'pursuit_of_happyness', movie:'The Pursuit of Happyness', quote:"Don't ever let somebody tell you you can't do something.", actor:'Will Smith', verb:{en:'to believe',es:'creer'}, sentence:['You','can','do','it']},
+    {id:'fifth_element', movie:'The Fifth Element', quote:"Multipass!", actor:'Milla Jovovich', verb:{en:'to save',es:'salvar'}, sentence:['This','is','a','multipass']},
+    {id:'devil_wears_prada', movie:'The Devil Wears Prada', quote:"That's all.", actor:'Meryl Streep', verb:{en:'to work',es:'trabajar'}, sentence:['That','is','all']},
+  ],
+
+  DEFS: [
+    {en:'run',es_correct:'moverse rápido con las piernas',es_wrong:['cocinar con aceite caliente','escribir con un lápiz']},
+    {en:'protect',es_correct:'defender a alguien de un peligro',es_wrong:['olvidar algo importante','cantar una canción']},
+    {en:'survive',es_correct:'continuar viviendo después de un peligro',es_wrong:['comprar ropa nueva','hablar con un amigo']},
+    {en:'choose',es_correct:'seleccionar una opción entre varias',es_wrong:['romper un objeto de vidrio','dormir hasta tarde']},
+    {en:'believe',es_correct:'tener confianza en algo o alguien',es_wrong:['vender algo en el mercado','preparar la cena']},
+    {en:'save',es_correct:'rescatar a alguien de un peligro',es_wrong:['perder el autobús','lavar los platos']},
+    {en:'change',es_correct:'hacer que algo sea diferente',es_wrong:['subir a un árbol alto','beber agua fría']},
+    {en:'learn',es_correct:'adquirir nuevos conocimientos',es_wrong:['romper una ventana','conducir muy rápido']},
+  ],
+
+  shuffle(arr) { return [...arr].sort(() => Math.random() - 0.5); },
+
+  buildQuestions() {
+    const q = [];
+    const scenes = this.shuffle([...this.SCENES]);
+    scenes.forEach((scene, i) => {
+      const type = i % 4;
+      if (type === 0) {
+        const others = this.SCENES.filter(s => s.id !== scene.id);
+        const wrongs = this.shuffle(others).slice(0,3).map(s => s.movie);
+        q.push({ type:'movie_id', typeLabel:'¿De qué película es?', scene, question:`"${scene.quote}"`, options: this.shuffle([scene.movie,...wrongs]), answer: scene.movie });
+      } else if (type === 1) {
+        const words = this.shuffle([...scene.sentence]);
+        q.push({ type:'word_order', typeLabel:'Ordena las palabras', scene, question:`Ordena estas palabras para formar la frase de ${scene.movie}:`, words, answer: scene.sentence.join(' ') });
+      } else if (type === 2) {
+        const def = this.DEFS.find(d => d.en === scene.verb.en) || this.DEFS[i % this.DEFS.length];
+        const options = this.shuffle([def.es_correct, ...def.es_wrong.slice(0,2)]);
+        q.push({ type:'definition', typeLabel:'Elige la definición', scene, question:`¿Qué significa "${scene.verb.en}" en español?`, options, answer: def.es_correct });
+      } else {
+        const coin = Math.random() > 0.5;
+        const others = this.SCENES.filter(s => s.id !== scene.id);
+        if (coin) {
+          const wrongs = this.shuffle(others).slice(0,3).map(s => s.verb.es);
+          q.push({ type:'verb', typeLabel:'Traducción', scene, question:`Traduce al español:\n\n"${scene.verb.en}"`, options: this.shuffle([scene.verb.es,...wrongs]), answer: scene.verb.es });
+        } else {
+          const wrongs = this.shuffle(others).slice(0,3).map(s => s.verb.en);
+          q.push({ type:'verb', typeLabel:'Traducción', scene, question:`Traduce al inglés:\n\n"${scene.verb.es}"`, options: this.shuffle([scene.verb.en,...wrongs]), answer: scene.verb.en });
+        }
+      }
+    });
+    return q.slice(0,20);
+  },
+
+  open() {
+    this.questions = this.buildQuestions();
+    this.current = 0; this.score = 0; this.combo = 0; this.answered = false;
+    this.typeScores = { movie_id:[0,0], word_order:[0,0], definition:[0,0], verb:[0,0] };
+    document.getElementById('quizOverlay').style.display = 'block';
+    document.body.style.overflow = 'hidden';
+    document.getElementById('quizResults').style.display = 'none';
+    ['quizQuestionNum','quizQuestionText','quizQuestionType','quizPosterWrap','quizOptions','quizWordOrder'].forEach(id => {
+      const el = document.getElementById(id); if(el) el.style.display = '';
+    });
+    document.getElementById('quizNextBtn').style.display = 'none';
+    document.getElementById('quizFeedback').style.display = 'none';
+    document.getElementById('quizComboBadge').style.display = 'none';
+    this.renderQuestion();
+  },
+
+  close() {
+    document.getElementById('quizOverlay').style.display = 'none';
+    document.body.style.overflow = '';
+    setTimeout(() => { document.body.style.overflow = ''; document.documentElement.style.overflow = ''; }, 100);
+  },
+
+  renderQuestion() {
+    const q = this.questions[this.current];
+    const total = this.questions.length;
+    document.getElementById('quizProgressFill').style.width = ((this.current/total)*100)+'%';
+    document.getElementById('quizQuestionNum').textContent = 'PREGUNTA '+(this.current+1)+' DE '+total;
+    document.getElementById('quizQuestionType').textContent = q.typeLabel;
+    document.getElementById('quizQuestionText').textContent = q.question;
+    document.getElementById('quizFeedback').style.display = 'none';
+    document.getElementById('quizNextBtn').style.display = 'none';
+    document.getElementById('quizComboBadge').style.display = 'none';
+    this.answered = false;
+
+    const img = document.getElementById('quizPosterImg');
+    const movieLabel = document.getElementById('quizPosterMovie');
+    if (img) { img.src = '/static/posters/'+q.scene.id+'.jpg'; img.onerror = () => { img.style.display='none'; }; }
+    if (movieLabel) movieLabel.textContent = q.scene.movie;
+
+    const optEl = document.getElementById('quizOptions');
+    const woEl = document.getElementById('quizWordOrder');
+
+    if (q.type === 'word_order') {
+      optEl.style.display = 'none';
+      woEl.style.display = 'block';
+      this.wordSlots = [];
+      this.wordBank = [...q.words];
+      this.renderWordOrder(q);
+    } else {
+      optEl.style.display = 'flex';
+      woEl.style.display = 'none';
+      optEl.innerHTML = q.options.map(opt =>
+        `<button class="quiz-opt" data-val="${opt}">${opt}</button>`
+      ).join('');
+      optEl.querySelectorAll('.quiz-opt').forEach(btn => {
+        btn.onclick = () => this.selectAnswer(btn.dataset.val);
+      });
+    }
+  },
+
+  renderWordOrder(q) {
+    const slotsEl = document.getElementById('quizWordSlots');
+    const bankEl = document.getElementById('quizWordBank');
+    slotsEl.innerHTML = this.wordSlots.map((w,i) =>
+      `<span class="quiz-word-slot" data-i="${i}" onclick="QuizController.removeFromSlot(${i})">${w}</span>`
+    ).join('') || '<span style="color:rgba(255,255,255,0.2);font-size:0.75rem;padding:0.3rem;">Toca las palabras para ordenarlas</span>';
+    bankEl.innerHTML = this.wordBank.map((w,i) =>
+      `<span class="quiz-word-tile" data-i="${i}" onclick="QuizController.addToSlot(${i})">${w}</span>`
+    ).join('');
+  },
+
+  addToSlot(i) {
+    if (this.answered) return;
+    const word = this.wordBank[i];
+    this.wordSlots.push(word);
+    this.wordBank.splice(i,1);
+    this.renderWordOrder(this.questions[this.current]);
+    if (this.wordBank.length === 0) {
+      this.checkWordOrder();
+    }
+  },
+
+  removeFromSlot(i) {
+    if (this.answered) return;
+    const word = this.wordSlots[i];
+    this.wordBank.push(word);
+    this.wordSlots.splice(i,1);
+    this.renderWordOrder(this.questions[this.current]);
+  },
+
+  checkWordOrder() {
+    const q = this.questions[this.current];
+    const userAnswer = this.wordSlots.join(' ');
+    this.selectAnswer(userAnswer);
+  },
+
+  selectAnswer(selected) {
+    if (this.answered) return;
+    this.answered = true;
+    const q = this.questions[this.current];
+    const correct = selected.toLowerCase().trim() === q.answer.toLowerCase().trim();
+    if (correct) {
+      this.score++;
+      this.combo++;
+      this.typeScores[q.type][0]++;
+    } else {
+      this.combo = 0;
+    }
+    this.typeScores[q.type][1]++;
+
+    if (this.combo >= 3) {
+      const badge = document.getElementById('quizComboBadge');
+      document.getElementById('quizComboNum').textContent = this.combo;
+      badge.style.display = 'block';
+    }
+
+    if (q.type !== 'word_order') {
+      document.querySelectorAll('.quiz-opt').forEach(btn => {
+        btn.style.pointerEvents = 'none';
+        if (btn.dataset.val === q.answer) { btn.style.background='rgba(200,169,110,0.15)'; btn.style.borderColor='rgba(200,169,110,0.5)'; btn.style.color='#c8a96e'; }
+        else if (btn.dataset.val === selected && !correct) { btn.style.background='rgba(255,80,80,0.1)'; btn.style.borderColor='rgba(255,80,80,0.3)'; btn.style.color='rgba(255,100,100,0.8)'; }
+      });
+    }
+
+    const fb = document.getElementById('quizFeedback');
+    fb.style.display = 'block';
+    fb.style.background = correct ? 'rgba(200,169,110,0.08)' : 'rgba(255,80,80,0.06)';
+    fb.style.border = correct ? '0.5px solid rgba(200,169,110,0.2)' : '0.5px solid rgba(255,80,80,0.15)';
+    fb.style.color = correct ? '#c8a96e' : 'rgba(255,120,120,0.8)';
+    fb.textContent = correct ? '✓ ¡Correcto!' : '✗ La respuesta correcta es: '+q.answer;
+
+    const nextBtn = document.getElementById('quizNextBtn');
+    nextBtn.style.display = 'block';
+    nextBtn.textContent = this.current < this.questions.length-1 ? 'SIGUIENTE →' : 'VER RESULTADOS →';
+  },
+
+  next() {
+    this.current++;
+    if (this.current >= this.questions.length) this.showResults();
+    else this.renderQuestion();
+  },
+
+  async showResults() {
+    const total = this.questions.length;
+    const pct = Math.round((this.score/total)*100);
+    const passed = pct >= 70;
+    ['quizQuestionNum','quizQuestionText','quizQuestionType','quizPosterWrap','quizOptions','quizWordOrder','quizFeedback','quizNextBtn','quizComboBadge'].forEach(id => {
+      const el = document.getElementById(id); if(el) el.style.display='none';
+    });
+    document.getElementById('quizProgressFill').style.width='100%';
+    document.getElementById('quizResults').style.display='block';
+    document.getElementById('quizResultIcon').textContent = passed ? '🏆' : '🎬';
+    document.getElementById('quizResultTitle').textContent = passed ? '¡NIVEL 2 DESBLOQUEADO!' : 'SIGUE PRACTICANDO';
+    document.getElementById('quizResultScore').textContent = pct+'% — '+this.score+'/'+total+' correctas'+(passed ? '' : ' · Necesitas 70% para pasar');
+
+    const typeLabels = { movie_id:'Películas', word_order:'Ordenar', definition:'Definiciones', verb:'Verbos' };
+    const bd = document.getElementById('quizBreakdown');
+    bd.innerHTML = Object.entries(this.typeScores).map(([k,[c,t]]) =>
+      `<div class="quiz-breakdown-card">
+        <div class="quiz-breakdown-num">${t > 0 ? Math.round((c/t)*100) : 0}%</div>
+        <div class="quiz-breakdown-lbl">${typeLabels[k] || k}</div>
+      </div>`
+    ).join('');
+
+    if (passed) {
+      try {
+        const authToken = localStorage.getItem('mirror_token');
+        const res = await fetch('/api/quiz-pass', { method:'POST', headers:{'Authorization':'Bearer '+authToken,'Content-Type':'application/json'} });
+        if (res.ok) {
+          if (typeof userProgress !== 'undefined') userProgress._quizPassed = true;
+          if (typeof checkLevel2Unlock === 'function') checkLevel2Unlock();
+        }
+      } catch(e) { console.error('quiz-pass error', e); }
+    }
+  },
+
+  init() {
+    document.getElementById('quizNextBtn').onclick = () => this.next();
+    document.getElementById('quizCloseBtn').onclick = () => this.close();
+    document.getElementById('quizDoneBtn').onclick = () => this.close();
+  }
+};
+
+function wireQuizControls() { QuizController.init(); }
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', wireQuizControls);
+} else {
+  wireQuizControls();
+}
+
+window.QuizController = QuizController;
+function openQuiz() { QuizController.open(); }
+window.openQuiz = openQuiz;
