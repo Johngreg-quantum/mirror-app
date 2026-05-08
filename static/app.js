@@ -2899,7 +2899,14 @@ const QuizController = {
     if (passed) {
       try {
         const authToken = localStorage.getItem('mirror_token');
-        const res = await fetch('/api/quiz-pass', { method:'POST', headers:{'Authorization':'Bearer '+authToken,'Content-Type':'application/json'} });
+        const res = await fetch('/api/quiz-pass', {
+          method: 'POST',
+          headers: {
+            'Authorization': 'Bearer ' + authToken,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ score: pct })
+        });
         if (res.ok) {
           if (typeof userProgress !== 'undefined') userProgress._quizPassed = true;
           if (typeof checkLevel2Unlock === 'function') checkLevel2Unlock();
