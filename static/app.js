@@ -2905,7 +2905,7 @@ const QuizController = {
             'Authorization': 'Bearer ' + authToken,
             'Content-Type': 'application/json'
           },
-          body: JSON.stringify({ score: pct })
+          body: JSON.stringify({ quiz: 'level1', score: pct })
         });
         if (res.ok) {
           if (typeof userProgress !== 'undefined') userProgress._quizPassed = true;
