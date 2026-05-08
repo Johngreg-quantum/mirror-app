@@ -388,11 +388,12 @@ let activeChallenge = null;  // full challenge object when on challenge screen
 
 window.onYouTubeIframeAPIReady = function() { ytApiReady = true; };
 
-let mediaRecorder = null;
-let audioChunks   = [];
-let audioBlob     = null;
-let audioEl       = null;
-let micStream     = null;
+let mediaRecorder  = null;
+let audioChunks    = [];
+let audioBlob      = null;
+let audioEl        = null;
+let micStream      = null;
+let recordingStart = 0;
 let timerInterval = null;
 let recSecs       = 0;
 
@@ -1084,6 +1085,7 @@ async function startRec() {
     micStream = null;
   };
 
+  recordingStart = Date.now();
   mediaRecorder.start(100);
   startWaveform();
   renderRecordingActiveDisplay({
@@ -1169,6 +1171,9 @@ async function analyze() {
   const ext = audioBlob.type.includes('mp4') ? 'mp4' : audioBlob.type.includes('ogg') ? 'ogg' : 'webm';
   form.append('audio', audioBlob, `recording.${ext}`);
 
+  const recordingEnd = Date.now();
+  form.append('duration_seconds', Math.round((recordingEnd - recordingStart) / 1000));
+
   try {
     const res = await fetch(`${API}/api/submit`, {
       method: 'POST',
@@ -1191,6 +1196,7 @@ async function analyze() {
     const data      = await res.json();
     const prevLevel = userProgress.level;
     showScore(data);
+    if (typeof MissionsController !== 'undefined') MissionsController.onSubmitResponse(data);
     await refreshPostScoreSurfaces({
       activeScene: activeScene,
       previousLevel: prevLevel,
@@ -2932,3 +2938,186 @@ if (document.readyState === 'loading') {
 window.QuizController = QuizController;
 function openQuiz() { QuizController.open(); }
 window.openQuiz = openQuiz;
+
+// ══════════════════════════════════════════════
+// MISSIONS — daily quest, weekly challenge, active missions, XP toasts
+// ══════════════════════════════════════════════
+const MISSION_META = {
+  daily:           { icon: '🎬', title: "Today's Daily Scene",         xp: 100 },
+  pronunciation:   { icon: '⭐', title: 'Score 85%+ on 5 takes',       xp:  75 },
+  genre_drama:     { icon: '🎭', title: 'Practice 5 drama scenes',     xp: 150 },
+  sprint:          { icon: '⚡', title: 'Finish a scene under 4 min',  xp:  50 },
+  weekly_thriller: { icon: '🔪', title: 'Practice 3 thriller scenes',  xp: 200 },
+};
+
+const MissionsController = {
+  data:   null,
+  loaded: false,
+
+  init() {
+    this.bindDailyCta();
+    this.load();
+  },
+
+  async load() {
+    const tok = localStorage.getItem('mirror_token');
+    if (!tok) return;
+    try {
+      const r = await fetch(`${API}/api/missions`, {
+        headers: { Authorization: 'Bearer ' + tok },
+      });
+      if (!r.ok) return;
+      this.data = await r.json();
+      this.loaded = true;
+      this.render();
+    } catch (e) {
+      console.error('MissionsController load failed', e);
+    }
+  },
+
+  render() {
+    const d = this.data;
+    if (!d) return;
+
+    // Today's XP pill
+    const xpEl   = document.getElementById('mpTodayXp');
+    const goalEl = document.getElementById('mpTodayGoal');
+    if (xpEl)   xpEl.textContent   = (d.today_xp || 0).toLocaleString();
+    if (goalEl) goalEl.textContent = (d.daily_xp_goal || 1000).toLocaleString();
+
+    // Streak banner
+    const s = d.streak || {};
+    const tag   = document.getElementById('mpStreakTag');
+    const title = document.getElementById('mpStreakTitle');
+    const sub   = document.getElementById('mpStreakSub');
+    if (tag)   tag.textContent   = '🔥 ' + (s.current || 0) + '-Day Streak';
+    if (title) title.textContent = (s.current || 0) > 0
+        ? "Great work — keep your streak alive."
+        : 'Complete a mission today to start your streak';
+    if (sub)   sub.textContent   = 'Longest: ' + (s.longest || 0) + ' days · Total XP: ' + (s.total_xp || 0).toLocaleString();
+
+    // Daily quest card
+    const dq = d.daily_quest;
+    const dailyMovie = document.getElementById('mpDailyMovie');
+    const dailyQuote = document.getElementById('mpDailyQuote');
+    const dailyBar   = document.getElementById('mpDailyBar');
+    const dailyCount = document.getElementById('mpDailyCount');
+    const dailyCta   = document.getElementById('mpDailyCta');
+    const dailySid   = (typeof userProfile !== 'undefined' && userProfile && userProfile.daily_scene_id) || '';
+    const dailyScene = (typeof scenes !== 'undefined' && scenes && dailySid) ? scenes[dailySid] : null;
+    if (dailyMovie) dailyMovie.textContent = dailyScene ? (dailyScene.movie || dailyScene.title || dailySid) : '—';
+    if (dailyQuote) {
+      const q = dailyScene ? (dailyScene.quote || '') : '';
+      dailyQuote.textContent = q ? '"' + (q.length > 90 ? q.slice(0, 90) + '…' : q) + '"' : '';
+    }
+    if (dq && dailyBar)   dailyBar.style.width = Math.min(100, (dq.progress / dq.goal) * 100) + '%';
+    if (dq && dailyCount) dailyCount.textContent = dq.progress + '/' + dq.goal;
+    if (dailyCta) {
+      if (dq && dq.completed) {
+        dailyCta.textContent = '✓ Completed';
+        dailyCta.style.background = 'rgba(106,170,46,0.2)';
+        dailyCta.style.color = '#6aaa2e';
+        dailyCta.style.cursor = 'default';
+      } else {
+        dailyCta.textContent = 'Practice →';
+        dailyCta.style.background = '#c8a96e';
+        dailyCta.style.color = '#0d0d0d';
+        dailyCta.style.cursor = 'pointer';
+      }
+    }
+
+    // Weekly challenge card
+    const wc       = d.weekly_challenge;
+    const wBar     = document.getElementById('mpWeeklyBar');
+    const wCount   = document.getElementById('mpWeeklyCount');
+    if (wc && wBar)   wBar.style.width = Math.min(100, (wc.progress / wc.goal) * 100) + '%';
+    if (wc && wCount) wCount.textContent = wc.progress + '/' + wc.goal;
+
+    // Active missions list (excluding the two surfaced above)
+    const list = document.getElementById('mpMissionList');
+    if (!list) return;
+    const surfaced = new Set(['daily', 'weekly_thriller']);
+    const items    = (d.active_missions || []).filter(m => !surfaced.has(m.mission_id));
+    list.innerHTML = items.map(m => {
+      const meta = MISSION_META[m.mission_id] || { icon: '📌', title: m.mission_id, xp: 100 };
+      const pct  = Math.min(100, (m.progress / m.goal) * 100);
+      return (
+        '<div class="mp-mission ' + (m.completed ? 'completed' : '') + '" data-mission-id="' + m.mission_id + '">' +
+          '<div class="mp-mission-icon">' + meta.icon + '</div>' +
+          '<div class="mp-mission-body">' +
+            '<div class="mp-mission-title">' + meta.title + '</div>' +
+            '<div class="mp-mission-bar-wrap">' +
+              '<div class="mp-mission-bar"><div class="mp-mission-bar-fill" style="width:' + pct + '%"></div></div>' +
+              '<div class="mp-mission-count">' + m.progress + '/' + m.goal + '</div>' +
+            '</div>' +
+          '</div>' +
+          '<div class="mp-mission-xp">' + (m.completed ? '✓ ' : '+') + meta.xp + ' XP</div>' +
+        '</div>'
+      );
+    }).join('');
+  },
+
+  bindDailyCta() {
+    const cta = document.getElementById('mpDailyCta');
+    if (!cta) return;
+    cta.onclick = () => {
+      if (this.data && this.data.daily_quest && this.data.daily_quest.completed) return;
+      const sid = (typeof userProfile !== 'undefined' && userProfile && userProfile.daily_scene_id) || '';
+      if (sid && typeof scenes !== 'undefined' && scenes && scenes[sid] && typeof openModal === 'function') {
+        openModal(sid, scenes[sid]);
+      }
+    };
+  },
+
+  /**
+   * Hook for /api/submit responses. Bumps mission progress bars in-place and
+   * shows XP toasts for any newly-completed missions, without a full reload.
+   */
+  onSubmitResponse(resp) {
+    if (!resp || !Array.isArray(resp.missions_updated) || !resp.missions_updated.length) return;
+
+    // Update local cache so re-renders are accurate
+    if (this.data && Array.isArray(this.data.active_missions)) {
+      const byId = {};
+      this.data.active_missions.forEach(m => { byId[m.mission_id] = m; });
+      resp.missions_updated.forEach(u => {
+        if (byId[u.mission_id]) {
+          byId[u.mission_id].progress  = u.new_progress;
+          byId[u.mission_id].completed = u.completed;
+        }
+      });
+      // Bump today_xp + total_xp on the local snapshot
+      if (resp.total_xp_earned) {
+        this.data.today_xp = (this.data.today_xp || 0) + resp.total_xp_earned;
+        if (this.data.streak) this.data.streak.total_xp = (this.data.streak.total_xp || 0) + resp.total_xp_earned;
+      }
+    }
+
+    // Re-render so visible bars and counters reflect new state
+    if (this.loaded) this.render();
+
+    // Toasts for completions only (more meaningful than every increment)
+    resp.missions_updated.forEach(u => {
+      if (u.completed && u.xp_earned > 0) this.showXpToast(u.xp_earned, u.mission_id);
+    });
+    // If progress advanced but nothing completed, still show a single combined toast
+    const completedCount = resp.missions_updated.filter(u => u.completed).length;
+    if (completedCount === 0 && resp.total_xp_earned > 0) {
+      this.showXpToast(resp.total_xp_earned, null);
+    }
+  },
+
+  showXpToast(amount, missionId) {
+    const wrap = document.getElementById('mpXpToastWrap');
+    if (!wrap) return;
+    const meta = missionId && MISSION_META[missionId];
+    const label = meta ? (meta.icon + ' +' + amount + ' XP') : ('+' + amount + ' XP');
+    const el = document.createElement('div');
+    el.className = 'mp-xp-toast';
+    el.textContent = label;
+    wrap.appendChild(el);
+    setTimeout(() => { if (el.parentNode) el.parentNode.removeChild(el); }, 3200);
+  },
+};
+
+window.MissionsController = MissionsController;

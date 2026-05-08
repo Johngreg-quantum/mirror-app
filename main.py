@@ -269,6 +269,241 @@ def get_daily_scene_id() -> str:
     return list(SCENES.keys())[h % len(SCENES)]
 
 
+def get_today_daily_scene(scenes):
+    """Return one scene from the list, deterministic per UTC calendar day."""
+    if not scenes:
+        return None
+    return scenes[date.today().toordinal() % len(scenes)]
+
+
+# ---------------------------------------------------------------------------
+# Missions — defaults and time helpers
+# ---------------------------------------------------------------------------
+
+DEFAULT_MISSIONS = [
+    # (mission_id, goal, cadence)  — cadence: "daily" expires tonight, "weekly" expires next Sunday
+    ("daily",           3, "daily"),
+    ("pronunciation",   5, "daily"),
+    ("genre_drama",     5, "weekly"),
+    ("sprint",          1, "daily"),
+    ("weekly_thriller", 3, "weekly"),
+]
+
+
+def _midnight_tonight_utc_str() -> str:
+    """End of today UTC, i.e. tomorrow 00:00:00 UTC, formatted YYYY-MM-DD HH:MM:SS."""
+    now = datetime.now(timezone.utc)
+    end = now.replace(hour=0, minute=0, second=0, microsecond=0) + timedelta(days=1)
+    return end.strftime("%Y-%m-%d %H:%M:%S")
+
+
+def _next_sunday_midnight_utc_str() -> str:
+    """End of the upcoming Sunday UTC (i.e. next Monday 00:00:00 UTC). If today is
+    already Sunday, returns end of next Sunday (7 days out)."""
+    now = datetime.now(timezone.utc)
+    today = now.replace(hour=0, minute=0, second=0, microsecond=0)
+    days_until_sunday = (6 - now.weekday()) % 7  # Monday=0 ... Sunday=6
+    if days_until_sunday == 0:
+        days_until_sunday = 7
+    end = today + timedelta(days=days_until_sunday + 1)  # Monday 00:00 == end of Sunday
+    return end.strftime("%Y-%m-%d %H:%M:%S")
+
+
+SCENE_GENRES = {
+    # Drama
+    "forrest_gump":          "drama",
+    "shawshank":             "drama",
+    "good_will_hunting":     "drama",
+    "dead_poets":            "drama",
+    "the_blind_side":        "drama",
+    "pursuit_of_happyness":  "drama",
+    "rain_man":              "drama",
+    "as_good_as_it_gets":    "drama",
+    "rocky":                 "drama",
+    "whiplash":              "drama",
+    "wall_street":           "drama",
+    "social_network":        "drama",
+    "jerry_maguire":         "drama",
+    "cast_away":             "drama",
+    "apollo_13":             "drama",
+    "mystic_river":          "drama",
+    "titanic":               "drama",
+    "a_few_good_men":        "drama",
+    "wolf_of_wall_street":   "drama",
+    "interstellar":          "drama",
+    "the_truman_show":       "drama",
+    "braveheart":            "drama",
+    "godfather":             "drama",
+    "gladiator":             "drama",
+    "breakfast_club":        "drama",
+    # Thriller
+    "seven":                 "thriller",
+    "dark_knight":           "thriller",
+    "fight_club":            "thriller",
+    "the_matrix":            "thriller",
+    "basic_instinct":        "thriller",
+    "sixth_sense":           "thriller",
+    "terminator":            "thriller",
+    "taken":                 "thriller",
+    "heat":                  "thriller",
+    # Other (won't match drama/thriller missions)
+    "home_alone":            "family",
+    "back_to_the_future":    "scifi",
+    "avengers":              "action",
+    "men_in_black":          "scifi",
+    "mrs_doubtfire":         "comedy",
+    "fifth_element":         "scifi",
+    "top_gun":               "action",
+    "clueless":              "comedy",
+    "the_intern":            "comedy",
+    "devil_wears_prada":     "comedy",
+    "ferris_bueller":        "comedy",
+    "legally_blonde":        "comedy",
+    "notting_hill":          "romance",
+}
+
+MISSION_XP = {
+    "daily":           100,
+    "pronunciation":    75,
+    "genre_drama":     150,
+    "sprint":           50,
+    "weekly_thriller": 200,
+}
+
+
+def seed_user_missions(username: str, db) -> None:
+    """Insert any default missions the user is missing or whose previous instance
+    has expired. `db` is a database cursor (matches the pattern of other helpers)."""
+    now_str = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S")
+    db.execute(
+        f"SELECT mission_id FROM user_missions "
+        f"WHERE username = {PH} AND expires_at > {PH}",
+        (username, now_str),
+    )
+    active_ids = {r[0] for r in db.fetchall()}
+
+    for mission_id, goal, cadence in DEFAULT_MISSIONS:
+        if mission_id in active_ids:
+            continue
+        expires = _midnight_tonight_utc_str() if cadence == "daily" else _next_sunday_midnight_utc_str()
+        db.execute(
+            f"INSERT INTO user_missions (username, mission_id, progress, goal, expires_at) "
+            f"VALUES ({PH}, {PH}, 0, {PH}, {PH})",
+            (username, mission_id, goal, expires),
+        )
+
+
+async def update_missions(username: str, scene_id: str, score: float,
+                          duration_seconds: float, take_number: int, db):
+    """Advance any active user_missions matching this submission. Returns
+    [{mission_id, new_progress, completed, xp_earned}]. Also updates user_streak
+    (current/longest streak, daily_xp, total_xp)."""
+    now_str   = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S")
+    today_str = date.today().strftime("%Y-%m-%d")
+
+    db.execute(
+        f"SELECT id, mission_id, progress, goal, completed, xp_awarded "
+        f"FROM user_missions WHERE username = {PH} AND expires_at > {PH}",
+        (username, now_str),
+    )
+    rows = db.fetchall()
+
+    daily_today = get_daily_scene_id()
+    genre       = SCENE_GENRES.get(scene_id, "")
+    duration    = float(duration_seconds or 0)
+    score_pct   = float(score or 0)
+
+    matched = []
+    for r in rows:
+        row_id     = r[0]
+        mid        = r[1]
+        progress   = int(r[2] or 0)
+        goal       = int(r[3])
+        completed  = bool(r[4])
+        xp_awarded = bool(r[5])
+        if completed:
+            continue
+
+        advances = (
+            (mid == "daily"           and scene_id == daily_today) or
+            (mid == "pronunciation"   and score_pct >= 85)         or
+            (mid == "genre_drama"     and genre == "drama")        or
+            (mid == "sprint"          and take_number == 1 and duration > 0 and duration <= 240) or
+            (mid == "weekly_thriller" and genre == "thriller")
+        )
+        if not advances:
+            continue
+
+        new_progress  = progress + 1
+        new_completed = new_progress >= goal
+        xp_earned     = 0
+
+        if new_completed and not xp_awarded:
+            xp_earned = MISSION_XP.get(mid, 100)
+            db.execute(
+                f"UPDATE user_missions SET progress = {PH}, completed = {PH}, xp_awarded = {PH} "
+                f"WHERE id = {PH}",
+                (new_progress, True, True, row_id),
+            )
+        else:
+            db.execute(
+                f"UPDATE user_missions SET progress = {PH} WHERE id = {PH}",
+                (new_progress, row_id),
+            )
+
+        matched.append({
+            "mission_id":   mid,
+            "new_progress": new_progress,
+            "completed":    new_completed,
+            "xp_earned":    xp_earned,
+        })
+
+    total_xp_earned = sum(m["xp_earned"] for m in matched)
+
+    # Ensure user_streak row exists; load current state
+    db.execute(
+        f"SELECT current_streak, longest_streak, last_active_date, total_xp, daily_xp, daily_xp_date "
+        f"FROM user_streak WHERE username = {PH}",
+        (username,),
+    )
+    srow = db.fetchone()
+    if srow is None:
+        cur_streak, longest, last_active = 0, 0, ""
+        total_xp,  daily_xp, daily_xp_date = 0, 0, ""
+        db.execute(
+            f"INSERT INTO user_streak (username) VALUES ({PH})",
+            (username,),
+        )
+    else:
+        cur_streak    = int(srow[0] or 0)
+        longest       = int(srow[1] or 0)
+        last_active   = (srow[2] or "")
+        total_xp      = int(srow[3] or 0)
+        daily_xp      = int(srow[4] or 0)
+        daily_xp_date = (srow[5] or "")
+
+    if last_active != today_str:
+        cur_streak += 1
+        last_active = today_str
+        if cur_streak > longest:
+            longest = cur_streak
+
+    if daily_xp_date != today_str:
+        daily_xp = 0
+        daily_xp_date = today_str
+    daily_xp += total_xp_earned
+    total_xp += total_xp_earned
+
+    db.execute(
+        f"UPDATE user_streak SET current_streak = {PH}, longest_streak = {PH}, "
+        f"last_active_date = {PH}, total_xp = {PH}, daily_xp = {PH}, daily_xp_date = {PH} "
+        f"WHERE username = {PH}",
+        (cur_streak, longest, last_active, total_xp, daily_xp, daily_xp_date, username),
+    )
+
+    return matched
+
+
 # ---------------------------------------------------------------------------
 # Database initialisation
 # ---------------------------------------------------------------------------
@@ -420,6 +655,58 @@ def init_db():
                 correct_count INTEGER DEFAULT 0,
                 updated_at    TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 PRIMARY KEY (user_id, scene_id, word_en)
+            )
+        """)
+
+    # Missions + streak tables (dual PG / SQLite)
+    if USE_PG:
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS user_missions (
+                id          SERIAL PRIMARY KEY,
+                username    TEXT NOT NULL,
+                mission_id  TEXT NOT NULL,
+                progress    INTEGER DEFAULT 0,
+                goal        INTEGER NOT NULL,
+                completed   BOOLEAN DEFAULT FALSE,
+                xp_awarded  BOOLEAN DEFAULT FALSE,
+                expires_at  TEXT NOT NULL,
+                created_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS user_streak (
+                username         TEXT PRIMARY KEY,
+                current_streak   INTEGER DEFAULT 0,
+                longest_streak   INTEGER DEFAULT 0,
+                last_active_date TEXT DEFAULT '',
+                total_xp         INTEGER DEFAULT 0,
+                daily_xp         INTEGER DEFAULT 0,
+                daily_xp_date    TEXT DEFAULT ''
+            )
+        """)
+    else:
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS user_missions (
+                id          INTEGER PRIMARY KEY AUTOINCREMENT,
+                username    TEXT NOT NULL,
+                mission_id  TEXT NOT NULL,
+                progress    INTEGER DEFAULT 0,
+                goal        INTEGER NOT NULL,
+                completed   BOOLEAN DEFAULT 0,
+                xp_awarded  BOOLEAN DEFAULT 0,
+                expires_at  TEXT NOT NULL,
+                created_at  TEXT DEFAULT (datetime('now'))
+            )
+        """)
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS user_streak (
+                username         TEXT PRIMARY KEY,
+                current_streak   INTEGER DEFAULT 0,
+                longest_streak   INTEGER DEFAULT 0,
+                last_active_date TEXT DEFAULT '',
+                total_xp         INTEGER DEFAULT 0,
+                daily_xp         INTEGER DEFAULT 0,
+                daily_xp_date    TEXT DEFAULT ''
             )
         """)
 
@@ -749,6 +1036,7 @@ async def get_daily():
 async def submit_recording(
     scene_id: str = Form(...),
     audio: UploadFile = File(...),
+    duration_seconds: float = Form(0.0),
     creds: HTTPAuthorizationCredentials = Depends(bearer),
 ):
     user = decode_token(creds)  # raises 401 if missing / invalid
@@ -874,6 +1162,21 @@ async def submit_recording(
     best_score_scene = float(row[1] or 0)
     translation_unlocked = total_attempts >= 3 and best_score_scene >= 70
 
+    # Advance any active missions and roll user_streak XP/streak counters.
+    # take_number is 1-based: this submission's position in the user's history
+    # for this scene (1 = first attempt).
+    seed_user_missions(user["username"], cur)
+    take_number = int(attempt_count) + 1
+    missions_updated = await update_missions(
+        username=user["username"],
+        scene_id=scene_id,
+        score=score,
+        duration_seconds=duration_seconds,
+        take_number=take_number,
+        db=cur,
+    )
+    total_xp_earned = sum(m["xp_earned"] for m in missions_updated)
+
     conn.commit()
     conn.close()
 
@@ -896,6 +1199,8 @@ async def submit_recording(
         "streak":               new_streak,
         "is_new_pb":            is_new_pb,
         "prev_best":            prev_best,
+        "missions_updated":     missions_updated,
+        "total_xp_earned":      total_xp_earned,
     }
 
 
@@ -1101,6 +1406,67 @@ async def get_ranks_social(user: dict = Depends(current_user)):
         "feed":             feed,
         "top3":             top3,
         "leaderboard":      leaderboard,
+    }
+
+
+@app.get("/api/missions")
+async def get_missions(user: dict = Depends(current_user)):
+    """Return the user's active missions, daily quest, weekly challenge, and
+    streak/XP summary. Seeds default missions on first call after expiry."""
+    conn = get_conn()
+    cur  = conn.cursor()
+
+    seed_user_missions(user["username"], cur)
+
+    now_str = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S")
+    cur.execute(
+        f"SELECT mission_id, progress, goal, completed, xp_awarded, expires_at "
+        f"FROM user_missions WHERE username = {PH} AND expires_at > {PH} "
+        f"ORDER BY id ASC",
+        (user["username"], now_str),
+    )
+    missions = [
+        {
+            "mission_id": r[0],
+            "progress":   int(r[1] or 0),
+            "goal":       int(r[2]),
+            "completed":  bool(r[3]),
+            "xp_awarded": bool(r[4]),
+            "expires_at": r[5],
+        }
+        for r in cur.fetchall()
+    ]
+    by_id = {m["mission_id"]: m for m in missions}
+
+    today_str = date.today().strftime("%Y-%m-%d")
+    cur.execute(
+        f"SELECT current_streak, longest_streak, last_active_date, total_xp, daily_xp, daily_xp_date "
+        f"FROM user_streak WHERE username = {PH}",
+        (user["username"],),
+    )
+    srow = cur.fetchone()
+    if srow:
+        streak = {
+            "current":          int(srow[0] or 0),
+            "longest":          int(srow[1] or 0),
+            "last_active_date": srow[2] or "",
+            "total_xp":         int(srow[3] or 0),
+        }
+        today_xp = int(srow[4] or 0) if (srow[5] or "") == today_str else 0
+    else:
+        streak   = {"current": 0, "longest": 0, "last_active_date": "", "total_xp": 0}
+        today_xp = 0
+
+    conn.commit()
+    conn.close()
+
+    return {
+        "daily_quest":      by_id.get("daily"),
+        "streak":           streak,
+        "weekly_challenge": by_id.get("weekly_thriller"),
+        "active_missions":  missions,
+        "today_xp":         today_xp,
+        "daily_xp_goal":    1000,
     }
 
 

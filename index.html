@@ -1266,6 +1266,23 @@
     .quiz-breakdown-card { background:rgba(255,255,255,0.04); border:0.5px solid rgba(255,255,255,0.08); border-radius:12px; padding:0.75rem; }
     .quiz-breakdown-num { font-size:1.4rem; font-weight:500; color:#c8a96e; }
     .quiz-breakdown-lbl { font-size:0.6rem; color:rgba(255,255,255,0.3); margin-top:2px; letter-spacing:0.04em; }
+
+    /* ── MISSIONS PANEL — active mission cards + XP toast ── */
+    .mp-mission { background:rgba(255,255,255,0.02); border:0.5px solid rgba(255,255,255,0.07); border-radius:14px; padding:13px 14px; display:flex; align-items:center; gap:12px; transition: opacity 0.3s ease, border-color 0.3s ease; }
+    .mp-mission.completed { opacity:0.6; border-color:rgba(106,170,46,0.25); background:rgba(106,170,46,0.04); }
+    .mp-mission-icon { width:40px; height:40px; border-radius:12px; display:flex; align-items:center; justify-content:center; font-size:18px; flex-shrink:0; background:rgba(200,169,110,0.08); }
+    .mp-mission-body { flex:1; min-width:0; }
+    .mp-mission-title { font-family:'Georgia',serif; font-size:13px; color:#fff; margin-bottom:4px; }
+    .mp-mission-bar-wrap { display:flex; align-items:center; gap:8px; }
+    .mp-mission-bar { flex:1; height:3px; background:rgba(255,255,255,0.06); border-radius:3px; overflow:hidden; }
+    .mp-mission-bar-fill { height:100%; width:0%; background:#c8a96e; border-radius:3px; transition:width 0.5s ease; }
+    .mp-mission-count { font-family:'DM Sans',sans-serif; font-size:10px; color:#888; font-weight:600; }
+    .mp-mission-xp { font-family:'DM Sans',sans-serif; font-size:11px; font-weight:700; color:#c8a96e; flex-shrink:0; }
+
+    #mpXpToastWrap { position:fixed; top:80px; right:16px; z-index:9999; display:flex; flex-direction:column; gap:8px; pointer-events:none; }
+    .mp-xp-toast { background:linear-gradient(135deg, rgba(200,169,110,0.95), rgba(232,207,160,0.92)); color:#0d0d0d; padding:10px 16px; border-radius:12px; font-family:'Bebas Neue',sans-serif; font-size:18px; letter-spacing:0.08em; box-shadow:0 8px 24px rgba(0,0,0,0.5), 0 0 0 0.5px rgba(200,169,110,0.6); animation: mpXpToastIn 0.4s cubic-bezier(0.34,1.56,0.64,1), mpXpToastOut 0.4s ease 2.4s forwards; pointer-events:auto; }
+    @keyframes mpXpToastIn { from { transform:translateX(120%); opacity:0; } to { transform:translateX(0); opacity:1; } }
+    @keyframes mpXpToastOut { from { transform:translateX(0); opacity:1; } to { transform:translateX(120%); opacity:0; } }
   </style>
   <script type="module" src="https://unpkg.com/@splinetool/viewer@1.12.90/build/spline-viewer.js"></script>
 </head>
@@ -2045,6 +2062,7 @@
 <script src="/static/daily-challenge-domain.js"></script>
 <script src="/static/app-runtime-utils.js"></script>
 <script src="/static/app-progress-orchestration.js"></script>
+<div id="mpXpToastWrap"></div>
 <script src="/static/app-post-score-orchestration.js"></script>
 <script src="/static/app-leaderboard-orchestration.js"></script>
 <script src="/static/app-level-panel-orchestration.js"></script>
@@ -2368,83 +2386,61 @@
     </div>
   </div>
   <div class="app-panel" id="panelMissions">
-  <div style="padding:16px 4px 12px; display:flex; justify-content:space-between; align-items:flex-end;">
-    <div>
-      <div style="font-family:'DM Sans',sans-serif; font-size:9px; letter-spacing:2px; text-transform:uppercase; color:#555; margin-bottom:4px;">Daily</div>
-      <div style="font-family:'Bebas Neue',sans-serif; font-size:28px; letter-spacing:0.1em; color:#fff;">Missions</div>
-    </div>
-    <div id="missionsResetPill" style="display:flex; align-items:center; gap:5px; background:rgba(255,255,255,0.04); border:0.5px solid rgba(255,255,255,0.1); border-radius:10px; padding:6px 12px; margin-bottom:4px;">
-      <span style="font-size:11px;">⏱</span>
-      <span style="font-family:'DM Sans',sans-serif; font-size:10px; color:#555;">Resets in</span>
-      <span id="missionsCountdown" style="font-family:'DM Sans',sans-serif; font-size:10px; font-weight:700; color:#c8a96e;">--:--:--</span>
-    </div>
-  </div>
-
-  <!-- Streak banner -->
-  <div id="missionsStreakBanner" style="background:rgba(200,169,110,0.06); border:0.5px solid rgba(200,169,110,0.25); border-radius:14px; padding:14px 16px; margin-bottom:14px; display:flex; align-items:center; justify-content:space-between;">
-    <div>
-      <div id="missionsStreakTag" style="font-family:'DM Sans',sans-serif; font-size:9px; letter-spacing:2px; text-transform:uppercase; color:#c8a96e; margin-bottom:4px;">🔥 0-Day Streak</div>
-      <div id="missionsStreakTitle" style="font-family:'Georgia',serif; font-size:15px; color:#fff;">Complete today's scene to start your streak</div>
-      <div id="missionsStreakSub" style="font-family:'DM Sans',sans-serif; font-size:10px; color:#555; margin-top:3px;">Complete 1 mission daily to maintain it</div>
-    </div>
-    <div id="missionsStreakDots" style="display:flex; flex-direction:column; gap:5px; align-items:center;"></div>
-  </div>
-
-  <!-- Featured daily challenge -->
-  <div style="font-family:'DM Sans',sans-serif; font-size:9px; letter-spacing:2px; text-transform:uppercase; color:#444; margin-bottom:10px;">Featured Challenge</div>
-  <div id="missionsDailyCard" style="background:#111; border:0.5px solid #c8a96e; border-radius:16px; overflow:hidden; margin-bottom:14px;">
-    <div style="padding:14px 16px 10px;">
-      <div style="font-family:'DM Sans',sans-serif; font-size:9px; letter-spacing:2px; text-transform:uppercase; color:#c8a96e; margin-bottom:6px; display:flex; align-items:center; gap:8px;">
-        Scene of the Day <span id="missionsLiveBadge" style="background:#c8a96e; color:#0d0d0d; font-size:8px; letter-spacing:1px; padding:2px 7px; border-radius:4px; font-weight:700; font-family:'DM Sans',sans-serif;">LIVE</span>
+    <div id="mpHeader" style="padding:16px 4px 12px; display:flex; justify-content:space-between; align-items:flex-end;">
+      <div>
+        <div style="font-family:'DM Sans',sans-serif; font-size:9px; letter-spacing:2px; text-transform:uppercase; color:#555; margin-bottom:4px;">Daily</div>
+        <div style="font-family:'Bebas Neue',sans-serif; font-size:28px; letter-spacing:0.1em; color:#fff;">Missions</div>
       </div>
-      <div id="missionsDailyMovie" style="font-family:'Georgia',serif; font-size:18px; color:#fff; margin-bottom:4px;">Loading...</div>
-      <div id="missionsDailyQuote" style="font-family:'DM Sans',sans-serif; font-size:11px; color:#555; line-height:1.5; margin-bottom:10px;"></div>
-      <div style="display:flex; gap:8px;">
-        <div style="background:rgba(200,169,110,0.1); border:0.5px solid rgba(200,169,110,0.3); border-radius:8px; padding:5px 12px; font-family:'DM Sans',sans-serif; font-size:11px; font-weight:700; color:#c8a96e;">2X XP</div>
-        <div style="background:rgba(200,169,110,0.1); border:0.5px solid rgba(200,169,110,0.3); border-radius:8px; padding:5px 12px; font-family:'DM Sans',sans-serif; font-size:11px; color:#c8a96e;">+50 bonus pts</div>
+      <div id="mpXpPill" style="display:flex; flex-direction:column; align-items:flex-end; gap:2px;">
+        <div style="font-family:'DM Sans',sans-serif; font-size:9px; letter-spacing:1.5px; text-transform:uppercase; color:#555;">Today's XP</div>
+        <div><span id="mpTodayXp" style="font-family:'Bebas Neue',sans-serif; font-size:18px; color:#c8a96e;">0</span><span style="font-family:'DM Sans',sans-serif; font-size:10px; color:#555;"> / <span id="mpTodayGoal">1000</span></span></div>
       </div>
     </div>
-    <div id="missionsDailyCta" style="background:#c8a96e; margin:10px 16px 14px; border-radius:10px; padding:12px; text-align:center; font-family:'DM Sans',sans-serif; font-size:13px; font-weight:700; color:#0d0d0d; cursor:pointer;">Act This Scene →</div>
-  </div>
 
-  <!-- Mission list -->
-  <div style="font-family:'DM Sans',sans-serif; font-size:9px; letter-spacing:2px; text-transform:uppercase; color:#444; margin-bottom:10px;">Today's Missions</div>
+    <!-- Streak banner -->
+    <div id="mpStreakBanner" style="background:rgba(200,169,110,0.06); border:0.5px solid rgba(200,169,110,0.25); border-radius:14px; padding:14px 16px; margin-bottom:14px; display:flex; align-items:center; justify-content:space-between;">
+      <div>
+        <div id="mpStreakTag" style="font-family:'DM Sans',sans-serif; font-size:9px; letter-spacing:2px; text-transform:uppercase; color:#c8a96e; margin-bottom:4px;">🔥 0-Day Streak</div>
+        <div id="mpStreakTitle" style="font-family:'Georgia',serif; font-size:15px; color:#fff;">Complete a mission today to start your streak</div>
+        <div id="mpStreakSub" style="font-family:'DM Sans',sans-serif; font-size:10px; color:#555; margin-top:3px;">Longest: 0 days · Total XP: 0</div>
+      </div>
+      <div id="mpStreakIcon" style="font-size:30px; line-height:1;">🔥</div>
+    </div>
 
-  <div id="mission1" style="background:rgba(255,255,255,0.02); border:0.5px solid rgba(255,255,255,0.07); border-radius:14px; padding:13px 14px; margin-bottom:8px; display:flex; align-items:center; gap:12px;">
-    <div style="width:40px; height:40px; border-radius:12px; background:rgba(200,169,110,0.08); display:flex; align-items:center; justify-content:center; font-size:18px; flex-shrink:0;">🎬</div>
-    <div style="flex:1;">
-      <div style="font-family:'Georgia',serif; font-size:13px; color:#fff; margin-bottom:2px;">Complete Today's Daily Scene</div>
-      <div id="mission1Sub" style="font-family:'DM Sans',sans-serif; font-size:10px; color:#555;">Scene of the Day · 2X points</div>
+    <!-- Daily quest card -->
+    <div style="font-family:'DM Sans',sans-serif; font-size:9px; letter-spacing:2px; text-transform:uppercase; color:#444; margin-bottom:10px;">Daily Quest</div>
+    <div id="mpDailyCard" style="background:#111; border:0.5px solid #c8a96e; border-radius:16px; overflow:hidden; margin-bottom:14px;">
+      <div style="padding:14px 16px 10px;">
+        <div style="font-family:'DM Sans',sans-serif; font-size:9px; letter-spacing:2px; text-transform:uppercase; color:#c8a96e; margin-bottom:6px;">Today's Daily Scene</div>
+        <div id="mpDailyMovie" style="font-family:'Georgia',serif; font-size:18px; color:#fff; margin-bottom:4px;">—</div>
+        <div id="mpDailyQuote" style="font-family:'DM Sans',sans-serif; font-size:11px; color:#555; line-height:1.5; margin-bottom:10px;"></div>
+        <div id="mpDailyProgress" style="display:flex; align-items:center; gap:8px; margin-bottom:10px;">
+          <div style="flex:1; height:4px; background:rgba(255,255,255,0.06); border-radius:4px; overflow:hidden;"><div id="mpDailyBar" style="height:100%; width:0%; background:#c8a96e; border-radius:4px; transition:width 0.5s ease;"></div></div>
+          <div id="mpDailyCount" style="font-family:'DM Sans',sans-serif; font-size:10px; color:#c8a96e; font-weight:600;">0/3</div>
+        </div>
+      </div>
+      <button id="mpDailyCta" style="display:block; width:calc(100% - 32px); margin:0 16px 14px; background:#c8a96e; border:none; border-radius:10px; padding:12px; font-family:'DM Sans',sans-serif; font-size:13px; font-weight:700; color:#0d0d0d; cursor:pointer;">Practice →</button>
     </div>
-    <div style="text-align:right;">
-      <div style="font-family:'DM Sans',sans-serif; font-size:12px; font-weight:700; color:#c8a96e; margin-bottom:4px;">+100 pts</div>
-      <div id="mission1Badge" style="font-family:'DM Sans',sans-serif; font-size:9px; color:#555; background:rgba(255,255,255,0.04); border:0.5px solid rgba(255,255,255,0.08); border-radius:6px; padding:2px 8px;">Pending</div>
-    </div>
-  </div>
 
-  <div style="background:rgba(255,255,255,0.02); border:0.5px solid rgba(255,255,255,0.07); border-radius:14px; padding:13px 14px; margin-bottom:8px; display:flex; align-items:center; gap:12px; opacity:0.5;">
-    <div style="width:40px; height:40px; border-radius:12px; background:rgba(106,170,46,0.08); display:flex; align-items:center; justify-content:center; font-size:18px; flex-shrink:0;">⭐</div>
-    <div style="flex:1;">
-      <div style="font-family:'Georgia',serif; font-size:13px; color:#fff; margin-bottom:2px;">Score 80% or Higher</div>
-      <div style="font-family:'DM Sans',sans-serif; font-size:10px; color:#555;">Any scene · coming soon</div>
+    <!-- Weekly challenge card -->
+    <div style="font-family:'DM Sans',sans-serif; font-size:9px; letter-spacing:2px; text-transform:uppercase; color:#444; margin-bottom:10px;">Weekly Challenge</div>
+    <div id="mpWeeklyCard" style="background:rgba(255,255,255,0.02); border:0.5px solid rgba(200,169,110,0.2); border-radius:16px; padding:14px 16px; margin-bottom:18px;">
+      <div style="display:flex; align-items:center; gap:10px; margin-bottom:10px;">
+        <div style="width:40px; height:40px; border-radius:12px; background:rgba(200,80,80,0.08); display:flex; align-items:center; justify-content:center; font-size:20px; flex-shrink:0;">🔪</div>
+        <div style="flex:1;">
+          <div style="font-family:'Georgia',serif; font-size:14px; color:#fff;">Practice 3 Thriller Scenes</div>
+          <div id="mpWeeklySub" style="font-family:'DM Sans',sans-serif; font-size:10px; color:#555; margin-top:2px;">Resets Sunday · +200 XP</div>
+        </div>
+      </div>
+      <div style="display:flex; align-items:center; gap:8px;">
+        <div style="flex:1; height:4px; background:rgba(255,255,255,0.06); border-radius:4px; overflow:hidden;"><div id="mpWeeklyBar" style="height:100%; width:0%; background:linear-gradient(90deg,#c8a96e,#e8cfa0); border-radius:4px; transition:width 0.5s ease;"></div></div>
+        <div id="mpWeeklyCount" style="font-family:'DM Sans',sans-serif; font-size:10px; color:#c8a96e; font-weight:600;">0/3</div>
+      </div>
     </div>
-    <div style="text-align:right;">
-      <div style="font-family:'DM Sans',sans-serif; font-size:12px; font-weight:700; color:#555; margin-bottom:4px;">+150 pts</div>
-      <div style="font-family:'DM Sans',sans-serif; font-size:9px; color:#444; background:rgba(255,255,255,0.02); border:0.5px solid rgba(255,255,255,0.05); border-radius:6px; padding:2px 8px;">Soon</div>
-    </div>
-  </div>
 
-  <div style="background:rgba(255,255,255,0.02); border:0.5px solid rgba(255,255,255,0.07); border-radius:14px; padding:13px 14px; margin-bottom:24px; display:flex; align-items:center; gap:12px; opacity:0.5;">
-    <div style="width:40px; height:40px; border-radius:12px; background:rgba(85,136,204,0.08); display:flex; align-items:center; justify-content:justify; font-size:18px; flex-shrink:0;">📖</div>
-    <div style="flex:1;">
-      <div style="font-family:'Georgia',serif; font-size:13px; color:#fff; margin-bottom:2px;">Learn 5 New Words</div>
-      <div style="font-family:'DM Sans',sans-serif; font-size:10px; color:#555;">My Dictionary · coming soon</div>
-    </div>
-    <div style="text-align:right;">
-      <div style="font-family:'DM Sans',sans-serif; font-size:12px; font-weight:700; color:#555; margin-bottom:4px;">+100 pts</div>
-      <div style="font-family:'DM Sans',sans-serif; font-size:9px; color:#444; background:rgba(255,255,255,0.02); border:0.5px solid rgba(255,255,255,0.05); border-radius:6px; padding:2px 8px;">Soon</div>
-    </div>
-  </div>
+    <!-- Active missions list -->
+    <div style="font-family:'DM Sans',sans-serif; font-size:9px; letter-spacing:2px; text-transform:uppercase; color:#444; margin-bottom:10px;">Active Missions</div>
+    <div id="mpMissionList" style="display:flex; flex-direction:column; gap:8px; margin-bottom:24px;"></div>
   </div>
   <div class="app-panel" id="panelWords">
     <div id="wordsHeader">
@@ -2516,7 +2512,11 @@ function switchTab(tab) {
     if (rp) rp.classList.add('active');
     if (typeof RanksController !== 'undefined') RanksController.init();
   } else if (panel === 'panelMissions') {
+    if (appShell) appShell.style.display = 'block';
     if (heroFeatured) heroFeatured.style.display = 'block';
+    const mp = document.getElementById('panelMissions');
+    if (mp) mp.classList.add('active');
+    if (typeof MissionsController !== 'undefined') MissionsController.init();
   } else if (panel === 'panelWords') {
     if (appShell) appShell.style.display = 'block';
     const wp = document.getElementById('panelWords');
@@ -2605,55 +2605,6 @@ function enterAppMode() {
         } else if (lb) { lb.innerHTML = '<div style="padding:14px 16px;font-family:DM Sans,sans-serif;font-size:12px;color:#555;">No scores yet — be the first!</div>'; }
       } catch(e) { console.error('leaderboard fetch failed', e); }
     }
-  })();
-  (async function updateMissionsPanel() {
-    if (window._missionsCountdownTimer) clearInterval(window._missionsCountdownTimer);
-    const streak = userProfile ? (userProfile.streak || 0) : 0;
-    const doneToday = userProfile ? userProfile.daily_done_today : false;
-    const streakTag = document.getElementById('missionsStreakTag');
-    const streakTitle = document.getElementById('missionsStreakTitle');
-    const streakDots = document.getElementById('missionsStreakDots');
-    const m1Badge = document.getElementById('mission1Badge');
-    if (streakTag) streakTag.textContent = '🔥 ' + streak + '-Day Streak';
-    if (streakTitle) streakTitle.textContent = streak > 0 ? 'Great work! Keep your streak alive.' : 'Complete today\'s scene to start your streak';
-    if (doneToday && m1Badge) { m1Badge.textContent = '✓ Done'; m1Badge.style.color = '#6aaa2e'; m1Badge.style.borderColor = 'rgba(106,170,46,0.3)'; m1Badge.style.background = 'rgba(106,170,46,0.08)'; }
-    if (streakDots) {
-      const days = ['M','T','W','T','F','S','S'];
-      const today = new Date().getDay();
-      const todayIdx = today === 0 ? 6 : today - 1;
-      streakDots.innerHTML = days.map((d, i) => {
-        const done = i < todayIdx || (i === todayIdx && doneToday);
-        const isToday = i === todayIdx;
-        return '<div style="display:flex;flex-direction:column;align-items:center;gap:3px;">' +
-          '<div style="width:10px;height:10px;border-radius:50%;background:' + (done ? '#c8a96e' : '#2a2a2a') + ';' + (isToday && !done ? 'box-shadow:0 0 0 2px #1a1506,0 0 0 3px #c8a96e;' : '') + '"></div>' +
-          '<div style="font-family:DM Sans,sans-serif;font-size:8px;color:' + (isToday ? '#c8a96e' : '#444') + ';">' + d + '</div></div>';
-      }).join('');
-    }
-    try {
-      const res = await fetch('/api/daily');
-      const data = await res.json();
-      const movie = data.scene ? (data.scene.movie || data.scene.title || data.scene_id) : 'Loading...';
-      const quote = data.scene ? (data.scene.quote || data.scene.target_line || '') : '';
-      const secs = data.secs_until_reset || 0;
-      const el = (id) => document.getElementById(id);
-      if (el('missionsDailyMovie')) el('missionsDailyMovie').textContent = movie;
-      if (el('missionsDailyQuote')) el('missionsDailyQuote').textContent = '"' + quote.slice(0, 80) + (quote.length > 80 ? '…' : '') + '"';
-      if (el('mission1Sub')) el('mission1Sub').textContent = movie + ' · 2X points';
-      if (el('missionsDailyCta')) {
-        if (doneToday) { el('missionsDailyCta').textContent = '✓ Completed Today'; el('missionsDailyCta').style.background = 'rgba(106,170,46,0.15)'; el('missionsDailyCta').style.color = '#6aaa2e'; el('missionsDailyCta').style.cursor = 'default'; }
-        else { el('missionsDailyCta').onclick = () => { if (typeof openModal === 'function') openModal(data.scene_id, data.scene); }; }
-      }
-      if (secs > 0) {
-        function tick() {
-          const h = Math.floor(secs / 3600); const m = Math.floor((secs % 3600) / 60); const s = secs % 60;
-          const cd = document.getElementById('missionsCountdown');
-          if (cd) cd.textContent = String(h).padStart(2,'0') + ':' + String(m).padStart(2,'0') + ':' + String(s).padStart(2,'0');
-        }
-        tick();
-        let remaining = secs;
-        window._missionsCountdownTimer = setInterval(() => { if (remaining > 0) { remaining--; const h = Math.floor(remaining/3600); const m = Math.floor((remaining%3600)/60); const s = remaining%60; const cd = document.getElementById('missionsCountdown'); if(cd) cd.textContent = String(h).padStart(2,'0')+':'+String(m).padStart(2,'0')+':'+String(s).padStart(2,'0'); } }, 1000);
-      }
-    } catch(e) { console.error('daily fetch failed', e); }
   })();
   (async function updateWordsPanel() {
     const bestScores = userProgress ? (userProgress.best_scores || {}) : {};
