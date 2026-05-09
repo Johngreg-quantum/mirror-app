@@ -1305,10 +1305,15 @@
 <section id="mirrorLanding" style="
   position: fixed; inset: 0; z-index: 100;
   display: flex; align-items: center; justify-content: center;
-  background: radial-gradient(ellipse 80% 80% at 50% 50%, #0d0c0b, #060504);
+  background:
+    radial-gradient(ellipse 40% 60% at 15% 50%, rgba(45,35,25,0.9), transparent),
+    radial-gradient(ellipse 40% 60% at 85% 50%, rgba(35,28,20,0.9), transparent),
+    radial-gradient(ellipse 100% 100% at 50% 50%, #1a1610, #0a0907);
   overflow: hidden;
   font-family: 'DM Sans', sans-serif;
 ">
+  <!-- Stone/noise texture overlay on the outer frame -->
+  <div aria-hidden="true" style="position:absolute;inset:0;pointer-events:none;z-index:0;background-image:url(&quot;data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.15'/%3E%3C/svg%3E&quot;);"></div>
 
   <!-- Film grain -->
   <style>
@@ -1432,11 +1437,12 @@
 
     <!-- Giant wordmark outline -->
     <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;z-index:5;overflow:hidden;pointer-events:none;">
-      <div style="font-family:'Bebas Neue',sans-serif;font-size:clamp(100px,20vw,168px);letter-spacing:0.04em;color:transparent;-webkit-text-stroke:0.5px rgba(255,255,255,0.07);white-space:nowrap;animation:mlWordmark 1.2s cubic-bezier(0.16,1,0.3,1) 0.15s both;">MIRROR</div>
+      <div style="font-family:'Bebas Neue',sans-serif;font-size:clamp(120px,22vw,190px);letter-spacing:0.04em;color:transparent;-webkit-text-stroke:1px rgba(255,255,255,0.12);white-space:nowrap;animation:mlWordmark 1.2s cubic-bezier(0.16,1,0.3,1) 0.15s both;">MIRROR</div>
     </div>
 
-    <!-- Sliding card track -->
-    <div class="ml-card-track" id="mlCardTrack" style="position:absolute;top:50%;z-index:10;display:flex;gap:11px;animation:mlSlide 20s linear infinite;will-change:transform;"></div>
+    <!-- Sliding card tracks (two parallel rows, opposite directions) -->
+    <div class="ml-card-track" id="mlCardTrack" style="position:absolute;top:calc(50% - 78px);z-index:10;display:flex;gap:11px;animation:mlSlide 20s linear infinite;will-change:transform;"></div>
+    <div class="ml-card-track" id="mlCardTrack2" style="position:absolute;top:calc(50% + 78px);z-index:10;display:flex;gap:11px;animation:mlSlide 25s linear infinite reverse;will-change:transform;"></div>
 
     <!-- Poster grid (EXPLORE mode) -->
     <div class="ml-poster-grid" id="mlPosterGrid" style="position:absolute;inset:0;display:grid;grid-template-columns:repeat(6,1fr);grid-template-rows:repeat(3,1fr);gap:3px;padding:3px;z-index:8;opacity:0;pointer-events:none;"></div>
@@ -1458,32 +1464,38 @@
 <script>
 (function() {
   const SCENES = [
-    { emoji:'🎭', label:'Forrest Gump',    score:'94%', bg:'linear-gradient(135deg,#1a0e00,#3d2800)' },
-    { emoji:'🦁', label:'The Matrix',      score:'87%', bg:'linear-gradient(135deg,#001a0e,#003820)' },
-    { emoji:'🔱', label:'The Godfather',   score:'91%', bg:'linear-gradient(135deg,#0a0006,#1e0014)' },
-    { emoji:'🦇', label:'Dark Knight',     score:'88%', bg:'linear-gradient(135deg,#000a1a,#001433)' },
-    { emoji:'⚡', label:'Fight Club',      score:'79%', bg:'linear-gradient(135deg,#1a0000,#330000)' },
-    { emoji:'🚀', label:'Interstellar',    score:'95%', bg:'linear-gradient(135deg,#000510,#000d28)' },
-    { emoji:'🥁', label:'Whiplash',        score:'82%', bg:'linear-gradient(135deg,#1a0800,#331500)' },
-    { emoji:'🥊', label:'Rocky',           score:'76%', bg:'linear-gradient(135deg,#0e0000,#220000)' },
-    { emoji:'📖', label:'Dead Poets',      score:'93%', bg:'linear-gradient(135deg,#001210,#002622)' },
-    { emoji:'⚔️', label:'Gladiator',       score:'85%', bg:'linear-gradient(135deg,#100800,#201500)' },
+    { id:'forrest_gump', label:'Forrest Gump',       score:'94%' },
+    { id:'the_matrix',   label:'The Matrix',         score:'87%' },
+    { id:'godfather',    label:'The Godfather',      score:'91%' },
+    { id:'dark_knight',  label:'Dark Knight',        score:'88%' },
+    { id:'fight_club',   label:'Fight Club',         score:'79%' },
+    { id:'interstellar', label:'Interstellar',       score:'95%' },
+    { id:'whiplash',     label:'Whiplash',           score:'82%' },
+    { id:'rocky',        label:'Rocky',              score:'76%' },
+    { id:'dead_poets',   label:'Dead Poets Society', score:'93%' },
+    { id:'gladiator',    label:'Gladiator',          score:'85%' },
   ];
 
-  function buildCards() {
-    const track = document.getElementById('mlCardTrack');
+  function cardInnerHTML(s) {
+    return `<img src="/static/posters/${s.id}.jpg" alt="${s.label}" style="width:100%;height:100%;object-fit:cover;display:block;" onerror="this.style.background='#181410';this.style.opacity='0';">
+      <div style="position:absolute;top:7px;right:7px;background:rgba(0,0,0,0.65);border:0.5px solid rgba(255,255,255,0.14);border-radius:100px;font-size:0.48rem;padding:0.12rem 0.38rem;color:#c8a96e;font-family:'DM Sans',sans-serif;letter-spacing:0.05em;">${s.score}</div>
+      <div style="position:absolute;bottom:0;left:0;right:0;padding:0.45rem 0.5rem;background:linear-gradient(to top,rgba(0,0,0,0.85),transparent);font-size:0.48rem;color:rgba(255,255,255,0.85);letter-spacing:0.06em;font-family:'DM Sans',sans-serif;">${s.label.toUpperCase()}</div>`;
+  }
+
+  function buildOneTrack(track) {
     if (!track || track.dataset.built === '1') return;
     [...SCENES, ...SCENES].forEach(s => {
       const c = document.createElement('div');
       c.className = 'ml-media-card';
-      c.innerHTML = `<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:${s.bg};position:relative;">
-        <span style="font-size:2.4rem;filter:drop-shadow(0 2px 10px rgba(0,0,0,0.8))">${s.emoji}</span>
-        <div style="position:absolute;top:7px;right:7px;background:rgba(0,0,0,0.65);border:0.5px solid rgba(255,255,255,0.14);border-radius:100px;font-size:0.48rem;padding:0.12rem 0.38rem;color:#c8a96e;font-family:'DM Sans',sans-serif;letter-spacing:0.05em;">${s.score}</div>
-        <div style="position:absolute;bottom:0;left:0;right:0;padding:0.45rem 0.5rem;background:linear-gradient(to top,rgba(0,0,0,0.85),transparent);font-size:0.48rem;color:rgba(255,255,255,0.65);letter-spacing:0.06em;font-family:'DM Sans',sans-serif;">${s.label.toUpperCase()}</div>
-      </div>`;
+      c.innerHTML = cardInnerHTML(s);
       track.appendChild(c);
     });
     track.dataset.built = '1';
+  }
+
+  function buildCards() {
+    buildOneTrack(document.getElementById('mlCardTrack'));
+    buildOneTrack(document.getElementById('mlCardTrack2'));
   }
 
   function buildGrid() {
@@ -1493,10 +1505,9 @@
     cells.forEach((s, i) => {
       const c = document.createElement('div');
       c.className = 'ml-poster-cell';
-      c.style.background = s.bg;
       c.style.animationDelay = (i * 0.035) + 's';
-      c.innerHTML = `<span style="font-size:1.5rem;filter:drop-shadow(0 2px 8px rgba(0,0,0,0.8))">${s.emoji}</span>
-        <div style="position:absolute;bottom:0;left:0;right:0;padding:0.35rem;background:linear-gradient(to top,rgba(0,0,0,0.9),transparent);font-size:0.42rem;color:rgba(255,255,255,0.55);letter-spacing:0.05em;font-family:'DM Sans',sans-serif;">${s.label}</div>`;
+      c.innerHTML = `<img src="/static/posters/${s.id}.jpg" alt="${s.label}" style="width:100%;height:100%;object-fit:cover;display:block;" onerror="this.style.background='#181410';this.style.opacity='0';">
+        <div style="position:absolute;bottom:0;left:0;right:0;padding:0.35rem;background:linear-gradient(to top,rgba(0,0,0,0.9),transparent);font-size:0.42rem;color:rgba(255,255,255,0.85);letter-spacing:0.05em;font-family:'DM Sans',sans-serif;">${s.label}</div>`;
       grid.appendChild(c);
     });
     grid.dataset.built = '1';
