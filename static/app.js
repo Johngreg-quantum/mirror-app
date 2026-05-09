@@ -453,6 +453,8 @@ function showAuthScreen() {
   setOn('challengeScreen', false);
   setOverlayOpen('authModalOverlay', false);
   setBodyScrollLocked(false);
+  const mlLanding = document.getElementById('mirrorLanding');
+  if (mlLanding) mlLanding.style.display = 'flex';
 }
 
 function showApp() {
@@ -503,6 +505,8 @@ function logout() {
   if (heroFeatured) heroFeatured.style.display = 'none';
   const appScreen = document.getElementById('appScreen');
   if (appScreen) appScreen.style.display = 'none';
+  const mlLanding = document.getElementById('mirrorLanding');
+  if (mlLanding) mlLanding.style.display = 'flex';
   window.scrollTo(0, 0);
   window.location.href = '/';
 }

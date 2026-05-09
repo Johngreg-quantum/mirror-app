@@ -1297,6 +1297,242 @@
 <!-- Custom cursor -->
 <div id="cursorDot"></div>
 
+<!-- ═══════════════════════════════════════════════════════
+     MIRROR CINEMATIC LANDING HERO
+     Sits on top of #authScreen; auth modal (z 8500) still wins.
+     CTA buttons fire heroStartBtn.click() inside #authScreen below.
+════════════════════════════════════════════════════════ -->
+<section id="mirrorLanding" style="
+  position: fixed; inset: 0; z-index: 100;
+  display: flex; align-items: center; justify-content: center;
+  background: radial-gradient(ellipse 80% 80% at 50% 50%, #0d0c0b, #060504);
+  overflow: hidden;
+  font-family: 'DM Sans', sans-serif;
+">
+
+  <!-- Film grain -->
+  <style>
+    #mirrorLanding::after {
+      content: '';
+      position: absolute; inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+      opacity: 0.032; pointer-events: none; z-index: 9998;
+      animation: mlGrain 0.15s steps(1) infinite;
+    }
+    @keyframes mlGrain {
+      0%   { transform: translate(0,0); }
+      25%  { transform: translate(-2px,1px); }
+      50%  { transform: translate(1px,-2px); }
+      75%  { transform: translate(2px,1px); }
+      100% { transform: translate(-1px,2px); }
+    }
+    @keyframes mlWipe     { 0%{transform:scaleX(1)} 100%{transform:scaleX(0)} }
+    @keyframes mlFadeDown { from{opacity:0;transform:translateX(-50%) translateY(-10px)} to{opacity:1;transform:translateX(-50%) translateY(0)} }
+    @keyframes mlFadeIn   { from{opacity:0} to{opacity:1} }
+    @keyframes mlFadeUp   { from{opacity:0;transform:translateY(18px)} to{opacity:1;transform:translateY(0)} }
+    @keyframes mlWordmark { from{opacity:0;transform:scaleX(0.92) translateY(24px)} to{opacity:1;transform:scaleX(1) translateY(0)} }
+    @keyframes mlSlide    { 0%{transform:translateY(-50%) translateX(80%)} 100%{transform:translateY(-50%) translateX(-280%)} }
+
+    .ml-pill-btn {
+      padding: 0.28rem 0.9rem; border-radius: 100px;
+      font-size: 0.62rem; letter-spacing: 0.1em;
+      font-family: 'DM Sans', sans-serif; font-weight: 500;
+      border: none; cursor: pointer; transition: all 0.25s ease;
+      color: rgba(255,255,255,0.4); background: transparent;
+    }
+    .ml-pill-btn.ml-active { background: rgba(255,255,255,0.12); color: #f0ede8; }
+
+    .ml-sidebar-icon {
+      width: 28px; height: 28px; border-radius: 8px;
+      background: rgba(255,255,255,0.05);
+      border: 0.5px solid rgba(255,255,255,0.09);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.78rem; cursor: pointer; transition: all 0.2s;
+      color: rgba(255,255,255,0.4);
+    }
+    .ml-sidebar-icon:hover { background: rgba(255,255,255,0.1); color: #f0ede8; }
+    .ml-sidebar-icon.ml-active { background: rgba(255,255,255,0.09); border-color: rgba(255,255,255,0.22); color: #f0ede8; }
+
+    .ml-media-card {
+      width: 108px; height: 145px; border-radius: 14px;
+      overflow: hidden; flex-shrink: 0; position: relative;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.7);
+      border: 0.5px solid rgba(255,255,255,0.07);
+    }
+
+    .ml-cta-primary {
+      padding: 0.58rem 1.5rem; border-radius: 100px;
+      font-size: 0.7rem; letter-spacing: 0.08em;
+      font-family: 'DM Sans', sans-serif; font-weight: 500;
+      cursor: pointer; border: none; transition: all 0.2s;
+      background: #f0ede8; color: #080808;
+    }
+    .ml-cta-primary:hover { background: #fff; transform: scale(1.02); }
+
+    .ml-cta-secondary {
+      padding: 0.58rem 1.4rem; border-radius: 100px;
+      font-size: 0.7rem; letter-spacing: 0.08em;
+      font-family: 'DM Sans', sans-serif; font-weight: 500;
+      cursor: pointer; transition: all 0.2s;
+      background: transparent; border: 0.5px solid rgba(255,255,255,0.2);
+      color: rgba(255,255,255,0.6);
+    }
+    .ml-cta-secondary:hover { border-color: rgba(255,255,255,0.5); color: #f0ede8; }
+
+    .ml-poster-cell {
+      border-radius: 6px; overflow: hidden; position: relative;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.5rem; cursor: pointer; transition: transform 0.3s ease;
+    }
+    .ml-poster-cell:hover { transform: scale(1.05); z-index: 2; }
+
+    #mirrorLanding.ml-explore .ml-card-track { opacity: 0; transition: opacity 0.4s; pointer-events: none; }
+    #mirrorLanding.ml-explore .ml-headline   { opacity: 0; transition: opacity 0.3s; pointer-events: none; }
+    #mirrorLanding.ml-explore .ml-sidebar    { opacity: 0; transition: opacity 0.3s; }
+    #mirrorLanding.ml-explore .ml-poster-grid { opacity: 1 !important; pointer-events: auto; }
+
+    .ml-poster-grid { transition: opacity 0.6s ease; }
+  </style>
+
+  <!-- Outer vignette -->
+  <div style="position:absolute;inset:0;background:radial-gradient(ellipse 100% 100% at 50% 50%,transparent 35%,rgba(0,0,0,0.88) 100%);pointer-events:none;z-index:1;"></div>
+
+  <!-- Central black canvas -->
+  <div id="mlCanvas" style="
+    position: relative;
+    width: min(700px, 96vw); height: min(490px, 88vh);
+    background: #050505; border-radius: 10px; overflow: hidden;
+    box-shadow: 0 0 0 1px rgba(255,255,255,0.04), 0 50px 140px rgba(0,0,0,0.95);
+    z-index: 2;
+  ">
+
+    <!-- Wipe reveal on load -->
+    <div style="position:absolute;inset:0;background:#050505;z-index:50;transform-origin:left;animation:mlWipe 0.9s cubic-bezier(0.76,0,0.24,1) 0.1s both;pointer-events:none;"></div>
+
+    <!-- Pill toggle -->
+    <div style="position:absolute;top:16px;left:50%;transform:translateX(-50%);z-index:20;display:flex;background:rgba(255,255,255,0.06);border:0.5px solid rgba(255,255,255,0.11);border-radius:100px;padding:3px;gap:2px;animation:mlFadeDown 0.8s ease 0.4s both;">
+      <button class="ml-pill-btn ml-active" id="mlBtnCreate" onclick="mlSetMode('create')">CREATE</button>
+      <button class="ml-pill-btn" id="mlBtnExplore" onclick="mlSetMode('explore')">EXPLORE</button>
+    </div>
+
+    <!-- Corner microcopy -->
+    <div style="position:absolute;top:15px;left:16px;font-size:0.5rem;letter-spacing:0.08em;color:rgba(255,255,255,0.2);line-height:1.7;z-index:20;animation:mlFadeIn 1s ease 1.1s both;">MIRROR<br>V 2.0</div>
+    <div style="position:absolute;top:15px;right:16px;font-size:0.5rem;letter-spacing:0.08em;color:rgba(255,255,255,0.2);line-height:1.7;text-align:right;z-index:20;animation:mlFadeIn 1s ease 1.1s both;">50+ USERS<br>ACTIVE NOW</div>
+    <div style="position:absolute;bottom:15px;left:16px;font-size:0.5rem;letter-spacing:0.08em;color:rgba(255,255,255,0.2);line-height:1.7;z-index:20;animation:mlFadeIn 1s ease 1.3s both;">ENGLISH<br>THROUGH CINEMA</div>
+    <div style="position:absolute;bottom:15px;right:16px;font-size:0.5rem;letter-spacing:0.08em;color:rgba(255,255,255,0.2);line-height:1.7;text-align:right;z-index:20;animation:mlFadeIn 1s ease 1.3s both;">ACT · SCORE<br>MASTER</div>
+
+    <!-- Left floating sidebar -->
+    <div class="ml-sidebar" style="position:absolute;left:13px;top:50%;transform:translateY(-50%);display:flex;flex-direction:column;gap:14px;z-index:20;animation:mlFadeIn 1s ease 1.2s both;">
+      <div class="ml-sidebar-icon ml-active">🎬</div>
+      <div class="ml-sidebar-icon">📚</div>
+      <div class="ml-sidebar-icon">🏆</div>
+      <div class="ml-sidebar-icon">⚡</div>
+      <div class="ml-sidebar-icon">📖</div>
+    </div>
+
+    <!-- Giant wordmark outline -->
+    <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;z-index:5;overflow:hidden;pointer-events:none;">
+      <div style="font-family:'Bebas Neue',sans-serif;font-size:clamp(100px,20vw,168px);letter-spacing:0.04em;color:transparent;-webkit-text-stroke:0.5px rgba(255,255,255,0.07);white-space:nowrap;animation:mlWordmark 1.2s cubic-bezier(0.16,1,0.3,1) 0.15s both;">MIRROR</div>
+    </div>
+
+    <!-- Sliding card track -->
+    <div class="ml-card-track" id="mlCardTrack" style="position:absolute;top:50%;z-index:10;display:flex;gap:11px;animation:mlSlide 20s linear infinite;will-change:transform;"></div>
+
+    <!-- Poster grid (EXPLORE mode) -->
+    <div class="ml-poster-grid" id="mlPosterGrid" style="position:absolute;inset:0;display:grid;grid-template-columns:repeat(6,1fr);grid-template-rows:repeat(3,1fr);gap:3px;padding:3px;z-index:8;opacity:0;pointer-events:none;"></div>
+
+    <!-- Headline + CTA -->
+    <div class="ml-headline" style="position:absolute;bottom:44px;left:0;right:0;display:flex;flex-direction:column;align-items:center;gap:9px;z-index:15;animation:mlFadeUp 1s ease 0.8s both;">
+      <div style="font-family:'Bebas Neue',sans-serif;font-size:clamp(1.3rem,3.5vw,2rem);letter-spacing:0.08em;color:#f0ede8;text-align:center;line-height:1;">SPEAK LIKE THE GREATS</div>
+      <div style="font-size:0.7rem;color:rgba(255,255,255,0.38);letter-spacing:0.04em;text-align:center;font-style:italic;font-family:'Playfair Display',serif;">Practice English through iconic movie scenes</div>
+      <div style="display:flex;gap:9px;margin-top:3px;">
+        <button class="ml-cta-primary" onclick="document.getElementById('heroStartBtn').click()">START ACTING</button>
+        <button class="ml-cta-secondary" onclick="document.getElementById('heroStartBtn').click()">SIGN IN</button>
+      </div>
+    </div>
+
+  </div><!-- /mlCanvas -->
+</section>
+
+<!-- Landing JS (self-contained, no conflicts) -->
+<script>
+(function() {
+  const SCENES = [
+    { emoji:'🎭', label:'Forrest Gump',    score:'94%', bg:'linear-gradient(135deg,#1a0e00,#3d2800)' },
+    { emoji:'🦁', label:'The Matrix',      score:'87%', bg:'linear-gradient(135deg,#001a0e,#003820)' },
+    { emoji:'🔱', label:'The Godfather',   score:'91%', bg:'linear-gradient(135deg,#0a0006,#1e0014)' },
+    { emoji:'🦇', label:'Dark Knight',     score:'88%', bg:'linear-gradient(135deg,#000a1a,#001433)' },
+    { emoji:'⚡', label:'Fight Club',      score:'79%', bg:'linear-gradient(135deg,#1a0000,#330000)' },
+    { emoji:'🚀', label:'Interstellar',    score:'95%', bg:'linear-gradient(135deg,#000510,#000d28)' },
+    { emoji:'🥁', label:'Whiplash',        score:'82%', bg:'linear-gradient(135deg,#1a0800,#331500)' },
+    { emoji:'🥊', label:'Rocky',           score:'76%', bg:'linear-gradient(135deg,#0e0000,#220000)' },
+    { emoji:'📖', label:'Dead Poets',      score:'93%', bg:'linear-gradient(135deg,#001210,#002622)' },
+    { emoji:'⚔️', label:'Gladiator',       score:'85%', bg:'linear-gradient(135deg,#100800,#201500)' },
+  ];
+
+  function buildCards() {
+    const track = document.getElementById('mlCardTrack');
+    if (!track || track.dataset.built === '1') return;
+    [...SCENES, ...SCENES].forEach(s => {
+      const c = document.createElement('div');
+      c.className = 'ml-media-card';
+      c.innerHTML = `<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:${s.bg};position:relative;">
+        <span style="font-size:2.4rem;filter:drop-shadow(0 2px 10px rgba(0,0,0,0.8))">${s.emoji}</span>
+        <div style="position:absolute;top:7px;right:7px;background:rgba(0,0,0,0.65);border:0.5px solid rgba(255,255,255,0.14);border-radius:100px;font-size:0.48rem;padding:0.12rem 0.38rem;color:#c8a96e;font-family:'DM Sans',sans-serif;letter-spacing:0.05em;">${s.score}</div>
+        <div style="position:absolute;bottom:0;left:0;right:0;padding:0.45rem 0.5rem;background:linear-gradient(to top,rgba(0,0,0,0.85),transparent);font-size:0.48rem;color:rgba(255,255,255,0.65);letter-spacing:0.06em;font-family:'DM Sans',sans-serif;">${s.label.toUpperCase()}</div>
+      </div>`;
+      track.appendChild(c);
+    });
+    track.dataset.built = '1';
+  }
+
+  function buildGrid() {
+    const grid = document.getElementById('mlPosterGrid');
+    if (!grid || grid.dataset.built === '1') return;
+    const cells = [...SCENES, ...SCENES.slice(0,8)];
+    cells.forEach((s, i) => {
+      const c = document.createElement('div');
+      c.className = 'ml-poster-cell';
+      c.style.background = s.bg;
+      c.style.animationDelay = (i * 0.035) + 's';
+      c.innerHTML = `<span style="font-size:1.5rem;filter:drop-shadow(0 2px 8px rgba(0,0,0,0.8))">${s.emoji}</span>
+        <div style="position:absolute;bottom:0;left:0;right:0;padding:0.35rem;background:linear-gradient(to top,rgba(0,0,0,0.9),transparent);font-size:0.42rem;color:rgba(255,255,255,0.55);letter-spacing:0.05em;font-family:'DM Sans',sans-serif;">${s.label}</div>`;
+      grid.appendChild(c);
+    });
+    grid.dataset.built = '1';
+  }
+
+  window.mlSetMode = function(mode) {
+    const landing = document.getElementById('mirrorLanding');
+    const btnC = document.getElementById('mlBtnCreate');
+    const btnE = document.getElementById('mlBtnExplore');
+    if (!landing) return;
+    if (mode === 'explore') {
+      landing.classList.add('ml-explore');
+      btnE.classList.add('ml-active'); btnC.classList.remove('ml-active');
+    } else {
+      landing.classList.remove('ml-explore');
+      btnC.classList.add('ml-active'); btnE.classList.remove('ml-active');
+    }
+  };
+
+  // Hide landing when user logs in — hook into existing enterAppMode
+  const _origEnterAppMode = window.enterAppMode;
+  window.enterAppMode = function() {
+    const landing = document.getElementById('mirrorLanding');
+    if (landing) landing.style.display = 'none';
+    if (typeof _origEnterAppMode === 'function') _origEnterAppMode.apply(this, arguments);
+  };
+
+  document.addEventListener('DOMContentLoaded', function() {
+    buildCards();
+    buildGrid();
+  });
+  if (document.readyState !== 'loading') { buildCards(); buildGrid(); }
+})();
+</script>
+<!-- ═══════════════════════════ END MIRROR LANDING ═══════════════════════════ -->
+
 <!-- ══════════════════════════════════════════════
      LANDING / AUTH SCREEN
 ══════════════════════════════════════════════ -->
