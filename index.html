@@ -1515,14 +1515,19 @@
 
   <script>
   function mlOpenAuth() {
-    var modal = document.getElementById('authModalOverlay');
-    var heroBtn = document.getElementById('heroStartBtn');
-    if (modal) {
-      modal.style.display = 'flex';
-      modal.style.zIndex = '9000';
-      document.body.style.overflow = 'hidden';
-    } else if (heroBtn) {
-      heroBtn.click();
+    if (typeof window.openAuthModal === 'function') {
+      window.openAuthModal('register');
+    } else if (typeof window.setOverlayActive === 'function') {
+      window.setOverlayActive(true);
+    } else {
+      var modal = document.getElementById('authModalOverlay');
+      if (modal) {
+        modal.style.display = 'flex';
+        modal.style.opacity = '1';
+        modal.style.pointerEvents = 'auto';
+        modal.classList.add('open');
+        document.body.style.overflow = 'hidden';
+      }
     }
   }
   </script>
