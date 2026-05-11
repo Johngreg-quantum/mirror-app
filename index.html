@@ -1452,8 +1452,8 @@
       <div style="font-family:'Bebas Neue',sans-serif;font-size:clamp(1.3rem,3.5vw,2rem);letter-spacing:0.08em;color:#f0ede8;text-align:center;line-height:1;">SPEAK LIKE THE GREATS</div>
       <div style="font-size:0.7rem;color:rgba(255,255,255,0.38);letter-spacing:0.04em;text-align:center;font-style:italic;font-family:'Playfair Display',serif;">Practice English through iconic movie scenes</div>
       <div style="display:flex;gap:9px;margin-top:3px;">
-        <button class="ml-cta-primary" onclick="(function(){ var btn = document.getElementById('heroStartBtn'); if(btn){ btn.click(); } else { document.getElementById('authModalOverlay').style.display='flex'; } })()">START ACTING</button>
-        <button class="ml-cta-secondary" onclick="(function(){ var btn = document.getElementById('heroStartBtn'); if(btn){ btn.click(); } else { document.getElementById('authModalOverlay').style.display='flex'; } })()">SIGN IN</button>
+        <button class="ml-cta-primary" onclick="mlOpenAuth()">START ACTING</button>
+        <button class="ml-cta-secondary" onclick="mlOpenAuth()">SIGN IN</button>
       </div>
     </div>
 
@@ -1508,10 +1508,24 @@
 
     <div style="text-align:center;padding:2rem 0;">
       <div style="font-size:0.6rem;color:rgba(255,255,255,0.2);letter-spacing:0.1em;margin-bottom:1rem;">START YOUR JOURNEY</div>
-      <button onclick="(function(){ var btn = document.getElementById('heroStartBtn'); if(btn){ btn.click(); } else { document.getElementById('authModalOverlay').style.display='flex'; } })()" style="padding:0.7rem 2rem;border-radius:100px;background:#f0ede8;color:#080808;font-family:'DM Sans',sans-serif;font-size:0.75rem;font-weight:500;letter-spacing:0.08em;border:none;cursor:pointer;">CREATE YOUR ACCOUNT</button>
+      <button onclick="mlOpenAuth()" style="padding:0.7rem 2rem;border-radius:100px;background:#f0ede8;color:#080808;font-family:'DM Sans',sans-serif;font-size:0.75rem;font-weight:500;letter-spacing:0.08em;border:none;cursor:pointer;">CREATE YOUR ACCOUNT</button>
     </div>
 
   </div>
+
+  <script>
+  function mlOpenAuth() {
+    var modal = document.getElementById('authModalOverlay');
+    var heroBtn = document.getElementById('heroStartBtn');
+    if (modal) {
+      modal.style.display = 'flex';
+      modal.style.zIndex = '9000';
+      document.body.style.overflow = 'hidden';
+    } else if (heroBtn) {
+      heroBtn.click();
+    }
+  }
+  </script>
 </section>
 
 <!-- Landing JS (self-contained, no conflicts) -->
@@ -1847,7 +1861,7 @@
   </footer>
 
   <!-- ── AUTH MODAL ── -->
-  <div class="auth-modal-overlay" id="authModalOverlay">
+  <div class="auth-modal-overlay" id="authModalOverlay" style="z-index:9000;">
     <div class="auth-modal-box">
       <button class="auth-modal-close" id="authModalClose">&times;</button>
       <div class="auth-modal-logo">MIR<em>RO</em>R</div>
