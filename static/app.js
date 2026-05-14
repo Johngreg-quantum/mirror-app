@@ -2679,80 +2679,133 @@ window.RanksController = RanksController;
 // ══════════════════════════════════════════════
 const QuizController = {
   questions: [], current: 0, score: 0, combo: 0, answered: false,
-  typeScores: { movie_id: [0,0], word_order: [0,0], definition: [0,0], verb: [0,0] },
+  typeScores: { vocab: [0,0], verb: [0,0] },
   wordSlots: [], wordBank: [],
 
-  SCENES: [
-    {id:'forrest_gump', movie:'Forrest Gump', quote:"Life is like a box of chocolates.", actor:'Tom Hanks', verb:{en:'to run',es:'correr'}, sentence:['Life','is','like','a','box','of','chocolates']},
-    {id:'home_alone', movie:'Home Alone', quote:"Keep the change, ya filthy animal.", actor:'Macaulay Culkin', verb:{en:'to protect',es:'proteger'}, sentence:['Keep','the','change']},
-    {id:'social_network', movie:'The Social Network', quote:"A million dollars isn't cool.", actor:'Justin Timberlake', verb:{en:'to create',es:'crear'}, sentence:['A','million','dollars','is','cool']},
-    {id:'cast_away', movie:'Cast Away', quote:"I have made fire!", actor:'Tom Hanks', verb:{en:'to survive',es:'sobrevivir'}, sentence:['I','have','made','fire']},
-    {id:'fight_club', movie:'Fight Club', quote:"The first rule of Fight Club is you do not talk about Fight Club.", actor:'Brad Pitt', verb:{en:'to fight',es:'pelear'}, sentence:['You','do','not','talk']},
-    {id:'seven', movie:'Se7en', quote:"What's in the box?", actor:'Brad Pitt', verb:{en:'to discover',es:'descubrir'}, sentence:['What','is','in','the','box']},
-    {id:'the_matrix', movie:'The Matrix', quote:"There is no spoon.", actor:'Keanu Reeves', verb:{en:'to choose',es:'elegir'}, sentence:['There','is','no','spoon']},
-    {id:'men_in_black', movie:'Men in Black', quote:"I make this look good.", actor:'Will Smith', verb:{en:'to protect',es:'proteger'}, sentence:['I','make','this','look','good']},
-    {id:'top_gun', movie:'Top Gun', quote:"I feel the need, the need for speed!", actor:'Tom Cruise', verb:{en:'to fly',es:'volar'}, sentence:['I','feel','the','need']},
-    {id:'back_to_the_future', movie:'Back to the Future', quote:"Roads? Where we're going we don't need roads.", actor:'Christopher Lloyd', verb:{en:'to travel',es:'viajar'}, sentence:['We','do','not','need','roads']},
-    {id:'the_blind_side', movie:'The Blind Side', quote:"You're changing that boy's life.", actor:'Sandra Bullock', verb:{en:'to change',es:'cambiar'}, sentence:['You','are','changing','his','life']},
-    {id:'clueless', movie:'Clueless', quote:"As if!", actor:'Alicia Silverstone', verb:{en:'to argue',es:'discutir'}, sentence:['As','if']},
-    {id:'the_intern', movie:'The Intern', quote:"Experience never gets old.", actor:'Robert De Niro', verb:{en:'to learn',es:'aprender'}, sentence:['Experience','never','gets','old']},
-    {id:'mystic_river', movie:'Mystic River', quote:"Is that my daughter in there?", actor:'Sean Penn', verb:{en:'to lose',es:'perder'}, sentence:['Is','that','my','daughter']},
-    {id:'mrs_doubtfire', movie:'Mrs. Doubtfire', quote:"Help is on the way, dear.", actor:'Robin Williams', verb:{en:'to help',es:'ayudar'}, sentence:['Help','is','on','the','way']},
-    {id:'jerry_maguire', movie:'Jerry Maguire', quote:"You had me at hello.", actor:'Renée Zellweger', verb:{en:'to love',es:'amar'}, sentence:['You','had','me','at','hello']},
-    {id:'apollo_13', movie:'Apollo 13', quote:"Houston, we have a problem.", actor:'Tom Hanks', verb:{en:'to solve',es:'resolver'}, sentence:['We','have','a','problem']},
-    {id:'pursuit_of_happyness', movie:'The Pursuit of Happyness', quote:"Don't ever let somebody tell you you can't do something.", actor:'Will Smith', verb:{en:'to believe',es:'creer'}, sentence:['You','can','do','it']},
-    {id:'fifth_element', movie:'The Fifth Element', quote:"Multipass!", actor:'Milla Jovovich', verb:{en:'to save',es:'salvar'}, sentence:['This','is','a','multipass']},
-    {id:'devil_wears_prada', movie:'The Devil Wears Prada', quote:"That's all.", actor:'Meryl Streep', verb:{en:'to work',es:'trabajar'}, sentence:['That','is','all']},
+  VOCAB_QUESTIONS: [
+    { scene:'forrest_gump', phrase:'Life is like a box of chocolates',
+      word:'chocolates',
+      q:'¿Qué significa "chocolates" en español?',
+      correct:'chocolates (dulces)', wrong:['zapatos','libros','flores'] },
+    { scene:'fight_club', phrase:'You do not talk about Fight Club',
+      word:'talk',
+      q:'¿Qué significa "to talk" en español?',
+      correct:'hablar', wrong:['correr','dormir','comer'] },
+    { scene:'seven', phrase:"What's in the box?",
+      word:'box',
+      q:'¿Qué significa "box" en español?',
+      correct:'caja', wrong:['bolso','silla','ventana'] },
+    { scene:'the_matrix', phrase:'There is no spoon',
+      word:'spoon',
+      q:'¿Qué significa "spoon" en español?',
+      correct:'cuchara', wrong:['tenedor','cuchillo','plato'] },
+    { scene:'men_in_black', phrase:'I make this look good',
+      word:'look good',
+      q:'¿Qué significa "look good" en español?',
+      correct:'verse bien', wrong:['sentirse mal','estar cansado','hablar rápido'] },
+    { scene:'top_gun', phrase:'I feel the need for speed',
+      word:'speed',
+      q:'¿Qué significa "speed" en español?',
+      correct:'velocidad', wrong:['silencio','distancia','altura'] },
+    { scene:'cast_away', phrase:'I have made fire',
+      word:'fire',
+      q:'¿Qué significa "fire" en español?',
+      correct:'fuego', wrong:['agua','tierra','viento'] },
+    { scene:'jerry_maguire', phrase:'You had me at hello',
+      word:'hello',
+      q:'¿Qué significa "hello" en español?',
+      correct:'hola', wrong:['adiós','gracias','perdón'] },
+    { scene:'pursuit_of_happyness', phrase:"Don't ever let somebody tell you you can't do something",
+      word:'somebody',
+      q:'¿Qué significa "somebody" en español?',
+      correct:'alguien', wrong:['nadie','todos','ninguno'] },
+    { scene:'apollo_13', phrase:'Houston, we have a problem',
+      word:'problem',
+      q:'¿Qué significa "problem" en español?',
+      correct:'problema', wrong:['solución','pregunta','respuesta'] },
+    { scene:'clueless', phrase:'As if!',
+      word:'as if',
+      q:'¿Qué significa "as if" en español?',
+      correct:'¡Como si fuera!', wrong:['¡Claro que sí!','¡Por supuesto!','¡Qué bueno!'] },
+    { scene:'home_alone', phrase:'Keep the change',
+      word:'change',
+      q:'¿Qué significa "change" en español?',
+      correct:'cambio', wrong:['dinero','precio','compra'] },
+    { scene:'social_network', phrase:"A million dollars isn't cool",
+      word:'cool',
+      q:'¿Qué significa "cool" en español (informal)?',
+      correct:'genial / chévere', wrong:['aburrido','frío','pequeño'] },
+    { scene:'the_blind_side', phrase:"You're changing that boy's life",
+      word:'changing',
+      q:'¿Qué significa "changing" en español?',
+      correct:'cambiando', wrong:['corriendo','hablando','mirando'] },
+    { scene:'mrs_doubtfire', phrase:'Help is on the way',
+      word:'help',
+      q:'¿Qué significa "help" en español?',
+      correct:'ayuda', wrong:['peligro','miedo','trabajo'] },
+    { scene:'fifth_element', phrase:'Multipass',
+      word:'pass',
+      q:'¿Qué significa "pass" en español?',
+      correct:'pase / permiso', wrong:['boleto de avión','tarjeta de crédito','llave'] },
+    { scene:'devil_wears_prada', phrase:"That's all",
+      word:"that's all",
+      q:'¿Qué significa "that\'s all" en español?',
+      correct:'eso es todo', wrong:['eso no es nada','qué más','hay más'] },
+    { scene:'the_intern', phrase:'Experience never gets old',
+      word:'experience',
+      q:'¿Qué significa "experience" en español?',
+      correct:'experiencia', wrong:['experimento','experto','ejemplo'] },
+    { scene:'mystic_river', phrase:'Is that my daughter in there?',
+      word:'daughter',
+      q:'¿Qué significa "daughter" en español?',
+      correct:'hija', wrong:['madre','hermana','abuela'] },
+    { scene:'back_to_the_future', phrase:"We don't need roads",
+      word:'roads',
+      q:'¿Qué significa "roads" en español?',
+      correct:'caminos / carreteras', wrong:['puentes','ríos','ciudades'] },
   ],
 
-  DEFS: [
-    {en:'run',es_correct:'moverse rápido con las piernas',es_wrong:['cocinar con aceite caliente','escribir con un lápiz']},
-    {en:'protect',es_correct:'defender a alguien de un peligro',es_wrong:['olvidar algo importante','cantar una canción']},
-    {en:'survive',es_correct:'continuar viviendo después de un peligro',es_wrong:['comprar ropa nueva','hablar con un amigo']},
-    {en:'choose',es_correct:'seleccionar una opción entre varias',es_wrong:['romper un objeto de vidrio','dormir hasta tarde']},
-    {en:'believe',es_correct:'tener confianza en algo o alguien',es_wrong:['vender algo en el mercado','preparar la cena']},
-    {en:'save',es_correct:'rescatar a alguien de un peligro',es_wrong:['perder el autobús','lavar los platos']},
-    {en:'change',es_correct:'hacer que algo sea diferente',es_wrong:['subir a un árbol alto','beber agua fría']},
-    {en:'learn',es_correct:'adquirir nuevos conocimientos',es_wrong:['romper una ventana','conducir muy rápido']},
+  VERB_BANK: [
+    { en:'to love',     es:'amar' },
+    { en:'to run',      es:'correr' },
+    { en:'to protect',  es:'proteger' },
+    { en:'to help',     es:'ayudar' },
+    { en:'to survive',  es:'sobrevivir' },
+    { en:'to believe',  es:'creer' },
+    { en:'to change',   es:'cambiar' },
+    { en:'to save',     es:'salvar' },
+    { en:'to choose',   es:'elegir' },
+    { en:'to fight',    es:'pelear' },
+    { en:'to fly',      es:'volar' },
+    { en:'to travel',   es:'viajar' },
+    { en:'to work',     es:'trabajar' },
+    { en:'to learn',    es:'aprender' },
+    { en:'to create',   es:'crear' },
   ],
 
   shuffle(arr) { return [...arr].sort(() => Math.random() - 0.5); },
 
   buildQuestions() {
-    const q = [];
-    const scenes = this.shuffle([...this.SCENES]);
-    scenes.forEach((scene, i) => {
-      const type = i % 4;
-      if (type === 0) {
-        const others = this.SCENES.filter(s => s.id !== scene.id);
-        const wrongs = this.shuffle(others).slice(0,3).map(s => s.movie);
-        q.push({ type:'movie_id', typeLabel:'¿De qué película es?', scene, question:`"${scene.quote}"`, options: this.shuffle([scene.movie,...wrongs]), answer: scene.movie });
-      } else if (type === 1) {
-        const words = this.shuffle([...scene.sentence]);
-        q.push({ type:'word_order', typeLabel:'Ordena las palabras', scene, question:`Ordena estas palabras para formar la frase de ${scene.movie}:`, words, answer: scene.sentence.join(' ') });
-      } else if (type === 2) {
-        const def = this.DEFS.find(d => d.en === scene.verb.en) || this.DEFS[i % this.DEFS.length];
-        const options = this.shuffle([def.es_correct, ...def.es_wrong.slice(0,2)]);
-        q.push({ type:'definition', typeLabel:'Elige la definición', scene, question:`¿Qué significa "${scene.verb.en}" en español?`, options, answer: def.es_correct });
-      } else {
-        const coin = Math.random() > 0.5;
-        const others = this.SCENES.filter(s => s.id !== scene.id);
-        if (coin) {
-          const wrongs = this.shuffle(others).slice(0,3).map(s => s.verb.es);
-          q.push({ type:'verb', typeLabel:'Traducción', scene, question:`Traduce al español:\n\n"${scene.verb.en}"`, options: this.shuffle([scene.verb.es,...wrongs]), answer: scene.verb.es });
-        } else {
-          const wrongs = this.shuffle(others).slice(0,3).map(s => s.verb.en);
-          q.push({ type:'verb', typeLabel:'Traducción', scene, question:`Traduce al inglés:\n\n"${scene.verb.es}"`, options: this.shuffle([scene.verb.en,...wrongs]), answer: scene.verb.en });
-        }
-      }
+    const shuffled = this.shuffle([...this.VOCAB_QUESTIONS]);
+    const selected = shuffled.slice(0, 10);
+
+    return selected.map(item => {
+      const options = this.shuffle([item.correct, ...item.wrong.slice(0,2)]);
+      return {
+        type: 'vocab',
+        typeLabel: 'Vocabulario de la escena',
+        scene: { id: item.scene, movie: item.scene.replace(/_/g,' ') },
+        question: `De la frase:\n"${item.phrase}"\n\n${item.q}`,
+        options: options,
+        answer: item.correct
+      };
     });
-    return q.slice(0,20);
   },
 
   open() {
     this.questions = this.buildQuestions();
     this.current = 0; this.score = 0; this.combo = 0; this.answered = false;
-    this.typeScores = { movie_id:[0,0], word_order:[0,0], definition:[0,0], verb:[0,0] };
+    this.typeScores = { vocab:[0,0], verb:[0,0] };
     document.getElementById('quizOverlay').style.display = 'block';
     document.body.style.overflow = 'hidden';
     document.getElementById('quizResults').style.display = 'none';
@@ -2790,23 +2843,15 @@ const QuizController = {
 
     const optEl = document.getElementById('quizOptions');
     const woEl = document.getElementById('quizWordOrder');
+    if (woEl) woEl.style.display = 'none';
 
-    if (q.type === 'word_order') {
-      optEl.style.display = 'none';
-      woEl.style.display = 'block';
-      this.wordSlots = [];
-      this.wordBank = [...q.words];
-      this.renderWordOrder(q);
-    } else {
-      optEl.style.display = 'flex';
-      woEl.style.display = 'none';
-      optEl.innerHTML = q.options.map(opt =>
-        `<button class="quiz-opt" data-val="${opt}">${opt}</button>`
-      ).join('');
-      optEl.querySelectorAll('.quiz-opt').forEach(btn => {
-        btn.onclick = () => this.selectAnswer(btn.dataset.val);
-      });
-    }
+    optEl.style.display = 'flex';
+    optEl.innerHTML = q.options.map(opt =>
+      `<button class="quiz-opt" data-val="${opt}">${opt}</button>`
+    ).join('');
+    optEl.querySelectorAll('.quiz-opt').forEach(btn => {
+      btn.onclick = () => this.selectAnswer(btn.dataset.val);
+    });
   },
 
   renderWordOrder(q) {
@@ -2865,13 +2910,11 @@ const QuizController = {
       badge.style.display = 'block';
     }
 
-    if (q.type !== 'word_order') {
-      document.querySelectorAll('.quiz-opt').forEach(btn => {
-        btn.style.pointerEvents = 'none';
-        if (btn.dataset.val === q.answer) { btn.style.background='rgba(200,169,110,0.15)'; btn.style.borderColor='rgba(200,169,110,0.5)'; btn.style.color='#c8a96e'; }
-        else if (btn.dataset.val === selected && !correct) { btn.style.background='rgba(255,80,80,0.1)'; btn.style.borderColor='rgba(255,80,80,0.3)'; btn.style.color='rgba(255,100,100,0.8)'; }
-      });
-    }
+    document.querySelectorAll('.quiz-opt').forEach(btn => {
+      btn.style.pointerEvents = 'none';
+      if (btn.dataset.val === q.answer) { btn.style.background='rgba(200,169,110,0.15)'; btn.style.borderColor='rgba(200,169,110,0.5)'; btn.style.color='#c8a96e'; }
+      else if (btn.dataset.val === selected && !correct) { btn.style.background='rgba(255,80,80,0.1)'; btn.style.borderColor='rgba(255,80,80,0.3)'; btn.style.color='rgba(255,100,100,0.8)'; }
+    });
 
     const fb = document.getElementById('quizFeedback');
     fb.style.display = 'block';
@@ -2904,7 +2947,7 @@ const QuizController = {
     document.getElementById('quizResultTitle').textContent = passed ? '¡NIVEL 2 DESBLOQUEADO!' : 'SIGUE PRACTICANDO';
     document.getElementById('quizResultScore').textContent = pct+'% — '+this.score+'/'+total+' correctas'+(passed ? '' : ' · Necesitas 70% para pasar');
 
-    const typeLabels = { movie_id:'Películas', word_order:'Ordenar', definition:'Definiciones', verb:'Verbos' };
+    const typeLabels = { vocab:'Vocabulario', verb:'Verbos' };
     const bd = document.getElementById('quizBreakdown');
     bd.innerHTML = Object.entries(this.typeScores).map(([k,[c,t]]) =>
       `<div class="quiz-breakdown-card">
