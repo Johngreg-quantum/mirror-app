@@ -530,10 +530,12 @@ onClick('btnLogout', logout);
 function openAuthModal(tab) {
   switchAuthTab(tab || 'login');
   setOverlayActive('authModalOverlay', true);
+  document.body.classList.add('auth-open');
 }
 
 function closeAuthModal() {
   setOverlayActive('authModalOverlay', false);
+  document.body.classList.remove('auth-open');
 }
 
 onClick('authModalClose', closeAuthModal);

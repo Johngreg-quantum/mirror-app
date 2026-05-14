@@ -1303,7 +1303,7 @@
      CTA buttons fire heroStartBtn.click() inside #authScreen below.
 ════════════════════════════════════════════════════════ -->
 <section id="mirrorLanding" style="
-  position: relative; width: 100%; min-height: 100vh; padding-bottom: 4rem; z-index: 100;
+  position: relative; width: 100%; min-height: 100vh; padding-bottom: 4rem; z-index: 1;
   display: flex; flex-direction: column; align-items: center; justify-content: flex-start; padding-top: 4vh;
   background:
     radial-gradient(ellipse 40% 60% at 15% 50%, rgba(45,35,25,0.9), transparent),
@@ -1396,6 +1396,15 @@
     #mirrorLanding.ml-explore .ml-poster-grid { opacity: 1 !important; pointer-events: auto; }
 
     .ml-poster-grid { transition: opacity 0.6s ease; }
+
+    body.auth-open #mirrorLanding,
+    body.modal-open #mirrorLanding {
+      z-index: 1 !important;
+    }
+
+    #authModalOverlay.open {
+      z-index: 99999 !important;
+    }
   </style>
 
   <!-- Outer vignette -->
@@ -1515,20 +1524,7 @@
 
   <script>
   function mlOpenAuth() {
-    if (typeof window.openAuthModal === 'function') {
-      window.openAuthModal('register');
-    } else if (typeof window.setOverlayActive === 'function') {
-      window.setOverlayActive(true);
-    } else {
-      var modal = document.getElementById('authModalOverlay');
-      if (modal) {
-        modal.style.display = 'flex';
-        modal.style.opacity = '1';
-        modal.style.pointerEvents = 'auto';
-        modal.classList.add('open');
-        document.body.style.overflow = 'hidden';
-      }
-    }
+    document.getElementById('heroStartBtn').click();
   }
   </script>
 </section>
