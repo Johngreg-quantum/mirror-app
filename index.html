@@ -3,6 +3,19 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <script>
+    (function(){
+      var token = localStorage.getItem('mirror_token');
+      var style = document.createElement('style');
+      style.id = 'preloadHide';
+      if (token) {
+        style.textContent = '#mirrorLanding{display:none!important;} #appShell{opacity:0;}';
+      } else {
+        style.textContent = '#appShell{display:none!important;} #authScreen{display:none!important;}';
+      }
+      document.head.appendChild(style);
+    })();
+  </script>
   <title>MIRRORSPEAK — Cinematic Language Learning</title>
   <link rel="icon" href="/static/favicon.svg" type="image/svg+xml" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -1286,7 +1299,7 @@
   </style>
   <script type="module" src="https://unpkg.com/@splinetool/viewer@1.12.90/build/spline-viewer.js"></script>
 </head>
-<body>
+<body style="overflow:hidden;">
 
 <!-- Background atmosphere -->
 <div class="bg-orb bg-orb-1"></div>
@@ -2981,6 +2994,11 @@ function enterAppMode() {
     document.documentElement.style.overflow = '';
     window.scrollTo(0, 0);
   }, 300);
+
+  var preload = document.getElementById('preloadHide');
+  if (preload) preload.remove();
+  document.getElementById('appShell').style.opacity = '1';
+  document.body.style.overflow = '';
 }
 
 // Level 1 quiz logic moved to static/app.js — see QuizController.
