@@ -364,6 +364,11 @@ function getScenePlaybackMeta(sceneId) {
 let authToken   = localStorage.getItem('mirror_token') || null;
 let authUser    = null;
 
+if (authToken) {
+  const _mlLanding = document.getElementById('mirrorLanding');
+  if (_mlLanding) _mlLanding.style.display = 'none';
+}
+
 let scenes      = {};
 let activeScene = null;
 let activeLbTab = null;

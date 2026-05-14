@@ -1303,8 +1303,8 @@
      CTA buttons fire heroStartBtn.click() inside #authScreen below.
 ════════════════════════════════════════════════════════ -->
 <section id="mirrorLanding" style="
-  position: relative; width: 100%; min-height: 100vh; padding-bottom: 4rem; z-index: 1;
-  display: flex; flex-direction: column; align-items: center; justify-content: flex-start; padding-top: 4vh;
+  position: fixed; inset: 0; overflow-y: auto; padding-bottom: 4rem; z-index: 500;
+  display: flex; flex-direction: column; align-items: center; justify-content: flex-start;
   background:
     radial-gradient(ellipse 40% 60% at 15% 50%, rgba(45,35,25,0.9), transparent),
     radial-gradient(ellipse 40% 60% at 85% 50%, rgba(35,28,20,0.9), transparent),
@@ -1468,7 +1468,7 @@
 
   </div><!-- /mlCanvas -->
 
-  <div style="max-width:700px;margin:3rem auto 0;padding:0 2rem 5rem;position:relative;z-index:3;">
+  <div style="position:relative;z-index:3;max-width:700px;margin:0 auto;padding:0 2rem 5rem;">
 
     <div style="height:1px;background:linear-gradient(90deg,transparent,rgba(255,255,255,0.12),transparent);margin-bottom:3rem;"></div>
 
@@ -2845,6 +2845,8 @@ function switchTab(tab) {
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 function enterAppMode() {
+  var landing = document.getElementById('mirrorLanding');
+  if (landing) { landing.style.display = 'none'; }
   document.body.classList.add('app-mode');
   document.getElementById('bottomNav').classList.add('visible');
   document.getElementById('appShell').style.display = 'block';
