@@ -2681,116 +2681,118 @@ const QuizController = {
   questions: [], current: 0, score: 0, combo: 0, answered: false,
   typeScores: { vocab: [0,0], verb: [0,0] },
   wordSlots: [], wordBank: [],
+  level: 'L1',
 
-  VOCAB_QUESTIONS: [
+  VOCAB_QUESTIONS_L1: [
     { scene:'forrest_gump', phrase:'Life is like a box of chocolates',
-      word:'chocolates',
-      q:'¿Qué significa "chocolates" en español?',
-      correct:'chocolates (dulces)', wrong:['zapatos','libros','flores'] },
+      q:'¿Qué significa "chocolates"?', correct:'chocolates (dulces)', wrong:['zapatos','libros'] },
     { scene:'fight_club', phrase:'You do not talk about Fight Club',
-      word:'talk',
-      q:'¿Qué significa "to talk" en español?',
-      correct:'hablar', wrong:['correr','dormir','comer'] },
+      q:'¿Qué significa "to talk"?', correct:'hablar', wrong:['correr','dormir'] },
     { scene:'seven', phrase:"What's in the box?",
-      word:'box',
-      q:'¿Qué significa "box" en español?',
-      correct:'caja', wrong:['bolso','silla','ventana'] },
+      q:'¿Qué significa "box"?', correct:'caja', wrong:['bolso','silla'] },
     { scene:'the_matrix', phrase:'There is no spoon',
-      word:'spoon',
-      q:'¿Qué significa "spoon" en español?',
-      correct:'cuchara', wrong:['tenedor','cuchillo','plato'] },
+      q:'¿Qué significa "spoon"?', correct:'cuchara', wrong:['tenedor','plato'] },
     { scene:'men_in_black', phrase:'I make this look good',
-      word:'look good',
-      q:'¿Qué significa "look good" en español?',
-      correct:'verse bien', wrong:['sentirse mal','estar cansado','hablar rápido'] },
+      q:'¿Qué significa "look good"?', correct:'verse bien', wrong:['sentirse mal','estar cansado'] },
     { scene:'top_gun', phrase:'I feel the need for speed',
-      word:'speed',
-      q:'¿Qué significa "speed" en español?',
-      correct:'velocidad', wrong:['silencio','distancia','altura'] },
+      q:'¿Qué significa "speed"?', correct:'velocidad', wrong:['silencio','altura'] },
     { scene:'cast_away', phrase:'I have made fire',
-      word:'fire',
-      q:'¿Qué significa "fire" en español?',
-      correct:'fuego', wrong:['agua','tierra','viento'] },
+      q:'¿Qué significa "fire"?', correct:'fuego', wrong:['agua','tierra'] },
     { scene:'jerry_maguire', phrase:'You had me at hello',
-      word:'hello',
-      q:'¿Qué significa "hello" en español?',
-      correct:'hola', wrong:['adiós','gracias','perdón'] },
-    { scene:'pursuit_of_happyness', phrase:"Don't ever let somebody tell you you can't do something",
-      word:'somebody',
-      q:'¿Qué significa "somebody" en español?',
-      correct:'alguien', wrong:['nadie','todos','ninguno'] },
+      q:'¿Qué significa "hello"?', correct:'hola', wrong:['adiós','gracias'] },
+    { scene:'pursuit_of_happyness', phrase:"Don't let somebody tell you you can't do something",
+      q:'¿Qué significa "somebody"?', correct:'alguien', wrong:['nadie','todos'] },
     { scene:'apollo_13', phrase:'Houston, we have a problem',
-      word:'problem',
-      q:'¿Qué significa "problem" en español?',
-      correct:'problema', wrong:['solución','pregunta','respuesta'] },
+      q:'¿Qué significa "problem"?', correct:'problema', wrong:['solución','pregunta'] },
     { scene:'clueless', phrase:'As if!',
-      word:'as if',
-      q:'¿Qué significa "as if" en español?',
-      correct:'¡Como si fuera!', wrong:['¡Claro que sí!','¡Por supuesto!','¡Qué bueno!'] },
+      q:'¿Qué significa "as if"?', correct:'¡Como si fuera!', wrong:['¡Claro que sí!','¡Por supuesto!'] },
     { scene:'home_alone', phrase:'Keep the change',
-      word:'change',
-      q:'¿Qué significa "change" en español?',
-      correct:'cambio', wrong:['dinero','precio','compra'] },
+      q:'¿Qué significa "change" en este contexto?', correct:'cambio / vuelto', wrong:['ropa','precio'] },
     { scene:'social_network', phrase:"A million dollars isn't cool",
-      word:'cool',
-      q:'¿Qué significa "cool" en español (informal)?',
-      correct:'genial / chévere', wrong:['aburrido','frío','pequeño'] },
+      q:'¿Qué significa "cool" en inglés informal?', correct:'genial / chévere', wrong:['frío','aburrido'] },
     { scene:'the_blind_side', phrase:"You're changing that boy's life",
-      word:'changing',
-      q:'¿Qué significa "changing" en español?',
-      correct:'cambiando', wrong:['corriendo','hablando','mirando'] },
+      q:'¿Qué significa "changing"?', correct:'cambiando', wrong:['corriendo','hablando'] },
     { scene:'mrs_doubtfire', phrase:'Help is on the way',
-      word:'help',
-      q:'¿Qué significa "help" en español?',
-      correct:'ayuda', wrong:['peligro','miedo','trabajo'] },
+      q:'¿Qué significa "help"?', correct:'ayuda', wrong:['peligro','trabajo'] },
     { scene:'fifth_element', phrase:'Multipass',
-      word:'pass',
-      q:'¿Qué significa "pass" en español?',
-      correct:'pase / permiso', wrong:['boleto de avión','tarjeta de crédito','llave'] },
+      q:'¿Qué significa "pass"?', correct:'pase / permiso', wrong:['boleto','llave'] },
     { scene:'devil_wears_prada', phrase:"That's all",
-      word:"that's all",
-      q:'¿Qué significa "that\'s all" en español?',
-      correct:'eso es todo', wrong:['eso no es nada','qué más','hay más'] },
+      q:'¿Qué significa "that\'s all"?', correct:'eso es todo', wrong:['qué más','hay más'] },
     { scene:'the_intern', phrase:'Experience never gets old',
-      word:'experience',
-      q:'¿Qué significa "experience" en español?',
-      correct:'experiencia', wrong:['experimento','experto','ejemplo'] },
+      q:'¿Qué significa "experience"?', correct:'experiencia', wrong:['experimento','experto'] },
     { scene:'mystic_river', phrase:'Is that my daughter in there?',
-      word:'daughter',
-      q:'¿Qué significa "daughter" en español?',
-      correct:'hija', wrong:['madre','hermana','abuela'] },
+      q:'¿Qué significa "daughter"?', correct:'hija', wrong:['madre','hermana'] },
     { scene:'back_to_the_future', phrase:"We don't need roads",
-      word:'roads',
-      q:'¿Qué significa "roads" en español?',
-      correct:'caminos / carreteras', wrong:['puentes','ríos','ciudades'] },
+      q:'¿Qué significa "roads"?', correct:'caminos / carreteras', wrong:['puentes','ríos'] },
   ],
 
-  VERB_BANK: [
-    { en:'to love',     es:'amar' },
-    { en:'to run',      es:'correr' },
-    { en:'to protect',  es:'proteger' },
-    { en:'to help',     es:'ayudar' },
-    { en:'to survive',  es:'sobrevivir' },
-    { en:'to believe',  es:'creer' },
-    { en:'to change',   es:'cambiar' },
-    { en:'to save',     es:'salvar' },
-    { en:'to choose',   es:'elegir' },
-    { en:'to fight',    es:'pelear' },
-    { en:'to fly',      es:'volar' },
-    { en:'to travel',   es:'viajar' },
-    { en:'to work',     es:'trabajar' },
-    { en:'to learn',    es:'aprender' },
-    { en:'to create',   es:'crear' },
+  VERB_BANK_L1: [
+    { q:'¿Cómo se dice "to run" en español?',      correct:'correr',     wrong:['saltar','nadar'] },
+    { q:'¿Cómo se dice "to help" en español?',     correct:'ayudar',     wrong:['correr','hablar'] },
+    { q:'¿Cómo se dice "to love" en español?',     correct:'amar',       wrong:['odiar','temer'] },
+    { q:'¿Cómo se dice "to change" en español?',   correct:'cambiar',    wrong:['crecer','romper'] },
+    { q:'¿Cómo se dice "to save" en español?',     correct:'salvar',     wrong:['perder','buscar'] },
+    { q:'¿Cómo se dice "to believe" en español?',  correct:'creer',      wrong:['saber','pensar'] },
+    { q:'¿Cómo se dice "to work" en español?',     correct:'trabajar',   wrong:['descansar','jugar'] },
+    { q:'¿Cómo se dice "to learn" en español?',    correct:'aprender',   wrong:['enseñar','olvidar'] },
+    { q:'¿Cómo se dice "to protect" en español?',  correct:'proteger',   wrong:['atacar','ignorar'] },
+    { q:'¿Cómo se dice "to survive" en español?',  correct:'sobrevivir', wrong:['morir','huir'] },
+  ],
+
+  VOCAB_QUESTIONS_L2: [
+    { scene:'good_will_hunting', phrase:"It's not your fault",
+      q:'¿Qué significa "fault"?', correct:'culpa', wrong:['miedo','dolor'] },
+    { scene:'shawshank', phrase:'Get busy living or get busy dying',
+      q:'¿Qué significa "busy"?', correct:'ocupado', wrong:['cansado','libre'] },
+    { scene:'godfather', phrase:"I'll make him an offer he can't refuse",
+      q:'¿Qué significa "refuse"?', correct:'rechazar', wrong:['aceptar','pedir'] },
+    { scene:'dark_knight', phrase:'Why so serious?',
+      q:'¿Qué significa "serious"?', correct:'serio', wrong:['feliz','enojado'] },
+    { scene:'dead_poets', phrase:'Carpe diem. Seize the day',
+      q:'¿Qué significa "seize"?', correct:'aprovechar / tomar', wrong:['perder','ignorar'] },
+    { scene:'gladiator', phrase:'Are you not entertained?',
+      q:'¿Qué significa "entertained"?', correct:'entretenido', wrong:['cansado','asustado'] },
+    { scene:'whiplash', phrase:'Were you rushing or were you dragging?',
+      q:'¿Qué significa "rushing"?', correct:'apresurándose', wrong:['esperando','parando'] },
+    { scene:'rocky', phrase:'Yo, Adrian!',
+      q:'¿Qué significa "Adrian" en el contexto de Rocky?', correct:'El nombre de su novia', wrong:['su entrenador','su rival'] },
+    { scene:'braveheart', phrase:'They may take our lives but never our freedom',
+      q:'¿Qué significa "freedom"?', correct:'libertad', wrong:['victoria','tierra'] },
+    { scene:'interstellar', phrase:'We must reach beyond our own time',
+      q:'¿Qué significa "reach"?', correct:'alcanzar', wrong:['escapar','olvidar'] },
+    { scene:'rain_man', phrase:'I am an excellent driver',
+      q:'¿Qué significa "excellent"?', correct:'excelente', wrong:['terrible','normal'] },
+    { scene:'wolf_of_wall_street', phrase:'Sell me this pen',
+      q:'¿Qué significa "sell"?', correct:'vender', wrong:['comprar','guardar'] },
+    { scene:'wall_street', phrase:'Greed is good',
+      q:'¿Qué significa "greed"?', correct:'codicia / avaricia', wrong:['bondad','tristeza'] },
+    { scene:'breakfast_club', phrase:'We are all pretty bizarre',
+      q:'¿Qué significa "bizarre"?', correct:'extraño / raro', wrong:['normal','aburrido'] },
+    { scene:'a_few_good_men', phrase:"You can't handle the truth",
+      q:'¿Qué significa "handle"?', correct:'manejar / soportar', wrong:['esconder','ignorar'] },
+  ],
+
+  VERB_BANK_L2: [
+    { q:'¿Cómo se dice "to struggle" en español?',  correct:'luchar / esforzarse',     wrong:['descansar','rendirse'] },
+    { q:'¿Cómo se dice "to overcome" en español?',  correct:'superar',                 wrong:['evitar','ignorar'] },
+    { q:'¿Cómo se dice "to sacrifice" en español?', correct:'sacrificar',              wrong:['ganar','recibir'] },
+    { q:'¿Cómo se dice "to betray" en español?',    correct:'traicionar',              wrong:['proteger','ayudar'] },
+    { q:'¿Cómo se dice "to inspire" en español?',   correct:'inspirar',                wrong:['desanimar','confundir'] },
+    { q:'¿Cómo se dice "to confront" en español?',  correct:'confrontar / enfrentar',  wrong:['evitar','huir'] },
+    { q:'¿Cómo se dice "to forgive" en español?',   correct:'perdonar',                wrong:['castigar','olvidar'] },
+    { q:'¿Cómo se dice "to achieve" en español?',   correct:'lograr / alcanzar',       wrong:['fallar','intentar'] },
+    { q:'¿Cómo se dice "to pursue" en español?',    correct:'perseguir',               wrong:['abandonar','ignorar'] },
+    { q:'¿Cómo se dice "to reveal" en español?',    correct:'revelar',                 wrong:['esconder','mentir'] },
   ],
 
   shuffle(arr) { return [...arr].sort(() => Math.random() - 0.5); },
 
   buildQuestions() {
-    const shuffled = this.shuffle([...this.VOCAB_QUESTIONS]);
-    const selected = shuffled.slice(0, 10);
+    const vocabPool = this.level === 'L2' ? this.VOCAB_QUESTIONS_L2 : this.VOCAB_QUESTIONS_L1;
+    const verbPool  = this.level === 'L2' ? this.VERB_BANK_L2       : this.VERB_BANK_L1;
 
-    return selected.map(item => {
-      const options = this.shuffle([item.correct, ...item.wrong.slice(0,2)]);
+    const vocabPicks = this.shuffle([...vocabPool]).slice(0, 7).map(item => {
+      const options = this.shuffle([item.correct, ...item.wrong]);
       return {
         type: 'vocab',
         typeLabel: 'Vocabulario de la escena',
@@ -2800,9 +2802,24 @@ const QuizController = {
         answer: item.correct
       };
     });
+
+    const verbPicks = this.shuffle([...verbPool]).slice(0, 3).map(item => {
+      const options = this.shuffle([item.correct, ...item.wrong]);
+      return {
+        type: 'verb',
+        typeLabel: 'Verbo',
+        scene: null,
+        question: item.q,
+        options: options,
+        answer: item.correct
+      };
+    });
+
+    return this.shuffle([...vocabPicks, ...verbPicks]);
   },
 
-  open() {
+  open(level) {
+    this.level = level === 'L2' ? 'L2' : 'L1';
     this.questions = this.buildQuestions();
     this.current = 0; this.score = 0; this.combo = 0; this.answered = false;
     this.typeScores = { vocab:[0,0], verb:[0,0] };
@@ -2838,8 +2855,16 @@ const QuizController = {
 
     const img = document.getElementById('quizPosterImg');
     const movieLabel = document.getElementById('quizPosterMovie');
-    if (img) { img.src = '/static/posters/'+q.scene.id+'.jpg'; img.onerror = () => { img.style.display='none'; }; }
-    if (movieLabel) movieLabel.textContent = q.scene.movie;
+    if (img) {
+      if (q.scene && q.scene.id) {
+        img.style.display = '';
+        img.src = '/static/posters/'+q.scene.id+'.jpg';
+        img.onerror = () => { img.style.display='none'; };
+      } else {
+        img.style.display = 'none';
+      }
+    }
+    if (movieLabel) movieLabel.textContent = q.scene && q.scene.movie ? q.scene.movie : '';
 
     const optEl = document.getElementById('quizOptions');
     const woEl = document.getElementById('quizWordOrder');
@@ -2944,7 +2969,8 @@ const QuizController = {
     document.getElementById('quizProgressFill').style.width='100%';
     document.getElementById('quizResults').style.display='block';
     document.getElementById('quizResultIcon').textContent = passed ? '🏆' : '🎬';
-    document.getElementById('quizResultTitle').textContent = passed ? '¡NIVEL 2 DESBLOQUEADO!' : 'SIGUE PRACTICANDO';
+    const passTitle = this.level === 'L2' ? '¡NIVEL 3 DESBLOQUEADO!' : '¡NIVEL 2 DESBLOQUEADO!';
+    document.getElementById('quizResultTitle').textContent = passed ? passTitle : 'SIGUE PRACTICANDO';
     document.getElementById('quizResultScore').textContent = pct+'% — '+this.score+'/'+total+' correctas'+(passed ? '' : ' · Necesitas 70% para pasar');
 
     const typeLabels = { vocab:'Vocabulario', verb:'Verbos' };
@@ -2959,17 +2985,20 @@ const QuizController = {
     if (passed) {
       try {
         const authToken = localStorage.getItem('mirror_token');
-        const res = await fetch('/api/quiz-pass', {
+        const isL2 = this.level === 'L2';
+        const url  = isL2 ? '/api/quiz2-pass' : '/api/quiz-pass';
+        const body = isL2 ? { score: pct } : { quiz: 'level1', score: pct };
+        const res = await fetch(url, {
           method: 'POST',
           headers: {
             'Authorization': 'Bearer ' + authToken,
             'Content-Type': 'application/json'
           },
-          body: JSON.stringify({ quiz: 'level1', score: pct })
+          body: JSON.stringify(body)
         });
         if (res.ok) {
           if (typeof userProgress !== 'undefined') userProgress._quizPassed = true;
-          if (typeof checkLevel2Unlock === 'function') checkLevel2Unlock();
+          if (!isL2 && typeof checkLevel2Unlock === 'function') checkLevel2Unlock();
         }
       } catch(e) { console.error('quiz-pass error', e); }
     }
@@ -2990,7 +3019,7 @@ if (document.readyState === 'loading') {
 }
 
 window.QuizController = QuizController;
-function openQuiz() { QuizController.open(); }
+function openQuiz(level) { QuizController.open(level || 'L1'); }
 window.openQuiz = openQuiz;
 
 // ══════════════════════════════════════════════
