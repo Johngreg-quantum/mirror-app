@@ -20,7 +20,7 @@
   <link rel="icon" href="/static/favicon.svg" type="image/svg+xml" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Playfair+Display:ital,wght@0,700;1,700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Playfair+Display:ital,wght@0,700;1,700&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
   <!-- YouTube IFrame API — loaded early so it's ready when user opens a scene -->
   <script src="https://www.youtube.com/iframe_api"></script>
   <link rel="stylesheet" href="/static/app.css" />
@@ -1376,25 +1376,33 @@
     @keyframes mlMarqueeRTL { 0% { transform: translateX(0);    } 100% { transform: translateX(-50%); } }
     @keyframes mlMarqueeLTR { 0% { transform: translateX(-50%); } 100% { transform: translateX(0);    } }
 
-    /* CTA buttons — unchanged */
+    /* CTA buttons — premium pill, modern UI feel */
+    .ml-cta-primary, .ml-cta-secondary {
+      padding: 0.78rem 1.65rem; border-radius: 100px;
+      font-family: 'DM Sans', -apple-system, 'Inter', system-ui, sans-serif;
+      font-size: 0.82rem; font-weight: 500; letter-spacing: 0;
+      cursor: pointer; transition: transform 0.2s ease, background 0.2s ease, border-color 0.2s ease, color 0.2s ease, box-shadow 0.25s ease;
+      line-height: 1;
+    }
     .ml-cta-primary {
-      padding: 0.58rem 1.5rem; border-radius: 100px;
-      font-size: 0.7rem; letter-spacing: 0.08em;
-      font-family: 'DM Sans', sans-serif; font-weight: 500;
-      cursor: pointer; border: none; transition: all 0.2s;
-      background: #f0ede8; color: #080808;
+      background: #ffffff; color: #0a0a0a; border: 1px solid rgba(255,255,255,0.95);
+      box-shadow: 0 8px 28px rgba(0,0,0,0.45), 0 0 0 1px rgba(255,255,255,0.06) inset;
     }
-    .ml-cta-primary:hover { background: #fff; transform: scale(1.02); }
-
+    .ml-cta-primary:hover {
+      transform: translateY(-1px);
+      background: #ffffff;
+      box-shadow: 0 12px 36px rgba(0,0,0,0.55), 0 0 24px rgba(255,255,255,0.18);
+    }
     .ml-cta-secondary {
-      padding: 0.58rem 1.4rem; border-radius: 100px;
-      font-size: 0.7rem; letter-spacing: 0.08em;
-      font-family: 'DM Sans', sans-serif; font-weight: 500;
-      cursor: pointer; transition: all 0.2s;
-      background: transparent; border: 0.5px solid rgba(255,255,255,0.2);
-      color: rgba(255,255,255,0.6);
+      background: rgba(255,255,255,0.04); color: rgba(255,255,255,0.82);
+      border: 1px solid rgba(255,255,255,0.16);
+      backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
     }
-    .ml-cta-secondary:hover { border-color: rgba(255,255,255,0.5); color: #f0ede8; }
+    .ml-cta-secondary:hover {
+      background: rgba(255,255,255,0.10);
+      border-color: rgba(255,255,255,0.32); color: #ffffff;
+      transform: translateY(-1px);
+    }
 
     /* Inner-canvas radial vignette */
     .ml-vignette {
@@ -1610,11 +1618,11 @@
     .ml-headline::before {
       content: ''; position: absolute;
       left: 50%; top: 50%; transform: translate(-50%, -50%);
-      width: 140%; height: 280%;
+      width: 160%; height: 300%;
       background:
-        radial-gradient(ellipse 55% 65% at 50% 60%, rgba(5,5,5,0.78), rgba(5,5,5,0.45) 55%, transparent 80%);
+        radial-gradient(ellipse 58% 62% at 50% 60%, rgba(5,5,5,0.86), rgba(5,5,5,0.55) 50%, transparent 82%);
       z-index: -1; pointer-events: none;
-      filter: blur(2px);
+      filter: blur(3px);
     }
 
     /* Marquee row 4 — bias even darker so deep-bg cards never compete with the headline */
@@ -1720,12 +1728,12 @@
     <div class="ml-canvas-floor"></div>
 
     <!-- Headline + CTA (preserved) -->
-    <div class="ml-headline" style="position:absolute;bottom:44px;left:0;right:0;display:flex;flex-direction:column;align-items:center;gap:9px;z-index:15;animation:mlFadeUp 1s ease 0.8s both;">
-      <div style="font-family:'Bebas Neue',sans-serif;font-size:clamp(1.3rem,3.5vw,2rem);letter-spacing:0.08em;color:#f0ede8;text-align:center;line-height:1;text-shadow:0 2px 14px rgba(0,0,0,0.85);">SPEAK LIKE THE GREATS</div>
-      <div style="font-size:0.74rem;color:rgba(255,255,255,0.62);letter-spacing:0.04em;text-align:center;font-style:italic;font-family:'Playfair Display',serif;text-shadow:0 1px 8px rgba(0,0,0,0.6);">Practice English through iconic movie scenes</div>
-      <div style="display:flex;gap:9px;margin-top:3px;">
-        <button class="ml-cta-primary" onclick="mlOpenAuth()">START PRACTICING</button>
-        <button class="ml-cta-secondary" onclick="mlOpenAuth()">SIGN IN</button>
+    <div class="ml-headline" style="position:absolute;bottom:54px;left:0;right:0;display:flex;flex-direction:column;align-items:center;gap:14px;z-index:15;animation:mlFadeUp 1s ease 0.8s both;">
+      <div style="font-family:'DM Sans',-apple-system,BlinkMacSystemFont,'Inter',system-ui,sans-serif;font-size:clamp(1.8rem,3.6vw,2.6rem);font-weight:600;letter-spacing:-0.018em;color:#ffffff;text-align:center;line-height:1.08;text-shadow:0 2px 24px rgba(0,0,0,0.6),0 0 80px rgba(0,0,0,0.35);max-width:680px;padding:0 16px;">Speak like the greats</div>
+      <div style="font-family:'DM Sans',-apple-system,'Inter',system-ui,sans-serif;font-size:0.88rem;font-weight:400;color:rgba(255,255,255,0.72);letter-spacing:0.005em;text-align:center;line-height:1.5;text-shadow:0 1px 12px rgba(0,0,0,0.55);max-width:520px;padding:0 16px;">Practice English through iconic movie scenes.</div>
+      <div style="display:flex;gap:12px;margin-top:8px;">
+        <button class="ml-cta-primary" onclick="mlOpenAuth()">Start practicing</button>
+        <button class="ml-cta-secondary" onclick="mlOpenAuth()">Sign in</button>
       </div>
     </div>
 
