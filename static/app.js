@@ -2975,6 +2975,42 @@ const QuizController = {
     document.getElementById('quizResultTitle').textContent = passed ? passTitle : 'SIGUE PRACTICANDO';
     document.getElementById('quizResultScore').textContent = pct+'% — '+this.score+'/'+total+' correctas'+(passed ? '' : ' · Necesitas 70% para pasar');
 
+    const motivations = [
+      "Every scene you practice brings you closer to fluency.",
+      "You're speaking like the greats. Keep going.",
+      "Cinema is your classroom. You just aced the lesson.",
+      "Method acting, method learning. You're doing it.",
+    ];
+    const motEl = document.getElementById('quizMotivation');
+    if (motEl) motEl.textContent = motivations[Math.floor(Math.random() * motivations.length)];
+
+    const xpBanner = document.getElementById('quizXpBanner');
+    if (xpBanner) {
+      const xp = passed ? 500 : 100;
+      xpBanner.querySelector('span:last-child').textContent = '+' + xp + ' XP EARNED';
+      xpBanner.style.display = passed ? 'inline-flex' : 'none';
+    }
+
+    if (passed) {
+      const container = document.getElementById('quizResults');
+      for (let i = 0; i < 12; i++) {
+        const dot = document.createElement('div');
+        dot.style.cssText = `
+          position:absolute;
+          width:6px;height:6px;
+          border-radius:50%;
+          background:#c8a96e;
+          left:${10 + Math.random() * 80}%;
+          bottom:20%;
+          opacity:1;
+          animation:victoryConfetti ${0.8 + Math.random() * 0.8}s ease ${Math.random() * 0.4}s forwards;
+          pointer-events:none;
+        `;
+        container.appendChild(dot);
+        setTimeout(() => dot.remove(), 2000);
+      }
+    }
+
     const typeLabels = { vocab:'Vocabulario', verb:'Verbos' };
     const bd = document.getElementById('quizBreakdown');
     bd.innerHTML = Object.entries(this.typeScores).map(([k,[c,t]]) =>

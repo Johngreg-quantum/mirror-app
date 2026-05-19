@@ -1280,6 +1280,19 @@
     .quiz-breakdown-num { font-size:1.4rem; font-weight:500; color:#c8a96e; }
     .quiz-breakdown-lbl { font-size:0.6rem; color:rgba(255,255,255,0.3); margin-top:2px; letter-spacing:0.04em; }
 
+    @keyframes victoryPop {
+      from { transform: scale(0); opacity: 0; }
+      to   { transform: scale(1); opacity: 1; }
+    }
+    @keyframes victorySlide {
+      from { opacity: 0; transform: translateY(16px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes victoryConfetti {
+      0%   { transform: translateY(0) rotate(0deg); opacity: 1; }
+      100% { transform: translateY(-80px) rotate(720deg); opacity: 0; }
+    }
+
     /* ── MISSIONS PANEL — active mission cards + XP toast ── */
     .mp-mission { background:rgba(255,255,255,0.02); border:0.5px solid rgba(255,255,255,0.07); border-radius:14px; padding:13px 14px; display:flex; align-items:center; gap:12px; transition: opacity 0.3s ease, border-color 0.3s ease; }
     .mp-mission.completed { opacity:0.6; border-color:rgba(106,170,46,0.25); background:rgba(106,170,46,0.04); }
@@ -2449,12 +2462,51 @@
   </div>
 
   <!-- Results screen -->
-  <div id="quizResults" style="display:none; padding:2rem 1.5rem; text-align:center;">
-    <div id="quizResultIcon" style="font-size:3rem; margin-bottom:0.8rem;"></div>
-    <div id="quizResultTitle" style="font-family:'Bebas Neue',sans-serif; font-size:2.5rem; letter-spacing:0.1em; color:#c8a96e; margin-bottom:0.4rem;"></div>
-    <div id="quizResultScore" style="font-size:1rem; color:rgba(255,255,255,0.5); margin-bottom:1.5rem;"></div>
-    <div id="quizBreakdown" style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:1.5rem; text-align:left;"></div>
-    <button id="quizDoneBtn" style="padding:0.9rem 2rem; background:linear-gradient(135deg,rgba(200,169,110,0.15),rgba(200,169,110,0.08)); border:1px solid rgba(200,169,110,0.3); border-radius:14px; font-family:'Bebas Neue',sans-serif; font-size:1rem; letter-spacing:0.1em; color:#c8a96e; cursor:pointer;">CONTINUE →</button>
+  <div id="quizResults" style="display:none; padding:2rem 1.5rem; text-align:center; position:relative; overflow:hidden;">
+    <div id="quizResultIcon" style="font-size:3.5rem;margin-bottom:0.5rem;animation:victoryPop 0.6s cubic-bezier(0.34,1.56,0.64,1) both;"></div>
+
+    <div id="quizResultTitle" style="font-family:'Bebas Neue',sans-serif;font-size:2.8rem;letter-spacing:0.1em;color:#c8a96e;margin-bottom:0.3rem;animation:victorySlide 0.7s cubic-bezier(0.16,1,0.3,1) 0.1s both;"></div>
+
+    <div id="quizResultScore" style="font-size:0.9rem;color:rgba(255,255,255,0.5);margin-bottom:1.5rem;animation:victorySlide 0.7s ease 0.2s both;"></div>
+
+    <!-- XP earned banner -->
+    <div id="quizXpBanner" style="
+      display:inline-flex;align-items:center;gap:8px;
+      background:linear-gradient(135deg,rgba(200,169,110,0.2),rgba(200,169,110,0.08));
+      border:1px solid rgba(200,169,110,0.4);
+      border-radius:100px;padding:0.6rem 1.4rem;
+      margin-bottom:1.5rem;
+      animation:victorySlide 0.7s ease 0.3s both;
+    ">
+      <span style="font-size:1.1rem;">⭐</span>
+      <span style="font-family:'Bebas Neue',sans-serif;font-size:1.2rem;letter-spacing:0.1em;color:#c8a96e;">+500 XP EARNED</span>
+    </div>
+
+    <!-- Breakdown cards -->
+    <div id="quizBreakdown" style="
+      display:grid;grid-template-columns:1fr 1fr;
+      gap:8px;margin-bottom:1.5rem;text-align:left;
+      animation:victorySlide 0.7s ease 0.4s both;
+    "></div>
+
+    <!-- Motivational message -->
+    <div id="quizMotivation" style="
+      font-size:0.75rem;color:rgba(255,255,255,0.35);
+      font-style:italic;font-family:'Playfair Display',serif;
+      margin-bottom:1.5rem;line-height:1.6;
+      animation:victorySlide 0.7s ease 0.5s both;
+    "></div>
+
+    <button id="quizDoneBtn" style="
+      padding:0.9rem 2.5rem;
+      background:linear-gradient(135deg,#c8a96e,#9a7d4e);
+      border:none;border-radius:14px;
+      font-family:'Bebas Neue',sans-serif;
+      font-size:1.1rem;letter-spacing:0.12em;
+      color:#080808;cursor:pointer;
+      animation:victorySlide 0.7s ease 0.6s both;
+      transition:transform 0.2s ease;
+    ">CONTINUE →</button>
   </div>
 
 </div>
