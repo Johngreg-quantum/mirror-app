@@ -1506,12 +1506,17 @@
       position: absolute; inset: 0; width: 100%; height: 100%;
       object-fit: cover; display: block;
     }
-    /* Real poster artwork — sits below the cinematic ::after overlay but above the gradient fallback */
+    /* Real poster artwork — sits below the cinematic ::after overlay but above the gradient fallback.
+       Cards are landscape (16:9); most movie posters are portrait, so focal-point
+       biased toward the upper third where faces/titles usually live. */
     .ml-scene-poster {
       position: absolute; inset: 0; width: 100%; height: 100%;
       object-fit: cover;
-      opacity: 0.88; z-index: 0;
-      filter: saturate(0.92) contrast(1.05) brightness(0.88);
+      object-position: center 32%;
+      border-radius: inherit;
+      opacity: 0.92; z-index: 0;
+      filter: saturate(0.95) contrast(1.06) brightness(0.9);
+      display: block;
     }
     .ml-scene-title {
       position: absolute; left: 0; right: 0; top: 50%; transform: translateY(-50%);
@@ -1586,7 +1591,7 @@
     }
     .ml-marquee[data-row="1"] .ml-marquee-track { --ml-mq-dur: 32s; animation-name: mlMarqueeRTL; }
     .ml-marquee[data-row="2"] .ml-marquee-track { --ml-mq-dur: 26s; animation-name: mlMarqueeLTR; }
-    .ml-marquee[data-row="3"] .ml-marquee-track { --ml-mq-dur: 40s; animation-name: mlMarqueeRTL; }
+    .ml-marquee[data-row="3"] .ml-marquee-track { --ml-mq-dur: 30s; animation-name: mlMarqueeRTL; }
     .ml-marquee[data-row="4"] .ml-marquee-track { --ml-mq-dur: 22s; animation-name: mlMarqueeLTR; }
     /* Larger poster panels — premium tile feel instead of dashboard windows */
     .ml-marquee[data-row="1"] .ml-cinema-card { width: 210px; height: 118px; margin: 0; position: relative; left: auto; top: auto; transform: scale(1);    flex-shrink: 0; }
@@ -1876,18 +1881,21 @@
     layer.dataset.built = '1';
   }
 
-  // ── Phase 4 — marquee rows.  ONE master shuffle, each row rotates by 3.
-  // With 12 scenes and a 3-step rotation, the 4 rows always show 4 different
-  // starting scenes (offsets 0,3,6,9 are all distinct in 12) so the first-
-  // screen composition has no obvious side-by-side duplicates across rows,
-  // and no row has internal duplicates within its first 12 cards.
+  // ── Phase 4 — marquee rows.  Split the master shuffle into TWO disjoint
+  // pools (A = first half, B = second half) and alternate them across rows.
+  // Guarantees that adjacent rows never share any poster artwork:
+  //   row 1 (A) ≠ row 2 (B) ≠ row 3 (A) ≠ row 4 (B)
+  // Each row's track is its pool, duplicated for the seamless wrap.
   function buildMarquees() {
     const master = mlShuffle(ML_SCENES);
+    const half   = Math.ceil(master.length / 2);
+    const pools  = [ master.slice(0, half), master.slice(half) ];   // [A, B]
     document.querySelectorAll('#mlMarqueeStack .ml-marquee-track').forEach((track, rowIdx) => {
       if (track.dataset.built === '1') return;
-      const offset = (rowIdx * 3) % master.length;
-      const ordered = [...master.slice(offset), ...master.slice(0, offset)];
-      const items = [...ordered, ...ordered]; // duplicated for seamless loop
+      const pool   = pools[rowIdx % 2];                              // alternate A/B
+      const offset = (rowIdx * 2) % pool.length;                     // vary first-screen entry
+      const ordered = [...pool.slice(offset), ...pool.slice(0, offset)];
+      const items   = [...ordered, ...ordered];                      // duplicate for seamless loop
       items.forEach(s => track.appendChild(buildCinemaCard(s, { compact: true })));
       track.dataset.built = '1';
     });
