@@ -1443,11 +1443,11 @@
     /* Cinematic placeholder — soft light + atmospheric haze + diagonal streak */
     .ml-scene-area::after {
       content: ''; position: absolute; inset: 0; z-index: 1; pointer-events: none;
-      background:
-        radial-gradient(ellipse 70% 50% at 22% 28%, rgba(255,235,200,0.10), transparent 60%),
-        radial-gradient(ellipse 55% 40% at 78% 75%, rgba(180,160,255,0.06), transparent 65%),
-        radial-gradient(ellipse 110% 60% at 50% 105%, rgba(0,0,0,0.35), transparent 70%),
-        linear-gradient(115deg, transparent 32%, rgba(255,255,255,0.04) 48%, transparent 64%);
+      background: linear-gradient(to bottom,
+        rgba(0,0,0,0.08)  0%,
+        rgba(0,0,0,0.10) 28%,
+        rgba(0,0,0,0.22) 58%,
+        rgba(0,0,0,0.58) 100%);
     }
     /* Faux silhouette — soft dark blob bottom-center to suggest a figure */
     .ml-scene-area .ml-silhouette {
@@ -1481,29 +1481,37 @@
     .ml-scene-rec { z-index: 2; }
     .ml-scene-bottom { z-index: 3; }
 
-    /* Cinema-screen card — 16:9 with fake window topbar */
+    /* Cinema poster tile — dark rounded shell, embedded look (reference image) */
     .ml-cinema-card {
       position: absolute; left: 50%; top: 50%;
       width: 220px; height: 124px;
       margin: -62px 0 0 -110px;                     /* center on the layer */
-      border-radius: 14px; overflow: hidden;
-      border: 0.5px solid rgba(255,255,255,0.1);
-      box-shadow: 0 20px 60px rgba(0,0,0,0.8), 0 0 0 0.5px rgba(200,169,110,0.06);
+      border-radius: 18px; overflow: hidden;
+      background: #07090c;
+      border: 1px solid rgba(255,255,255,0.04);
+      box-shadow:
+        0 10px 30px rgba(0,0,0,0.45),
+        0 2px 8px rgba(0,0,0,0.28),
+        inset 0 1px 0 rgba(255,255,255,0.03),
+        inset 0 -1px 0 rgba(0,0,0,0.35);
       transform-style: preserve-3d;
       will-change: transform, opacity, filter;
-      background: #0a0a0a;
       cursor: pointer;
-      transition: box-shadow 0.3s ease, border-color 0.3s ease;
+      transition: box-shadow 0.3s ease, border-color 0.3s ease, transform 0.3s ease;
     }
     .ml-cinema-card:hover {
-      border-color: rgba(200,169,110,0.45);
-      box-shadow: 0 24px 70px rgba(0,0,0,0.85), 0 0 0 1px rgba(200,169,110,0.35), 0 0 32px rgba(200,169,110,0.18);
+      border-color: rgba(200,169,110,0.32);
+      box-shadow:
+        0 14px 38px rgba(0,0,0,0.55),
+        0 2px 10px rgba(0,0,0,0.32),
+        0 0 24px rgba(200,169,110,0.14),
+        inset 0 1px 0 rgba(255,255,255,0.05);
       filter: blur(0) !important;
     }
     /* No window-chrome topbar — top edge is the poster itself */
     .ml-scene-area {
-      position: relative; overflow: hidden;
-      width: 100%; height: 100%;
+      position: absolute; inset: 0;
+      border-radius: inherit; overflow: hidden;
     }
     .ml-scene-area::before {
       /* falls behind any dropped-in <video>/<img> */
@@ -1514,16 +1522,15 @@
       position: absolute; inset: 0; width: 100%; height: 100%;
       object-fit: cover; display: block;
     }
-    /* Real poster artwork — sits below the cinematic ::after overlay but above the gradient fallback.
-       Cards are landscape (16:9); most movie posters are portrait, so focal-point
-       biased toward the upper third where faces/titles usually live. */
+    /* Real poster artwork — clipped by the inherited 18px radius.
+       Slight scale(1.01) hides any sub-pixel gap at the rounded corner. */
     .ml-scene-poster {
       position: absolute; inset: 0; width: 100%; height: 100%;
-      object-fit: cover;
-      object-position: center 32%;
+      object-fit: cover; object-position: center center;
       border-radius: inherit;
-      opacity: 0.92; z-index: 0;
-      filter: saturate(0.95) contrast(1.06) brightness(0.9);
+      opacity: 0.84; z-index: 0;
+      filter: saturate(0.92) contrast(1.04) brightness(0.78);
+      transform: scale(1.01);
       display: block;
     }
     .ml-scene-title {
