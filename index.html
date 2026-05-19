@@ -1436,10 +1436,10 @@
     .ml-scene-area::after {
       content: ''; position: absolute; inset: 0; z-index: 1; pointer-events: none;
       background:
-        radial-gradient(ellipse 70% 50% at 22% 28%, rgba(255,235,200,0.13), transparent 60%),
-        radial-gradient(ellipse 55% 40% at 78% 75%, rgba(180,160,255,0.07), transparent 65%),
-        radial-gradient(ellipse 110% 60% at 50% 105%, rgba(0,0,0,0.55), transparent 70%),
-        linear-gradient(115deg, transparent 32%, rgba(255,255,255,0.05) 48%, transparent 64%);
+        radial-gradient(ellipse 70% 50% at 22% 28%, rgba(255,235,200,0.10), transparent 60%),
+        radial-gradient(ellipse 55% 40% at 78% 75%, rgba(180,160,255,0.06), transparent 65%),
+        radial-gradient(ellipse 110% 60% at 50% 105%, rgba(0,0,0,0.35), transparent 70%),
+        linear-gradient(115deg, transparent 32%, rgba(255,255,255,0.04) 48%, transparent 64%);
     }
     /* Faux silhouette — soft dark blob bottom-center to suggest a figure */
     .ml-scene-area .ml-silhouette {
@@ -1512,6 +1512,13 @@
     .ml-scene-area > video, .ml-scene-area > img {
       position: absolute; inset: 0; width: 100%; height: 100%;
       object-fit: cover; display: block;
+    }
+    /* Real poster artwork — sits below the cinematic ::after overlay but above the gradient fallback */
+    .ml-scene-poster {
+      position: absolute; inset: 0; width: 100%; height: 100%;
+      object-fit: cover;
+      opacity: 0.72; z-index: 0;
+      filter: saturate(0.85) contrast(1.05) brightness(0.75);
     }
     .ml-scene-title {
       position: absolute; left: 0; right: 0; top: 50%; transform: translateY(-50%);
@@ -1773,18 +1780,18 @@
 (function() {
   // ── Scene data (12 entries; 6 used in depth stage, all 12 in marquee rows) ──
   const ML_SCENES = [
-    {id:'forrest_gump',     title:'Forrest Gump',             quote:'"Life is like a box of chocolates..."',   score:'94%', level:'L1', bg:'linear-gradient(135deg,#2a1a00,#5a3800)'},
-    {id:'the_matrix',       title:'The Matrix',               quote:'"There is no spoon."',                    score:'87%', level:'L1', bg:'linear-gradient(135deg,#001a0a,#004020)'},
-    {id:'godfather',        title:'The Godfather',            quote:'"An offer he can\'t refuse."',             score:'91%', level:'L2', bg:'linear-gradient(135deg,#120008,#2e0018)'},
-    {id:'dark_knight',      title:'Dark Knight',              quote:'"Why so serious?"',                       score:'88%', level:'L2', bg:'linear-gradient(135deg,#00091a,#001433)'},
-    {id:'fight_club',       title:'Fight Club',               quote:'"First rule: you do not talk..."',         score:'79%', level:'L1', bg:'linear-gradient(135deg,#1a0000,#3a0000)'},
-    {id:'interstellar',     title:'Interstellar',             quote:'"We must reach beyond our time."',         score:'95%', level:'L2', bg:'linear-gradient(135deg,#000510,#000d28)'},
-    {id:'whiplash',         title:'Whiplash',                 quote:'"Were you rushing or dragging?"',          score:'82%', level:'L2', bg:'linear-gradient(135deg,#1a0a00,#341500)'},
-    {id:'rocky',            title:'Rocky',                    quote:'"Yo, Adrian!"',                           score:'76%', level:'L2', bg:'linear-gradient(135deg,#120000,#260000)'},
-    {id:'dead_poets',       title:'Dead Poets Society',       quote:'"Carpe diem. Seize the day."',             score:'93%', level:'L2', bg:'linear-gradient(135deg,#001412,#002a24)'},
-    {id:'gladiator',        title:'Gladiator',                quote:'"Are you not entertained?"',              score:'85%', level:'L2', bg:'linear-gradient(135deg,#120800,#241500)'},
-    {id:'good_will_hunting',title:'Good Will Hunting',        quote:'"It\'s not your fault."',                 score:'89%', level:'L2', bg:'linear-gradient(135deg,#0a0a1a,#14142a)'},
-    {id:'shawshank',        title:'The Shawshank Redemption', quote:'"Get busy living or get busy dying."',     score:'92%', level:'L2', bg:'linear-gradient(135deg,#100e00,#201c00)'},
+    {id:'forrest_gump',     title:'Forrest Gump',             quote:'"Life is like a box of chocolates..."',   score:'94%', level:'L1', poster:'/static/posters/forrest_gump.jpg',     bg:'linear-gradient(135deg,#2a1a00,#5a3800)'},
+    {id:'the_matrix',       title:'The Matrix',               quote:'"There is no spoon."',                    score:'87%', level:'L1', poster:'/static/posters/the_matrix.jpg',       bg:'linear-gradient(135deg,#001a0a,#004020)'},
+    {id:'godfather',        title:'The Godfather',            quote:'"An offer he can\'t refuse."',             score:'91%', level:'L2', poster:'/static/posters/godfather.jpg',        bg:'linear-gradient(135deg,#120008,#2e0018)'},
+    {id:'dark_knight',      title:'Dark Knight',              quote:'"Why so serious?"',                       score:'88%', level:'L2', poster:'/static/posters/dark_knight.jpg',      bg:'linear-gradient(135deg,#00091a,#001433)'},
+    {id:'fight_club',       title:'Fight Club',               quote:'"First rule: you do not talk..."',         score:'79%', level:'L1', poster:'/static/posters/fight_club.jpg',       bg:'linear-gradient(135deg,#1a0000,#3a0000)'},
+    {id:'interstellar',     title:'Interstellar',             quote:'"We must reach beyond our time."',         score:'95%', level:'L2', poster:'/static/posters/interstellar.jpg',     bg:'linear-gradient(135deg,#000510,#000d28)'},
+    {id:'whiplash',         title:'Whiplash',                 quote:'"Were you rushing or dragging?"',          score:'82%', level:'L2', poster:'/static/posters/whiplash.jpg',         bg:'linear-gradient(135deg,#1a0a00,#341500)'},
+    {id:'rocky',            title:'Rocky',                    quote:'"Yo, Adrian!"',                           score:'76%', level:'L2', poster:'/static/posters/rocky.jpg',            bg:'linear-gradient(135deg,#120000,#260000)'},
+    {id:'dead_poets',       title:'Dead Poets Society',       quote:'"Carpe diem. Seize the day."',             score:'93%', level:'L2', poster:'/static/posters/dead_poets.jpg',       bg:'linear-gradient(135deg,#001412,#002a24)'},
+    {id:'gladiator',        title:'Gladiator',                quote:'"Are you not entertained?"',              score:'85%', level:'L2', poster:'/static/posters/gladiator.jpg',        bg:'linear-gradient(135deg,#120800,#241500)'},
+    {id:'good_will_hunting',title:'Good Will Hunting',        quote:'"It\'s not your fault."',                 score:'89%', level:'L2', poster:'/static/posters/good_will_hunting.jpg',bg:'linear-gradient(135deg,#0a0a1a,#14142a)'},
+    {id:'shawshank',        title:'The Shawshank Redemption', quote:'"Get busy living or get busy dying."',     score:'92%', level:'L2', poster:'/static/posters/shawshank.jpg',        bg:'linear-gradient(135deg,#100e00,#201c00)'},
   ];
 
   // Phase 1 starting positions (x/y offsets, relative to layer center). 3D depth via translateZ in keyframe.
@@ -1821,8 +1828,7 @@
         <span class="ml-card-dot g"></span>
       </div>
       <div class="ml-scene-area" data-scene="${s.id}" style="--ml-card-bg:${s.bg};">
-        <img src="/static/posters/${s.id}.jpg" alt="${s.title} poster" style="width:100%;height:100%;object-fit:cover;position:absolute;inset:0;opacity:0.85;" onerror="this.style.display='none'">
-        <div class="ml-silhouette"></div>
+        <img src="${s.poster}" alt="${s.title} poster" class="ml-scene-poster" onerror="this.style.display='none'">
         <div class="ml-scene-title">${s.title.toUpperCase()}</div>
         <div class="ml-scene-rec"></div>
         <div class="ml-scene-score">${s.score}</div>
