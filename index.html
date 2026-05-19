@@ -47,6 +47,7 @@
     }
 
     /* ── SECTION 1 — BODY & BACKGROUND ── */
+    html { overflow-x: hidden; }
     body {
       background: #060609;
       font-family: 'DM Sans', sans-serif;
@@ -1329,7 +1330,7 @@
      CTA buttons fire heroStartBtn.click() inside #authScreen below.
 ════════════════════════════════════════════════════════ -->
 <section id="mirrorLanding" style="
-  position: fixed; inset: 0; overflow-y: auto; padding-bottom: 4rem; z-index: 500;
+  position: fixed; inset: 0; overflow-y: auto; overflow-x: hidden; padding-bottom: 4rem; z-index: 500;
   display: flex; flex-direction: column; align-items: center; justify-content: flex-start;
   background:
     radial-gradient(ellipse 40% 60% at 15% 50%, rgba(45,35,25,0.9), transparent),
@@ -1411,7 +1412,8 @@
       pointer-events: none;
     }
     .ml-parallax-layer {
-      position: relative; width: 100%; height: 100%;
+      position: absolute; inset: 0;
+      width: 100%; height: 100%;
       transform-style: preserve-3d;
       transition: transform 600ms ease;
       pointer-events: auto;
@@ -1676,6 +1678,13 @@
       <div class="ml-marquee" data-row="4"><div class="ml-marquee-track"></div></div>
     </div>
 
+    <!-- Ghost MIRROR watermark — atmospheric, behind everything -->
+    <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
+         font-family:'Bebas Neue',sans-serif;font-size:clamp(80px,16vw,140px);
+         letter-spacing:0.06em;color:transparent;
+         -webkit-text-stroke:0.5px rgba(255,255,255,0.06);
+         white-space:nowrap;pointer-events:none;z-index:1;user-select:none;">MIRROR</div>
+
     <!-- 3D depth stage with hero cards (Phases 1-3) -->
     <div class="ml-depth-stage" id="mlDepthStage">
       <div class="ml-parallax-layer" id="mlParallaxLayer">
@@ -1812,7 +1821,7 @@
         <span class="ml-card-dot g"></span>
       </div>
       <div class="ml-scene-area" data-scene="${s.id}" style="--ml-card-bg:${s.bg};">
-        <!-- REPLACE: drop a <video src="/static/clips/${s.id}.mp4" autoplay muted loop playsinline> or <img src="/static/posters/${s.id}.jpg"> here -->
+        <img src="/static/posters/${s.id}.jpg" alt="${s.title} poster" style="width:100%;height:100%;object-fit:cover;position:absolute;inset:0;opacity:0.85;" onerror="this.style.display='none'">
         <div class="ml-silhouette"></div>
         <div class="ml-scene-title">${s.title.toUpperCase()}</div>
         <div class="ml-scene-rec"></div>
