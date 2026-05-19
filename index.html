@@ -1603,8 +1603,8 @@
 
     /* ── Mobile responsiveness ── */
     @media (max-width: 640px) {
-      /* Canvas — taller aspect on narrow screens */
-      #mlCanvas { height: min(540px, 78vh); }
+      /* Canvas — keep proportional to phone aspect, override desktop height */
+      #mlCanvas { height: min(520px, 72vh) !important; }
 
       /* Headline backdrop wider/shorter on mobile so the CTAs aren't shadowed too far down */
       .ml-headline::before { width: 200%; height: 240%; }
@@ -1657,11 +1657,11 @@
   <div id="mlCanvas" style="
     position: relative;
     flex-shrink: 0;
-    width: min(700px, 96vw); height: min(490px, 88vh);
-    background: #050505; border-radius: 10px; overflow: hidden;
-    box-shadow: 0 0 0 1px rgba(255,255,255,0.04), 0 50px 140px rgba(0,0,0,0.95);
+    width: min(960px, 96vw); height: min(600px, 84vh);
+    background: #050505; border-radius: 12px; overflow: hidden;
+    box-shadow: 0 0 0 1px rgba(255,255,255,0.04), 0 60px 160px rgba(0,0,0,0.95);
     z-index: 2;
-    perspective: 1000px;
+    perspective: 1100px;
   ">
     <div class="ml-brandmark">MIRROR</div>
 
@@ -1698,11 +1698,11 @@
 
   </div><!-- /mlCanvas -->
 
-  <div style="position:relative;z-index:3;max-width:700px;margin:0 auto;padding:0 2rem 5rem;">
+  <div style="position:relative;z-index:3;max-width:780px;margin:0 auto;padding:1.25rem 2rem 5rem;">
 
-    <div style="height:1px;background:linear-gradient(90deg,transparent,rgba(255,255,255,0.12),transparent);margin-bottom:3rem;"></div>
+    <div style="height:1px;background:linear-gradient(90deg,transparent,rgba(255,255,255,0.12),transparent);margin-bottom:1.4rem;"></div>
 
-    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:1.5rem;margin-bottom:3rem;">
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:1.5rem;margin-bottom:2.4rem;">
       <div style="border:0.5px solid rgba(255,255,255,0.08);border-radius:12px;padding:1.2rem;background:rgba(255,255,255,0.02);">
         <div style="font-family:'Bebas Neue',sans-serif;font-size:2rem;color:#f0ede8;line-height:1;">50+</div>
         <div style="font-size:0.6rem;color:rgba(255,255,255,0.3);letter-spacing:0.1em;margin-top:4px;">ACTIVE USERS</div>
