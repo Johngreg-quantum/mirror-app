@@ -915,6 +915,7 @@ function showLevelUp(newLevel) {
 // Ownership point: do not extract casually; this owns activeScene and starts the
 // recording/playback/analyze lifecycle for every scene-entry path.
 function openModal(id, s) {
+  window._savedScrollY = window.scrollY;
   activeScene = id;
   const color = getSceneColor(id);
   const playback = getScenePlaybackMeta(id);
@@ -966,6 +967,7 @@ function closeModal() {
   hideReplayLine();
   if (ytPlayer) ytPlayer.stopVideo();
   activeScene = null;
+  setTimeout(() => { window.scrollTo(0, window._savedScrollY || 0); }, 50);
 }
 
 onClick('btnClose', closeModal);
