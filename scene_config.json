@@ -363,7 +363,7 @@
       "ui": {
         "youtube_id": "7hsAbjmNpKU",
         "clip_start": 1,
-        "clip_end": 10,
+        "clip_end": 13,
         "card_color": "#e07b39",
         "poster_image": "/static/posters/mrs_doubtfire.jpg",
         "backdrop_image": "/static/backdrops/mrs_doubtfire.jpg"
@@ -371,7 +371,7 @@
     },
     "fifth_element": {
       "movie": "The Fifth Element",
-      "quote": "Leeloo Dallas multipass. Yeah, multipass, she knows it's a multipass.",
+      "quote": "But David, he's in good shape, he'll protect you.",
       "year": 1997,
       "difficulty": "Beginner",
       "actor": "Milla Jovovich",
@@ -394,8 +394,8 @@
       "translation": "¿Cuándo fue la última vez que viste a Dave? Eso fue hace veinticinco años, subiendo por esta calle, en la parte de atrás de ese coche.",
       "ui": {
         "youtube_id": "9KLTw2D6cD4",
-        "clip_start": 1,
-        "clip_end": 45,
+        "clip_start": 170,
+        "clip_end": 223,
         "card_color": "#5a7d8c",
         "poster_image": "/static/posters/mystic_river.jpg",
         "backdrop_image": "/static/backdrops/mystic_river.jpg"
@@ -515,7 +515,7 @@
     },
     "dark_knight": {
       "movie": "The Dark Knight",
-      "quote": "Why so serious? Let's put a smile on that face!",
+      "quote": "Let's put a smile on that face! Why so serious?",
       "year": 2008,
       "difficulty": "Intermediate",
       "actor": "Heath Ledger",
