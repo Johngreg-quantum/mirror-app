@@ -1481,19 +1481,22 @@
     .ml-scene-rec { z-index: 2; }
     .ml-scene-bottom { z-index: 3; }
 
-    /* Cinema poster tile — dark rounded shell, embedded look (reference image) */
+    /* Cinema poster tile — dark rounded shell, embedded look (reference image).
+       The 1 px inset on .ml-scene-area below leaves a thin frame of this background
+       visible at every edge — most visibly at the top — which is what makes the
+       upper silhouette read as a solid premium tile rather than a flat poster. */
     .ml-cinema-card {
       position: absolute; left: 50%; top: 50%;
       width: 220px; height: 124px;
       margin: -62px 0 0 -110px;                     /* center on the layer */
-      border-radius: 18px; overflow: hidden;
-      background: #07090c;
-      border: 1px solid rgba(255,255,255,0.04);
+      border-radius: 22px; overflow: hidden;
+      background: #050608;
+      border: 1px solid rgba(255,255,255,0.03);
       box-shadow:
-        0 10px 30px rgba(0,0,0,0.45),
-        0 2px 8px rgba(0,0,0,0.28),
-        inset 0 1px 0 rgba(255,255,255,0.03),
-        inset 0 -1px 0 rgba(0,0,0,0.35);
+        0 16px 36px rgba(0,0,0,0.46),
+        0 4px 10px rgba(0,0,0,0.28),
+        inset 0 1px 0 rgba(255,255,255,0.04),
+        inset 0 -1px 0 rgba(0,0,0,0.42);
       transform-style: preserve-3d;
       will-change: transform, opacity, filter;
       cursor: pointer;
@@ -1502,16 +1505,18 @@
     .ml-cinema-card:hover {
       border-color: rgba(200,169,110,0.32);
       box-shadow:
-        0 14px 38px rgba(0,0,0,0.55),
-        0 2px 10px rgba(0,0,0,0.32),
-        0 0 24px rgba(200,169,110,0.14),
-        inset 0 1px 0 rgba(255,255,255,0.05);
+        0 20px 44px rgba(0,0,0,0.55),
+        0 4px 12px rgba(0,0,0,0.32),
+        0 0 26px rgba(200,169,110,0.14),
+        inset 0 1px 0 rgba(255,255,255,0.06),
+        inset 0 -1px 0 rgba(0,0,0,0.48);
       filter: blur(0) !important;
     }
-    /* No window-chrome topbar — top edge is the poster itself */
+    /* Inner content sits 1 px inside the shell so the dark frame shows on every
+       edge — gives the cards their reference-image "embedded tile" silhouette. */
     .ml-scene-area {
-      position: absolute; inset: 0;
-      border-radius: inherit; overflow: hidden;
+      position: absolute; inset: 1px;
+      border-radius: 21px; overflow: hidden;
     }
     .ml-scene-area::before {
       /* falls behind any dropped-in <video>/<img> */
