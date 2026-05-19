@@ -1492,17 +1492,10 @@
       box-shadow: 0 24px 70px rgba(0,0,0,0.85), 0 0 0 1px rgba(200,169,110,0.35), 0 0 32px rgba(200,169,110,0.18);
       filter: blur(0) !important;
     }
-    .ml-card-topbar {
-      height: 18px; background: #0a0a0a; border-bottom: 0.5px solid rgba(255,255,255,0.06);
-      display: flex; align-items: center; gap: 5px; padding: 0 8px;
-    }
-    .ml-card-dot { width: 7px; height: 7px; border-radius: 50%; }
-    .ml-card-dot.r { background: #ff5f57; }
-    .ml-card-dot.y { background: #febc2e; }
-    .ml-card-dot.g { background: #28c840; }
+    /* No window-chrome topbar — top edge is the poster itself */
     .ml-scene-area {
-      position: relative; flex: 1; overflow: hidden;
-      height: calc(100% - 18px);
+      position: relative; overflow: hidden;
+      width: 100%; height: 100%;
     }
     .ml-scene-area::before {
       /* falls behind any dropped-in <video>/<img> */
@@ -1517,8 +1510,8 @@
     .ml-scene-poster {
       position: absolute; inset: 0; width: 100%; height: 100%;
       object-fit: cover;
-      opacity: 0.72; z-index: 0;
-      filter: saturate(0.85) contrast(1.05) brightness(0.75);
+      opacity: 0.88; z-index: 0;
+      filter: saturate(0.92) contrast(1.05) brightness(0.88);
     }
     .ml-scene-title {
       position: absolute; left: 0; right: 0; top: 50%; transform: translateY(-50%);
@@ -1558,40 +1551,53 @@
       opacity: 0;
     }
 
-    /* Marquee rows — Phase 4 */
+    /* Marquee rows — Phase 4. Stack is height-bounded so the WebKit reflection
+       below it stays inside the canvas viewport. */
     .ml-marquee-stack {
-      position: absolute; left: 0; right: 0; bottom: 0;
-      height: 100%; z-index: 9; pointer-events: none;
+      position: absolute; left: 0; right: 0; top: 6%;
+      height: 64%; bottom: auto; z-index: 9; pointer-events: none;
       opacity: 0; transition: opacity 700ms ease;
+      -webkit-box-reflect: below -28px linear-gradient(rgba(0,0,0,0.55) 0%, transparent 75%);
     }
     .ml-marquee-stack.on { opacity: 1; }
+
+    /* Glossy "floor" — atmospheric dark fade that the reflection settles into.
+       Also acts as a fallback for browsers without -webkit-box-reflect. */
+    .ml-canvas-floor {
+      position: absolute; left: 0; right: 0; bottom: 0; height: 36%;
+      background: linear-gradient(to top, rgba(0,0,0,0.92) 10%, rgba(0,0,0,0.55) 45%, transparent 100%);
+      z-index: 7; pointer-events: none;
+    }
+
     .ml-marquee {
       position: absolute; left: 0; right: 0;
       display: flex; overflow: hidden;
       mask-image: linear-gradient(to right, transparent 0, #000 8%, #000 92%, transparent 100%);
     }
-    .ml-marquee[data-row="1"] { top: 18%;  height: 105px; opacity: 1;    filter: blur(0); }
-    .ml-marquee[data-row="2"] { top: 36%;  height: 95px;  opacity: 0.7;  filter: blur(0.5px); }
-    .ml-marquee[data-row="3"] { top: 54%;  height: 82px;  opacity: 0.45; filter: blur(1.5px); }
-    .ml-marquee[data-row="4"] { top: 72%;  height: 70px;  opacity: 0.25; filter: blur(3px); }
+    /* Rows positioned in % of the bounded stack (384px on a 600px canvas) */
+    .ml-marquee[data-row="1"] { top: 0%;   height: 122px; opacity: 1;    filter: blur(0); }
+    .ml-marquee[data-row="2"] { top: 32%;  height: 110px; opacity: 0.78; filter: blur(0.4px); }
+    .ml-marquee[data-row="3"] { top: 62%;  height: 100px; opacity: 0.5;  filter: blur(1.2px); }
+    .ml-marquee[data-row="4"] { top: 88%;  height: 90px;  opacity: 0.28; filter: blur(2.5px); }
     .ml-marquee-track {
-      display: flex; gap: 10px; align-items: center;
+      display: flex; gap: 14px; align-items: center;
       will-change: transform;
-      animation: mlMarqueeRTL var(--ml-mq-dur, 28s) linear infinite;
+      animation: mlMarqueeRTL var(--ml-mq-dur, 32s) linear infinite;
     }
-    .ml-marquee[data-row="1"] .ml-marquee-track { --ml-mq-dur: 28s; animation-name: mlMarqueeRTL; }
-    .ml-marquee[data-row="2"] .ml-marquee-track { --ml-mq-dur: 22s; animation-name: mlMarqueeLTR; }
-    .ml-marquee[data-row="3"] .ml-marquee-track { --ml-mq-dur: 35s; animation-name: mlMarqueeRTL; }
-    .ml-marquee[data-row="4"] .ml-marquee-track { --ml-mq-dur: 18s; animation-name: mlMarqueeLTR; }
-    .ml-marquee[data-row="1"] .ml-cinema-card { width: 170px; height: 96px; margin: 0; position: relative; left: auto; top: auto; transform: scale(1);    flex-shrink: 0; }
-    .ml-marquee[data-row="2"] .ml-cinema-card { width: 160px; height: 90px; margin: 0; position: relative; left: auto; top: auto; transform: scale(0.93); flex-shrink: 0; }
-    .ml-marquee[data-row="3"] .ml-cinema-card { width: 150px; height: 84px; margin: 0; position: relative; left: auto; top: auto; transform: scale(0.86); flex-shrink: 0; }
-    .ml-marquee[data-row="4"] .ml-cinema-card { width: 140px; height: 78px; margin: 0; position: relative; left: auto; top: auto; transform: scale(0.78); flex-shrink: 0; }
+    .ml-marquee[data-row="1"] .ml-marquee-track { --ml-mq-dur: 32s; animation-name: mlMarqueeRTL; }
+    .ml-marquee[data-row="2"] .ml-marquee-track { --ml-mq-dur: 26s; animation-name: mlMarqueeLTR; }
+    .ml-marquee[data-row="3"] .ml-marquee-track { --ml-mq-dur: 40s; animation-name: mlMarqueeRTL; }
+    .ml-marquee[data-row="4"] .ml-marquee-track { --ml-mq-dur: 22s; animation-name: mlMarqueeLTR; }
+    /* Larger poster panels — premium tile feel instead of dashboard windows */
+    .ml-marquee[data-row="1"] .ml-cinema-card { width: 210px; height: 118px; margin: 0; position: relative; left: auto; top: auto; transform: scale(1);    flex-shrink: 0; }
+    .ml-marquee[data-row="2"] .ml-cinema-card { width: 192px; height: 108px; margin: 0; position: relative; left: auto; top: auto; transform: scale(0.96); flex-shrink: 0; }
+    .ml-marquee[data-row="3"] .ml-cinema-card { width: 174px; height:  98px; margin: 0; position: relative; left: auto; top: auto; transform: scale(0.9);  flex-shrink: 0; }
+    .ml-marquee[data-row="4"] .ml-cinema-card { width: 158px; height:  89px; margin: 0; position: relative; left: auto; top: auto; transform: scale(0.82); flex-shrink: 0; }
     .ml-marquee .ml-cinema-card { cursor: default; }
     .ml-marquee .ml-cinema-card:hover { box-shadow: 0 20px 60px rgba(0,0,0,0.8), 0 0 0 0.5px rgba(200,169,110,0.06); border-color: rgba(255,255,255,0.1); }
-    .ml-marquee .ml-scene-title { font-size: 0.95rem; }
-    .ml-marquee .ml-scene-bottom { padding: 12px 8px 6px; font-size: 0.5rem; }
-    .ml-marquee .ml-scene-score { font-size: 0.42rem; padding: 1px 5px; }
+    .ml-marquee .ml-scene-title { font-size: 1.05rem; }
+    .ml-marquee .ml-scene-bottom { padding: 14px 9px 7px; font-size: 0.55rem; }
+    .ml-marquee .ml-scene-score { font-size: 0.46rem; padding: 1px 5px; }
 
     /* Headline backdrop — soft dark vignette behind the headline + CTAs so
        the type stays readable while cards keep sliding behind it. */
@@ -1613,7 +1619,10 @@
     /* ── Mobile responsiveness ── */
     @media (max-width: 640px) {
       /* Canvas — keep proportional to phone aspect, override desktop height */
-      #mlCanvas { height: min(520px, 72vh) !important; }
+      #mlCanvas { height: min(540px, 74vh) !important; }
+
+      /* Reflection on mobile — softer, less offset to stay within smaller canvas */
+      .ml-marquee-stack { -webkit-box-reflect: below -18px linear-gradient(rgba(0,0,0,0.45), transparent 75%); }
 
       /* Headline backdrop wider/shorter on mobile so the CTAs aren't shadowed too far down */
       .ml-headline::before { width: 200%; height: 240%; }
@@ -1625,14 +1634,14 @@
       #mlParallaxLayer .ml-cinema-card:nth-child(n+5) { display: none; }
       .ml-cinema-card { width: 170px; height: 96px; margin: -48px 0 0 -85px; }
 
-      /* Marquee rows — smaller cards, fewer rows. Hide row 4 entirely. */
+      /* Marquee rows — fewer rows, sized to the bounded mobile stack. */
       .ml-marquee[data-row="4"] { display: none; }
-      .ml-marquee[data-row="1"] { top: 14%;  height: 88px; }
-      .ml-marquee[data-row="2"] { top: 36%;  height: 80px; }
-      .ml-marquee[data-row="3"] { top: 58%;  height: 70px; opacity: 0.32; }
-      .ml-marquee[data-row="1"] .ml-cinema-card { width: 138px; height: 78px; }
-      .ml-marquee[data-row="2"] .ml-cinema-card { width: 128px; height: 72px; transform: scale(0.95); }
-      .ml-marquee[data-row="3"] .ml-cinema-card { width: 118px; height: 66px; transform: scale(0.88); }
+      .ml-marquee[data-row="1"] { top: 0%;   height: 96px; }
+      .ml-marquee[data-row="2"] { top: 34%;  height: 86px; }
+      .ml-marquee[data-row="3"] { top: 66%;  height: 76px; opacity: 0.36; }
+      .ml-marquee[data-row="1"] .ml-cinema-card { width: 152px; height: 86px; }
+      .ml-marquee[data-row="2"] .ml-cinema-card { width: 140px; height: 79px; transform: scale(0.95); }
+      .ml-marquee[data-row="3"] .ml-cinema-card { width: 128px; height: 72px; transform: scale(0.88); }
 
       /* Brand mark — tuck closer in */
       .ml-brandmark { top: 11px; left: 12px; font-size: 0.62rem; letter-spacing: 0.26em; }
@@ -1701,6 +1710,9 @@
 
     <!-- Inner radial vignette -->
     <div class="ml-vignette"></div>
+
+    <!-- Glossy floor — dark fade beneath the marquee stage, where the reflection settles -->
+    <div class="ml-canvas-floor"></div>
 
     <!-- Headline + CTA (preserved) -->
     <div class="ml-headline" style="position:absolute;bottom:44px;left:0;right:0;display:flex;flex-direction:column;align-items:center;gap:9px;z-index:15;animation:mlFadeUp 1s ease 0.8s both;">
@@ -1814,6 +1826,16 @@
     { x:   0, y:  65, r:  0, z: 1 }, // deep center
   ];
 
+  // ── Fisher–Yates shuffle (used for both depth-stage and marquee-row variety) ──
+  function mlShuffle(arr) {
+    const a = [...arr];
+    for (let i = a.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [a[i], a[j]] = [a[j], a[i]];
+    }
+    return a;
+  }
+
   // ── Card builder. Drop a <video> or <img> inside .ml-scene-area for any scene. ──
   function buildCinemaCard(s, opts) {
     opts = opts || {};
@@ -1821,16 +1843,11 @@
     const card = document.createElement('div');
     card.className = 'ml-cinema-card';
     card.dataset.scene = s.id;
+    // No window-chrome topbar, no rec dot — top edge stays clean per reference image.
     card.innerHTML = `
-      <div class="ml-card-topbar">
-        <span class="ml-card-dot r"></span>
-        <span class="ml-card-dot y"></span>
-        <span class="ml-card-dot g"></span>
-      </div>
       <div class="ml-scene-area" data-scene="${s.id}" style="--ml-card-bg:${s.bg};">
         <img src="${s.poster}" alt="${s.title} poster" class="ml-scene-poster" onerror="this.style.display='none'">
         <div class="ml-scene-title">${s.title.toUpperCase()}</div>
-        <div class="ml-scene-rec"></div>
         <div class="ml-scene-score">${s.score}</div>
         <div class="ml-scene-level">${level}</div>
         <div class="ml-scene-bottom">${s.quote}</div>
@@ -1840,32 +1857,37 @@
     return card;
   }
 
-  // ── Phase 1 — depth stage build ──
+  // ── Phase 1 — depth stage build (6 unique posters, randomly chosen) ──
   function buildDepthStage() {
     const layer = document.getElementById('mlParallaxLayer');
     if (!layer || layer.dataset.built === '1') return;
-    ML_SCENES.slice(0, 6).forEach((s, i) => {
+    const picks = mlShuffle(ML_SCENES).slice(0, 6);
+    picks.forEach((s, i) => {
       const card = buildCinemaCard(s);
       const off = PHASE1_OFFSETS[i];
       const stack = STACK_POSITIONS[i];
       card.style.zIndex = stack.z;
       card.style.setProperty('--mlx', off.x + 'px');
       card.style.setProperty('--mly', off.y + 'px');
-      // Phase 1 keyframe: from deep z + blur to settled. Forwards keeps the end state.
       card.style.animation = `mlCardEnter 1200ms cubic-bezier(0.16,1,0.3,1) ${i * 120}ms both`;
-      // Final transform after entrance — matches keyframe end (translate3d 0/0/0 scale 1).
-      // Phase 3 will overwrite this via inline transform + transition.
       card.dataset.phase1End = `translate3d(${off.x}px, ${off.y}px, 0) scale(1)`;
       layer.appendChild(card);
     });
     layer.dataset.built = '1';
   }
 
-  // ── Phase 4 — marquee rows ──
+  // ── Phase 4 — marquee rows.  ONE master shuffle, each row rotates by 3.
+  // With 12 scenes and a 3-step rotation, the 4 rows always show 4 different
+  // starting scenes (offsets 0,3,6,9 are all distinct in 12) so the first-
+  // screen composition has no obvious side-by-side duplicates across rows,
+  // and no row has internal duplicates within its first 12 cards.
   function buildMarquees() {
-    document.querySelectorAll('#mlMarqueeStack .ml-marquee-track').forEach(track => {
+    const master = mlShuffle(ML_SCENES);
+    document.querySelectorAll('#mlMarqueeStack .ml-marquee-track').forEach((track, rowIdx) => {
       if (track.dataset.built === '1') return;
-      const items = [...ML_SCENES, ...ML_SCENES]; // duplicated for seamless loop
+      const offset = (rowIdx * 3) % master.length;
+      const ordered = [...master.slice(offset), ...master.slice(0, offset)];
+      const items = [...ordered, ...ordered]; // duplicated for seamless loop
       items.forEach(s => track.appendChild(buildCinemaCard(s, { compact: true })));
       track.dataset.built = '1';
     });
