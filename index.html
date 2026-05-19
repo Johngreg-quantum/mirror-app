@@ -1584,6 +1584,51 @@
     .ml-marquee .ml-scene-bottom { padding: 12px 8px 6px; font-size: 0.5rem; }
     .ml-marquee .ml-scene-score { font-size: 0.42rem; padding: 1px 5px; }
 
+    /* Headline backdrop — soft dark vignette behind the headline + CTAs so
+       the type stays readable while cards keep sliding behind it. */
+    .ml-headline { position: absolute; }
+    .ml-headline::before {
+      content: ''; position: absolute;
+      left: 50%; top: 50%; transform: translate(-50%, -50%);
+      width: 140%; height: 280%;
+      background:
+        radial-gradient(ellipse 55% 65% at 50% 60%, rgba(5,5,5,0.78), rgba(5,5,5,0.45) 55%, transparent 80%);
+      z-index: -1; pointer-events: none;
+      filter: blur(2px);
+    }
+
+    /* Marquee row 4 — bias even darker so deep-bg cards never compete with the headline */
+    .ml-marquee[data-row="4"] { opacity: 0.2; }
+    .ml-marquee[data-row="3"] { opacity: 0.38; }
+
+    /* ── Mobile responsiveness ── */
+    @media (max-width: 640px) {
+      /* Canvas — taller aspect on narrow screens */
+      #mlCanvas { height: min(540px, 78vh); }
+
+      /* Headline backdrop wider/shorter on mobile so the CTAs aren't shadowed too far down */
+      .ml-headline::before { width: 200%; height: 240%; }
+
+      /* Headline can sit a touch higher to clear marquees */
+      .ml-headline { bottom: 56px !important; }
+
+      /* Drop the deepest 2 hero cards so the entrance feels less crowded */
+      #mlParallaxLayer .ml-cinema-card:nth-child(n+5) { display: none; }
+      .ml-cinema-card { width: 170px; height: 96px; margin: -48px 0 0 -85px; }
+
+      /* Marquee rows — smaller cards, fewer rows. Hide row 4 entirely. */
+      .ml-marquee[data-row="4"] { display: none; }
+      .ml-marquee[data-row="1"] { top: 14%;  height: 88px; }
+      .ml-marquee[data-row="2"] { top: 36%;  height: 80px; }
+      .ml-marquee[data-row="3"] { top: 58%;  height: 70px; opacity: 0.32; }
+      .ml-marquee[data-row="1"] .ml-cinema-card { width: 138px; height: 78px; }
+      .ml-marquee[data-row="2"] .ml-cinema-card { width: 128px; height: 72px; transform: scale(0.95); }
+      .ml-marquee[data-row="3"] .ml-cinema-card { width: 118px; height: 66px; transform: scale(0.88); }
+
+      /* Brand mark — tuck closer in */
+      .ml-brandmark { top: 11px; left: 12px; font-size: 0.62rem; letter-spacing: 0.26em; }
+    }
+
     /* Reduced motion — skip phases 1–3, marquee on immediately */
     #mirrorLanding.ml-reduced .ml-depth-stage { display: none; }
     #mirrorLanding.ml-reduced .ml-marquee-stack { opacity: 1; transition: none; }
@@ -1643,10 +1688,10 @@
 
     <!-- Headline + CTA (preserved) -->
     <div class="ml-headline" style="position:absolute;bottom:44px;left:0;right:0;display:flex;flex-direction:column;align-items:center;gap:9px;z-index:15;animation:mlFadeUp 1s ease 0.8s both;">
-      <div style="font-family:'Bebas Neue',sans-serif;font-size:clamp(1.3rem,3.5vw,2rem);letter-spacing:0.08em;color:#f0ede8;text-align:center;line-height:1;">SPEAK LIKE THE GREATS</div>
-      <div style="font-size:0.7rem;color:rgba(255,255,255,0.38);letter-spacing:0.04em;text-align:center;font-style:italic;font-family:'Playfair Display',serif;">Practice English through iconic movie scenes</div>
+      <div style="font-family:'Bebas Neue',sans-serif;font-size:clamp(1.3rem,3.5vw,2rem);letter-spacing:0.08em;color:#f0ede8;text-align:center;line-height:1;text-shadow:0 2px 14px rgba(0,0,0,0.85);">SPEAK LIKE THE GREATS</div>
+      <div style="font-size:0.74rem;color:rgba(255,255,255,0.62);letter-spacing:0.04em;text-align:center;font-style:italic;font-family:'Playfair Display',serif;text-shadow:0 1px 8px rgba(0,0,0,0.6);">Practice English through iconic movie scenes</div>
       <div style="display:flex;gap:9px;margin-top:3px;">
-        <button class="ml-cta-primary" onclick="mlOpenAuth()">START ACTING</button>
+        <button class="ml-cta-primary" onclick="mlOpenAuth()">START PRACTICING</button>
         <button class="ml-cta-secondary" onclick="mlOpenAuth()">SIGN IN</button>
       </div>
     </div>
