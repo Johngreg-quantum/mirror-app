@@ -1351,33 +1351,45 @@
   75% { transform: translate(2px,1px); }
   100%{ transform: translate(-1px,2px); }
 }
+#ml-rows-container {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  z-index: 1;
+}
 .ml-mrow {
-  display: flex; gap: 8px; padding: 4px 0;
-  overflow: hidden; flex-shrink: 0;
+  display: flex;
+  flex: 1;
+  gap: 8px;
+  overflow: hidden;
+  min-height: 0;
 }
 .ml-mtrack {
-  display: flex; gap: 8px; will-change: transform;
+  display: flex;
+  gap: 8px;
+  will-change: transform;
+  align-items: stretch;
 }
 .ml-mrow.ml-left  .ml-mtrack { animation: mlL var(--spd, 30s) linear infinite; }
 .ml-mrow.ml-right .ml-mtrack { animation: mlR var(--spd, 30s) linear infinite; }
 @keyframes mlL { from{transform:translateX(0)} to{transform:translateX(-50%)} }
 @keyframes mlR { from{transform:translateX(-50%)} to{transform:translateX(0)} }
 .ml-card {
-  flex-shrink: 0; border-radius: 12px; overflow: hidden;
-  position: relative; cursor: pointer;
-  box-shadow: 0 4px 20px rgba(0,0,0,0.6);
-  transition: transform .25s ease, box-shadow .25s ease;
+  flex-shrink: 0;
+  border-radius: 10px;
+  overflow: hidden;
+  position: relative;
+  cursor: pointer;
+  transition: transform .25s ease;
 }
-.ml-card:hover {
-  transform: scale(1.04);
-  box-shadow: 0 8px 32px rgba(0,0,0,0.8), 0 0 0 1px rgba(255,255,255,0.14);
-}
+.ml-card:hover { transform: scale(1.04); }
 .ml-card img {
   width: 100%; height: 100%; object-fit: cover; display: block;
 }
 .ml-card-grad {
   position: absolute; inset: 0;
-  background: linear-gradient(to top, rgba(0,0,0,0.5), transparent 60%);
+  background: linear-gradient(to top, rgba(0,0,0,0.45), transparent 55%);
   pointer-events: none;
 }
 .ml-vignette {
@@ -1467,6 +1479,8 @@
 }
 </style>
 
+<div id="ml-rows-container"></div>
+
 <!-- Rows injected by JS -->
 <div class="ml-vignette"></div>
 <div class="ml-vignette2"></div>
@@ -1521,43 +1535,40 @@
     {id:'cast_away',        bg:'linear-gradient(135deg,#002010,#004020)'},
   ];
 
-  const ML_ROWS = [
-    {dir:'left',  spd:'32s'},
-    {dir:'right', spd:'24s'},
-    {dir:'left',  spd:'42s'},
-    {dir:'right', spd:'20s'},
-  ];
-
   function mlShuffle(a){return [...a].sort(()=>Math.random()-.5);}
 
   function mlBuildWall(){
-    const landing = document.getElementById('mirrorLanding');
-    if(!landing) return;
-    const vignette = landing.querySelector('.ml-vignette');
-    const vh = window.innerHeight;
-    const rowH = Math.floor(vh / 4) - 4;
-    const cardW = Math.floor(rowH * (16/9));
+    const container = document.getElementById('ml-rows-container');
+    if(!container) return;
 
-    ML_ROWS.forEach(cfg=>{
+    const ML_ROWS = [
+      {dir:'left',  spd:'30s'},
+      {dir:'right', spd:'22s'},
+      {dir:'left',  spd:'40s'},
+      {dir:'right', spd:'18s'},
+    ];
+
+    ML_ROWS.forEach(cfg => {
       const row = document.createElement('div');
-      row.className = `ml-mrow ml-${cfg.dir}`;
+      row.className = 'ml-mrow ml-' + cfg.dir;
       row.style.setProperty('--spd', cfg.spd);
-      row.style.height = rowH + 'px';
 
       const track = document.createElement('div');
       track.className = 'ml-mtrack';
 
-      const pool = [...mlShuffle(ML_SCENES),...mlShuffle(ML_SCENES),...mlShuffle(ML_SCENES)];
-      pool.forEach(s=>{
+      const pool = [...mlShuffle(ML_SCENES), ...mlShuffle(ML_SCENES), ...mlShuffle(ML_SCENES)];
+
+      pool.forEach(s => {
         const card = document.createElement('div');
         card.className = 'ml-card';
-        card.style.cssText = `width:${cardW}px;height:${rowH}px;`;
+        // width = 16/9 * row height, row height = 25vh
+        card.style.cssText = 'width:calc(25vh * 1.6);height:100%;';
 
         const img = document.createElement('img');
-        img.src = `/static/posters/${s.id}.jpg`;
+        img.src = '/static/posters/' + s.id + '.jpg';
         img.alt = '';
         img.onerror = function(){
-          this.style.display='none';
+          this.style.display = 'none';
           card.style.background = s.bg;
         };
 
@@ -1570,7 +1581,7 @@
       });
 
       row.appendChild(track);
-      landing.insertBefore(row, vignette);
+      container.appendChild(row);
     });
   }
 
