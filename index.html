@@ -1445,17 +1445,15 @@
   display: flex; flex-direction: column; gap: 10px; z-index: 20;
 }
 .ml-sb-icon {
-  width: 36px; height: 36px;
+  width: 34px; height: 34px;
   border-radius: 50%;
-  background: rgba(255,255,255,0.05);
-  border: .5px solid rgba(255,255,255,0.1);
+  background: rgba(255,255,255,0.08);
+  border: 0.5px solid rgba(255,255,255,0.15);
   display: flex; align-items: center; justify-content: center;
-  font-size: .9rem; cursor: pointer; transition: all .2s;
-  color: rgba(255,255,255,0.4);
+  font-size: 0.78rem; cursor: pointer; transition: all 0.2s;
 }
-.ml-sb-icon .ml-sb-emoji { font-size: .95rem; line-height: 1; }
 .ml-sb-icon:hover, .ml-sb-icon.ml-on {
-  background: rgba(255,255,255,0.11); border-color: rgba(255,255,255,0.22); color: #fff;
+  background: rgba(255,255,255,0.18); border-color: rgba(255,255,255,0.32);
 }
 #mlCenter {
   position: absolute; top: 50%; left: 50%;
@@ -1552,10 +1550,10 @@
   </div>
 
   <div id="mlSidebar">
-    <div class="ml-sb-icon ml-on"><span class="ml-sb-emoji">🎬</span></div>
-    <div class="ml-sb-icon"><span class="ml-sb-emoji">📚</span></div>
-    <div class="ml-sb-icon"><span class="ml-sb-emoji">🏆</span></div>
-    <div class="ml-sb-icon"><span class="ml-sb-emoji">⚡</span></div>
+    <div class="ml-sb-icon ml-on">🎬</div>
+    <div class="ml-sb-icon">📚</div>
+    <div class="ml-sb-icon">🏆</div>
+    <div class="ml-sb-icon">⚡</div>
   </div>
 
   <div id="mlCenter">
@@ -1571,28 +1569,40 @@
   <div class="ml-corner" style="bottom:16px;right:18px;text-align:right;">ACT · SCORE<br>MASTER</div>
 </div>
 
-<!-- Subtle floor reflection — 70px band directly under #ml-frame.
-     JS positions it and clones only the wall's bottom row. -->
+<!-- Pure CSS gradient reflection — independent gradient-block track,
+     JS positions it flush below #ml-frame. No DOM clone, no timing race. -->
 <div id="ml-reflect" style="
   position: absolute;
   left: 50%;
+  transform: translateX(-50%);
   width: min(1100px, 96vw);
-  height: 70px;
-  z-index: 497;
+  height: 80px;
   pointer-events: none;
+  z-index: 497;
   overflow: hidden;
-  border-radius: 0 0 12px 12px;
 ">
-  <div id="ml-reflect-rows" style="
+  <div style="
     width: 100%;
-    height: 70px;
+    height: 80px;
+    background: linear-gradient(
+      to bottom,
+      rgba(20,16,10,0.0) 0%,
+      rgba(20,16,10,0.4) 40%,
+      rgba(12,10,6,0.85) 100%
+    );
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+  "></div>
+  <div id="ml-reflect-content" style="
+    width: 100%;
+    height: 80px;
     transform: scaleY(-1);
     transform-origin: top center;
-    filter: blur(3px) brightness(0.22) saturate(0.4);
-    -webkit-mask-image: linear-gradient(to bottom, rgba(0,0,0,0.7) 0%, transparent 100%);
-    mask-image: linear-gradient(to bottom, rgba(0,0,0,0.7) 0%, transparent 100%);
+    filter: blur(2px) brightness(0.28) saturate(0.35);
     overflow: hidden;
-    position: relative;
+    display: flex;
+    gap: 8px;
   "></div>
 </div>
 
@@ -1631,9 +1641,9 @@
     const container = document.getElementById('ml-rows-container');
     if(!container) return;
 
-    // Cap row height so cards stay small enough to show 5-6 per row like the reference.
-    const rowH = Math.min(Math.floor(window.innerHeight / 5), 145);
-    const cardW = Math.floor(rowH * 1.68);
+    // Cap row height so cards stay small enough to show 6-7 per row like the reference.
+    const rowH = Math.min(Math.floor(window.innerHeight / 6), 115);
+    const cardW = Math.floor(rowH * 1.72);
 
     // Cloud-drift parallax — reference rows are almost imperceptibly slow.
     const ML_ROWS = [
@@ -1764,41 +1774,48 @@
   setTimeout(mlApply3DCurve, 1000);
   setInterval(mlApply3DCurve, 2000);
 
-  // ── Floor reflection — clone only the bottom marquee row into the reflect
-  // band directly below the frame.  scaleY(-1) on #ml-reflect-rows flips the
-  // clone so it reads as a mirrored reflection of the wall's last row. ──
-  function mlPositionReflect() {
-    const frame = document.getElementById('ml-frame');
+  // ── Floor reflection — pure CSS, no DOM cloning.
+  //    Independent gradient-block track sits in #ml-reflect-content with its
+  //    own marquee animation; outer #ml-reflect is JS-positioned flush below
+  //    the frame on build + resize. ──
+  function mlBuildReflection() {
+    const reflectContent = document.getElementById('ml-reflect-content');
     const reflect = document.getElementById('ml-reflect');
-    if (!frame || !reflect) return;
-    const frameRect = frame.getBoundingClientRect();
-    const landingRect = document.getElementById('mirrorLanding').getBoundingClientRect();
-    const topRelative = frameRect.bottom - landingRect.top;
-    reflect.style.top = topRelative + 'px';
-    reflect.style.transform = 'translateX(-50%)';
-  }
+    const frame = document.getElementById('ml-frame');
+    if (!reflectContent || !frame || !reflect) return;
 
-  setTimeout(() => {
-    const reflectRows = document.getElementById('ml-reflect-rows');
-    const rowsContainer = document.getElementById('ml-rows-container');
-    if (!reflectRows || !rowsContainer) return;
+    const frameBottom = frame.offsetTop + frame.offsetHeight;
+    reflect.style.top = frameBottom + 'px';
 
-    const allRows = rowsContainer.querySelectorAll('.ml-mrow');
-    const lastRow = allRows[allRows.length - 1];
-    if (!lastRow) return;
+    const ML_SCENES_REF = [
+      {bg:'linear-gradient(135deg,#2a1a00,#5a3800)'},
+      {bg:'linear-gradient(135deg,#001a0a,#004020)'},
+      {bg:'linear-gradient(135deg,#120008,#2e0018)'},
+      {bg:'linear-gradient(135deg,#00091a,#001433)'},
+      {bg:'linear-gradient(135deg,#1a0000,#3a0000)'},
+      {bg:'linear-gradient(135deg,#000510,#000d28)'},
+      {bg:'linear-gradient(135deg,#1a0a00,#341500)'},
+      {bg:'linear-gradient(135deg,#120000,#260000)'},
+    ];
 
-    const clone = lastRow.cloneNode(true);
-    const spd = lastRow.style.getPropertyValue('--spd');
-    clone.style.cssText = 'display:flex;height:70px;gap:8px;overflow:hidden;flex-shrink:0;';
-    clone.style.setProperty('--spd', spd || '150s');
-    clone.querySelectorAll('.ml-mtrack').forEach(t => {
-      t.style.animationPlayState = 'running';
+    const track = document.createElement('div');
+    track.style.cssText = 'display:flex;gap:8px;will-change:transform;animation:mlL 150s linear infinite;flex-shrink:0;';
+
+    [...ML_SCENES_REF, ...ML_SCENES_REF, ...ML_SCENES_REF].forEach(s => {
+      const card = document.createElement('div');
+      const cardW = Math.floor(80 * 1.72);
+      card.style.cssText = `width:${cardW}px;height:80px;border-radius:8px;flex-shrink:0;background:${s.bg};`;
+      track.appendChild(card);
     });
 
-    reflectRows.appendChild(clone);
-    mlPositionReflect();
-    window.addEventListener('resize', mlPositionReflect);
-  }, 1000);
+    reflectContent.appendChild(track);
+  }
+  setTimeout(mlBuildReflection, 600);
+  window.addEventListener('resize', () => {
+    const frame = document.getElementById('ml-frame');
+    const reflect = document.getElementById('ml-reflect');
+    if (frame && reflect) reflect.style.top = (frame.offsetTop + frame.offsetHeight) + 'px';
+  });
 
   var token = localStorage.getItem('mirror_token');
   if(token){
