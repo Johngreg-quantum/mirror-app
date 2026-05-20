@@ -1333,7 +1333,10 @@
 <style>
 #mirrorLanding {
   position: fixed; inset: 0; z-index: 500;
-  background: #080808;
+  background:
+    radial-gradient(ellipse 60% 50% at 20% 60%, rgba(40,30,20,0.8), transparent),
+    radial-gradient(ellipse 60% 50% at 80% 40%, rgba(30,22,15,0.8), transparent),
+    radial-gradient(ellipse 100% 100% at 50% 50%, #1a1612, #0a0806);
   overflow: hidden;
   font-family: 'DM Sans', sans-serif;
 }
@@ -1394,7 +1397,7 @@
 }
 .ml-vignette {
   position: absolute; inset: 0; z-index: 5; pointer-events: none;
-  background: radial-gradient(ellipse 60% 65% at 50% 50%, rgba(0,0,0,0.0) 0%, rgba(0,0,0,0.75) 100%);
+  background: linear-gradient(to right, rgba(0,0,0,0.4), transparent 15%, transparent 85%, rgba(0,0,0,0.4));
 }
 .ml-vignette2 {
   position: absolute; inset: 0; z-index: 6; pointer-events: none;
@@ -1424,16 +1427,25 @@
   display: flex; flex-direction: column; gap: 10px; z-index: 20;
 }
 .ml-sb-icon {
-  width: 32px; height: 32px; border-radius: 9px;
+  width: auto; height: 32px;
+  padding: 0 10px 0 6px;
+  border-radius: 20px;
   background: rgba(255,255,255,0.05);
   border: .5px solid rgba(255,255,255,0.1);
-  display: flex; align-items: center; justify-content: center;
+  display: flex; align-items: center; gap: 8px;
   font-size: .78rem; cursor: pointer; transition: all .2s;
   color: rgba(255,255,255,0.4);
+}
+.ml-sb-icon .ml-sb-emoji { font-size: .82rem; line-height: 1; }
+.ml-sb-icon .ml-sb-label {
+  font-family: 'DM Sans', sans-serif; font-size: .65rem; letter-spacing: .04em;
+  color: rgba(255,255,255,0.5);
 }
 .ml-sb-icon:hover, .ml-sb-icon.ml-on {
   background: rgba(255,255,255,0.11); border-color: rgba(255,255,255,0.22); color: #fff;
 }
+.ml-sb-icon:hover .ml-sb-label,
+.ml-sb-icon.ml-on .ml-sb-label { color: #fff; }
 #mlCenter {
   position: absolute; top: 50%; left: 50%;
   transform: translate(-50%, -50%);
@@ -1479,40 +1491,58 @@
 }
 </style>
 
-<div id="ml-rows-container"></div>
+<!-- Framed inner canvas — the rocky outer bg of #mirrorLanding shows around it -->
+<div id="ml-frame" style="
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  width: min(1100px, 96vw);
+  height: min(640px, 88vh);
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 40px 120px rgba(0,0,0,0.85), 0 0 0 1px rgba(255,255,255,0.06);
+  background: #080808;
+">
+  <div id="ml-rows-container"></div>
 
-<!-- Rows injected by JS -->
-<div class="ml-vignette"></div>
-<div class="ml-vignette2"></div>
+  <!-- Rows injected by JS -->
+  <div class="ml-vignette"></div>
+  <div class="ml-vignette2"></div>
 
-<div id="mlTopBar">
-  <div class="ml-brand">MIRROR<br>V 2.0</div>
-  <div class="ml-pill">
-    <button class="ml-pill-btn ml-on" onclick="mlPill(this)">CREATE</button>
-    <button class="ml-pill-btn" onclick="mlPill(this)">EXPLORE</button>
+  <!-- Bottom darkening — fades the lower half of the wall into a deep base -->
+  <div style="position:absolute;bottom:0;left:0;right:0;height:45%;
+       background:linear-gradient(to top, rgba(0,0,0,0.75), transparent);
+       pointer-events:none;z-index:4;"></div>
+
+  <div id="mlTopBar">
+    <div class="ml-brand">MIRROR<br>V 2.0</div>
+    <div class="ml-pill">
+      <button class="ml-pill-btn ml-on" onclick="mlPill(this)">CREATE</button>
+      <button class="ml-pill-btn" onclick="mlPill(this)">EXPLORE</button>
+    </div>
+    <div class="ml-topright">50+ USERS<br>ACTIVE NOW</div>
   </div>
-  <div class="ml-topright">50+ USERS<br>ACTIVE NOW</div>
-</div>
 
-<div id="mlSidebar">
-  <div class="ml-sb-icon ml-on">🎬</div>
-  <div class="ml-sb-icon">📚</div>
-  <div class="ml-sb-icon">🏆</div>
-  <div class="ml-sb-icon">⚡</div>
-  <div class="ml-sb-icon">📖</div>
-</div>
-
-<div id="mlCenter">
-  <h1>SPEAK LIKE<br>THE GREATS</h1>
-  <p>Practice English through iconic movie scenes.</p>
-  <div class="ml-cta-row">
-    <button class="ml-btn-primary" onclick="mlOpenAuth()">Start practicing</button>
-    <button class="ml-btn-secondary" onclick="mlOpenAuth()">Sign in</button>
+  <div id="mlSidebar">
+    <div class="ml-sb-icon ml-on"><span class="ml-sb-emoji">🎬</span><span class="ml-sb-label">Home</span></div>
+    <div class="ml-sb-icon"><span class="ml-sb-emoji">📚</span><span class="ml-sb-label">Levels</span></div>
+    <div class="ml-sb-icon"><span class="ml-sb-emoji">🏆</span><span class="ml-sb-label">Ranks</span></div>
+    <div class="ml-sb-icon"><span class="ml-sb-emoji">⚡</span><span class="ml-sb-label">Missions</span></div>
+    <div class="ml-sb-icon"><span class="ml-sb-emoji">📖</span><span class="ml-sb-label">Words</span></div>
   </div>
-</div>
 
-<div class="ml-corner" style="bottom:16px;left:18px;">ENGLISH<br>THROUGH CINEMA</div>
-<div class="ml-corner" style="bottom:16px;right:18px;text-align:right;">ACT · SCORE<br>MASTER</div>
+  <div id="mlCenter">
+    <h1>SPEAK LIKE<br>THE GREATS</h1>
+    <p>Practice English through iconic movie scenes.</p>
+    <div class="ml-cta-row">
+      <button class="ml-btn-primary" onclick="mlOpenAuth()">Start practicing</button>
+      <button class="ml-btn-secondary" onclick="mlOpenAuth()">Sign in</button>
+    </div>
+  </div>
+
+  <div class="ml-corner" style="bottom:16px;left:18px;">ENGLISH<br>THROUGH CINEMA</div>
+  <div class="ml-corner" style="bottom:16px;right:18px;text-align:right;">ACT · SCORE<br>MASTER</div>
+</div>
 
 <script>
 (function(){
@@ -1561,8 +1591,10 @@
       pool.forEach(s => {
         const card = document.createElement('div');
         card.className = 'ml-card';
-        // width = 16/9 * row height, row height = 25vh
-        card.style.cssText = 'width:calc(25vh * 1.6);height:100%;';
+        // Card height fills its row (which is 100%/4 of the frame via flex:1);
+        // aspect-ratio derives width automatically, so cards always feel
+        // proportional to whatever size the framed canvas is.
+        card.style.cssText = 'height:100%;aspect-ratio:16/9;';
 
         const img = document.createElement('img');
         img.src = '/static/posters/' + s.id + '.jpg';
