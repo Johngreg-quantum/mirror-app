@@ -1370,6 +1370,7 @@
   display: flex;
   flex-direction: column;
   z-index: 1;
+  transform-style: preserve-3d;
 }
 .ml-mrow {
   display: flex;
@@ -1377,12 +1378,14 @@
   gap: 10px;
   overflow: hidden;
   min-height: 0;
+  transform-style: preserve-3d;
 }
 .ml-mtrack {
   display: flex;
   gap: 10px;
   will-change: transform;
   align-items: stretch;
+  transform-style: preserve-3d;
 }
 .ml-mrow.ml-left  .ml-mtrack { animation: mlL var(--spd, 30s) linear infinite; }
 .ml-mrow.ml-right .ml-mtrack { animation: mlR var(--spd, 30s) linear infinite; }
@@ -1520,12 +1523,25 @@
     0 0 0 1px rgba(255,255,255,0.05),
     0 0 80px rgba(0,0,0,0.5);
   background: #080808;
+  transform-style: preserve-3d;
+  perspective: 1200px;
 ">
-  <div id="ml-rows-container"></div>
+  <div id="ml-rows-container" style="perspective: 1200px; transform-style: preserve-3d;"></div>
 
   <!-- Rows injected by JS -->
   <div class="ml-vignette"></div>
   <div class="ml-vignette2"></div>
+
+  <!-- Edge vignettes — darken sides + top to enhance the cylindrical curve illusion -->
+  <div style="position:absolute;top:0;left:0;width:15%;height:100%;
+       background:linear-gradient(to right, rgba(0,0,0,0.7), transparent);
+       z-index:7;pointer-events:none;"></div>
+  <div style="position:absolute;top:0;right:0;width:15%;height:100%;
+       background:linear-gradient(to left, rgba(0,0,0,0.7), transparent);
+       z-index:7;pointer-events:none;"></div>
+  <div style="position:absolute;top:0;left:0;right:0;height:18%;
+       background:linear-gradient(to bottom, rgba(0,0,0,0.65), transparent);
+       z-index:7;pointer-events:none;"></div>
 
   <!-- Bottom darkening — sharper fade so deeper rows recede into pure black at the floor -->
   <div style="position:absolute;bottom:0;left:0;right:0;height:35%;
@@ -1715,6 +1731,37 @@
   } else {
     mlBuildWall();
   }
+
+  // ── 3D cylindrical curve — tilt rows away from the horizontal centerline
+  //    and rotateY each card based on its distance from the frame's vertical
+  //    centerline.  Re-applied periodically since marquee scroll changes each
+  //    card's screen position. ──
+  function mlApply3DCurve() {
+    const container = document.getElementById('ml-frame');
+    if (!container) return;
+    const frameW = container.offsetWidth;
+
+    container.querySelectorAll('.ml-mrow').forEach((row, rowIndex) => {
+      const totalRows = 4;
+      const rowOffset = (rowIndex / (totalRows - 1) - 0.5) * 2;
+      const rotX = rowOffset * 8;
+      row.style.transform = `rotateX(${rotX}deg)`;
+      row.style.transformOrigin = 'center center';
+
+      row.querySelectorAll('.ml-card').forEach(card => {
+        const rect = card.getBoundingClientRect();
+        const containerRect = container.getBoundingClientRect();
+        const cardCenterX = rect.left + rect.width / 2 - containerRect.left;
+        const normalizedX = (cardCenterX / frameW - 0.5) * 2;
+        const rotY = normalizedX * -18;
+        const scaleZ = 1 - Math.abs(normalizedX) * 0.08;
+        card.style.transform = `rotateY(${rotY}deg) scale(${scaleZ})`;
+        card.style.transformOrigin = 'center center';
+      });
+    });
+  }
+  setTimeout(mlApply3DCurve, 1000);
+  setInterval(mlApply3DCurve, 2000);
 
   // ── Floor reflection — clone the live marquee rows into the reflect layer.
   // The container is scaled -1 vertically, so the inner is scaled -1 again to
