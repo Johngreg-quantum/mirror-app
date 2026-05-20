@@ -1334,12 +1334,21 @@
 #mirrorLanding {
   position: fixed; inset: 0; z-index: 500;
   background:
-    radial-gradient(ellipse 40% 60% at 15% 70%, rgba(35,28,20,0.95), transparent 60%),
-    radial-gradient(ellipse 40% 60% at 85% 70%, rgba(25,20,15,0.95), transparent 60%),
-    radial-gradient(ellipse 100% 50% at 50% 100%, rgba(15,12,8,1), transparent 70%),
-    linear-gradient(180deg, #2a2520 0%, #1a1510 30%, #0d0a07 60%, #080604 100%);
+    radial-gradient(ellipse 25% 80% at 5% 60%, rgba(20,16,10,0.98), transparent 70%),
+    radial-gradient(ellipse 25% 80% at 95% 60%, rgba(20,16,10,0.98), transparent 70%),
+    radial-gradient(ellipse 80% 40% at 50% 100%, rgba(8,6,4,1), transparent 80%),
+    radial-gradient(ellipse 60% 60% at 50% 75%, rgba(30,24,16,0.9), transparent 70%),
+    linear-gradient(180deg, #232018 0%, #18140e 25%, #100d08 55%, #080604 100%);
   overflow: hidden;
   font-family: 'DM Sans', sans-serif;
+}
+#mirrorLanding::before {
+  content: '';
+  position: absolute; inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='t'%3E%3CfeTurbulence type='turbulence' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23t)' opacity='1'/%3E%3C/svg%3E");
+  opacity: 0.04;
+  pointer-events: none;
+  z-index: 0;
 }
 #mirrorLanding::after {
   content: '';
@@ -1385,8 +1394,8 @@
   overflow: hidden;
   position: relative;
   cursor: pointer;
-  filter: brightness(0.88) saturate(0.85);
-  transition: transform .25s ease, filter .25s ease;
+  filter: brightness(0.82) saturate(0.75);
+  transition: filter 0.3s ease, transform 0.25s ease;
 }
 .ml-card:hover {
   transform: scale(1.04);
@@ -1464,8 +1473,8 @@
 }
 #mlCenter h1 {
   font-family: 'Bebas Neue', sans-serif;
-  font-size: clamp(1.9rem, 4vw, 3rem);
-  letter-spacing: .1em; line-height: 1.05; color: #fff;
+  font-size: clamp(2rem, 4.5vw, 3.4rem);
+  letter-spacing: .08em; line-height: 1.05; color: #fff;
   text-shadow: 0 2px 40px rgba(0,0,0,0.9); margin-bottom: .45rem;
 }
 #mlCenter p {
@@ -1505,7 +1514,11 @@
   height: min(640px, 88vh);
   border-radius: 16px;
   overflow: hidden;
-  box-shadow: 0 40px 120px rgba(0,0,0,0.85), 0 0 0 1px rgba(255,255,255,0.06);
+  box-shadow:
+    0 60px 140px rgba(0,0,0,0.95),
+    0 30px 60px rgba(0,0,0,0.8),
+    0 0 0 1px rgba(255,255,255,0.05),
+    0 0 80px rgba(0,0,0,0.5);
   background: #080808;
 ">
   <div id="ml-rows-container"></div>
@@ -1549,39 +1562,30 @@
   <div class="ml-corner" style="bottom:16px;right:18px;text-align:right;">ACT · SCORE<br>MASTER</div>
 </div>
 
-<!-- Floor reflection — sits outside #ml-frame, immediately below it.
-     A canvas mirrors the marquee feel; gradient fade above sells the glossy floor. -->
-<div id="ml-reflection-wrap" style="
+<!-- True CSS reflection — the actual marquee rows are cloned into this layer
+     and inverted via scaleY(-1).  Filter + mask create the dim glossy floor. -->
+<div id="ml-reflect" style="
   position: absolute;
   left: 50%;
-  transform: translateX(-50%);
+  transform: translateX(-50%) scaleY(-1);
+  transform-origin: top center;
   width: min(1100px, 96vw);
-  height: 140px;
-  top: calc(50% + min(320px, 44vh));
-  overflow: hidden;
+  height: 100px;
+  top: calc(50% + min(330px, 45vh) - 4px);
   pointer-events: none;
-  z-index: 498;
+  z-index: 497;
+  filter: blur(4px) brightness(0.3) saturate(0.5);
+  -webkit-mask-image: linear-gradient(to top, transparent 0%, rgba(0,0,0,0.6) 100%);
+  mask-image: linear-gradient(to top, transparent 0%, rgba(0,0,0,0.6) 100%);
+  overflow: hidden;
+  border-radius: 0 0 16px 16px;
 ">
-  <div id="ml-reflection-inner" style="
+  <div id="ml-reflect-inner" style="
     width: 100%;
     height: 100%;
-    position: relative;
-    overflow: hidden;
-  ">
-    <canvas id="ml-reflection-canvas" style="
-      width: 100%;
-      height: 140px;
-      display: block;
-      transform: scaleY(-1);
-      filter: blur(3px) brightness(0.35);
-      opacity: 0.5;
-    "></canvas>
-    <div style="
-      position: absolute; inset: 0;
-      background: linear-gradient(to bottom, transparent 0%, rgba(15,12,8,1) 85%);
-      pointer-events: none;
-    "></div>
-  </div>
+    transform: scaleY(-1);
+    transform-origin: center center;
+  "></div>
 </div>
 
 <script>
@@ -1712,47 +1716,30 @@
     mlBuildWall();
   }
 
-  // ── Floor reflection renderer ──
-  // Simulates the marquee wall as a dim, blurred, slow-drifting band so the
-  // canvas below the frame reads as a glossy floor reflection of the cards.
-  function mlDrawReflection() {
-    const frame = document.getElementById('ml-frame');
-    const canvas = document.getElementById('ml-reflection-canvas');
-    if (!frame || !canvas) return;
-    const ctx = canvas.getContext('2d');
-    const w = frame.offsetWidth;
-    const h = 140;
-    canvas.width = w;
-    canvas.height = h;
-
-    ctx.clearRect(0, 0, w, h);
-    ctx.fillStyle = '#0d0a07';
-    ctx.fillRect(0, 0, w, h);
-
-    const rowH = Math.floor(frame.offsetHeight / 4);
-    [0, 1].forEach((i) => {
-      const y = i * (rowH * 0.7);
-      ctx.fillStyle = `rgba(40, 35, 28, ${0.15 - i * 0.06})`;
-      ctx.fillRect(0, y, w, rowH * 0.65);
-
-      const cardW = rowH * 1.78;
-      const numCards = Math.ceil(w / (cardW + 10)) + 2;
-      for (let j = 0; j < numCards; j++) {
-        const offset = (Date.now() / (i === 0 ? 30000 : 22000) * w) % (cardW + 10);
-        const x = j * (cardW + 10) - offset;
-        ctx.fillStyle = `rgba(55, 48, 38, ${0.12 - i * 0.04})`;
-        ctx.beginPath();
-        if (ctx.roundRect) ctx.roundRect(x, y + 5, cardW, rowH * 0.6, 8);
-        else ctx.rect(x, y + 5, cardW, rowH * 0.6);
-        ctx.fill();
-      }
-    });
-  }
-  function mlAnimateReflection() {
-    mlDrawReflection();
-    requestAnimationFrame(mlAnimateReflection);
-  }
-  setTimeout(mlAnimateReflection, 500);
+  // ── Floor reflection — clone the live marquee rows into the reflect layer.
+  // The container is scaled -1 vertically, so the inner is scaled -1 again to
+  // un-flip the cards while keeping the bottom-edge alignment.  Tracks keep
+  // their own animations so the reflection moves with the originals. ──
+  setTimeout(() => {
+    const reflectInner = document.getElementById('ml-reflect-inner');
+    const rowsContainer = document.getElementById('ml-rows-container');
+    if (reflectInner && rowsContainer) {
+      const clone = rowsContainer.cloneNode(true);
+      clone.removeAttribute('id'); // keep IDs unique in the DOM
+      clone.style.position = 'absolute';
+      clone.style.bottom = '0';
+      clone.style.left = '0';
+      clone.style.right = '0';
+      clone.style.top = 'auto';
+      clone.style.height = '100px';
+      // reset any inset from the CSS rule so bottom:0 actually anchors
+      clone.style.inset = 'auto';
+      clone.querySelectorAll('.ml-mtrack').forEach(t => {
+        t.style.animationPlayState = 'running';
+      });
+      reflectInner.appendChild(clone);
+    }
+  }, 800);
 
   var token = localStorage.getItem('mirror_token');
   if(token){
