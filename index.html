@@ -1578,29 +1578,28 @@
   <div class="ml-corner" style="bottom:16px;right:18px;text-align:right;">ACT · SCORE<br>MASTER</div>
 </div>
 
-<!-- True CSS reflection — the actual marquee rows are cloned into this layer
-     and inverted via scaleY(-1).  Filter + mask create the dim glossy floor. -->
+<!-- Subtle floor reflection — 70px band directly under #ml-frame.
+     JS positions it and clones only the wall's bottom row. -->
 <div id="ml-reflect" style="
   position: absolute;
   left: 50%;
-  transform: translateX(-50%) scaleY(-1);
-  transform-origin: top center;
   width: min(1100px, 96vw);
-  height: 100px;
-  top: calc(50% + min(330px, 45vh) - 4px);
-  pointer-events: none;
+  height: 70px;
   z-index: 497;
-  filter: blur(4px) brightness(0.3) saturate(0.5);
-  -webkit-mask-image: linear-gradient(to top, transparent 0%, rgba(0,0,0,0.6) 100%);
-  mask-image: linear-gradient(to top, transparent 0%, rgba(0,0,0,0.6) 100%);
+  pointer-events: none;
   overflow: hidden;
-  border-radius: 0 0 16px 16px;
+  border-radius: 0 0 12px 12px;
 ">
-  <div id="ml-reflect-inner" style="
+  <div id="ml-reflect-rows" style="
     width: 100%;
-    height: 100%;
+    height: 70px;
     transform: scaleY(-1);
-    transform-origin: center center;
+    transform-origin: top center;
+    filter: blur(3px) brightness(0.22) saturate(0.4);
+    -webkit-mask-image: linear-gradient(to bottom, rgba(0,0,0,0.7) 0%, transparent 100%);
+    mask-image: linear-gradient(to bottom, rgba(0,0,0,0.7) 0%, transparent 100%);
+    overflow: hidden;
+    position: relative;
   "></div>
 </div>
 
@@ -1639,12 +1638,12 @@
     const container = document.getElementById('ml-rows-container');
     if(!container) return;
 
-    // Very slow parallax — reference video reads as barely-drifting rows.
+    // Cloud-drift parallax — reference rows are almost imperceptibly slow.
     const ML_ROWS = [
-      {dir:'left',  spd:'55s'},
-      {dir:'right', spd:'75s'},
-      {dir:'left',  spd:'45s'},
-      {dir:'right', spd:'90s'},
+      {dir:'left',  spd:'80s'},
+      {dir:'right', spd:'120s'},
+      {dir:'left',  spd:'65s'},
+      {dir:'right', spd:'150s'},
     ];
 
     ML_ROWS.forEach((cfg, rowIndex) => {
@@ -1763,30 +1762,39 @@
   setTimeout(mlApply3DCurve, 1000);
   setInterval(mlApply3DCurve, 2000);
 
-  // ── Floor reflection — clone the live marquee rows into the reflect layer.
-  // The container is scaled -1 vertically, so the inner is scaled -1 again to
-  // un-flip the cards while keeping the bottom-edge alignment.  Tracks keep
-  // their own animations so the reflection moves with the originals. ──
+  // ── Floor reflection — clone only the bottom marquee row into the reflect
+  // band directly below the frame.  scaleY(-1) on #ml-reflect-rows flips the
+  // clone so it reads as a mirrored reflection of the wall's last row. ──
+  function mlPositionReflect() {
+    const frame = document.getElementById('ml-frame');
+    const reflect = document.getElementById('ml-reflect');
+    if (!frame || !reflect) return;
+    const frameRect = frame.getBoundingClientRect();
+    const landingRect = document.getElementById('mirrorLanding').getBoundingClientRect();
+    const topRelative = frameRect.bottom - landingRect.top;
+    reflect.style.top = topRelative + 'px';
+    reflect.style.transform = 'translateX(-50%)';
+  }
+
   setTimeout(() => {
-    const reflectInner = document.getElementById('ml-reflect-inner');
+    const reflectRows = document.getElementById('ml-reflect-rows');
     const rowsContainer = document.getElementById('ml-rows-container');
-    if (reflectInner && rowsContainer) {
-      const clone = rowsContainer.cloneNode(true);
-      clone.removeAttribute('id'); // keep IDs unique in the DOM
-      clone.style.position = 'absolute';
-      clone.style.bottom = '0';
-      clone.style.left = '0';
-      clone.style.right = '0';
-      clone.style.top = 'auto';
-      clone.style.height = '100px';
-      // reset any inset from the CSS rule so bottom:0 actually anchors
-      clone.style.inset = 'auto';
-      clone.querySelectorAll('.ml-mtrack').forEach(t => {
-        t.style.animationPlayState = 'running';
-      });
-      reflectInner.appendChild(clone);
-    }
-  }, 800);
+    if (!reflectRows || !rowsContainer) return;
+
+    const allRows = rowsContainer.querySelectorAll('.ml-mrow');
+    const lastRow = allRows[allRows.length - 1];
+    if (!lastRow) return;
+
+    const clone = lastRow.cloneNode(true);
+    clone.style.cssText = 'display:flex;height:70px;gap:8px;overflow:hidden;flex-shrink:0;';
+    clone.querySelectorAll('.ml-mtrack').forEach(t => {
+      t.style.animationPlayState = 'running';
+    });
+
+    reflectRows.appendChild(clone);
+    mlPositionReflect();
+    window.addEventListener('resize', mlPositionReflect);
+  }, 1000);
 
   var token = localStorage.getItem('mirror_token');
   if(token){
