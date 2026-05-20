@@ -1334,15 +1334,10 @@
 #mirrorLanding {
   position: fixed; inset: 0; z-index: 500;
   background:
-    radial-gradient(ellipse 30% 30% at 0% 0%, rgba(0,0,0,0.95), transparent 50%),
-    radial-gradient(ellipse 30% 30% at 100% 0%, rgba(0,0,0,0.95), transparent 50%),
-    radial-gradient(ellipse 30% 30% at 0% 100%, rgba(0,0,0,0.95), transparent 50%),
-    radial-gradient(ellipse 30% 30% at 100% 100%, rgba(0,0,0,0.95), transparent 50%),
-    radial-gradient(ellipse 25% 80% at 5% 60%, rgba(20,16,10,0.98), transparent 70%),
-    radial-gradient(ellipse 25% 80% at 95% 60%, rgba(20,16,10,0.98), transparent 70%),
-    radial-gradient(ellipse 80% 40% at 50% 100%, rgba(8,6,4,1), transparent 80%),
-    radial-gradient(ellipse 60% 60% at 50% 75%, rgba(30,24,16,0.9), transparent 70%),
-    linear-gradient(180deg, #232018 0%, #18140e 25%, #100d08 55%, #080604 100%);
+    radial-gradient(ellipse 18% 70% at 3%  50%, rgba(8,7,5,0.98),  transparent 80%),
+    radial-gradient(ellipse 18% 70% at 97% 50%, rgba(8,7,5,0.98),  transparent 80%),
+    radial-gradient(ellipse 80% 35% at 50% 100%, rgba(5,4,3,1),    transparent 70%),
+    linear-gradient(180deg, #28231c 0%, #1c1812 20%, #11100c 55%, #080706 100%);
   overflow: hidden;
   font-family: 'DM Sans', sans-serif;
 }
@@ -1351,20 +1346,19 @@
   position: absolute;
   inset: 0;
   border-radius: 24px;
-  box-shadow:
-    inset 0 0 0 1px rgba(255,255,255,0.06),
-    inset 50px 50px 100px rgba(0,0,0,0.7),
-    inset -50px 50px 100px rgba(0,0,0,0.7),
-    inset 50px -50px 100px rgba(0,0,0,0.7),
-    inset -50px -50px 100px rgba(0,0,0,0.7);
+  background:
+    radial-gradient(ellipse 55% 55% at 0% 0%,   rgba(0,0,0,0.97) 0%, transparent 60%),
+    radial-gradient(ellipse 55% 55% at 100% 0%,  rgba(0,0,0,0.97) 0%, transparent 60%),
+    radial-gradient(ellipse 55% 55% at 0% 100%,  rgba(0,0,0,0.97) 0%, transparent 60%),
+    radial-gradient(ellipse 55% 55% at 100% 100%,rgba(0,0,0,0.97) 0%, transparent 60%);
   pointer-events: none;
-  z-index: 20;
+  z-index: 15;
 }
 #mirrorLanding::before {
   content: '';
   position: absolute; inset: 0;
   background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='t'%3E%3CfeTurbulence type='turbulence' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23t)' opacity='1'/%3E%3C/svg%3E");
-  opacity: 0.04;
+  opacity: 0.06;
   pointer-events: none;
   z-index: 0;
 }
@@ -1594,43 +1588,6 @@
   <div class="ml-corner" style="bottom:16px;right:18px;text-align:right;">ACT · SCORE<br>MASTER</div>
 </div>
 
-<!-- Pure CSS gradient reflection — independent gradient-block track,
-     JS positions it flush below #ml-frame. No DOM clone, no timing race. -->
-<div id="ml-reflect" style="
-  position: absolute;
-  left: 50%;
-  transform: translateX(-50%);
-  width: min(1100px, 96vw);
-  height: 80px;
-  pointer-events: none;
-  z-index: 497;
-  overflow: hidden;
-">
-  <div style="
-    width: 100%;
-    height: 80px;
-    background: linear-gradient(
-      to bottom,
-      rgba(20,16,10,0.0) 0%,
-      rgba(20,16,10,0.4) 40%,
-      rgba(12,10,6,0.85) 100%
-    );
-    position: absolute;
-    inset: 0;
-    z-index: 2;
-  "></div>
-  <div id="ml-reflect-content" style="
-    width: 100%;
-    height: 80px;
-    transform: scaleY(-1);
-    transform-origin: top center;
-    filter: blur(2px) brightness(0.28) saturate(0.35);
-    overflow: hidden;
-    display: flex;
-    gap: 8px;
-  "></div>
-</div>
-
 <script>
 (function(){
   const ML_SCENES = [
@@ -1798,49 +1755,6 @@
   }
   setTimeout(mlApply3DCurve, 1000);
   setInterval(mlApply3DCurve, 2000);
-
-  // ── Floor reflection — pure CSS, no DOM cloning.
-  //    Independent gradient-block track sits in #ml-reflect-content with its
-  //    own marquee animation; outer #ml-reflect is JS-positioned flush below
-  //    the frame on build + resize. ──
-  function mlBuildReflection() {
-    const reflectContent = document.getElementById('ml-reflect-content');
-    const reflect = document.getElementById('ml-reflect');
-    const frame = document.getElementById('ml-frame');
-    if (!reflectContent || !frame || !reflect) return;
-
-    const frameBottom = frame.offsetTop + frame.offsetHeight;
-    reflect.style.top = frameBottom + 'px';
-
-    const ML_SCENES_REF = [
-      {bg:'linear-gradient(135deg,#2a1a00,#5a3800)'},
-      {bg:'linear-gradient(135deg,#001a0a,#004020)'},
-      {bg:'linear-gradient(135deg,#120008,#2e0018)'},
-      {bg:'linear-gradient(135deg,#00091a,#001433)'},
-      {bg:'linear-gradient(135deg,#1a0000,#3a0000)'},
-      {bg:'linear-gradient(135deg,#000510,#000d28)'},
-      {bg:'linear-gradient(135deg,#1a0a00,#341500)'},
-      {bg:'linear-gradient(135deg,#120000,#260000)'},
-    ];
-
-    const track = document.createElement('div');
-    track.style.cssText = 'display:flex;gap:8px;will-change:transform;animation:mlL 150s linear infinite;flex-shrink:0;';
-
-    [...ML_SCENES_REF, ...ML_SCENES_REF, ...ML_SCENES_REF].forEach(s => {
-      const card = document.createElement('div');
-      const cardW = Math.floor(80 * 1.72);
-      card.style.cssText = `width:${cardW}px;height:80px;border-radius:8px;flex-shrink:0;background:${s.bg};`;
-      track.appendChild(card);
-    });
-
-    reflectContent.appendChild(track);
-  }
-  setTimeout(mlBuildReflection, 600);
-  window.addEventListener('resize', () => {
-    const frame = document.getElementById('ml-frame');
-    const reflect = document.getElementById('ml-reflect');
-    if (frame && reflect) reflect.style.top = (frame.offsetTop + frame.offsetHeight) + 'px';
-  });
 
   var token = localStorage.getItem('mirror_token');
   if(token){
