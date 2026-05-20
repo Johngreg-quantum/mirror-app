@@ -1334,9 +1334,10 @@
 #mirrorLanding {
   position: fixed; inset: 0; z-index: 500;
   background:
-    radial-gradient(ellipse 60% 50% at 20% 60%, rgba(40,30,20,0.8), transparent),
-    radial-gradient(ellipse 60% 50% at 80% 40%, rgba(30,22,15,0.8), transparent),
-    radial-gradient(ellipse 100% 100% at 50% 50%, #1a1612, #0a0806);
+    radial-gradient(ellipse 40% 60% at 15% 70%, rgba(35,28,20,0.95), transparent 60%),
+    radial-gradient(ellipse 40% 60% at 85% 70%, rgba(25,20,15,0.95), transparent 60%),
+    radial-gradient(ellipse 100% 50% at 50% 100%, rgba(15,12,8,1), transparent 70%),
+    linear-gradient(180deg, #2a2520 0%, #1a1510 30%, #0d0a07 60%, #080604 100%);
   overflow: hidden;
   font-family: 'DM Sans', sans-serif;
 }
@@ -1384,9 +1385,13 @@
   overflow: hidden;
   position: relative;
   cursor: pointer;
-  transition: transform .25s ease;
+  filter: brightness(0.88) saturate(0.85);
+  transition: transform .25s ease, filter .25s ease;
 }
-.ml-card:hover { transform: scale(1.04); }
+.ml-card:hover {
+  transform: scale(1.04);
+  filter: brightness(1) saturate(1);
+}
 .ml-card img {
   width: 100%; height: 100%; object-fit: cover; display: block;
 }
@@ -1494,7 +1499,7 @@
 <!-- Framed inner canvas — the rocky outer bg of #mirrorLanding shows around it -->
 <div id="ml-frame" style="
   position: absolute;
-  top: 50%; left: 50%;
+  top: 48%; left: 50%;
   transform: translate(-50%, -50%);
   width: min(1100px, 96vw);
   height: min(640px, 88vh);
@@ -1509,9 +1514,9 @@
   <div class="ml-vignette"></div>
   <div class="ml-vignette2"></div>
 
-  <!-- Bottom darkening — stronger fade so deeper rows recede into a black base -->
-  <div style="position:absolute;bottom:0;left:0;right:0;height:55%;
-       background:linear-gradient(to top, rgba(0,0,0,0.9), transparent);
+  <!-- Bottom darkening — sharper fade so deeper rows recede into pure black at the floor -->
+  <div style="position:absolute;bottom:0;left:0;right:0;height:35%;
+       background:linear-gradient(to top, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.6) 50%, transparent 100%);
        pointer-events:none;z-index:4;"></div>
 
   <div id="mlTopBar">
@@ -1544,39 +1549,40 @@
   <div class="ml-corner" style="bottom:16px;right:18px;text-align:right;">ACT · SCORE<br>MASTER</div>
 </div>
 
-<!-- Floor reflection — thin specular sheen sitting just below the framed canvas -->
-<div id="ml-reflection" style="
-  position: absolute;
-  bottom: 0; left: 50%;
-  width: min(1100px, 96vw);
-  height: 120px;
-  background: linear-gradient(to bottom, rgba(255,255,255,0.04), transparent);
-  mask-image: linear-gradient(to bottom, rgba(0,0,0,0.3), transparent);
-  -webkit-mask-image: linear-gradient(to bottom, rgba(0,0,0,0.3), transparent);
-  pointer-events: none;
-  z-index: 498;
-  filter: blur(2px);
-  transform: translateX(-50%) scaleY(-1);
-  transform-origin: top center;
-"></div>
-
-<!-- Soft secondary reflection — slightly higher sheen aligned to the frame bottom edge -->
-<div style="
+<!-- Floor reflection — sits outside #ml-frame, immediately below it.
+     A canvas mirrors the marquee feel; gradient fade above sells the glossy floor. -->
+<div id="ml-reflection-wrap" style="
   position: absolute;
   left: 50%;
+  transform: translateX(-50%);
   width: min(1100px, 96vw);
-  height: 80px;
-  bottom: calc(50% - min(320px, 44vh) - 80px);
-  background: linear-gradient(to bottom, rgba(255,255,255,0.025), transparent);
-  -webkit-mask-image: linear-gradient(to bottom, black, transparent);
-  mask-image: linear-gradient(to bottom, black, transparent);
-  filter: blur(3px);
-  transform: translateX(-50%) scaleY(-1);
-  pointer-events: none;
-  z-index: 499;
-  border-radius: 0 0 16px 16px;
+  height: 140px;
+  top: calc(50% + min(320px, 44vh));
   overflow: hidden;
-"></div>
+  pointer-events: none;
+  z-index: 498;
+">
+  <div id="ml-reflection-inner" style="
+    width: 100%;
+    height: 100%;
+    position: relative;
+    overflow: hidden;
+  ">
+    <canvas id="ml-reflection-canvas" style="
+      width: 100%;
+      height: 140px;
+      display: block;
+      transform: scaleY(-1);
+      filter: blur(3px) brightness(0.35);
+      opacity: 0.5;
+    "></canvas>
+    <div style="
+      position: absolute; inset: 0;
+      background: linear-gradient(to bottom, transparent 0%, rgba(15,12,8,1) 85%);
+      pointer-events: none;
+    "></div>
+  </div>
+</div>
 
 <script>
 (function(){
@@ -1613,13 +1619,12 @@
     const container = document.getElementById('ml-rows-container');
     if(!container) return;
 
-    // Parallax-depth speeds: fast foreground sweep, slow mid drift,
-    // faster deeper urgency, very slow farthest row.
+    // Very slow parallax — reference video reads as barely-drifting rows.
     const ML_ROWS = [
-      {dir:'left',  spd:'25s'},
-      {dir:'right', spd:'45s'},
-      {dir:'left',  spd:'20s'},
-      {dir:'right', spd:'55s'},
+      {dir:'left',  spd:'55s'},
+      {dir:'right', spd:'75s'},
+      {dir:'left',  spd:'45s'},
+      {dir:'right', spd:'90s'},
     ];
 
     ML_ROWS.forEach((cfg, rowIndex) => {
@@ -1706,6 +1711,48 @@
   } else {
     mlBuildWall();
   }
+
+  // ── Floor reflection renderer ──
+  // Simulates the marquee wall as a dim, blurred, slow-drifting band so the
+  // canvas below the frame reads as a glossy floor reflection of the cards.
+  function mlDrawReflection() {
+    const frame = document.getElementById('ml-frame');
+    const canvas = document.getElementById('ml-reflection-canvas');
+    if (!frame || !canvas) return;
+    const ctx = canvas.getContext('2d');
+    const w = frame.offsetWidth;
+    const h = 140;
+    canvas.width = w;
+    canvas.height = h;
+
+    ctx.clearRect(0, 0, w, h);
+    ctx.fillStyle = '#0d0a07';
+    ctx.fillRect(0, 0, w, h);
+
+    const rowH = Math.floor(frame.offsetHeight / 4);
+    [0, 1].forEach((i) => {
+      const y = i * (rowH * 0.7);
+      ctx.fillStyle = `rgba(40, 35, 28, ${0.15 - i * 0.06})`;
+      ctx.fillRect(0, y, w, rowH * 0.65);
+
+      const cardW = rowH * 1.78;
+      const numCards = Math.ceil(w / (cardW + 10)) + 2;
+      for (let j = 0; j < numCards; j++) {
+        const offset = (Date.now() / (i === 0 ? 30000 : 22000) * w) % (cardW + 10);
+        const x = j * (cardW + 10) - offset;
+        ctx.fillStyle = `rgba(55, 48, 38, ${0.12 - i * 0.04})`;
+        ctx.beginPath();
+        if (ctx.roundRect) ctx.roundRect(x, y + 5, cardW, rowH * 0.6, 8);
+        else ctx.rect(x, y + 5, cardW, rowH * 0.6);
+        ctx.fill();
+      }
+    });
+  }
+  function mlAnimateReflection() {
+    mlDrawReflection();
+    requestAnimationFrame(mlAnimateReflection);
+  }
+  setTimeout(mlAnimateReflection, 500);
 
   var token = localStorage.getItem('mirror_token');
   if(token){
