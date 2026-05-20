@@ -1489,7 +1489,7 @@
       position: absolute; left: 50%; top: 50%;
       width: 220px; height: 124px;
       margin: -62px 0 0 -110px;                     /* center on the layer */
-      border-radius: 22px; overflow: hidden;
+      border-radius: 12px; overflow: hidden;
       background: #050608;
       border: 1px solid rgba(255,255,255,0.03);
       box-shadow:
@@ -1534,7 +1534,7 @@
        edge — gives the cards their reference-image "embedded tile" silhouette. */
     .ml-scene-area {
       position: absolute; inset: 1px;
-      border-radius: 21px; overflow: hidden;
+      border-radius: 11px; overflow: hidden;
     }
     .ml-scene-area::before {
       /* falls behind any dropped-in <video>/<img> */
@@ -1612,7 +1612,7 @@
     .ml-marquee[data-row="3"] { top: 62%;  height: 100px; opacity: 0.55; filter: blur(1px); }
     .ml-marquee[data-row="4"] { top: 88%;  height: 90px;  opacity: 0.3;  filter: blur(2.5px); }
     .ml-marquee-track {
-      display: flex; gap: 14px; align-items: center;
+      display: flex; gap: 16px; align-items: center;
       will-change: transform;
       animation: mlMarqueeRTL var(--ml-mq-dur, 20s) linear infinite;
     }
@@ -1748,6 +1748,12 @@
 
     <!-- Inner radial vignette -->
     <div class="ml-vignette"></div>
+
+    <!-- Top + bottom hard masks — clip the marquee wall into a clean horizontal band
+         so the top edge of the canvas and the headline area read as solid black.
+         (z-index sits above the marquee stack and below the wall vignette.) -->
+    <div style="position:absolute;top:0;left:0;right:0;height:80px;background:linear-gradient(to bottom,#040404,transparent);pointer-events:none;z-index:11;"></div>
+    <div style="position:absolute;bottom:0;left:0;right:0;height:120px;background:linear-gradient(to top,#040404,transparent);pointer-events:none;z-index:11;"></div>
 
     <!-- Unified wall vignette — fades the tiled wall down into darkness so the
          headline area always reads clearly and the wall edges feel framed. -->
