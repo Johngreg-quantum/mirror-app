@@ -1786,7 +1786,9 @@
     if (!lastRow) return;
 
     const clone = lastRow.cloneNode(true);
+    const spd = lastRow.style.getPropertyValue('--spd');
     clone.style.cssText = 'display:flex;height:70px;gap:8px;overflow:hidden;flex-shrink:0;';
+    clone.style.setProperty('--spd', spd || '150s');
     clone.querySelectorAll('.ml-mtrack').forEach(t => {
       t.style.animationPlayState = 'running';
     });
