@@ -1556,36 +1556,16 @@
       transform: scale(1.01);
       display: block;
     }
-    .ml-scene-title {
-      position: absolute; left: 0; right: 0; top: 50%; transform: translateY(-50%);
-      text-align: center; pointer-events: none;
-      font-family: 'Bebas Neue', sans-serif;
-      font-size: 1.45rem; letter-spacing: 0.06em;
-      color: rgba(255,255,255,0.12); white-space: nowrap;
-      mix-blend-mode: screen;
+    /* Card overlays removed — wall is now pure poster artwork inside rounded shells.
+       Readability + atmospheric depth now come from the wall vignette below. */
+
+    /* Entrance default — depth-stage hero cards start invisible so they cannot
+       flash visible before the mlCardEnter keyframe begins (belt-and-suspenders
+       for `animation-fill-mode: both`). Marquee cards are unaffected. */
+    #mlDepthStage .ml-cinema-card {
+      opacity: 0;
+      filter: blur(16px);
     }
-    .ml-scene-bottom {
-      position: absolute; left: 0; right: 0; bottom: 0;
-      padding: 16px 10px 8px 10px;
-      background: linear-gradient(to top, rgba(0,0,0,0.92) 25%, transparent);
-      font-family: 'Playfair Display', serif;
-      font-style: italic; font-size: 0.58rem; line-height: 1.4;
-      color: rgba(255,255,255,0.82);
-    }
-    .ml-scene-score {
-      position: absolute; top: 24px; right: 6px; z-index: 2;
-      background: rgba(0,0,0,0.7); border: 0.5px solid rgba(200,169,110,0.35);
-      border-radius: 100px; padding: 1px 7px;
-      font-family: 'DM Sans', sans-serif; font-size: 0.5rem; letter-spacing: 0.05em;
-      color: #c8a96e;
-    }
-    .ml-scene-rec {
-      position: absolute; top: 25px; left: 7px; z-index: 2;
-      width: 6px; height: 6px; border-radius: 50%; background: #ff3030;
-      box-shadow: 0 0 6px rgba(255,48,48,0.7);
-      animation: mlRecPulse 1.4s ease-in-out infinite;
-    }
-    @keyframes mlRecPulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.4;transform:scale(0.8)} }
 
     /* Stack formation classes — applied at Phase 3 */
     .ml-depth-stage.stacked .ml-cinema-card { transition: transform 800ms cubic-bezier(0.16,1,0.3,1); }
@@ -1604,12 +1584,21 @@
     }
     .ml-marquee-stack.on { opacity: 1; }
 
-    /* Glossy "floor" — atmospheric dark fade that the reflection settles into.
-       Also acts as a fallback for browsers without -webkit-box-reflect. */
-    .ml-canvas-floor {
-      position: absolute; left: 0; right: 0; bottom: 0; height: 36%;
-      background: linear-gradient(to top, rgba(0,0,0,0.92) 10%, rgba(0,0,0,0.55) 45%, transparent 100%);
-      z-index: 7; pointer-events: none;
+    /* Unified wall vignette — replaces the old .ml-canvas-floor.
+       Fades the tiled wall down into darkness and softly frames the edges,
+       giving the whole canvas the "premium stage" feel of the reference. */
+    .ml-wall-vignette {
+      position: absolute; inset: 0; z-index: 12; pointer-events: none;
+      background:
+        linear-gradient(to bottom,
+          rgba(0,0,0,0.04)  0%,
+          rgba(0,0,0,0.08) 38%,
+          rgba(0,0,0,0.58) 68%,
+          rgba(0,0,0,0.92) 100%),
+        radial-gradient(circle at 50% 42%,
+          rgba(0,0,0,0.08)  0%,
+          rgba(0,0,0,0.48) 72%,
+          rgba(0,0,0,0.76) 100%);
     }
 
     .ml-marquee {
@@ -1617,30 +1606,36 @@
       display: flex; overflow: hidden;
       mask-image: linear-gradient(to right, transparent 0, #000 8%, #000 92%, transparent 100%);
     }
-    /* Rows positioned in % of the bounded stack (384px on a 600px canvas) */
+    /* Rows positioned in % of the bounded stack */
     .ml-marquee[data-row="1"] { top: 0%;   height: 122px; opacity: 1;    filter: blur(0); }
-    .ml-marquee[data-row="2"] { top: 32%;  height: 110px; opacity: 0.78; filter: blur(0.4px); }
-    .ml-marquee[data-row="3"] { top: 62%;  height: 100px; opacity: 0.5;  filter: blur(1.2px); }
-    .ml-marquee[data-row="4"] { top: 88%;  height: 90px;  opacity: 0.28; filter: blur(2.5px); }
+    .ml-marquee[data-row="2"] { top: 32%;  height: 110px; opacity: 0.82; filter: blur(0.3px); }
+    .ml-marquee[data-row="3"] { top: 62%;  height: 100px; opacity: 0.55; filter: blur(1px); }
+    .ml-marquee[data-row="4"] { top: 88%;  height: 90px;  opacity: 0.3;  filter: blur(2.5px); }
     .ml-marquee-track {
-      display: flex; gap: 16px; align-items: center;
+      display: flex; gap: 14px; align-items: center;
       will-change: transform;
-      animation: mlMarqueeRTL var(--ml-mq-dur, 32s) linear infinite;
+      animation: mlMarqueeRTL var(--ml-mq-dur, 20s) linear infinite;
     }
-    .ml-marquee[data-row="1"] .ml-marquee-track { --ml-mq-dur: 32s; animation-name: mlMarqueeRTL; }
-    .ml-marquee[data-row="2"] .ml-marquee-track { --ml-mq-dur: 26s; animation-name: mlMarqueeLTR; }
-    .ml-marquee[data-row="3"] .ml-marquee-track { --ml-mq-dur: 30s; animation-name: mlMarqueeRTL; }
+    /* Parallax-depth speeds — fast foreground, slow mid, faster deep row */
+    .ml-marquee[data-row="1"] .ml-marquee-track { --ml-mq-dur: 20s; animation-name: mlMarqueeRTL; }
+    .ml-marquee[data-row="2"] .ml-marquee-track { --ml-mq-dur: 38s; animation-name: mlMarqueeLTR; }
+    .ml-marquee[data-row="3"] .ml-marquee-track { --ml-mq-dur: 15s; animation-name: mlMarqueeRTL; }
     .ml-marquee[data-row="4"] .ml-marquee-track { --ml-mq-dur: 22s; animation-name: mlMarqueeLTR; }
-    /* Larger poster panels — premium tile feel instead of dashboard windows */
-    .ml-marquee[data-row="1"] .ml-cinema-card { width: 210px; height: 118px; margin: 0; position: relative; left: auto; top: auto; transform: scale(1);    flex-shrink: 0; }
-    .ml-marquee[data-row="2"] .ml-cinema-card { width: 192px; height: 108px; margin: 0; position: relative; left: auto; top: auto; transform: scale(0.96); flex-shrink: 0; }
-    .ml-marquee[data-row="3"] .ml-cinema-card { width: 174px; height:  98px; margin: 0; position: relative; left: auto; top: auto; transform: scale(0.9);  flex-shrink: 0; }
-    .ml-marquee[data-row="4"] .ml-cinema-card { width: 158px; height:  89px; margin: 0; position: relative; left: auto; top: auto; transform: scale(0.82); flex-shrink: 0; }
+    /* Tile sizes — smaller cinematic 16:9 panels (reference image rhythm) */
+    .ml-marquee[data-row="1"] .ml-cinema-card { width: 200px; height: 113px; margin: 0; position: relative; left: auto; top: auto; transform: scale(1);    flex-shrink: 0; }
+    .ml-marquee[data-row="2"] .ml-cinema-card { width: 175px; height:  99px; margin: 0; position: relative; left: auto; top: auto; transform: scale(0.96); flex-shrink: 0; }
+    .ml-marquee[data-row="3"] .ml-cinema-card { width: 155px; height:  87px; margin: 0; position: relative; left: auto; top: auto; transform: scale(0.92); flex-shrink: 0; }
+    .ml-marquee[data-row="4"] .ml-cinema-card { width: 140px; height:  79px; margin: 0; position: relative; left: auto; top: auto; transform: scale(0.84); flex-shrink: 0; }
     .ml-marquee .ml-cinema-card { cursor: default; }
-    .ml-marquee .ml-cinema-card:hover { box-shadow: 0 20px 60px rgba(0,0,0,0.8), 0 0 0 0.5px rgba(200,169,110,0.06); border-color: rgba(255,255,255,0.1); }
-    .ml-marquee .ml-scene-title { font-size: 1.05rem; }
-    .ml-marquee .ml-scene-bottom { padding: 14px 9px 7px; font-size: 0.55rem; }
-    .ml-marquee .ml-scene-score { font-size: 0.46rem; padding: 1px 5px; }
+    .ml-marquee .ml-cinema-card:hover {
+      box-shadow:
+        0 18px 40px rgba(0,0,0,0.5),
+        0 4px 12px rgba(0,0,0,0.32),
+        inset 0 1px 0 rgba(255,255,255,0.05),
+        inset 0 -1px 0 rgba(0,0,0,0.48),
+        inset 0 0 0 1px rgba(255,255,255,0.018);
+      border-color: rgba(255,255,255,0.03);
+    }
 
     /* Headline backdrop — soft dark vignette behind the headline + CTAs so
        the type stays readable while cards keep sliding behind it. */
@@ -1754,8 +1749,9 @@
     <!-- Inner radial vignette -->
     <div class="ml-vignette"></div>
 
-    <!-- Glossy floor — dark fade beneath the marquee stage, where the reflection settles -->
-    <div class="ml-canvas-floor"></div>
+    <!-- Unified wall vignette — fades the tiled wall down into darkness so the
+         headline area always reads clearly and the wall edges feel framed. -->
+    <div class="ml-wall-vignette"></div>
 
     <!-- Headline + CTA (preserved) -->
     <div class="ml-headline" style="position:absolute;bottom:54px;left:0;right:0;display:flex;flex-direction:column;align-items:center;gap:14px;z-index:15;animation:mlFadeUp 1s ease 0.8s both;">
@@ -1879,22 +1875,17 @@
     return a;
   }
 
-  // ── Card builder. Drop a <video> or <img> inside .ml-scene-area for any scene. ──
+  // ── Card builder.  Clean poster tile — no badges, no quotes, no titles.
+  // The wall reads as artwork mounted in rounded shells per the reference. ──
   function buildCinemaCard(s, opts) {
     opts = opts || {};
-    const level = (typeof s.level === 'string') ? s.level : 'L1';
     const card = document.createElement('div');
     card.className = 'ml-cinema-card';
     card.dataset.scene = s.id;
-    // No window-chrome topbar, no rec dot — top edge stays clean per reference image.
+    const objPos = s.objectPosition || 'center center';
     card.innerHTML = `
       <div class="ml-scene-area" data-scene="${s.id}" style="--ml-card-bg:${s.bg};">
-        <img src="${s.poster}" alt="${s.title} poster" class="ml-scene-poster" onerror="this.style.display='none'">
-        <div class="ml-scene-title">${s.title.toUpperCase()}</div>
-        <div class="ml-scene-score">${s.score}</div>
-        <div class="ml-scene-level">${level}</div>
-        <div class="ml-scene-bottom">${s.quote}</div>
-        <div class="ml-scene-progress"></div>
+        <img src="${s.poster}" alt="${s.title} poster" class="ml-scene-poster" style="object-position:${objPos};" onerror="this.style.display='none'">
       </div>
     `;
     return card;
