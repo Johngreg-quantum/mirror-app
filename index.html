@@ -1685,14 +1685,14 @@
       const track = document.createElement('div');
       track.className = 'ml-mtrack';
 
-      // Build enough cards to fill 3x screen width without obvious repeats
-      const screenCards = Math.ceil((window.innerWidth / cardW) * 3);
-      const pool = [];
-      const shuffled = mlShuffle([...ML_SCENES]);
-      while (pool.length < screenCards) {
-        pool.push(...mlShuffle([...ML_SCENES]));
+      // Seamless marquee loop: build halfCount cards, then duplicate so
+      // translateX(-50%) snaps back to an identical visual state.
+      const halfCount = Math.ceil((window.innerWidth / cardW) * 1.5) + 2;
+      const half = [];
+      while (half.length < halfCount) {
+        half.push(...mlShuffle([...ML_SCENES]));
       }
-      const finalPool = pool.slice(0, screenCards);
+      const finalPool = [...half.slice(0, halfCount), ...half.slice(0, halfCount)];
 
       finalPool.forEach(s => {
         const card = document.createElement('div');
