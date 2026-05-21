@@ -1333,12 +1333,14 @@
 <style>
 #mirrorLanding {
   position: fixed; inset: 0; z-index: 500;
-  background:
-    radial-gradient(ellipse 22% 65% at 2%  55%, rgba(0,0,0,0.92), transparent 70%),
-    radial-gradient(ellipse 22% 65% at 98% 55%, rgba(0,0,0,0.92), transparent 70%),
-    radial-gradient(ellipse 100% 45% at 50% 110%, rgba(0,0,0,0.98), transparent 65%),
-    radial-gradient(ellipse 100% 30% at 50% -10%, rgba(0,0,0,0.7), transparent 70%),
-    linear-gradient(180deg, #585858 0%, #484848 10%, #383838 30%, #202020 60%, #0c0c0c 100%);
+  background-color: #2a2a2a;
+  background-image:
+    url("https://images.unsplash.com/photo-1519681393784-d120267933ba?w=1920&q=60&auto=format"),
+    radial-gradient(ellipse 25% 70% at 2%  55%, rgba(0,0,0,0.95), transparent 75%),
+    radial-gradient(ellipse 25% 70% at 98% 55%, rgba(0,0,0,0.95), transparent 75%),
+    radial-gradient(ellipse 100% 45% at 50% 110%, rgba(0,0,0,1), transparent 65%);
+  background-size: cover, auto, auto, auto;
+  background-blend-mode: multiply;
   overflow: hidden;
   font-family: 'DM Sans', sans-serif;
 }
@@ -1593,10 +1595,22 @@
   gap: 12px;
   z-index: 600;
 ">
-  <div class="ml-sb-icon ml-on">🎬</div>
-  <div class="ml-sb-icon">📚</div>
-  <div class="ml-sb-icon">🏆</div>
-  <div class="ml-sb-icon">⚡</div>
+  <div class="ml-sb-icon ml-on" style="width:auto;padding:0 14px 0 8px;border-radius:20px;gap:8px;display:flex;align-items:center;">
+    <span style="font-size:0.9rem;">🏠</span>
+    <span style="font-size:0.65rem;color:rgba(255,255,255,0.7);font-family:'DM Sans',sans-serif;">Home</span>
+  </div>
+  <div class="ml-sb-icon" style="width:auto;padding:0 14px 0 8px;border-radius:20px;gap:8px;display:flex;align-items:center;">
+    <span style="font-size:0.9rem;">🎬</span>
+    <span style="font-size:0.65rem;color:rgba(255,255,255,0.5);font-family:'DM Sans',sans-serif;">Scenes</span>
+  </div>
+  <div class="ml-sb-icon" style="width:auto;padding:0 14px 0 8px;border-radius:20px;gap:8px;display:flex;align-items:center;">
+    <span style="font-size:0.9rem;">🏆</span>
+    <span style="font-size:0.65rem;color:rgba(255,255,255,0.5);font-family:'DM Sans',sans-serif;">Ranks</span>
+  </div>
+  <div class="ml-sb-icon" style="width:auto;padding:0 14px 0 8px;border-radius:20px;gap:8px;display:flex;align-items:center;">
+    <span style="font-size:0.9rem;">⚡</span>
+    <span style="font-size:0.65rem;color:rgba(255,255,255,0.5);font-family:'DM Sans',sans-serif;">Plans</span>
+  </div>
 </div>
 
 <script>
