@@ -1334,10 +1334,11 @@
 #mirrorLanding {
   position: fixed; inset: 0; z-index: 500;
   background:
-    radial-gradient(ellipse 18% 70% at 3%  50%, rgba(8,7,5,0.98),  transparent 80%),
-    radial-gradient(ellipse 18% 70% at 97% 50%, rgba(8,7,5,0.98),  transparent 80%),
-    radial-gradient(ellipse 80% 35% at 50% 100%, rgba(5,4,3,1),    transparent 70%),
-    linear-gradient(180deg, #28231c 0%, #1c1812 20%, #11100c 55%, #080706 100%);
+    radial-gradient(ellipse 20% 60% at 2%  60%, rgba(6,6,6,0.97),   transparent 75%),
+    radial-gradient(ellipse 20% 60% at 98% 60%, rgba(6,6,6,0.97),   transparent 75%),
+    radial-gradient(ellipse 90% 40% at 50% 100%, rgba(4,4,4,1),     transparent 70%),
+    radial-gradient(ellipse 90% 30% at 50% 0%,   rgba(10,10,10,0.9),transparent 70%),
+    linear-gradient(180deg, #3a3a3a 0%, #252525 20%, #141414 55%, #080808 100%);
   overflow: hidden;
   font-family: 'DM Sans', sans-serif;
 }
@@ -1345,14 +1346,14 @@
   content: '';
   position: absolute;
   inset: 0;
-  border-radius: 24px;
   background:
-    radial-gradient(ellipse 55% 55% at 0% 0%,   rgba(0,0,0,0.97) 0%, transparent 60%),
-    radial-gradient(ellipse 55% 55% at 100% 0%,  rgba(0,0,0,0.97) 0%, transparent 60%),
-    radial-gradient(ellipse 55% 55% at 0% 100%,  rgba(0,0,0,0.97) 0%, transparent 60%),
-    radial-gradient(ellipse 55% 55% at 100% 100%,rgba(0,0,0,0.97) 0%, transparent 60%);
+    radial-gradient(ellipse 50% 50% at 0%   0%,   rgba(0,0,0,0.95) 0%, transparent 55%),
+    radial-gradient(ellipse 50% 50% at 100% 0%,   rgba(0,0,0,0.95) 0%, transparent 55%),
+    radial-gradient(ellipse 50% 50% at 0%   100%, rgba(0,0,0,0.95) 0%, transparent 55%),
+    radial-gradient(ellipse 50% 50% at 100% 100%, rgba(0,0,0,0.95) 0%, transparent 55%);
   pointer-events: none;
   z-index: 15;
+  border-radius: 16px;
 }
 #mirrorLanding::before {
   content: '';
@@ -1514,19 +1515,16 @@
 
 <!-- Framed inner canvas — the rocky outer bg of #mirrorLanding shows around it -->
 <div id="ml-frame" style="
-  position: absolute;
-  top: 48%; left: 50%;
+  width: min(880px, 72vw);
+  height: min(580px, 78vh);
+  top: 50%;
+  left: 50%;
   transform: translate(-50%, -50%);
-  width: min(1100px, 96vw);
-  height: min(640px, 88vh);
-  border-radius: 24px;
+  position: absolute;
+  border-radius: 16px;
   overflow: hidden;
-  box-shadow:
-    0 60px 140px rgba(0,0,0,0.95),
-    0 30px 60px rgba(0,0,0,0.8),
-    0 0 0 1px rgba(255,255,255,0.05),
-    0 0 80px rgba(0,0,0,0.5);
-  background: #080808;
+  background: #060606;
+  box-shadow: 0 60px 120px rgba(0,0,0,0.9), 0 0 0 1px rgba(255,255,255,0.05);
   transform-style: preserve-3d;
   perspective: 1200px;
 ">
@@ -1563,13 +1561,6 @@
     <div class="ml-topright">50+ USERS<br>ACTIVE NOW</div>
   </div>
 
-  <div id="mlSidebar">
-    <div class="ml-sb-icon ml-on">🎬</div>
-    <div class="ml-sb-icon">📚</div>
-    <div class="ml-sb-icon">🏆</div>
-    <div class="ml-sb-icon">⚡</div>
-  </div>
-
   <div id="mlCenter">
     <h1>SPEAK LIKE<br>THE GREATS</h1>
     <p>Practice English through iconic movie scenes.</p>
@@ -1581,6 +1572,22 @@
 
   <div class="ml-corner" style="bottom:16px;left:18px;">ENGLISH<br>THROUGH CINEMA</div>
   <div class="ml-corner" style="bottom:16px;right:18px;text-align:right;">ACT · SCORE<br>MASTER</div>
+</div>
+
+<div id="mlSidebar" style="
+  position: absolute;
+  left: calc(50% - min(440px, 36vw) - 90px);
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  z-index: 20;
+">
+  <div class="ml-sb-icon ml-on">🎬</div>
+  <div class="ml-sb-icon">📚</div>
+  <div class="ml-sb-icon">🏆</div>
+  <div class="ml-sb-icon">⚡</div>
 </div>
 
 <script>
@@ -1630,6 +1637,7 @@
       {dir:'right', spd:'150s'},
     ];
 
+    const ROW_OPACITIES = ['1', '0.75', '0.35', '0.12'];
     ML_ROWS.forEach((cfg, rowIndex) => {
       const row = document.createElement('div');
       row.className = 'ml-mrow ml-' + cfg.dir;
@@ -1641,7 +1649,7 @@
       row.style.transform = 'translateY(30px)';
       row.style.transition = 'opacity 0.8s ease, transform 0.8s ease';
       setTimeout(() => {
-        row.style.opacity = '1';
+        row.style.opacity = ROW_OPACITIES[rowIndex];
         row.style.transform = 'translateY(0)';
       }, 200 + rowIndex * 150);
 
@@ -1682,6 +1690,12 @@
       row.appendChild(track);
       container.appendChild(row);
     });
+
+    const rows = container.querySelectorAll('.ml-mrow');
+    rows[0].style.opacity = '1';
+    rows[1].style.opacity = '0.75';
+    rows[2].style.opacity = '0.35';
+    rows[3].style.opacity = '0.12';
   }
 
   window.mlPill = function(btn){
