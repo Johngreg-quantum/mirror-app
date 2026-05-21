@@ -1333,14 +1333,7 @@
 <style>
 #mirrorLanding {
   position: fixed; inset: 0; z-index: 500;
-  background-color: #2a2a2a;
-  background-image:
-    url("https://images.unsplash.com/photo-1519681393784-d120267933ba?w=1920&q=60&auto=format"),
-    radial-gradient(ellipse 25% 70% at 2%  55%, rgba(0,0,0,0.95), transparent 75%),
-    radial-gradient(ellipse 25% 70% at 98% 55%, rgba(0,0,0,0.95), transparent 75%),
-    radial-gradient(ellipse 100% 45% at 50% 110%, rgba(0,0,0,1), transparent 65%);
-  background-size: cover, auto, auto, auto;
-  background-blend-mode: multiply;
+  background: #080808;
   overflow: hidden;
   font-family: 'DM Sans', sans-serif;
 }
@@ -1349,21 +1342,13 @@
   position: absolute;
   inset: 0;
   background:
-    radial-gradient(ellipse 60% 60% at 0%   0%,   rgba(0,0,0,0.98) 0%, rgba(0,0,0,0.4) 40%, transparent 65%),
-    radial-gradient(ellipse 60% 60% at 100% 0%,   rgba(0,0,0,0.98) 0%, rgba(0,0,0,0.4) 40%, transparent 65%),
-    radial-gradient(ellipse 60% 60% at 0%   100%, rgba(0,0,0,0.98) 0%, rgba(0,0,0,0.4) 40%, transparent 65%),
-    radial-gradient(ellipse 60% 60% at 100% 100%, rgba(0,0,0,0.98) 0%, rgba(0,0,0,0.4) 40%, transparent 65%);
+    radial-gradient(ellipse 45% 50% at 0%   0%,   rgba(0,0,0,0.96) 0%, transparent 60%),
+    radial-gradient(ellipse 45% 50% at 100% 0%,   rgba(0,0,0,0.96) 0%, transparent 60%),
+    radial-gradient(ellipse 45% 50% at 0%   100%, rgba(0,0,0,0.96) 0%, transparent 60%),
+    radial-gradient(ellipse 45% 50% at 100% 100%, rgba(0,0,0,0.96) 0%, transparent 60%);
   pointer-events: none;
   z-index: 15;
-  border-radius: 16px;
-}
-#mirrorLanding::before {
-  content: '';
-  position: absolute; inset: 0;
-  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='t'%3E%3CfeTurbulence type='turbulence' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23t)' opacity='1'/%3E%3C/svg%3E");
-  opacity: 0.06;
-  pointer-events: none;
-  z-index: 0;
+  border-radius: 0;
 }
 #mirrorLanding::after {
   content: '';
@@ -1385,20 +1370,20 @@
   display: flex;
   flex-direction: column;
   justify-content: center;
-  gap: 5px;
+  gap: 8px;
   z-index: 1;
   transform-style: preserve-3d;
 }
 .ml-mrow {
   display: flex;
-  gap: 10px;
+  gap: 8px;
   overflow: hidden;
   flex-shrink: 0;
   transform-style: preserve-3d;
 }
 .ml-mtrack {
   display: flex;
-  gap: 10px;
+  gap: 8px;
   will-change: transform;
   align-items: stretch;
   transform-style: preserve-3d;
@@ -1459,25 +1444,33 @@
   position: absolute; left: 18px; top: 50%; transform: translateY(-50%);
   display: flex; flex-direction: column; gap: 10px; z-index: 20;
 }
-.ml-sb-icon {
-  width: 42px;
-  height: 42px;
-  border-radius: 50%;
-  background: rgba(255,255,255,0.08);
-  border: 1.5px solid rgba(255,255,255,0.28);
+.ml-sb-item {
   display: flex;
   align-items: center;
-  justify-content: center;
-  font-size: 0.9rem;
+  gap: 10px;
   cursor: pointer;
-  transition: all 0.2s;
-  color: rgba(255,255,255,0.7);
-  box-shadow: 0 2px 12px rgba(0,0,0,0.5);
 }
-.ml-sb-icon.ml-on {
-  background: rgba(255,255,255,0.16);
+.ml-sb-circle {
+  width: 42px; height: 42px; border-radius: 50%;
+  background: rgba(255,255,255,0.07);
+  border: 1.5px solid rgba(255,255,255,0.25);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.88rem; flex-shrink: 0;
+  transition: all 0.2s;
+}
+.ml-sb-item.ml-on .ml-sb-circle {
+  background: rgba(255,255,255,0.15);
   border-color: rgba(255,255,255,0.5);
-  color: #fff;
+}
+.ml-sb-label {
+  font-size: 0.68rem;
+  color: rgba(255,255,255,0.45);
+  font-family: 'DM Sans', sans-serif;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+}
+.ml-sb-item.ml-on .ml-sb-label {
+  color: rgba(255,255,255,0.85);
 }
 #mlCenter {
   position: absolute; top: 50%; left: 50%;
@@ -1524,22 +1517,20 @@
 }
 </style>
 
-<!-- Framed inner canvas — the rocky outer bg of #mirrorLanding shows around it -->
+<!-- Full-bleed wall — fills #mirrorLanding entirely -->
 <div id="ml-frame" style="
-  width: min(880px, 72vw);
-  height: min(580px, 78vh);
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
   position: absolute;
-  border-radius: 16px;
+  inset: 0;
+  border-radius: 0;
+  background: #080808;
+  box-shadow: none;
   overflow: hidden;
-  background: #060606;
-  box-shadow: 0 60px 120px rgba(0,0,0,0.9), 0 0 0 1px rgba(255,255,255,0.05);
-  transform-style: preserve-3d;
-  perspective: 1200px;
+  width: 100%;
+  height: 100%;
+  transform: none;
+  top: 0; left: 0;
 ">
-  <div id="ml-rows-container" style="perspective: 1200px; transform-style: preserve-3d;"></div>
+  <div id="ml-rows-container" style="perspective: 1400px; transform-style: preserve-3d;"></div>
 
   <!-- Rows injected by JS -->
   <!-- Edge vignettes (corners are handled by #ml-frame::before inset shadow) -->
@@ -1587,29 +1578,29 @@
 
 <div id="mlSidebar" style="
   position: absolute;
-  left: 16px;
+  left: 28px;
   top: 50%;
   transform: translateY(-50%);
+  z-index: 600;
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  z-index: 600;
+  gap: 14px;
 ">
-  <div class="ml-sb-icon ml-on" style="width:auto;padding:0 14px 0 8px;border-radius:20px;gap:8px;display:flex;align-items:center;">
-    <span style="font-size:0.9rem;">🏠</span>
-    <span style="font-size:0.65rem;color:rgba(255,255,255,0.7);font-family:'DM Sans',sans-serif;">Home</span>
+  <div class="ml-sb-item ml-on">
+    <div class="ml-sb-circle">🎬</div>
+    <span class="ml-sb-label">Scenes</span>
   </div>
-  <div class="ml-sb-icon" style="width:auto;padding:0 14px 0 8px;border-radius:20px;gap:8px;display:flex;align-items:center;">
-    <span style="font-size:0.9rem;">🎬</span>
-    <span style="font-size:0.65rem;color:rgba(255,255,255,0.5);font-family:'DM Sans',sans-serif;">Scenes</span>
+  <div class="ml-sb-item">
+    <div class="ml-sb-circle">📚</div>
+    <span class="ml-sb-label">Levels</span>
   </div>
-  <div class="ml-sb-icon" style="width:auto;padding:0 14px 0 8px;border-radius:20px;gap:8px;display:flex;align-items:center;">
-    <span style="font-size:0.9rem;">🏆</span>
-    <span style="font-size:0.65rem;color:rgba(255,255,255,0.5);font-family:'DM Sans',sans-serif;">Ranks</span>
+  <div class="ml-sb-item">
+    <div class="ml-sb-circle">🏆</div>
+    <span class="ml-sb-label">Ranks</span>
   </div>
-  <div class="ml-sb-icon" style="width:auto;padding:0 14px 0 8px;border-radius:20px;gap:8px;display:flex;align-items:center;">
-    <span style="font-size:0.9rem;">⚡</span>
-    <span style="font-size:0.65rem;color:rgba(255,255,255,0.5);font-family:'DM Sans',sans-serif;">Plans</span>
+  <div class="ml-sb-item">
+    <div class="ml-sb-circle">⚡</div>
+    <span class="ml-sb-label">Missions</span>
   </div>
 </div>
 
@@ -1648,8 +1639,7 @@
     const container = document.getElementById('ml-rows-container');
     if(!container) return;
 
-    // Cap row height so cards stay small enough to show 6-7 per row like the reference.
-    const rowH = Math.min(Math.floor(window.innerHeight / 6), 115);
+    const rowH = Math.floor(window.innerHeight / 5) - 6;
     const cardW = Math.floor(rowH * 1.72);
 
     // Cloud-drift parallax — reference rows are almost imperceptibly slow.
@@ -1658,9 +1648,10 @@
       {dir:'right', spd:'120s'},
       {dir:'left',  spd:'65s'},
       {dir:'right', spd:'150s'},
+      {dir:'left',  spd:'95s'},
     ];
 
-    const ROW_OPACITIES = ['1', '0.75', '0.35', '0.12'];
+    const ROW_OPACITIES = ['1', '1', '0.9', '0.45', '0.12'];
     ML_ROWS.forEach((cfg, rowIndex) => {
       const row = document.createElement('div');
       row.className = 'ml-mrow ml-' + cfg.dir;
@@ -1716,9 +1707,10 @@
 
     const rows = container.querySelectorAll('.ml-mrow');
     rows[0].style.opacity = '1';
-    rows[1].style.opacity = '0.75';
-    rows[2].style.opacity = '0.35';
-    rows[3].style.opacity = '0.12';
+    rows[1].style.opacity = '1';
+    rows[2].style.opacity = '0.9';
+    rows[3].style.opacity = '0.45';
+    rows[4].style.opacity = '0.12';
   }
 
   window.mlPill = function(btn){
@@ -1767,9 +1759,9 @@
     const frameW = container.offsetWidth;
 
     container.querySelectorAll('.ml-mrow').forEach((row, rowIndex) => {
-      const totalRows = 4;
+      const totalRows = 5;
       const rowOffset = (rowIndex / (totalRows - 1) - 0.5) * 2;
-      const rotX = rowOffset * 8;
+      const rotX = rowOffset * 12;
       row.style.transform = `rotateX(${rotX}deg)`;
       row.style.transformOrigin = 'center center';
 
@@ -1778,7 +1770,7 @@
         const containerRect = container.getBoundingClientRect();
         const cardCenterX = rect.left + rect.width / 2 - containerRect.left;
         const normalizedX = (cardCenterX / frameW - 0.5) * 2;
-        const rotY = normalizedX * -18;
+        const rotY = normalizedX * -22;
         const scaleZ = 1 - Math.abs(normalizedX) * 0.08;
         card.style.transform = `rotateY(${rotY}deg) scale(${scaleZ})`;
         card.style.transformOrigin = 'center center';
