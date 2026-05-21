@@ -1607,30 +1607,45 @@
 <script>
 (function(){
   const ML_SCENES = [
-    {id:'forrest_gump',     bg:'linear-gradient(135deg,#2a1a00,#5a3800)'},
-    {id:'the_matrix',       bg:'linear-gradient(135deg,#001a0a,#004020)'},
-    {id:'godfather',        bg:'linear-gradient(135deg,#120008,#2e0018)'},
-    {id:'dark_knight',      bg:'linear-gradient(135deg,#00091a,#001433)'},
-    {id:'fight_club',       bg:'linear-gradient(135deg,#1a0000,#3a0000)'},
-    {id:'interstellar',     bg:'linear-gradient(135deg,#000510,#000d28)'},
-    {id:'whiplash',         bg:'linear-gradient(135deg,#1a0a00,#341500)'},
-    {id:'rocky',            bg:'linear-gradient(135deg,#120000,#260000)'},
-    {id:'dead_poets',       bg:'linear-gradient(135deg,#001412,#002a24)'},
-    {id:'gladiator',        bg:'linear-gradient(135deg,#120800,#241500)'},
-    {id:'good_will_hunting',bg:'linear-gradient(135deg,#0a0a1a,#14142a)'},
-    {id:'shawshank',        bg:'linear-gradient(135deg,#100e00,#201c00)'},
-    {id:'braveheart',       bg:'linear-gradient(135deg,#1a1200,#302200)'},
-    {id:'jerry_maguire',    bg:'linear-gradient(135deg,#0a0018,#180030)'},
-    {id:'apollo_13',        bg:'linear-gradient(135deg,#001828,#003050)'},
-    {id:'cast_away',        bg:'linear-gradient(135deg,#002010,#004020)'},
-    {id:'titanic',          bg:'linear-gradient(135deg,#001828,#003050)'},
-    {id:'social_network',   bg:'linear-gradient(135deg,#0a0a18,#14142a)'},
-    {id:'clueless',         bg:'linear-gradient(135deg,#1a0e00,#3d2800)'},
-    {id:'top_gun',          bg:'linear-gradient(135deg,#000510,#001020)'},
-    {id:'mrs_doubtfire',    bg:'linear-gradient(135deg,#001412,#002622)'},
-    {id:'legally_blonde',   bg:'linear-gradient(135deg,#1a0a00,#341500)'},
-    {id:'devil_wears_prada',bg:'linear-gradient(135deg,#0a0006,#1e0014)'},
-    {id:'taken',            bg:'linear-gradient(135deg,#000a1a,#001433)'},
+    {id:'forrest_gump',        bg:'linear-gradient(135deg,#2a1a00,#5a3800)'},
+    {id:'the_matrix',          bg:'linear-gradient(135deg,#001a0a,#004020)'},
+    {id:'godfather',           bg:'linear-gradient(135deg,#120008,#2e0018)'},
+    {id:'dark_knight',         bg:'linear-gradient(135deg,#00091a,#001433)'},
+    {id:'fight_club',          bg:'linear-gradient(135deg,#1a0000,#3a0000)'},
+    {id:'interstellar',        bg:'linear-gradient(135deg,#000510,#000d28)'},
+    {id:'whiplash',            bg:'linear-gradient(135deg,#1a0a00,#341500)'},
+    {id:'rocky',               bg:'linear-gradient(135deg,#120000,#260000)'},
+    {id:'dead_poets',          bg:'linear-gradient(135deg,#001412,#002a24)'},
+    {id:'gladiator',           bg:'linear-gradient(135deg,#120800,#241500)'},
+    {id:'good_will_hunting',   bg:'linear-gradient(135deg,#0a0a1a,#14142a)'},
+    {id:'shawshank',           bg:'linear-gradient(135deg,#100e00,#201c00)'},
+    {id:'braveheart',          bg:'linear-gradient(135deg,#1a1200,#302200)'},
+    {id:'jerry_maguire',       bg:'linear-gradient(135deg,#0a0018,#180030)'},
+    {id:'apollo_13',           bg:'linear-gradient(135deg,#001828,#003050)'},
+    {id:'cast_away',           bg:'linear-gradient(135deg,#002010,#004020)'},
+    {id:'titanic',             bg:'linear-gradient(135deg,#000a1a,#001830)'},
+    {id:'social_network',      bg:'linear-gradient(135deg,#0a0a18,#14142a)'},
+    {id:'clueless',            bg:'linear-gradient(135deg,#1a0e00,#3d2800)'},
+    {id:'top_gun',             bg:'linear-gradient(135deg,#000510,#001020)'},
+    {id:'mrs_doubtfire',       bg:'linear-gradient(135deg,#001412,#002622)'},
+    {id:'legally_blonde',      bg:'linear-gradient(135deg,#1a0a00,#341500)'},
+    {id:'devil_wears_prada',   bg:'linear-gradient(135deg,#0a0006,#1e0014)'},
+    {id:'taken',               bg:'linear-gradient(135deg,#000a1a,#001433)'},
+    {id:'avengers',            bg:'linear-gradient(135deg,#1a0000,#330010)'},
+    {id:'breakfast_club',      bg:'linear-gradient(135deg,#0a0a1a,#18182a)'},
+    {id:'ferris_bueller',      bg:'linear-gradient(135deg,#001a0a,#003818)'},
+    {id:'home_alone',          bg:'linear-gradient(135deg,#1a1000,#302000)'},
+    {id:'back_to_the_future',  bg:'linear-gradient(135deg,#000a1a,#001830)'},
+    {id:'men_in_black',        bg:'linear-gradient(135deg,#080808,#181818)'},
+    {id:'rain_man',            bg:'linear-gradient(135deg,#100800,#201500)'},
+    {id:'wolf_of_wall_street', bg:'linear-gradient(135deg,#1a1400,#302800)'},
+    {id:'pursuit_of_happyness',bg:'linear-gradient(135deg,#0a0a00,#181800)'},
+    {id:'fifth_element',       bg:'linear-gradient(135deg,#00081a,#001030)'},
+    {id:'the_blind_side',      bg:'linear-gradient(135deg,#0a1400,#182800)'},
+    {id:'the_intern',          bg:'linear-gradient(135deg,#001018,#002030)'},
+    {id:'mystic_river',        bg:'linear-gradient(135deg,#080808,#141414)'},
+    {id:'wall_street',         bg:'linear-gradient(135deg,#1a1000,#302000)'},
+    {id:'a_few_good_men',      bg:'linear-gradient(135deg,#00061a,#000c30)'},
   ];
 
   function mlShuffle(a){return [...a].sort(()=>Math.random()-.5);}
@@ -1670,16 +1685,16 @@
       const track = document.createElement('div');
       track.className = 'ml-mtrack';
 
-      // 4 shuffled copies (~48 cards / row) — wide enough for a seamless loop
-      // even on ultrawide displays, and avoids visible repetition.
-      const pool = [
-        ...mlShuffle(ML_SCENES),
-        ...mlShuffle(ML_SCENES),
-        ...mlShuffle(ML_SCENES),
-        ...mlShuffle(ML_SCENES)
-      ];
+      // Build enough cards to fill 3x screen width without obvious repeats
+      const screenCards = Math.ceil((window.innerWidth / cardW) * 3);
+      const pool = [];
+      const shuffled = mlShuffle([...ML_SCENES]);
+      while (pool.length < screenCards) {
+        pool.push(...mlShuffle([...ML_SCENES]));
+      }
+      const finalPool = pool.slice(0, screenCards);
 
-      pool.forEach(s => {
+      finalPool.forEach(s => {
         const card = document.createElement('div');
         card.className = 'ml-card';
         card.style.cssText = 'width:' + cardW + 'px;height:' + rowH + 'px;position:relative;border-radius:14px;';
