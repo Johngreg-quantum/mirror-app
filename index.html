@@ -1425,6 +1425,205 @@
       .bn-tab.tap-pulse::after { animation: none; opacity: 0.4; }
       .bn-tab { transition: none; }
     }
+
+    /* ===== MIRROR PHASE 2: SHARED PRISMATIC PILL FOUNDATION ===== */
+
+    .mc-pill-group {
+      display: inline-flex;
+      background: linear-gradient(180deg, #0a0a0a, #050505);
+      border-radius: 999px;
+      padding: 6px;
+      gap: 4px;
+      box-shadow:
+        inset 0 2px 4px rgba(0,0,0,0.8),
+        inset 0 -1px 0 rgba(255,255,255,0.04);
+    }
+
+    .mc-pill {
+      position: relative;
+      padding: 14px 32px;
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 14px;
+      letter-spacing: 0.22em;
+      color: rgba(255,255,255,0.4);
+      background: transparent;
+      border: none;
+      border-radius: 999px;
+      cursor: pointer;
+      transition: color 0.3s;
+      z-index: 1;
+      text-transform: uppercase;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      white-space: nowrap;
+    }
+
+    .mc-pill:hover { color: rgba(255,255,255,0.75); }
+
+    .mc-pill.active {
+      color: #fff;
+      background: linear-gradient(180deg, #1f1f1f 0%, #141414 100%);
+      box-shadow:
+        inset 0 1px 0 rgba(255,255,255,0.1),
+        0 4px 12px rgba(0,0,0,0.5);
+    }
+
+    .mc-pill .mc-pill-badge {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 10px;
+      letter-spacing: 0.18em;
+      color: #c8a96e;
+      background: rgba(200,169,110,0.15);
+      padding: 2px 6px;
+      border-radius: 4px;
+    }
+
+    .mc-pill-wrap {
+      display: flex;
+      justify-content: center;
+      width: 100%;
+      margin: 0 auto 24px;
+    }
+
+    /* THE SHARED CHROME RIM ::after — applied to multiple selectors */
+    .mc-pill.active::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-radius: 999px;
+      background: repeating-radial-gradient(
+        circle at 100% 0%,
+        #ff0000 calc(var(--ripple-offset) + 0px),
+        #ffffff calc(var(--ripple-offset) + 2px),
+        #ffffff calc(var(--ripple-offset) + 28px),
+        #0000ff calc(var(--ripple-offset) + 30px),
+        #000000 calc(var(--ripple-offset) + 32px),
+        #000000 calc(var(--ripple-offset) + 46px),
+        #ff0000 calc(var(--ripple-offset) + 48px),
+        #ffffff calc(var(--ripple-offset) + 50px),
+        #ffffff calc(var(--ripple-offset) + 58px),
+        #0000ff calc(var(--ripple-offset) + 60px),
+        #000000 calc(var(--ripple-offset) + 62px),
+        #000000 calc(var(--ripple-offset) + 150px)
+      ) 0 0 / cover no-repeat border-box;
+      border: 4px solid transparent;
+      filter: url(#shader-bold);
+      mask: linear-gradient(#000) padding-box, linear-gradient(#000) border-box;
+      mask-composite: subtract;
+      -webkit-mask: linear-gradient(#000) padding-box, linear-gradient(#000) border-box;
+      -webkit-mask-composite: source-out;
+      animation: ripple-flow 4s linear infinite;
+      pointer-events: none;
+      z-index: 2;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .mc-pill.active::after { animation: none; opacity: 0.4; }
+    }
+
+    .pro-price-wrap { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+    .pro-price-sub {
+      font-family: 'DM Sans', sans-serif;
+      font-size: 11px;
+      color: rgba(255,255,255,0.5);
+      letter-spacing: 0.04em;
+      min-height: 14px;
+      transition: opacity 0.2s;
+    }
+    .pro-price-sub:empty { opacity: 0; }
+
+    /* ===== HERO CTAs: CHROME RIM, STAGGERED ===== */
+    .ml-btn-primary::after,
+    .ml-btn-secondary::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-radius: 100px;
+      background: repeating-radial-gradient(
+        circle at 100% 0%,
+        #ff0000 calc(var(--ripple-offset) + 0px),
+        #ffffff calc(var(--ripple-offset) + 2px),
+        #ffffff calc(var(--ripple-offset) + 28px),
+        #0000ff calc(var(--ripple-offset) + 30px),
+        #000000 calc(var(--ripple-offset) + 32px),
+        #000000 calc(var(--ripple-offset) + 46px),
+        #ff0000 calc(var(--ripple-offset) + 48px),
+        #ffffff calc(var(--ripple-offset) + 50px),
+        #ffffff calc(var(--ripple-offset) + 58px),
+        #0000ff calc(var(--ripple-offset) + 60px),
+        #000000 calc(var(--ripple-offset) + 62px),
+        #000000 calc(var(--ripple-offset) + 150px)
+      ) 0 0 / cover no-repeat border-box;
+      border: 4px solid transparent;
+      filter: url(#shader-bold);
+      mask: linear-gradient(#000) padding-box, linear-gradient(#000) border-box;
+      mask-composite: subtract;
+      -webkit-mask: linear-gradient(#000) padding-box, linear-gradient(#000) border-box;
+      -webkit-mask-composite: source-out;
+      animation: ripple-flow 4s linear infinite;
+      pointer-events: none;
+      z-index: 2;
+    }
+
+    /* Stagger: Sign in starts 2s offset from Start practicing */
+    .ml-btn-secondary::after { animation-delay: -2s; }
+
+    /* Ensure .ml-btn-secondary has position:relative for ::after positioning */
+    .ml-btn-secondary { position: relative; z-index: 1; }
+
+    @media (prefers-reduced-motion: reduce) {
+      .ml-btn-primary::after,
+      .ml-btn-secondary::after { animation: none; opacity: 0.4; }
+    }
+
+    /* ===== SIDEBAR: 4 CHROME CIRCLES, STAGGERED ===== */
+
+    .ml-sb-circle {
+      position: relative;
+      z-index: 1;
+    }
+
+    .ml-sb-circle::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-radius: 50%;
+      background: repeating-radial-gradient(
+        circle at 100% 0%,
+        #ff0000 calc(var(--ripple-offset) + 0px),
+        #ffffff calc(var(--ripple-offset) + 2px),
+        #ffffff calc(var(--ripple-offset) + 28px),
+        #0000ff calc(var(--ripple-offset) + 30px),
+        #000000 calc(var(--ripple-offset) + 32px),
+        #000000 calc(var(--ripple-offset) + 46px),
+        #ff0000 calc(var(--ripple-offset) + 48px),
+        #ffffff calc(var(--ripple-offset) + 50px),
+        #ffffff calc(var(--ripple-offset) + 58px),
+        #0000ff calc(var(--ripple-offset) + 60px),
+        #000000 calc(var(--ripple-offset) + 62px),
+        #000000 calc(var(--ripple-offset) + 150px)
+      ) 0 0 / cover no-repeat border-box;
+      border: 4px solid transparent;
+      filter: url(#shader-bold);
+      mask: linear-gradient(#000) padding-box, linear-gradient(#000) border-box;
+      mask-composite: subtract;
+      -webkit-mask: linear-gradient(#000) padding-box, linear-gradient(#000) border-box;
+      -webkit-mask-composite: source-out;
+      animation: ripple-flow 4s linear infinite;
+      pointer-events: none;
+      z-index: 2;
+    }
+
+    /* STAGGERED ANIMATION DELAYS so rims don't move in unison */
+    #mlSidebar .ml-sb-item:nth-child(1) .ml-sb-circle::after { animation-delay:  0s; }
+    #mlSidebar .ml-sb-item:nth-child(2) .ml-sb-circle::after { animation-delay: -1s; }
+    #mlSidebar .ml-sb-item:nth-child(3) .ml-sb-circle::after { animation-delay: -2s; }
+    #mlSidebar .ml-sb-item:nth-child(4) .ml-sb-circle::after { animation-delay: -3s; }
+
+    @media (prefers-reduced-motion: reduce) {
+      .ml-sb-circle::after { animation: none; opacity: 0.4; }
+    }
   </style>
   <script type="module" src="https://unpkg.com/@splinetool/viewer@1.12.90/build/spline-viewer.js"></script>
 </head>
@@ -1622,12 +1821,27 @@
 }
 .ml-cta-row { display: flex; gap: 10px; justify-content: center; }
 .ml-btn-primary {
-  padding: .62rem 1.6rem; border-radius: 100px;
-  background: rgba(240,237,232,0.95); color: #080808; border: none;
-  font-family: 'DM Sans', sans-serif; font-size: .74rem; font-weight: 500;
-  letter-spacing: .07em; cursor: pointer; transition: all .2s;
+  position: relative;
+  padding: .62rem 1.6rem;
+  border-radius: 100px;
+  background: linear-gradient(180deg, #1f1f1f 0%, #141414 100%);
+  color: #fff;
+  border: none;
+  font-family: 'DM Sans', sans-serif;
+  font-size: .74rem;
+  font-weight: 600;
+  letter-spacing: .07em;
+  cursor: pointer;
+  transition: all .2s;
+  z-index: 1;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.1),
+    0 4px 12px rgba(0,0,0,0.5);
 }
-.ml-btn-primary:hover { background: #fff; transform: scale(1.03); }
+.ml-btn-primary:hover {
+  background: linear-gradient(180deg, #2a2a2a 0%, #1a1a1a 100%);
+  transform: scale(1.03);
+}
 .ml-btn-secondary {
   padding: .62rem 1.3rem; border-radius: 100px;
   background: rgba(255,255,255,0.07); color: rgba(255,255,255,0.65);
@@ -2070,6 +2284,13 @@
 
   <!-- ── LEVELS ── -->
   <section class="clv-section fade-up" id="levelsSection">
+    <div class="mc-pill-wrap">
+      <div class="mc-pill-group" id="levelsPill" data-default="none">
+        <button class="mc-pill" data-level="beginner">Beginner</button>
+        <button class="mc-pill" data-level="intermediate">Intermediate</button>
+        <button class="mc-pill" data-level="advanced">Advanced</button>
+      </div>
+    </div>
     <div class="section-wrap">
       <p class="section-eyebrow">Progressive Difficulty</p>
       <h2 class="section-heading">Your journey.</h2>
@@ -2137,6 +2358,15 @@
 
   <!-- ── PRICING ── -->
   <section class="pricing-section fade-up" id="pricingSection">
+    <div class="mc-pill-wrap">
+      <div class="mc-pill-group" id="pricingPill">
+        <button class="mc-pill" data-billing="monthly">Monthly</button>
+        <button class="mc-pill active" data-billing="yearly">
+          Yearly
+          <span class="mc-pill-badge">−20%</span>
+        </button>
+      </div>
+    </div>
     <div class="section-wrap">
       <p class="section-eyebrow">No Surprises</p>
       <h2 class="section-heading">Simple pricing.</h2>
@@ -2158,7 +2388,10 @@
         <div class="pricing-card pricing-card--pro">
           <div class="pricing-popular">Most Popular</div>
           <div class="pricing-tier">Pro</div>
-          <div class="pricing-price">$4.99<span>/mo</span></div>
+          <div class="pro-price-wrap">
+            <span class="pro-price" data-monthly="$4.99/mo" data-yearly="$3.99/mo">$3.99/mo</span>
+            <div class="pro-price-sub" data-yearly-text="billed yearly ($47.88/year)" data-monthly-text="">billed yearly ($47.88/year)</div>
+          </div>
           <p class="pricing-desc">For serious learners who want it all.</p>
           <ul class="pricing-features">
             <li>All scenes across every level</li>
@@ -3522,6 +3755,39 @@ function checkLevel2Unlock() {
       setTimeout(() => tab.classList.remove('tap-pulse'), 900);
     });
   });
+})();
+
+/* ===== MIRROR PHASE 2: PILL HANDLERS ===== */
+(function initPills() {
+  // Generic active-swap for any .mc-pill-group
+  document.querySelectorAll('.mc-pill-group').forEach(group => {
+    const pills = group.querySelectorAll('.mc-pill');
+    pills.forEach(pill => {
+      pill.addEventListener('click', () => {
+        pills.forEach(p => p.classList.remove('active'));
+        pill.classList.add('active');
+        group.dispatchEvent(new CustomEvent('pill:change', {
+          detail: { value: pill.dataset.level || pill.dataset.billing }
+        }));
+      });
+    });
+  });
+
+  // Pricing pill: swap Pro price between monthly and yearly
+  const pricingPill = document.getElementById('pricingPill');
+  if (pricingPill) {
+    pricingPill.addEventListener('pill:change', (e) => {
+      const mode = e.detail.value; // 'monthly' or 'yearly'
+      const priceEl = document.querySelector('.pro-price');
+      const subEl = document.querySelector('.pro-price-sub');
+      if (priceEl) {
+        priceEl.textContent = mode === 'yearly' ? priceEl.dataset.yearly : priceEl.dataset.monthly;
+      }
+      if (subEl) {
+        subEl.textContent = mode === 'yearly' ? subEl.dataset.yearlyText : subEl.dataset.monthlyText;
+      }
+    });
+  }
 })();
 </script>
 </body>
