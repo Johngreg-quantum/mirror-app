@@ -1708,10 +1708,14 @@
       #mlCenter h1.ml-hero-title { font-size: 2.4rem; }
       #mlCenter p.ml-hero-sub { font-size: 0.92rem; }
     }
+
+    /* ===== PHASE 3 [3/8]: BODY SCROLL UNLOCK ===== */
+    html { scroll-behavior: smooth; }
+    body { overflow-x: hidden; /* prevent horizontal scroll only */ }
   </style>
   <script type="module" src="https://unpkg.com/@splinetool/viewer@1.12.90/build/spline-viewer.js"></script>
 </head>
-<body style="overflow:hidden;">
+<body>
 
 <svg style="position: absolute; width: 0; height: 0;" aria-hidden="true">
   <defs>
