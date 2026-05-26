@@ -1712,6 +1712,90 @@
     /* ===== PHASE 3 [3/8]: BODY SCROLL UNLOCK ===== */
     html { scroll-behavior: smooth; }
     body { overflow-x: hidden; /* prevent horizontal scroll only */ }
+
+    /* ===== PHASE 3 [5/6]: WHAT IS MIRROR SECTION ===== */
+    .what-section {
+      position: relative;
+      min-height: 100vh;
+      padding: 120px 24px;
+      background: linear-gradient(180deg, rgba(5,5,5,0.95) 0%, rgba(10,8,6,0.97) 50%, rgba(5,5,5,0.95) 100%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 2;
+    }
+
+    .what-eyebrow {
+      margin-bottom: 32px;
+      font-family: 'Inter', sans-serif;
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 0.32em;
+      text-transform: uppercase;
+      color: #c8a96e;
+    }
+
+    .what-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-weight: 500;
+      font-size: clamp(2rem, 4.5vw, 3.5rem);
+      line-height: 1.05;
+      letter-spacing: -0.02em;
+      text-align: center;
+      max-width: 880px;
+      margin-bottom: 80px;
+      color: #f0ede6;
+    }
+    .what-title em {
+      font-style: italic;
+      font-weight: 400;
+      color: #c8a96e;
+    }
+
+    .what-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 60px;
+      max-width: 1100px;
+      width: 100%;
+    }
+
+    .what-card { text-align: center; }
+
+    .what-card-num {
+      font-family: 'Cormorant Garamond', serif;
+      font-style: italic;
+      font-weight: 400;
+      font-size: 56px;
+      color: #c8a96e;
+      line-height: 1;
+      margin-bottom: 16px;
+    }
+
+    .what-card-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-weight: 500;
+      font-size: 26px;
+      line-height: 1.2;
+      color: #f0ede6;
+      margin-bottom: 14px;
+    }
+
+    .what-card-body {
+      font-family: 'Inter', sans-serif;
+      font-size: 14px;
+      line-height: 1.7;
+      color: rgba(255,255,255,0.6);
+      font-weight: 300;
+      max-width: 280px;
+      margin: 0 auto;
+    }
+
+    @media (max-width: 880px) {
+      .what-grid { grid-template-columns: 1fr; gap: 40px; }
+      .what-title { font-size: 1.8rem; margin-bottom: 50px; }
+    }
   </style>
   <script type="module" src="https://unpkg.com/@splinetool/viewer@1.12.90/build/spline-viewer.js"></script>
 </head>
@@ -2232,6 +2316,38 @@
   }
 })();
 </script>
+</section>
+
+<!-- ===== PHASE 3 [5/6]: WHAT IS MIRROR ===== -->
+<section class="what-section" id="whatSection">
+  <div class="editorial-eyebrow what-eyebrow">What is Mirror?</div>
+  <h2 class="what-title">
+    Don't just <em>learn</em> English.<br>
+    <em>Perform</em> it.
+  </h2>
+  <div class="what-grid">
+    <div class="what-card">
+      <div class="what-card-num">i.</div>
+      <h3 class="what-card-title">Choose a scene</h3>
+      <p class="what-card-body">
+        Iconic moments from films you love — Titanic, The Godfather, Whiplash. Real lines from real cinema.
+      </p>
+    </div>
+    <div class="what-card">
+      <div class="what-card-num">ii.</div>
+      <h3 class="what-card-title">Act it out</h3>
+      <p class="what-card-body">
+        Speak the line in real time. Mirror listens, scores your pronunciation, rhythm, and emotion.
+      </p>
+    </div>
+    <div class="what-card">
+      <div class="what-card-num">iii.</div>
+      <h3 class="what-card-title">Master the moment</h3>
+      <p class="what-card-body">
+        Replay, refine, and rank up. Build vocabulary from the words the greats actually used.
+      </p>
+    </div>
+  </div>
 </section>
 
 <!-- ═══════════════════════════ END MIRROR LANDING ═══════════════════════════ -->
