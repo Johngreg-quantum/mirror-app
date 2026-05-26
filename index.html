@@ -2350,6 +2350,80 @@
   </div>
 </section>
 
+<!-- ===== PHASE 3 [6/6]: LEVELS SECTION (moved from #authScreen) ===== -->
+  <section class="clv-section fade-up" id="levelsSection">
+    <div class="mc-pill-wrap">
+      <div class="mc-pill-group" id="levelsPill" data-default="none">
+        <button class="mc-pill" data-level="beginner">Beginner</button>
+        <button class="mc-pill" data-level="intermediate">Intermediate</button>
+        <button class="mc-pill" data-level="advanced">Advanced</button>
+      </div>
+    </div>
+    <div class="section-wrap">
+      <p class="section-eyebrow">Progressive Difficulty</p>
+      <h2 class="section-heading">Your journey.</h2>
+      <div class="clv-grid">
+
+        <!-- Level 1 — Beginner -->
+        <div class="clv-card" id="clvCard1" onclick="openLevelPanel(1)">
+          <div class="clv-card-bg"></div>
+          <div class="clv-card-overlay"></div>
+          <div class="clv-card-body">
+            <span class="clv-badge beg">Beginner</span>
+            <h3 class="clv-title">Level 1</h3>
+            <p class="clv-subtitle">Short, clear lines. Build confidence on camera.</p>
+            <div class="clv-meta">
+              <span class="clv-count">20 scenes</span>
+              <span class="clv-pb-avg" id="clvPbAvg1"></span>
+            </div>
+            <div class="clv-cta">Explore Level &rarr;</div>
+          </div>
+        </div>
+
+        <!-- Level 2 — Intermediate -->
+        <div class="clv-card" id="clvCard2" onclick="openLevelPanel(2)">
+          <div class="clv-card-bg"></div>
+          <div class="clv-card-overlay"></div>
+          <div class="clv-card-body">
+            <span class="clv-badge int">Intermediate</span>
+            <h3 class="clv-title">Level 2</h3>
+            <p class="clv-subtitle">Rhythm and emotion start to matter.</p>
+            <div class="clv-meta">
+              <span class="clv-count">6 scenes</span>
+              <span class="clv-pb-avg" id="clvPbAvg2"></span>
+            </div>
+            <div class="clv-lock" id="clvLock2">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+              Score 60% to unlock
+            </div>
+            <div class="clv-cta" id="clvCta2" style="display:none">Explore Level &rarr;</div>
+          </div>
+        </div>
+
+        <!-- Level 3 — Advanced -->
+        <div class="clv-card" id="clvCard3" onclick="openLevelPanel(3)">
+          <div class="clv-card-bg"></div>
+          <div class="clv-card-overlay"></div>
+          <div class="clv-card-body">
+            <span class="clv-badge adv">Advanced</span>
+            <h3 class="clv-title">Level 3</h3>
+            <p class="clv-subtitle">Accent precision and raw delivery.</p>
+            <div class="clv-meta">
+              <span class="clv-count">1 scene</span>
+              <span class="clv-pb-avg" id="clvPbAvg3"></span>
+            </div>
+            <div class="clv-lock" id="clvLock3">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+              Score 70% to unlock
+            </div>
+            <div class="clv-cta" id="clvCta3" style="display:none">Explore Level &rarr;</div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
 <!-- ═══════════════════════════ END MIRROR LANDING ═══════════════════════════ -->
 
 <!-- ══════════════════════════════════════════════
@@ -2480,80 +2554,6 @@
           </div>
           <h3 class="hiw-title">Unlock New Levels</h3>
           <p class="hiw-desc">Score above the threshold to unlock harder scenes, more complex delivery, and tougher acting challenges.</p>
-        </div>
-
-      </div>
-    </div>
-  </section>
-
-  <!-- ── LEVELS ── -->
-  <section class="clv-section fade-up" id="levelsSection">
-    <div class="mc-pill-wrap">
-      <div class="mc-pill-group" id="levelsPill" data-default="none">
-        <button class="mc-pill" data-level="beginner">Beginner</button>
-        <button class="mc-pill" data-level="intermediate">Intermediate</button>
-        <button class="mc-pill" data-level="advanced">Advanced</button>
-      </div>
-    </div>
-    <div class="section-wrap">
-      <p class="section-eyebrow">Progressive Difficulty</p>
-      <h2 class="section-heading">Your journey.</h2>
-      <div class="clv-grid">
-
-        <!-- Level 1 — Beginner -->
-        <div class="clv-card" id="clvCard1" onclick="openLevelPanel(1)">
-          <div class="clv-card-bg"></div>
-          <div class="clv-card-overlay"></div>
-          <div class="clv-card-body">
-            <span class="clv-badge beg">Beginner</span>
-            <h3 class="clv-title">Level 1</h3>
-            <p class="clv-subtitle">Short, clear lines. Build confidence on camera.</p>
-            <div class="clv-meta">
-              <span class="clv-count">20 scenes</span>
-              <span class="clv-pb-avg" id="clvPbAvg1"></span>
-            </div>
-            <div class="clv-cta">Explore Level &rarr;</div>
-          </div>
-        </div>
-
-        <!-- Level 2 — Intermediate -->
-        <div class="clv-card" id="clvCard2" onclick="openLevelPanel(2)">
-          <div class="clv-card-bg"></div>
-          <div class="clv-card-overlay"></div>
-          <div class="clv-card-body">
-            <span class="clv-badge int">Intermediate</span>
-            <h3 class="clv-title">Level 2</h3>
-            <p class="clv-subtitle">Rhythm and emotion start to matter.</p>
-            <div class="clv-meta">
-              <span class="clv-count">6 scenes</span>
-              <span class="clv-pb-avg" id="clvPbAvg2"></span>
-            </div>
-            <div class="clv-lock" id="clvLock2">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-              Score 60% to unlock
-            </div>
-            <div class="clv-cta" id="clvCta2" style="display:none">Explore Level &rarr;</div>
-          </div>
-        </div>
-
-        <!-- Level 3 — Advanced -->
-        <div class="clv-card" id="clvCard3" onclick="openLevelPanel(3)">
-          <div class="clv-card-bg"></div>
-          <div class="clv-card-overlay"></div>
-          <div class="clv-card-body">
-            <span class="clv-badge adv">Advanced</span>
-            <h3 class="clv-title">Level 3</h3>
-            <p class="clv-subtitle">Accent precision and raw delivery.</p>
-            <div class="clv-meta">
-              <span class="clv-count">1 scene</span>
-              <span class="clv-pb-avg" id="clvPbAvg3"></span>
-            </div>
-            <div class="clv-lock" id="clvLock3">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-              Score 70% to unlock
-            </div>
-            <div class="clv-cta" id="clvCta3" style="display:none">Explore Level &rarr;</div>
-          </div>
         </div>
 
       </div>
