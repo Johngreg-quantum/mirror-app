@@ -1411,12 +1411,14 @@ onClick('btnStartActing', () => {
 // APP BOOTSTRAP / SESSION ENTRY — landing page chrome
 // ══════════════════════════════════════════════
 
+/* HOTFIX: custom cursor removed
 // Custom cursor
 const cursorDot = el('cursorDot');
 document.addEventListener('mousemove', e => {
   cursorDot.style.left = e.clientX + 'px';
   cursorDot.style.top  = e.clientY + 'px';
 });
+*/
 
 // Nav scroll effect
 window.addEventListener('scroll', () => {

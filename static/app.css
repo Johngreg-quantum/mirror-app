@@ -24,11 +24,6 @@ body {
   overflow-x: hidden;
 }
 
-/* Custom cursor on pointer devices */
-@media (hover: hover) {
-  body { cursor: none; }
-}
-
 /* ── Noise overlay ── */
 body::after {
   content: '';
@@ -38,25 +33,6 @@ body::after {
   pointer-events: none;
   z-index: 9000;
   opacity: 0.45;
-}
-
-/* ═══════════════════════════════════════════════
-   CUSTOM CURSOR DOT
-═══════════════════════════════════════════════ */
-#cursorDot {
-  display: none;
-  position: fixed;
-  width: 8px; height: 8px;
-  background: var(--gold);
-  border-radius: 50%;
-  pointer-events: none;
-  z-index: 99999;
-  transform: translate(-50%, -50%);
-  transition: transform 0.08s ease;
-  mix-blend-mode: screen;
-}
-@media (hover: hover) {
-  #cursorDot { display: block; }
 }
 
 /* ═══════════════════════════════════════════════
@@ -132,7 +108,7 @@ body::after {
   border: 1px solid var(--border);
   background: none;
   color: var(--text);
-  cursor: none;
+  cursor: pointer;
   transition: all 0.2s;
   white-space: nowrap;
   margin-left: 4px;
@@ -151,7 +127,7 @@ body::after {
   flex-direction: column;
   gap: 5px;
   background: none; border: none;
-  cursor: none; padding: 4px;
+  cursor: pointer; padding: 4px;
   margin-left: auto; flex-shrink: 0;
 }
 .hamburger span {
@@ -270,7 +246,7 @@ body::after {
   font-family: 'DM Sans', sans-serif;
   font-size: 15px; font-weight: 700;
   text-decoration: none;
-  cursor: none;
+  cursor: pointer;
   transition: all 0.25s;
   border: none;
   white-space: nowrap;
@@ -657,7 +633,7 @@ body::after {
   font-size: 14px; font-weight: 700;
   border: 1px solid var(--border);
   background: var(--surface-2); color: var(--text);
-  cursor: none; transition: all 0.2s;
+  cursor: pointer; transition: all 0.2s;
 }
 .pricing-btn:hover { border-color: rgba(255,255,255,.22); background: rgba(255,255,255,.06); }
 .pricing-btn--gold {
@@ -717,7 +693,7 @@ body::after {
   position: absolute; top: 16px; right: 20px;
   background: none; border: none;
   color: var(--muted); font-size: 26px; line-height: 1;
-  cursor: none; transition: color 0.2s; padding: 2px 6px;
+  cursor: pointer; transition: color 0.2s; padding: 2px 6px;
 }
 .auth-modal-close:hover { color: var(--text); }
 
@@ -748,7 +724,7 @@ body::after {
 }
 .auth-tab-btn {
   flex: 1; padding: 9px; border: none; border-radius: 7px;
-  font-size: 13px; font-weight: 500; cursor: none;
+  font-size: 13px; font-weight: 500; cursor: pointer;
   background: none; color: var(--muted); transition: all .2s;
   font-family: 'DM Sans', sans-serif;
   touch-action: manipulation; -webkit-tap-highlight-color: transparent;
@@ -773,7 +749,7 @@ body::after {
   width: 100%; padding: 13px;
   background: var(--gold); color: #000;
   font-size: 14px; font-weight: 700; border: none;
-  border-radius: 8px; cursor: none;
+  border-radius: 8px; cursor: pointer;
   transition: filter .2s, opacity .2s;
   letter-spacing: .05em; font-family: 'DM Sans', sans-serif; margin-top: 4px;
   touch-action: manipulation; -webkit-tap-highlight-color: transparent; min-height: 44px;
@@ -811,7 +787,7 @@ header {
 .btn-logout {
   font-size: 11px; color: var(--muted);
   background: none; border: none;
-  cursor: none; font-family: 'DM Sans', sans-serif;
+  cursor: pointer; font-family: 'DM Sans', sans-serif;
   transition: color .2s; padding: 0; margin-left: 4px;
 }
 .btn-logout:hover { color: var(--red); }
@@ -854,7 +830,7 @@ header {
   --c: var(--gold);
   background: var(--surface); border: 1px solid var(--border);
   border-radius: 14px; padding: 28px;
-  cursor: none; position: relative; overflow: hidden;
+  cursor: pointer; position: relative; overflow: hidden;
   transition: transform .28s ease, border-color .28s ease, box-shadow .28s ease;
 }
 .scene-card::before {
@@ -915,7 +891,7 @@ header {
 
 .btn-close {
   background: none; border: none; color: var(--muted);
-  font-size: 26px; line-height: 1; cursor: none; padding: 2px 6px;
+  font-size: 26px; line-height: 1; cursor: pointer; padding: 2px 6px;
   transition: color .2s; flex-shrink: 0;
 }
 .btn-close:hover { color: var(--text); }
@@ -936,7 +912,7 @@ header {
   padding: 9px 20px; border-radius: 8px;
   background: rgba(201,168,76,.12); border: 1px solid rgba(201,168,76,.4);
   color: var(--gold); font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 600;
-  cursor: none; transition: background .2s, border-color .2s;
+  cursor: pointer; transition: background .2s, border-color .2s;
   touch-action: manipulation; -webkit-tap-highlight-color: transparent;
 }
 .btn-replay-line:hover { background: rgba(201,168,76,.22); border-color: var(--gold); }
@@ -967,7 +943,7 @@ header {
 .btn {
   display: inline-flex; align-items: center; gap: 7px;
   padding: 11px 22px; border-radius: 8px; font-size: 13px; font-weight: 500;
-  cursor: none; border: none; transition: all .2s;
+  cursor: pointer; border: none; transition: all .2s;
   letter-spacing: .03em; white-space: nowrap;
   font-family: 'DM Sans', sans-serif;
   touch-action: manipulation; -webkit-tap-highlight-color: transparent;
@@ -1089,7 +1065,7 @@ header {
 .lb-tabs { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 20px; }
 .lb-tab {
   padding: 8px 18px; border-radius: 100px; font-size: 12px; font-weight: 500;
-  cursor: none; border: 1px solid var(--border); background: var(--surface);
+  cursor: pointer; border: 1px solid var(--border); background: var(--surface);
   color: var(--muted); transition: all .2s; white-space: nowrap;
   font-family: 'DM Sans', sans-serif;
 }
@@ -1162,7 +1138,7 @@ header {
   background: var(--gold); color: #000;
   font-size: 15px; font-weight: 700; letter-spacing: .06em;
   padding: 15px 44px; border: none; border-radius: 10px;
-  cursor: none; font-family: 'DM Sans', sans-serif;
+  cursor: pointer; font-family: 'DM Sans', sans-serif;
   transition: filter .2s, transform .2s;
   touch-action: manipulation; -webkit-tap-highlight-color: transparent;
   animation: onb-rise .5s .6s ease both;
@@ -1426,7 +1402,7 @@ header {
   background: var(--surface); border: 1px solid var(--border);
   border-radius: 100px; padding: 7px 14px 7px 12px;
   font-size: 12px; font-weight: 500; color: var(--text);
-  cursor: none; font-family: 'DM Sans', sans-serif;
+  cursor: pointer; font-family: 'DM Sans', sans-serif;
   transition: all 0.2s;
 }
 .btn-my-progress:hover { border-color: var(--gold); color: var(--gold); }
@@ -1440,7 +1416,7 @@ header {
 .btn-hear {
   display: inline-flex; align-items: center; gap: 7px;
   padding: 10px 18px; border-radius: 8px;
-  font-size: 12px; font-weight: 500; cursor: none;
+  font-size: 12px; font-weight: 500; cursor: pointer;
   border: 1px solid var(--border); background: var(--surface);
   color: var(--text); transition: all .2s;
   font-family: 'DM Sans', sans-serif;
@@ -1624,7 +1600,7 @@ header {
   padding: 9px 18px; border-radius: 8px;
   background: rgba(201,168,76,.15); border: 1px solid rgba(201,168,76,.4);
   color: var(--gold); font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 600;
-  cursor: none; transition: background .2s, border-color .2s;
+  cursor: pointer; transition: background .2s, border-color .2s;
   touch-action: manipulation; -webkit-tap-highlight-color: transparent;
 }
 .dc-open-btn:hover { background: rgba(201,168,76,.25); border-color: var(--gold); }
@@ -1705,7 +1681,7 @@ header {
   border-radius: 10px; border: 1px solid var(--border);
   background: transparent; color: var(--muted);
   font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 500;
-  cursor: none; transition: color .2s, border-color .2s, background .2s;
+  cursor: pointer; transition: color .2s, border-color .2s, background .2s;
   touch-action: manipulation; -webkit-tap-highlight-color: transparent;
 }
 .btn-try-again:hover { color: var(--text); border-color: rgba(255,255,255,.2); background: rgba(255,255,255,.04); }
