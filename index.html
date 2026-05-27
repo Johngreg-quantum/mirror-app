@@ -2015,6 +2015,53 @@
       justify-content: flex-start;
       z-index: 2;
     }
+
+    /* ===== HOTFIX: bottom nav text-only italic serif ===== */
+
+    /* Hide emoji icons */
+    .bn-tab .bn-icon {
+      display: none;
+    }
+
+    /* Restyle label to editorial italic */
+    .bn-tab .bn-label {
+      font-family: 'Cormorant Garamond', serif;
+      font-style: italic;
+      font-weight: 500;
+      font-size: 17px;
+      letter-spacing: 0.01em;
+      text-transform: none;
+      color: rgba(255,255,255,0.55);
+      transition: color 0.25s ease;
+      line-height: 1;
+    }
+
+    /* Active state — gold + brighter */
+    .bn-tab.active .bn-label {
+      color: #e8c98a;
+      font-weight: 600;
+    }
+
+    /* Hover on non-active */
+    .bn-tab:not(.active):hover .bn-label {
+      color: rgba(255,255,255,0.85);
+    }
+
+    /* Adjust tab padding now that there's no icon */
+    .bn-tab {
+      padding: 14px 8px;
+      gap: 0;
+    }
+
+    /* Center the label vertically since icon is gone */
+    .bn-tab {
+      justify-content: center;
+    }
+
+    /* Mobile - slightly smaller text */
+    @media (max-width: 480px) {
+      .bn-tab .bn-label { font-size: 14px; }
+    }
   </style>
   <script type="module" src="https://unpkg.com/@splinetool/viewer@1.12.90/build/spline-viewer.js"></script>
 </head>
