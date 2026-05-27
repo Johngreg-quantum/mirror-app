@@ -220,7 +220,12 @@ function setPanelOpen(panelId, backdropId, isOpen) {
 }
 
 function on(id, eventName, handler) {
-  el(id).addEventListener(eventName, handler);
+  var element = el(id);
+  if (!element) {
+    console.warn('on(): element not found, skipping listener for id="' + id + '"');
+    return;
+  }
+  element.addEventListener(eventName, handler);
 }
 
 function onClick(id, handler) {
