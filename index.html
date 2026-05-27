@@ -2788,35 +2788,6 @@
   </footer>
 
   <!-- ── AUTH MODAL ── -->
-  <div class="auth-modal-overlay" id="authModalOverlay" style="z-index:9000;">
-    <div class="auth-modal-box">
-      <button class="auth-modal-close" id="authModalClose">&times;</button>
-      <div class="auth-modal-logo">MIR<em>RO</em>R</div>
-      <p class="auth-modal-tagline">Speak like the screen</p>
-
-      <div class="auth-tabs">
-        <button class="auth-tab-btn active" id="tabLoginBtn">Sign In</button>
-        <button class="auth-tab-btn"        id="tabRegBtn">Register</button>
-      </div>
-
-      <form class="auth-form" id="loginForm">
-        <input class="auth-input" type="email"    id="loginEmail"    placeholder="Email"    required autocomplete="email" />
-        <input class="auth-input" type="password" id="loginPassword" placeholder="Password" required autocomplete="current-password" />
-        <div class="auth-error" id="loginError"></div>
-        <button class="auth-submit" id="loginSubmit" type="submit">Sign In</button>
-      </form>
-
-      <form class="auth-form hidden" id="registerForm">
-        <input class="auth-input" type="text"     id="regUsername" placeholder="Username (min 2 chars)"  required maxlength="30" autocomplete="username" />
-        <input class="auth-input" type="email"    id="regEmail"    placeholder="Email"                   required               autocomplete="email" />
-        <input class="auth-input" type="password" id="regPassword" placeholder="Password (min 6 chars)"  required               autocomplete="new-password" />
-        <input class="auth-input" type="password" id="regConfirm"  placeholder="Confirm password"        required               autocomplete="new-password" />
-        <div class="auth-error" id="registerError"></div>
-        <button class="auth-submit" id="registerSubmit" type="submit">Create Account</button>
-      </form>
-    </div>
-  </div>
-
 </div><!-- /authScreen -->
 
 <!-- ══════════════════════════════════════════════
@@ -3287,6 +3258,36 @@
   </div>
 </div>
 <div class="clv-panel-backdrop" id="clvPanelBackdrop" onclick="closeLevelPanel()"></div>
+
+<!-- ===== AUTH MODAL (extracted from #authScreen so it can render) ===== -->
+<div class="auth-modal-overlay" id="authModalOverlay" style="z-index:9000;">
+  <div class="auth-modal-box">
+    <button class="auth-modal-close" id="authModalClose">&times;</button>
+    <div class="auth-modal-logo">MIR<em>RO</em>R</div>
+    <p class="auth-modal-tagline">Speak like the screen</p>
+
+    <div class="auth-tabs">
+      <button class="auth-tab-btn active" id="tabLoginBtn">Sign In</button>
+      <button class="auth-tab-btn"        id="tabRegBtn">Register</button>
+    </div>
+
+    <form class="auth-form" id="loginForm">
+      <input class="auth-input" type="email"    id="loginEmail"    placeholder="Email"    required autocomplete="email" />
+      <input class="auth-input" type="password" id="loginPassword" placeholder="Password" required autocomplete="current-password" />
+      <div class="auth-error" id="loginError"></div>
+      <button class="auth-submit" id="loginSubmit" type="submit">Sign In</button>
+    </form>
+
+    <form class="auth-form hidden" id="registerForm">
+      <input class="auth-input" type="text"     id="regUsername" placeholder="Username (min 2 chars)"  required maxlength="30" autocomplete="username" />
+      <input class="auth-input" type="email"    id="regEmail"    placeholder="Email"                   required               autocomplete="email" />
+      <input class="auth-input" type="password" id="regPassword" placeholder="Password (min 6 chars)"  required               autocomplete="new-password" />
+      <input class="auth-input" type="password" id="regConfirm"  placeholder="Confirm password"        required               autocomplete="new-password" />
+      <div class="auth-error" id="registerError"></div>
+      <button class="auth-submit" id="registerSubmit" type="submit">Create Account</button>
+    </form>
+  </div>
+</div>
 
 <script src="/static/app-config.js"></script>
 <script src="/static/app-helpers.js"></script>
