@@ -2001,6 +2001,19 @@
     @media (max-width: 720px) {
       .pricing-cards-edt { grid-template-columns: 1fr; }
     }
+
+    /* ===== HOTFIX 78dcfd1: pricing section structural rule (was missing) ===== */
+    #pricingSection {
+      position: relative;
+      min-height: 100vh;
+      padding: 120px 24px;
+      background: linear-gradient(180deg, rgba(5,5,5,0.95) 0%, rgba(8,6,4,0.97) 100%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 2;
+    }
   </style>
   <script type="module" src="https://unpkg.com/@splinetool/viewer@1.12.90/build/spline-viewer.js"></script>
 </head>
@@ -2556,7 +2569,7 @@
 </section>
 
 <!-- ===== PHASE 3 [6/6]: LEVELS SECTION (moved from #authScreen) ===== -->
-  <section class="clv-section fade-up" id="levelsSection">
+  <section class="clv-section" id="levelsSection">
     <div class="editorial-eyebrow what-eyebrow">Three Acts</div>
     <h2 class="what-title">
       From your first <em>line</em><br>
@@ -2591,7 +2604,7 @@
   </section>
 
 <!-- ===== PHASE 3 [7/7]: PRICING SECTION (moved from #authScreen + editorial restyle) ===== -->
-<section class="pricing-section fade-up" id="pricingSection">
+<section class="pricing-section" id="pricingSection">
   <div class="editorial-eyebrow what-eyebrow">The Deal</div>
   <h2 class="what-title">Pick your <em>billing</em>.</h2>
   <p class="pricing-tagline-edt">Less than a movie ticket. Endless rewatches.</p>
