@@ -2295,7 +2295,7 @@
     <p class="ml-hero-sub">Practice English through iconic movie moments.<br>Speak like the legends. Perform like the greats.</p>
     <div class="ml-cta-row">
       <button class="ml-btn-primary" onclick="mlOpenAuth()">Start practicing</button>
-      <button class="ml-btn-secondary" onclick="mlOpenAuth()">Sign in</button>
+      <button class="ml-btn-secondary" onclick="mlOpenAuth('login')">Sign in</button>
     </div>
   </div>
 
@@ -2460,12 +2460,20 @@
     btn.classList.add('ml-on');
   };
 
-  window.mlOpenAuth = function(){
-    var heroBtn = document.getElementById('heroStartBtn');
-    if(heroBtn){ heroBtn.click(); return; }
-    if(typeof window.openAuthModal === 'function'){ window.openAuthModal('register'); return; }
+  window.mlOpenAuth = function(tab){
+    // tab defaults to 'register' to preserve behavior for callers that don't pass an arg
+    tab = tab || 'register';
+    // Tier 1: direct call to openAuthModal (preferred — modal is now body-level)
+    if(typeof window.openAuthModal === 'function'){
+      window.openAuthModal(tab);
+      return;
+    }
+    // Tier 2: fallback for the rare case openAuthModal isn't loaded yet (e.g. partial JS failure)
     var modal = document.getElementById('authModalOverlay');
-    if(modal){ modal.classList.add('open'); document.body.style.overflow='hidden'; }
+    if(modal){
+      modal.classList.add('open');
+      document.body.style.overflow='hidden';
+    }
   };
 
   var _origEnter = window.enterAppMode;
