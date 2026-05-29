@@ -2977,6 +2977,7 @@ const QuizController = {
     });
     document.getElementById('quizProgressFill').style.width='100%';
     document.getElementById('quizResults').style.display='block';
+    this.playResultsAnimation(passed);
     document.getElementById('quizResultIcon').textContent = passed ? '🏆' : '🎬';
     const passTitle = this.level === 'L2' ? '¡NIVEL 3 DESBLOQUEADO!' : '¡NIVEL 2 DESBLOQUEADO!';
     document.getElementById('quizResultTitle').textContent = passed ? passTitle : 'SIGUE PRACTICANDO';
@@ -3047,6 +3048,72 @@ const QuizController = {
         }
       } catch(e) { console.error('quiz-pass error', e); }
     }
+  },
+
+  playResultsAnimation(passed) {
+    var results = document.getElementById('quizResults');
+    if (!results) return;
+
+    results.classList.remove('qr-playing');
+
+    var raysWrap = document.getElementById('qrRays');
+    if (raysWrap) {
+      raysWrap.innerHTML = '';
+      for (var i = 0; i < 12; i++) {
+        var ray = document.createElement('div');
+        ray.className = 'qr-ray';
+        ray.style.transform = 'translate(-50%,-50%) rotate(' + ((360/12)*i) + 'deg)';
+        raysWrap.appendChild(ray);
+      }
+    }
+
+    var partWrap = document.getElementById('qrParticles');
+    if (partWrap) {
+      partWrap.innerHTML = '';
+      if (passed) {
+        var colors = ['#e8c98a','#c8a96e','#f5e6c8','#ffffff','#ff3b3b','#3b6bff'];
+        for (var j = 0; j < 56; j++) {
+          var p = document.createElement('div');
+          p.className = 'qr-particle';
+          var angle = (Math.PI * 2 * j) / 56 + (Math.random() - 0.5) * 0.5;
+          var dist = 160 + Math.random() * 260;
+          var dx = Math.cos(angle) * dist;
+          var dy = Math.sin(angle) * dist - 50;
+          p.style.setProperty('--dx', dx + 'px');
+          p.style.setProperty('--dy', dy + 'px');
+          p.style.setProperty('--rot', (Math.random() * 720 - 360) + 'deg');
+          p.style.background = colors[j % colors.length];
+          p.style.borderRadius = Math.random() > 0.5 ? '50%' : '1px';
+          var size = (5 + Math.random() * 5);
+          p.style.width = size + 'px';
+          p.style.height = size + 'px';
+          p.style.animationDelay = (Math.random() * 0.15) + 's';
+          partWrap.appendChild(p);
+        }
+      }
+    }
+
+    void results.offsetWidth;
+    results.classList.add('qr-playing');
+
+    setTimeout(function() {
+      var nums = results.querySelectorAll('.quiz-breakdown-num');
+      nums.forEach(function(el, idx) {
+        var target = parseInt(el.textContent, 10);
+        if (isNaN(target)) return;
+        var suffix = el.textContent.replace(/[0-9]/g, '');
+        var start = performance.now();
+        var dur = 1000;
+        el.textContent = '0' + suffix;
+        function tick(now) {
+          var prog = Math.min((now - start) / dur, 1);
+          var eased = 1 - Math.pow(1 - prog, 3);
+          el.textContent = Math.round(eased * target) + suffix;
+          if (prog < 1) requestAnimationFrame(tick);
+        }
+        setTimeout(function(){ requestAnimationFrame(tick); }, idx * 150);
+      });
+    }, 1500);
   },
 
   init() {
