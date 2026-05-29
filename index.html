@@ -2062,6 +2062,131 @@
     @media (max-width: 480px) {
       .bn-tab .bn-label { font-size: 14px; }
     }
+
+    /* ===== LEVEL-UP REDESIGN [1/2]: cinematic results screen ===== */
+    @property --qr-ripple { syntax:'<length>'; inherits:false; initial-value:0px; }
+
+    .qr-screen {
+      padding: 2rem 1.5rem !important;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+      min-height: 80vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .qr-bloom {
+      position: absolute; top: 34%; left: 50%;
+      width: 600px; height: 600px;
+      transform: translate(-50%,-50%) scale(0);
+      background: radial-gradient(circle, rgba(200,169,110,0.32) 0%, rgba(200,169,110,0.07) 35%, transparent 65%);
+      border-radius: 50%; pointer-events: none; opacity: 0;
+    }
+    .qr-rays, .qr-particles { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
+    .qr-ray {
+      position: absolute; top: 34%; left: 50%;
+      width: 2px; height: 200px;
+      background: linear-gradient(to bottom, rgba(232,201,138,0.5), transparent);
+      transform-origin: top center;
+    }
+    .qr-particle { position: absolute; top: 34%; left: 50%; width: 8px; height: 8px; opacity: 0; }
+
+    .qr-content {
+      position: relative; z-index: 10;
+      display: flex; flex-direction: column; align-items: center;
+      max-width: 480px; width: 100%; margin: 0 auto;
+    }
+
+    /* Medallion replaces the trophy emoji */
+    .qr-medallion { position: relative; width: 120px; height: 120px; margin-bottom: 32px; }
+    .qr-medallion-rim {
+      position: absolute; inset: 0; border-radius: 50%; padding: 3px;
+      background: repeating-conic-gradient(from calc(var(--qr-ripple)*1deg),
+        #ff3b3b 0deg, #ffffff 40deg, #3b6bff 80deg, #0a0a0a 120deg, #ff3b3b 160deg);
+      -webkit-mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0);
+      mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0);
+      -webkit-mask-composite: xor;
+      mask-composite: exclude;
+      animation: qr-rim 4s linear infinite;
+    }
+    @keyframes qr-rim { from{--qr-ripple:0;} to{--qr-ripple:360;} }
+    .qr-medallion-core {
+      position: absolute; inset: 13px; border-radius: 50%;
+      background: radial-gradient(circle at 35% 30%, #2a2a2e, #0a0a0c);
+      display: flex; align-items: center; justify-content: center;
+      box-shadow: inset 0 2px 8px rgba(255,255,255,0.1), 0 10px 40px rgba(0,0,0,0.6);
+    }
+    .qr-medallion-core #quizResultIcon { display: none; } /* hide JS emoji; medallion is the visual */
+    .qr-medallion-core::after {
+      content: '★'; font-size: 44px; line-height: 1;
+      background: linear-gradient(180deg, #f5e6c8, #c8a96e);
+      -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+    }
+
+    .qr-eyebrow {
+      font-family: 'Inter', sans-serif; font-size: 11px; font-weight: 600;
+      letter-spacing: 0.32em; text-transform: uppercase; color: #c8a96e; margin-bottom: 16px;
+    }
+    .qr-title {
+      font-family: 'Cormorant Garamond', serif; font-weight: 600;
+      font-size: clamp(2.2rem, 7vw, 3.2rem); line-height: 1.05;
+      color: #f0ede6; margin-bottom: 14px; letter-spacing: -0.01em;
+    }
+    .qr-score {
+      font-family: 'Inter', sans-serif; font-size: 14px;
+      color: rgba(255,255,255,0.6); margin-bottom: 28px;
+    }
+    .qr-xp {
+      display: inline-flex; align-items: center; gap: 10px;
+      background: linear-gradient(180deg, #1a1814, #0d0c0a);
+      border: 1px solid rgba(200,169,110,0.4); border-radius: 100px;
+      padding: 13px 26px; margin-bottom: 32px;
+      box-shadow: 0 0 30px rgba(200,169,110,0.12);
+    }
+    .qr-xp-star { color: #e8c98a; font-size: 17px; }
+    .qr-xp-text {
+      font-family: 'Bebas Neue', sans-serif; font-size: 21px; letter-spacing: 0.07em;
+      background: linear-gradient(180deg, #f5e6c8, #c8a96e);
+      -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+    }
+    .qr-breakdown {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 14px;
+      width: 100%; margin-bottom: 30px;
+    }
+    /* Restyle the JS-injected breakdown cards */
+    .qr-breakdown .quiz-breakdown-card {
+      background: linear-gradient(180deg, rgba(20,20,22,0.8), rgba(8,8,10,0.8)) !important;
+      border: 1px solid rgba(255,255,255,0.08) !important;
+      border-radius: 14px !important; padding: 22px !important; text-align: left !important;
+    }
+    .qr-breakdown .quiz-breakdown-num {
+      font-family: 'Cormorant Garamond', serif !important;
+      font-weight: 600 !important; font-size: 42px !important; line-height: 1 !important;
+      color: #f0ede6 !important; margin-bottom: 4px !important;
+    }
+    .qr-breakdown .quiz-breakdown-lbl {
+      font-family: 'Inter', sans-serif !important; font-size: 11px !important;
+      font-weight: 500 !important; letter-spacing: 0.14em !important; text-transform: uppercase !important;
+      color: rgba(200,169,110,0.7) !important; margin-top: 0 !important;
+    }
+    .qr-motivation {
+      font-family: 'Cormorant Garamond', serif; font-style: italic; font-weight: 400;
+      font-size: 16px; color: rgba(255,255,255,0.5); margin-bottom: 32px;
+    }
+    .qr-continue {
+      font-family: 'Inter', sans-serif; font-size: 14px; font-weight: 600;
+      letter-spacing: 0.14em; text-transform: uppercase; color: #0a0a0a;
+      background: linear-gradient(180deg, #e8c98a, #c8a96e);
+      border: none; border-radius: 100px; padding: 17px 52px; cursor: pointer;
+      transition: transform 0.2s;
+    }
+    .qr-continue:hover { transform: scale(1.04); }
+
+    @media (max-width: 560px) {
+      .qr-breakdown { grid-template-columns: 1fr; }
+    }
   </style>
   <script type="module" src="https://unpkg.com/@splinetool/viewer@1.12.90/build/spline-viewer.js"></script>
 </head>
@@ -3419,51 +3544,36 @@
   </div>
 
   <!-- Results screen -->
-  <div id="quizResults" style="display:none; padding:2rem 1.5rem; text-align:center; position:relative; overflow:hidden;">
-    <div id="quizResultIcon" style="font-size:3.5rem;margin-bottom:0.5rem;animation:victoryPop 0.6s cubic-bezier(0.34,1.56,0.64,1) both;"></div>
+  <div id="quizResults" class="qr-screen" style="display:none;">
+    <div class="qr-bloom" aria-hidden="true"></div>
+    <div class="qr-rays" id="qrRays" aria-hidden="true"></div>
+    <div class="qr-particles" id="qrParticles" aria-hidden="true"></div>
 
-    <div id="quizResultTitle" style="font-family:'Bebas Neue',sans-serif;font-size:2.8rem;letter-spacing:0.1em;color:#c8a96e;margin-bottom:0.3rem;animation:victorySlide 0.7s cubic-bezier(0.16,1,0.3,1) 0.1s both;"></div>
+    <div class="qr-content">
+      <div class="qr-medallion">
+        <div class="qr-medallion-rim"></div>
+        <div class="qr-medallion-core">
+          <span id="quizResultIcon"></span>
+        </div>
+      </div>
 
-    <div id="quizResultScore" style="font-size:0.9rem;color:rgba(255,255,255,0.5);margin-bottom:1.5rem;animation:victorySlide 0.7s ease 0.2s both;"></div>
+      <div class="qr-eyebrow">Nivel desbloqueado</div>
 
-    <!-- XP earned banner -->
-    <div id="quizXpBanner" style="
-      display:inline-flex;align-items:center;gap:8px;
-      background:linear-gradient(135deg,rgba(200,169,110,0.2),rgba(200,169,110,0.08));
-      border:1px solid rgba(200,169,110,0.4);
-      border-radius:100px;padding:0.6rem 1.4rem;
-      margin-bottom:1.5rem;
-      animation:victorySlide 0.7s ease 0.3s both;
-    ">
-      <span style="font-size:1.1rem;">⭐</span>
-      <span style="font-family:'Bebas Neue',sans-serif;font-size:1.2rem;letter-spacing:0.1em;color:#c8a96e;">+500 XP EARNED</span>
+      <div id="quizResultTitle" class="qr-title"></div>
+
+      <div id="quizResultScore" class="qr-score"></div>
+
+      <div id="quizXpBanner" class="qr-xp">
+        <span class="qr-xp-star">★</span>
+        <span class="qr-xp-text"></span>
+      </div>
+
+      <div id="quizBreakdown" class="qr-breakdown"></div>
+
+      <div id="quizMotivation" class="qr-motivation"></div>
+
+      <button id="quizDoneBtn" class="qr-continue">CONTINUE →</button>
     </div>
-
-    <!-- Breakdown cards -->
-    <div id="quizBreakdown" style="
-      display:grid;grid-template-columns:1fr 1fr;
-      gap:8px;margin-bottom:1.5rem;text-align:left;
-      animation:victorySlide 0.7s ease 0.4s both;
-    "></div>
-
-    <!-- Motivational message -->
-    <div id="quizMotivation" style="
-      font-size:0.75rem;color:rgba(255,255,255,0.35);
-      font-style:italic;font-family:'Playfair Display',serif;
-      margin-bottom:1.5rem;line-height:1.6;
-      animation:victorySlide 0.7s ease 0.5s both;
-    "></div>
-
-    <button id="quizDoneBtn" style="
-      padding:0.9rem 2.5rem;
-      background:linear-gradient(135deg,#c8a96e,#9a7d4e);
-      border:none;border-radius:14px;
-      font-family:'Bebas Neue',sans-serif;
-      font-size:1.1rem;letter-spacing:0.12em;
-      color:#080808;cursor:pointer;
-      animation:victorySlide 0.7s ease 0.6s both;
-      transition:transform 0.2s ease;
-    ">CONTINUE →</button>
   </div>
 
 </div>
