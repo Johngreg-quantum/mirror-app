@@ -2235,6 +2235,12 @@
       15% { opacity: 1; }
       100% { transform: translate(calc(-50% + var(--dx)), calc(-50% + var(--dy))) rotate(var(--rot)); opacity: 0; }
     }
+
+    /* ===== PRO STATE ===== */
+    .pro-only { display: none; }
+    body.is-pro .pro-only { display: block; }
+    .pro-locked { display: block; }
+    body.is-pro .pro-locked { display: none; }
   </style>
   <script type="module" src="https://unpkg.com/@splinetool/viewer@1.12.90/build/spline-viewer.js"></script>
 </head>

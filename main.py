@@ -909,7 +909,24 @@ async def login(req: LoginRequest):
 
 @app.get("/api/auth/me")
 async def me(user: dict = Depends(current_user)):
-    return user
+    conn = get_conn()
+    cur = conn.cursor()
+    try:
+        cur.execute(
+            f"SELECT is_pro FROM users WHERE id = {PH}",
+            (user["id"],)
+        )
+        row = cur.fetchone()
+        is_pro = bool(row[0]) if row and row[0] else False
+    except Exception:
+        is_pro = False
+    finally:
+        conn.close()
+    return {
+        "id": user["id"],
+        "username": user["username"],
+        "is_pro": is_pro,
+    }
 
 
 # ─── Lemon Squeezy billing ───────────────────────────────────────────────────

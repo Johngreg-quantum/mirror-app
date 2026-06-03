@@ -438,6 +438,24 @@ let waveAnimFrame  = null;
   showAuthScreen();
 })();
 
+// Detect post-checkout redirect
+if (window.location.search.includes('checkout=success')) {
+  window.history.replaceState({}, '', '/');
+  if (authToken) {
+    fetch(`${API}/api/auth/me`, {
+      headers: { "Authorization": `Bearer ${authToken}` }
+    }).then(r => r.json()).then(data => {
+      window.mirrorIsPro = data.is_pro || false;
+      document.body.classList.toggle('is-pro', window.mirrorIsPro);
+      if (data.is_pro) {
+        if (typeof showToast === 'function') {
+          showToast('🎬 Mirror Pro activated!', 3000);
+        }
+      }
+    }).catch(() => {});
+  }
+}
+
 // ══════════════════════════════════════════════
 // AUTH ORCHESTRATION — session state
 // ══════════════════════════════════════════════
@@ -530,6 +548,19 @@ async function enterAuthenticatedApp(options = {}) {
   await loadProgress();
   await Promise.all([loadScenes(), loadScores(), loadDaily(), loadStreakCard()]);
   if (activeChallenge) enterChallengeFromAuth();
+
+  try {
+    const meResp = await fetch(`${API}/api/auth/me`, {
+      headers: { "Authorization": `Bearer ${authToken}` }
+    });
+    if (meResp.ok) {
+      const meData = await meResp.json();
+      window.mirrorIsPro = meData.is_pro || false;
+      document.body.classList.toggle('is-pro', window.mirrorIsPro);
+    }
+  } catch(e) {
+    window.mirrorIsPro = false;
+  }
 }
 
 onClick('btnLogout', logout);
