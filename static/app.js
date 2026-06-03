@@ -561,6 +561,14 @@ async function enterAuthenticatedApp(options = {}) {
   } catch(e) {
     window.mirrorIsPro = false;
   }
+
+  if (window._pendingProCheckout && !window.mirrorIsPro) {
+    window._pendingProCheckout = null;
+    setTimeout(function() {
+      const btn = document.getElementById('pricingProBtn');
+      if (btn) btn.click();
+    }, 800);
+  }
 }
 
 onClick('btnLogout', logout);
@@ -587,7 +595,12 @@ onClick('navRegisterBtn',  () => openAuthModal('register'));
 onClick('heroStartBtn',    () => openAuthModal('register'));
 onClick('pricingFreeBtn',  () => openAuthModal('register'));
 onClick('pricingProBtn', async () => {
+  const pill = document.querySelector('#pricingPill .mc-pill.active');
+  const billing = pill ? pill.dataset.billing : 'yearly';
+  const variantId = billing === 'monthly' ? '1741149' : '1741098';
+
   if (!authToken) {
+    window._pendingProCheckout = variantId;
     openAuthModal('register');
     return;
   }
@@ -595,9 +608,6 @@ onClick('pricingProBtn', async () => {
     if (typeof showToast === 'function') showToast('You already have Mirror Pro!', 2500);
     return;
   }
-  const pill = document.querySelector('#pricingPill .mc-pill.active');
-  const billing = pill ? pill.dataset.billing : 'yearly';
-  const variantId = billing === 'monthly' ? '1741149' : '1741098';
 
   const btn = document.getElementById('pricingProBtn');
   if (btn) { btn.textContent = 'Loading...'; btn.disabled = true; }
@@ -3199,6 +3209,22 @@ if (document.readyState === 'loading') {
 window.QuizController = QuizController;
 function openQuiz(level) { QuizController.open(level || 'L1'); }
 window.openQuiz = openQuiz;
+
+// ══════════════════════════════════════════════
+// GLOBAL TOAST — reuses #mpXpToastWrap stacking slot with .mp-xp-toast styling
+// ══════════════════════════════════════════════
+function showToast(message, duration) {
+  const wrap = document.getElementById('mpXpToastWrap');
+  if (!wrap) return;
+  const el = document.createElement('div');
+  el.className = 'mp-xp-toast';
+  el.textContent = message;
+  wrap.appendChild(el);
+  setTimeout(function() {
+    if (el.parentNode) el.parentNode.removeChild(el);
+  }, duration || 3000);
+}
+window.showToast = showToast;
 
 // ══════════════════════════════════════════════
 // MISSIONS — daily quest, weekly challenge, active missions, XP toasts

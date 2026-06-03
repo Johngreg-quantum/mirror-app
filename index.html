@@ -2260,6 +2260,58 @@
     /* Inside #userChip the badge sits inline-flex alongside other items, so override */
     #userChip .pro-badge.pro-only { display: none; }
     body.is-pro #userChip .pro-badge.pro-only { display: inline-block; }
+
+    /* ===== PRO UPGRADE CARD (in-app upsell) ===== */
+    .pro-upgrade-card {
+      margin: 16px 16px 0;
+      background: linear-gradient(135deg, rgba(200,169,110,0.12), rgba(200,169,110,0.04));
+      border: 1px solid rgba(200,169,110,0.3);
+      border-radius: 16px;
+      overflow: hidden;
+      position: relative;
+    }
+    .pro-upgrade-card::before {
+      content: '';
+      position: absolute; inset: 0;
+      background: radial-gradient(ellipse 60% 80% at 80% 50%, rgba(200,169,110,0.08), transparent);
+      pointer-events: none;
+    }
+    .pro-upgrade-inner {
+      padding: 20px 20px 20px 24px;
+      display: flex; flex-direction: column; gap: 10px;
+    }
+    .pro-upgrade-eyebrow {
+      font-family: 'Inter', sans-serif; font-size: 10px;
+      font-weight: 700; letter-spacing: 0.25em; text-transform: uppercase;
+      color: #c8a96e;
+    }
+    .pro-upgrade-title {
+      font-family: 'Cormorant Garamond', serif; font-weight: 600;
+      font-size: 26px; line-height: 1.1; color: #f0ede6;
+    }
+    .pro-upgrade-title em { font-style: italic; color: #e8c98a; }
+    .pro-upgrade-features {
+      display: flex; flex-wrap: wrap; gap: 8px;
+    }
+    .pro-upgrade-features span {
+      font-family: 'Inter', sans-serif; font-size: 11px; font-weight: 500;
+      color: rgba(255,255,255,0.55);
+      background: rgba(255,255,255,0.05);
+      border: 0.5px solid rgba(255,255,255,0.1);
+      border-radius: 100px; padding: 4px 10px;
+    }
+    .pro-upgrade-btn {
+      align-self: flex-start;
+      font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 600;
+      letter-spacing: 0.06em;
+      color: #0a0a0a;
+      background: linear-gradient(180deg, #e8c98a, #c8a96e);
+      border: none; border-radius: 100px;
+      padding: 12px 24px; cursor: pointer;
+      transition: transform 0.2s;
+      margin-top: 4px;
+    }
+    .pro-upgrade-btn:hover { transform: scale(1.03); }
   </style>
   <script type="module" src="https://unpkg.com/@splinetool/viewer@1.12.90/build/spline-viewer.js"></script>
 </head>
@@ -3698,6 +3750,22 @@
       <div id="homeDailyTitle" style="font-family:'Georgia',serif; font-size:15px; color:#fff;">Complete a scene to start your streak</div>
     </div>
     <div style="background:rgba(200,169,110,0.15); border:0.5px solid #c8a96e; border-radius:8px; padding:4px 10px; font-family:'DM Sans',sans-serif; font-size:11px; font-weight:700; color:#c8a96e;">2X XP</div>
+  </div>
+
+  <!-- Pro upgrade card (hidden for Pro users via .pro-locked) -->
+  <div class="pro-upgrade-card pro-locked" id="proUpgradeCard">
+    <div class="pro-upgrade-inner">
+      <div class="pro-upgrade-eyebrow">Mirror Pro</div>
+      <div class="pro-upgrade-title">Unlock all <em>75 scenes</em></div>
+      <div class="pro-upgrade-features">
+        <span>Spanish translations</span>
+        <span>Advanced ranks</span>
+        <span>Priority releases</span>
+      </div>
+      <button class="pro-upgrade-btn" onclick="document.getElementById('pricingProBtn').click()">
+        Upgrade — $3.99/mo
+      </button>
+    </div>
   </div>
 
   <!-- Level 1 — open coverflow -->
