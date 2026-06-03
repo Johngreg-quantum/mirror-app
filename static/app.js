@@ -586,7 +586,42 @@ onClick('navLoginBtn',     () => openAuthModal('login'));
 onClick('navRegisterBtn',  () => openAuthModal('register'));
 onClick('heroStartBtn',    () => openAuthModal('register'));
 onClick('pricingFreeBtn',  () => openAuthModal('register'));
-onClick('pricingProBtn',   () => openAuthModal('register'));
+onClick('pricingProBtn', async () => {
+  if (!authToken) {
+    openAuthModal('register');
+    return;
+  }
+  if (window.mirrorIsPro) {
+    if (typeof showToast === 'function') showToast('You already have Mirror Pro!', 2500);
+    return;
+  }
+  const pill = document.querySelector('#pricingPill .mc-pill.active');
+  const billing = pill ? pill.dataset.billing : 'yearly';
+  const variantId = billing === 'monthly' ? '1741149' : '1741098';
+
+  const btn = document.getElementById('pricingProBtn');
+  if (btn) { btn.textContent = 'Loading...'; btn.disabled = true; }
+
+  try {
+    const resp = await fetch(`${API}/api/billing/checkout`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${authToken}`
+      },
+      body: JSON.stringify({ variant_id: variantId })
+    });
+    const data = await resp.json();
+    if (data.checkout_url) {
+      window.location.href = data.checkout_url;
+    } else {
+      throw new Error('No checkout URL');
+    }
+  } catch(e) {
+    if (typeof showToast === 'function') showToast('Something went wrong. Try again.', 3000);
+    if (btn) { btn.textContent = 'Go pro'; btn.disabled = false; }
+  }
+});
 
 // ══════════════════════════════════════════════
 // AUTH ORCHESTRATION — tab switching

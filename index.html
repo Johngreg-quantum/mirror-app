@@ -2241,6 +2241,25 @@
     body.is-pro .pro-only { display: block; }
     .pro-locked { display: block; }
     body.is-pro .pro-locked { display: none; }
+
+    /* ===== PRO BADGE ===== */
+    .pro-badge {
+      display: inline-block;
+      font-family: 'Inter', sans-serif;
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: #0a0a0a;
+      background: linear-gradient(135deg, #e8c98a, #c8a96e);
+      padding: 3px 8px;
+      border-radius: 100px;
+      vertical-align: middle;
+      margin-left: 8px;
+    }
+    /* Inside #userChip the badge sits inline-flex alongside other items, so override */
+    #userChip .pro-badge.pro-only { display: none; }
+    body.is-pro #userChip .pro-badge.pro-only { display: inline-block; }
   </style>
   <script type="module" src="https://unpkg.com/@splinetool/viewer@1.12.90/build/spline-viewer.js"></script>
 </head>
@@ -2873,7 +2892,7 @@
         <li>Advanced ranks &amp; missions</li>
         <li>Priority new releases</li>
       </ul>
-      <button class="price-card-cta" id="pricingProBtn" onclick="mlOpenAuth()">Go pro</button>
+      <button class="price-card-cta" id="pricingProBtn">Go pro</button>
     </div>
   </div>
 </section>
@@ -3047,6 +3066,7 @@
           </svg>
           <span class="div-dot" id="divDot" title="Bronze"></span>
           <span class="user-chip-name" id="userChipName"></span>
+          <span class="pro-badge pro-only">PRO</span>
           <button class="btn-logout" id="btnLogout">Logout</button>
         </div>
       </div>
