@@ -1066,6 +1066,29 @@ async def lemonsqueezy_webhook(request: Request):
     return {"ok": True}
 
 
+# ─── TEMPORARY admin: manually flip is_pro when a test-mode webhook didn't fire.
+#     REMOVE this endpoint after the test user is flipped and the live webhook is verified.
+@app.post("/api/admin/set-pro")
+async def admin_set_pro(request: Request):
+    """TEMPORARY — remove after use. Sets is_pro=true for a user by email."""
+    body = await request.json()
+    email = body.get("email", "")
+    secret = body.get("secret", "")
+    if secret != os.getenv("ADMIN_SECRET", "mirror-admin-2026"):
+        raise HTTPException(status_code=403, detail="Forbidden")
+    if not email:
+        raise HTTPException(status_code=400, detail="email required")
+    conn = get_conn()
+    cur = conn.cursor()
+    try:
+        cur.execute(f"UPDATE users SET is_pro = {PH} WHERE email = {PH}", (True, email))
+        conn.commit()
+        rows = cur.rowcount
+    finally:
+        conn.close()
+    return {"updated": rows, "email": email}
+
+
 # ---------------------------------------------------------------------------
 # Routes — scenes & scores
 # ---------------------------------------------------------------------------
