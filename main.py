@@ -6,6 +6,7 @@ import uuid
 import sqlite3
 import difflib
 import hashlib
+import hmac
 import logging
 import tempfile
 import traceback
@@ -136,6 +137,12 @@ SECRET    = os.getenv("JWT_SECRET", "change-me-to-a-long-random-string-in-produc
 ALGORITHM = "HS256"
 TOKEN_TTL = 30  # days
 APP_BASE_URL = os.getenv("APP_BASE_URL", "").rstrip("/")
+
+# Lemon Squeezy billing
+LS_API_KEY        = os.getenv("LEMONSQUEEZY_API_KEY", "")
+LS_SIGNING_SECRET = os.getenv("LEMONSQUEEZY_SIGNING_SECRET", "")
+LS_MONTHLY_ID     = os.getenv("LEMONSQUEEZY_MONTHLY_VARIANT_ID", "")
+LS_YEARLY_ID      = os.getenv("LEMONSQUEEZY_YEARLY_VARIANT_ID", "")
 
 
 def build_app_url(path: str) -> str:
@@ -567,11 +574,12 @@ def init_db():
                 cur.execute(f"ALTER TABLE scores ADD COLUMN {col} {dfn}")
             except sqlite3.OperationalError:
                 pass  # column already exists
-        # Non-destructive migration for users.points / streak / last_daily
+        # Non-destructive migration for users.points / streak / last_daily / is_pro
         for col, dfn in [
             ("points",     "INTEGER DEFAULT 0"),
             ("streak",     "INTEGER DEFAULT 0"),
             ("last_daily", "TEXT"),
+            ("is_pro",     "BOOLEAN DEFAULT FALSE"),
         ]:
             try:
                 cur.execute(f"ALTER TABLE users ADD COLUMN {col} {dfn}")
@@ -584,6 +592,7 @@ def init_db():
             ("points",     "INTEGER DEFAULT 0"),
             ("streak",     "INTEGER DEFAULT 0"),
             ("last_daily", "TEXT"),
+            ("is_pro",     "BOOLEAN DEFAULT FALSE"),
         ]:
             cur.execute(f"ALTER TABLE users ADD COLUMN IF NOT EXISTS {col} {dfn}")
         cur.execute("""
@@ -901,6 +910,143 @@ async def login(req: LoginRequest):
 @app.get("/api/auth/me")
 async def me(user: dict = Depends(current_user)):
     return user
+
+
+# ─── Lemon Squeezy billing ───────────────────────────────────────────────────
+
+@app.post("/api/billing/checkout")
+async def create_checkout(request: Request, user: dict = Depends(current_user)):
+    """Create a Lemon Squeezy checkout session and return the checkout URL."""
+    try:
+        body = await request.json()
+    except Exception:
+        body = {}
+
+    variant_id = body.get("variant_id")
+    if not variant_id:
+        raise HTTPException(status_code=400, detail="variant_id required")
+
+    # Only allow our known variant IDs
+    if str(variant_id) not in [LS_MONTHLY_ID, LS_YEARLY_ID]:
+        raise HTTPException(status_code=400, detail="Invalid variant")
+
+    if not LS_API_KEY:
+        raise HTTPException(status_code=500, detail="Payment not configured")
+
+    payload = {
+        "data": {
+            "type": "checkouts",
+            "attributes": {
+                "checkout_data": {
+                    "custom": {
+                        "user_id": str(user["id"]),
+                        "username": user["username"],
+                    }
+                },
+                "product_options": {
+                    "redirect_url": "https://mirror-app-z8wr.onrender.com/?checkout=success",
+                    "receipt_link_url": "https://mirror-app-z8wr.onrender.com/?checkout=success",
+                }
+            },
+            "relationships": {
+                "store": {
+                    "data": {"type": "stores", "id": "396208"}
+                },
+                "variant": {
+                    "data": {"type": "variants", "id": str(variant_id)}
+                }
+            }
+        }
+    }
+
+    async with httpx.AsyncClient() as client:
+        resp = await client.post(
+            "https://api.lemonsqueezy.com/v1/checkouts",
+            headers={
+                "Authorization": f"Bearer {LS_API_KEY}",
+                "Content-Type": "application/vnd.api+json",
+                "Accept": "application/vnd.api+json",
+            },
+            json=payload,
+            timeout=15,
+        )
+
+    if resp.status_code not in (200, 201):
+        raise HTTPException(status_code=502, detail="Checkout creation failed")
+
+    data = resp.json()
+    checkout_url = data["data"]["attributes"]["url"]
+    return {"checkout_url": checkout_url}
+
+
+@app.post("/api/billing/webhook")
+async def lemonsqueezy_webhook(request: Request):
+    """Receive Lemon Squeezy webhook events and update user pro status."""
+    raw_body = await request.body()
+    signature = request.headers.get("X-Signature", "")
+
+    # Verify HMAC-SHA256 signature
+    if LS_SIGNING_SECRET:
+        expected = hmac.new(
+            LS_SIGNING_SECRET.encode("utf-8"),
+            raw_body,
+            hashlib.sha256
+        ).hexdigest()
+        if not hmac.compare_digest(expected, signature):
+            raise HTTPException(status_code=401, detail="Invalid signature")
+
+    try:
+        payload = json.loads(raw_body)
+    except Exception:
+        raise HTTPException(status_code=400, detail="Invalid JSON")
+
+    event = request.headers.get("X-Event-Name", "")
+
+    # Extract user_id from custom data
+    try:
+        custom = payload["meta"]["custom_data"]
+        user_id = int(custom.get("user_id", 0))
+    except (KeyError, TypeError, ValueError):
+        # Can't identify user — return 200 so LS doesn't retry
+        return {"ok": True}
+
+    if not user_id:
+        return {"ok": True}
+
+    conn = get_conn()
+    cur = conn.cursor()
+    try:
+        if event in ("subscription_created", "subscription_updated", "subscription_resumed"):
+            # Check subscription status in payload
+            try:
+                status = payload["data"]["attributes"]["status"]
+                is_active = status in ("active", "trialing")
+            except (KeyError, TypeError):
+                is_active = True  # assume active if we can't read status
+
+            cur.execute(
+                f"UPDATE users SET is_pro = {PH} WHERE id = {PH}",
+                (is_active, user_id)
+            )
+            conn.commit()
+
+        elif event in ("subscription_cancelled", "subscription_expired"):
+            cur.execute(
+                f"UPDATE users SET is_pro = {PH} WHERE id = {PH}",
+                (False, user_id)
+            )
+            conn.commit()
+
+        elif event == "subscription_payment_failed":
+            # Don't immediately revoke — just log for now
+            pass
+
+    except Exception:
+        conn.rollback()
+    finally:
+        conn.close()
+
+    return {"ok": True}
 
 
 # ---------------------------------------------------------------------------
