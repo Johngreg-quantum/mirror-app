@@ -3408,3 +3408,63 @@ const MissionsController = {
 };
 
 window.MissionsController = MissionsController;
+
+// ===== ACETERNITY 3D SCROLL — WHAT SECTION =====
+(function() {
+  function initWhatScroll() {
+    if (document.body.classList.contains('app-mode')) return;
+
+    var outer  = document.getElementById('whatScrollOuter');
+    var header = document.getElementById('whatScrollHeader');
+    var card   = document.getElementById('whatScrollCard');
+    var layer  = document.getElementById('whatPosterLayer');
+
+    if (!outer || !header || !card) return;
+
+    if (layer) {
+      for (var r = 0; r < 6; r++) {
+        var row = document.createElement('div');
+        row.className = 'what-poster-row';
+        for (var i = 0; i < 44; i++) {
+          var tile = document.createElement('div');
+          tile.className = 'what-poster-tile';
+          row.appendChild(tile);
+        }
+        layer.appendChild(row);
+      }
+    }
+
+    function clamp(v, lo, hi) { return Math.max(lo, Math.min(hi, v)); }
+    function lerp(a, b, t)    { return a + (b - a) * t; }
+    var isMobile = function() { return window.innerWidth <= 768; };
+
+    function update() {
+      if (document.body.classList.contains('app-mode')) return;
+      var rect         = outer.getBoundingClientRect();
+      var scrollTravel = outer.offsetHeight - window.innerHeight;
+      var p            = clamp(-rect.top / scrollTravel, 0, 1);
+
+      var rotate    = lerp(20, 0, p);
+      var scaleFrom = isMobile() ? 0.7 : 1.05;
+      var scaleTo   = isMobile() ? 0.9 : 1.0;
+      var scale     = lerp(scaleFrom, scaleTo, p);
+
+      var translate = lerp(0, -140, p);
+      var opacity   = clamp(1 - p * 3, 0, 1);
+
+      card.style.transform   = 'rotateX(' + rotate + 'deg) scale(' + scale + ')';
+      header.style.transform = 'translateY(' + translate + 'px)';
+      header.style.opacity   = opacity;
+    }
+
+    window.addEventListener('scroll', update, { passive: true });
+    window.addEventListener('resize', update, { passive: true });
+    update();
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initWhatScroll);
+  } else {
+    initWhatScroll();
+  }
+})();

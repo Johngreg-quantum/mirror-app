@@ -1727,6 +1727,19 @@
       z-index: 2;
     }
 
+    /* Inner section (now inside the glass card) — override layout */
+    .what-section--inner {
+      position: relative;
+      min-height: unset;
+      padding: 0;
+      background: none;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: auto;
+    }
+
     .what-eyebrow {
       margin-bottom: 32px;
       font-family: 'Inter', sans-serif;
@@ -2312,6 +2325,143 @@
       margin-top: 4px;
     }
     .pro-upgrade-btn:hover { transform: scale(1.03); }
+
+    /* ===== ACETERNITY 3D SCROLL — WHAT SECTION ===== */
+
+    /* Outer container: extra height = scroll travel (600px) */
+    .what-scroll-outer {
+      height: calc(100vh + 600px);
+      position: relative;
+      background: #060609;
+      overflow: hidden;
+    }
+
+    /* Poster wall behind glass — gives backdrop-filter something to blur */
+    .what-poster-layer {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+      pointer-events: none;
+      opacity: 0.2;
+    }
+    .what-poster-layer::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(ellipse 90% 80% at 50% 50%, transparent 30%, rgba(6,6,9,0.75) 100%);
+      pointer-events: none;
+    }
+    .what-poster-row {
+      display: flex;
+      gap: 8px;
+      position: absolute;
+      white-space: nowrap;
+    }
+    .what-poster-row:nth-child(1) { top: 0;     animation: wpr-ml 18s linear infinite; }
+    .what-poster-row:nth-child(2) { top: 112px; animation: wpr-mr 25s linear infinite; }
+    .what-poster-row:nth-child(3) { top: 224px; animation: wpr-ml 15s linear infinite; }
+    .what-poster-row:nth-child(4) { top: 336px; animation: wpr-mr 22s linear infinite; }
+    .what-poster-row:nth-child(5) { top: 448px; animation: wpr-ml 20s linear infinite; }
+    .what-poster-row:nth-child(6) { top: 560px; animation: wpr-mr 17s linear infinite; }
+    @keyframes wpr-ml { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+    @keyframes wpr-mr { from { transform: translateX(-50%); } to { transform: translateX(0); } }
+    .what-poster-tile {
+      width: 72px;
+      height: 104px;
+      border-radius: 8px;
+      flex-shrink: 0;
+    }
+    .what-poster-tile:nth-child(5n)   { background: linear-gradient(135deg, #1a1a2e, #16213e); }
+    .what-poster-tile:nth-child(5n+1) { background: linear-gradient(135deg, #2d1b1b, #1a0a0a); }
+    .what-poster-tile:nth-child(5n+2) { background: linear-gradient(135deg, #1b2d1b, #0d1a0d); }
+    .what-poster-tile:nth-child(5n+3) { background: linear-gradient(135deg, #2d2d1b, #1a1a0d); }
+    .what-poster-tile:nth-child(5n+4) { background: linear-gradient(135deg, #1b1b2d, #0d0d1a); }
+
+    /* Sticky inner — always centered in viewport */
+    .what-scroll-sticky {
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      perspective: 1000px;
+      padding: 0 24px;
+      z-index: 2;
+    }
+
+    /* Header — lifts up and fades */
+    .what-scroll-header {
+      width: 100%;
+      max-width: 900px;
+      text-align: center;
+      margin-bottom: 0;
+      will-change: transform, opacity;
+      flex-shrink: 0;
+    }
+
+    /* Glass card */
+    .what-scroll-card {
+      margin-top: -32px;
+      width: 100%;
+      max-width: 900px;
+      height: min(500px, 55vh);
+      border-radius: 30px;
+      position: relative;
+      will-change: transform;
+      transform-origin: center top;
+      overflow: hidden;
+      isolation: isolate;
+      flex-shrink: 0;
+      box-shadow:
+        0 0 #0000004d, 0 9px 20px #0000004a,
+        0 37px 37px #00000042, 0 84px 50px #00000026,
+        0 149px 60px #0000000a, 0 233px 65px #00000003;
+    }
+
+    /* Glass layers */
+    .wsc-blur {
+      position: absolute; inset: 0; border-radius: 30px; z-index: 0;
+      backdrop-filter: blur(16px) saturate(1.8);
+      -webkit-backdrop-filter: blur(16px) saturate(1.8);
+      filter: url(#wsc-glass-filter);
+    }
+    .wsc-fill {
+      position: absolute; inset: 0;
+      background: rgba(255,255,255,0.035);
+      border-radius: 30px; z-index: 1;
+    }
+    .wsc-rim {
+      position: absolute; inset: 0; border-radius: 30px; z-index: 2;
+      border: 1px solid rgba(255,255,255,0.1);
+      box-shadow:
+        inset 1.5px 1.5px 1px rgba(255,255,255,0.15),
+        inset -1px -1px 1px rgba(255,255,255,0.06);
+    }
+    .wsc-spec {
+      position: absolute; top: 0; left: 10%; right: 10%;
+      height: 1px; z-index: 3;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3) 50%, transparent);
+    }
+    .wsc-content {
+      position: relative; z-index: 4;
+      width: 100%; height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 40px 48px;
+    }
+
+    /* app-mode: hide the outer wrapper (inner #whatSection display:none still works too) */
+    body.app-mode .what-scroll-outer { display: none; }
+
+    @media (max-width: 880px) {
+      .what-scroll-card { height: min(460px, 60vh); }
+      .wsc-content { padding: 24px; }
+      .what-scroll-sticky { padding: 0 16px; }
+    }
   </style>
   <script type="module" src="https://unpkg.com/@splinetool/viewer@1.12.90/build/spline-viewer.js"></script>
 </head>
@@ -2839,37 +2989,63 @@
 </script>
 </section>
 
-<!-- ===== PHASE 3 [5/6]: WHAT IS MIRROR ===== -->
-<section class="what-section" id="whatSection">
-  <div class="editorial-eyebrow what-eyebrow">What is Mirror?</div>
-  <h2 class="what-title">
-    Don't just <em>learn</em> English.<br>
-    <em>Perform</em> it.
-  </h2>
-  <div class="what-grid">
-    <div class="what-card">
-      <div class="what-card-num">i.</div>
-      <h3 class="what-card-title">Choose a scene</h3>
-      <p class="what-card-body">
-        Iconic moments from films you love — Titanic, The Godfather, Whiplash. Real lines from real cinema.
-      </p>
+<!-- ===== WHAT IS MIRROR — Aceternity 3D scroll ===== -->
+<div class="what-scroll-outer" id="whatScrollOuter">
+
+  <!-- Poster wall behind the glass card (gives backdrop-filter something to blur) -->
+  <div class="what-poster-layer" id="whatPosterLayer"></div>
+
+  <!-- Sticky container — stays centered in viewport while outer div scrolls -->
+  <div class="what-scroll-sticky">
+
+    <!-- HEADER: translates up and fades as you scroll -->
+    <div class="what-scroll-header" id="whatScrollHeader">
+      <div class="editorial-eyebrow what-eyebrow">What is Mirror?</div>
+      <h2 class="what-title">
+        Don't just <em>learn</em> English.<br>
+        <em>Perform</em> it.
+      </h2>
     </div>
-    <div class="what-card">
-      <div class="what-card-num">ii.</div>
-      <h3 class="what-card-title">Act it out</h3>
-      <p class="what-card-body">
-        Speak the line in real time. Mirror listens, scores your pronunciation, rhythm, and emotion.
-      </p>
+
+    <!-- CARD: the 3D element — rotates from 20° to 0° + scales -->
+    <div class="what-scroll-card" id="whatScrollCard">
+      <!-- Liquid glass layers -->
+      <div class="wsc-blur"></div>
+      <div class="wsc-fill"></div>
+      <div class="wsc-rim"></div>
+      <div class="wsc-spec"></div>
+      <!-- Card content -->
+      <div class="wsc-content">
+        <section id="whatSection" class="what-section what-section--inner">
+          <div class="what-grid">
+            <div class="what-card">
+              <div class="what-card-num">i.</div>
+              <h3 class="what-card-title">Choose a scene</h3>
+              <p class="what-card-body">
+                Iconic moments from films you love — Titanic, The Godfather, Whiplash. Real lines from real cinema.
+              </p>
+            </div>
+            <div class="what-card">
+              <div class="what-card-num">ii.</div>
+              <h3 class="what-card-title">Act it out</h3>
+              <p class="what-card-body">
+                Speak the line in real time. Mirror listens, scores your pronunciation, rhythm, and emotion.
+              </p>
+            </div>
+            <div class="what-card">
+              <div class="what-card-num">iii.</div>
+              <h3 class="what-card-title">Master the moment</h3>
+              <p class="what-card-body">
+                Replay, refine, and rank up. Build vocabulary from the words the greats actually used.
+              </p>
+            </div>
+          </div>
+        </section>
+      </div>
     </div>
-    <div class="what-card">
-      <div class="what-card-num">iii.</div>
-      <h3 class="what-card-title">Master the moment</h3>
-      <p class="what-card-body">
-        Replay, refine, and rank up. Build vocabulary from the words the greats actually used.
-      </p>
-    </div>
+
   </div>
-</section>
+</div>
 
 <!-- ===== PHASE 3 [6/6]: LEVELS SECTION (moved from #authScreen) ===== -->
   <section class="clv-section" id="levelsSection">
@@ -4471,5 +4647,22 @@ function checkLevel2Unlock() {
   }
 })();
 </script>
+<!-- Glass distortion filter for #whatSection card -->
+<svg id="wscGlassSvg" style="display:none" aria-hidden="true">
+  <filter id="wsc-glass-filter" x="0%" y="0%" width="100%" height="100%" filterUnits="objectBoundingBox">
+    <feTurbulence type="fractalNoise" baseFrequency="0.001 0.005" numOctaves="1" seed="17" result="turbulence"/>
+    <feComponentTransfer in="turbulence" result="mapped">
+      <feFuncR type="gamma" amplitude="1" exponent="10" offset="0.5"/>
+      <feFuncG type="gamma" amplitude="0" exponent="1" offset="0"/>
+      <feFuncB type="gamma" amplitude="0" exponent="1" offset="0.5"/>
+    </feComponentTransfer>
+    <feGaussianBlur in="turbulence" stdDeviation="3" result="softMap"/>
+    <feSpecularLighting in="softMap" surfaceScale="5" specularConstant="1" specularExponent="100" lightingColor="white" result="specLight">
+      <fePointLight x="-200" y="-200" z="300"/>
+    </feSpecularLighting>
+    <feComposite in="specLight" operator="arithmetic" k1="0" k2="1" k3="1" k4="0" result="litImage"/>
+    <feDisplacementMap in="SourceGraphic" in2="softMap" scale="200" xChannelSelector="R" yChannelSelector="G"/>
+  </filter>
+</svg>
 </body>
 </html>
