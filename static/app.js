@@ -3427,6 +3427,7 @@ window.MissionsController = MissionsController;
 
     function update() {
       if (document.body.classList.contains('app-mode')) return;
+      if (window.innerWidth <= 768) return;
       var rect         = outer.getBoundingClientRect();
       var scrollTravel = outer.offsetHeight - window.innerHeight;
       var p            = clamp(-rect.top / scrollTravel, 0, 1);

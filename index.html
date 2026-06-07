@@ -2452,6 +2452,38 @@
       .wsc-content { padding: 24px; }
       .what-scroll-sticky { padding: 0 16px; }
     }
+
+    @media (max-width: 768px) {
+      .what-scroll-outer {
+        height: auto;
+        min-height: unset;
+        overflow: visible;
+      }
+      .what-scroll-sticky {
+        position: relative;
+        height: auto;
+        min-height: unset;
+        padding: 80px 24px;
+        perspective: none;
+      }
+      .what-scroll-card {
+        margin-top: 32px;
+        height: auto;
+        min-height: unset;
+        transform: none !important;
+        will-change: auto;
+        border-radius: 20px;
+      }
+      .what-scroll-header {
+        transform: none !important;
+        opacity: 1 !important;
+        will-change: auto;
+      }
+      .wsc-content {
+        padding: 32px 24px;
+        height: auto;
+      }
+    }
   </style>
   <script type="module" src="https://unpkg.com/@splinetool/viewer@1.12.90/build/spline-viewer.js"></script>
 </head>
