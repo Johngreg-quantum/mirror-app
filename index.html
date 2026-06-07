@@ -2330,7 +2330,7 @@
 
     /* Outer container: extra height = scroll travel (600px) */
     .what-scroll-outer {
-      height: calc(100vh + 300px);
+      height: calc(100vh + 500px);
       position: relative;
       background: linear-gradient(180deg, rgba(5,5,5,0.95) 0%, rgba(10,8,6,0.97) 50%, rgba(5,5,5,0.95) 100%);
       overflow: hidden;
@@ -2404,10 +2404,12 @@
       overflow: hidden;
       isolation: isolate;
       flex-shrink: 0;
+      background: rgba(12,10,8,0.9);
+      border: 1px solid rgba(255,255,255,0.06);
       box-shadow:
-        0 0 0 1px rgba(200,169,110,0.18),
-        0 20px 60px rgba(0,0,0,0.4),
-        0 0 100px rgba(200,169,110,0.04);
+        0 0 60px rgba(200,169,110,0.12),
+        0 40px 80px rgba(0,0,0,0.6),
+        inset 0 1px 0 rgba(255,255,255,0.05);
     }
 
     /* Glass layers */
@@ -2420,15 +2422,13 @@
     }
     .wsc-fill {
       position: absolute; inset: 0;
-      background: rgba(255,255,255,0.035);
+      background: transparent;
       border-radius: 30px; z-index: 1;
     }
     .wsc-rim {
       position: absolute; inset: 0; border-radius: 30px; z-index: 2;
-      border: 1px solid rgba(255,255,255,0.1);
-      box-shadow:
-        inset 1.5px 1.5px 1px rgba(255,255,255,0.15),
-        inset -1px -1px 1px rgba(255,255,255,0.06);
+      border: none;
+      box-shadow: none;
     }
     .wsc-spec {
       position: absolute; top: 0; left: 10%; right: 10%;
