@@ -1841,16 +1841,23 @@
       position: relative;
       padding: 36px 28px;
       background: linear-gradient(180deg, rgba(14,14,14,0.95) 0%, rgba(5,5,5,0.95) 100%);
-      border: 1px solid rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.07);
       border-radius: 12px;
       transition: all 0.3s;
       cursor: pointer;
+      box-shadow:
+        0 0 60px rgba(200,169,110,0.08),
+        0 20px 60px rgba(0,0,0,0.5),
+        inset 0 1px 0 rgba(255,255,255,0.05);
     }
 
     .level-card-edt:hover {
       transform: translateY(-4px);
       border-color: rgba(200,169,110,0.3);
-      box-shadow: 0 20px 40px rgba(0,0,0,0.5), 0 0 60px rgba(200,169,110,0.08);
+      box-shadow:
+        0 0 80px rgba(200,169,110,0.15),
+        0 20px 40px rgba(0,0,0,0.5),
+        inset 0 1px 0 rgba(255,255,255,0.08);
     }
 
     .level-card-num {
@@ -1931,14 +1938,31 @@
     .price-card-edt {
       padding: 40px 32px;
       background: linear-gradient(180deg, rgba(14,14,14,0.95), rgba(5,5,5,0.95));
-      border: 1px solid rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,255,255,0.07);
       border-radius: 16px;
       text-align: center;
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+      box-shadow:
+        0 0 60px rgba(200,169,110,0.08),
+        0 20px 60px rgba(0,0,0,0.5),
+        inset 0 1px 0 rgba(255,255,255,0.05);
+    }
+
+    .price-card-edt:hover {
+      transform: translateY(-4px);
+      box-shadow:
+        0 0 80px rgba(200,169,110,0.12),
+        0 20px 40px rgba(0,0,0,0.5),
+        inset 0 1px 0 rgba(255,255,255,0.08);
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
     }
 
     .price-card-edt.pro {
-      border-color: rgba(200,169,110,0.3);
-      box-shadow: 0 0 60px rgba(200,169,110,0.08);
+      border-color: rgba(200,169,110,0.25);
+      box-shadow:
+        0 0 80px rgba(200,169,110,0.14),
+        0 20px 60px rgba(0,0,0,0.5),
+        inset 0 1px 0 rgba(255,255,255,0.07);
     }
 
     .price-card-tier {
