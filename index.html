@@ -2332,24 +2332,13 @@
     .what-scroll-outer {
       height: calc(100vh + 600px);
       position: relative;
-      background: #060609;
+      background: linear-gradient(180deg, rgba(5,5,5,0.95) 0%, rgba(10,8,6,0.97) 50%, rgba(5,5,5,0.95) 100%);
       overflow: hidden;
     }
 
-    /* Poster wall behind glass — gives backdrop-filter something to blur */
+    /* Poster wall removed — kept selector for backward-compat but hidden */
     .what-poster-layer {
-      position: absolute;
-      inset: 0;
-      overflow: hidden;
-      pointer-events: none;
-      opacity: 0.2;
-    }
-    .what-poster-layer::after {
-      content: '';
-      position: absolute;
-      inset: 0;
-      background: radial-gradient(ellipse 90% 80% at 50% 50%, transparent 30%, rgba(6,6,9,0.75) 100%);
-      pointer-events: none;
+      display: none;
     }
     .what-poster-row {
       display: flex;
@@ -2416,17 +2405,18 @@
       isolation: isolate;
       flex-shrink: 0;
       box-shadow:
-        0 0 #0000004d, 0 9px 20px #0000004a,
-        0 37px 37px #00000042, 0 84px 50px #00000026,
-        0 149px 60px #0000000a, 0 233px 65px #00000003;
+        0 0 0 1px rgba(200,169,110,0.18),
+        0 20px 60px rgba(0,0,0,0.4),
+        0 0 100px rgba(200,169,110,0.04);
     }
 
     /* Glass layers */
     .wsc-blur {
-      position: absolute; inset: 0; border-radius: 30px; z-index: 0;
-      backdrop-filter: blur(16px) saturate(1.8);
-      -webkit-backdrop-filter: blur(16px) saturate(1.8);
-      filter: url(#wsc-glass-filter);
+      position: absolute;
+      inset: 0;
+      border-radius: 30px;
+      z-index: 0;
+      background: rgba(255,255,255,0.015);
     }
     .wsc-fill {
       position: absolute; inset: 0;
@@ -4647,22 +4637,5 @@ function checkLevel2Unlock() {
   }
 })();
 </script>
-<!-- Glass distortion filter for #whatSection card -->
-<svg id="wscGlassSvg" style="display:none" aria-hidden="true">
-  <filter id="wsc-glass-filter" x="0%" y="0%" width="100%" height="100%" filterUnits="objectBoundingBox">
-    <feTurbulence type="fractalNoise" baseFrequency="0.001 0.005" numOctaves="1" seed="17" result="turbulence"/>
-    <feComponentTransfer in="turbulence" result="mapped">
-      <feFuncR type="gamma" amplitude="1" exponent="10" offset="0.5"/>
-      <feFuncG type="gamma" amplitude="0" exponent="1" offset="0"/>
-      <feFuncB type="gamma" amplitude="0" exponent="1" offset="0.5"/>
-    </feComponentTransfer>
-    <feGaussianBlur in="turbulence" stdDeviation="3" result="softMap"/>
-    <feSpecularLighting in="softMap" surfaceScale="5" specularConstant="1" specularExponent="100" lightingColor="white" result="specLight">
-      <fePointLight x="-200" y="-200" z="300"/>
-    </feSpecularLighting>
-    <feComposite in="specLight" operator="arithmetic" k1="0" k2="1" k3="1" k4="0" result="litImage"/>
-    <feDisplacementMap in="SourceGraphic" in2="softMap" scale="200" xChannelSelector="R" yChannelSelector="G"/>
-  </filter>
-</svg>
 </body>
 </html>

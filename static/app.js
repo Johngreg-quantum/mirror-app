@@ -3421,19 +3421,6 @@ window.MissionsController = MissionsController;
 
     if (!outer || !header || !card) return;
 
-    if (layer) {
-      for (var r = 0; r < 6; r++) {
-        var row = document.createElement('div');
-        row.className = 'what-poster-row';
-        for (var i = 0; i < 44; i++) {
-          var tile = document.createElement('div');
-          tile.className = 'what-poster-tile';
-          row.appendChild(tile);
-        }
-        layer.appendChild(row);
-      }
-    }
-
     function clamp(v, lo, hi) { return Math.max(lo, Math.min(hi, v)); }
     function lerp(a, b, t)    { return a + (b - a) * t; }
     var isMobile = function() { return window.innerWidth <= 768; };
