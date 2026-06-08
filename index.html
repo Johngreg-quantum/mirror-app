@@ -2508,6 +2508,494 @@
         height: auto;
       }
     }
+
+    /* ===== CINEMATIC ACTS — narrative scroll below #mirrorLanding ===== */
+    .act-section {
+      position: relative;
+      min-height: 100vh;
+      padding: 120px 24px;
+      background: #080808;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      z-index: 2;
+    }
+    .act-section + .act-section { background: #0d0d0d; }
+
+    /* Vertical act label on right edge */
+    .act-vlabel {
+      position: absolute;
+      top: 50%;
+      right: 24px;
+      transform: translateY(-50%) rotate(180deg);
+      writing-mode: vertical-rl;
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 11px;
+      letter-spacing: 0.35em;
+      color: rgba(200,169,110,0.45);
+      pointer-events: none;
+      z-index: 3;
+    }
+    .act-vlabel em { font-style: normal; color: #c8a96e; }
+
+    /* Film grain — fixed overlay */
+    .act-grain {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 9999;
+      opacity: 0.04;
+      mix-blend-mode: overlay;
+      background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 1 0'/></filter><rect width='200' height='200' filter='url(%23n)'/></svg>");
+    }
+    body.app-mode .act-grain { display: none; }
+
+    /* Entry animation primitive — opacity + slide */
+    .act-anim {
+      opacity: 0;
+      transform: translateY(28px);
+      transition: opacity 0.9s cubic-bezier(0.22,1,0.36,1), transform 0.9s cubic-bezier(0.22,1,0.36,1);
+    }
+    .act-anim.in-view { opacity: 1; transform: translateY(0); }
+    .act-anim[data-delay="100"] { transition-delay: 0.10s; }
+    .act-anim[data-delay="200"] { transition-delay: 0.20s; }
+    .act-anim[data-delay="300"] { transition-delay: 0.30s; }
+    .act-anim[data-delay="400"] { transition-delay: 0.40s; }
+    .act-anim[data-delay="500"] { transition-delay: 0.50s; }
+
+    /* ─── ACT I — YOUR VOICE. YOUR STAGE. ─── */
+    #actI { padding-top: 140px; }
+    #actI::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 14px;
+      background:
+        repeating-linear-gradient(90deg,
+          rgba(200,169,110,0.55) 0 18px,
+          transparent 18px 36px);
+      opacity: 0.55;
+    }
+    .actI-eyebrow {
+      font-family: 'Inter', sans-serif;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.32em;
+      text-transform: uppercase;
+      color: #c8a96e;
+      margin-bottom: 22px;
+    }
+    .actI-head {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: clamp(2.6rem, 7vw, 5.2rem);
+      line-height: 1.0;
+      letter-spacing: 0.04em;
+      color: #f0ede6;
+      text-align: center;
+      margin-bottom: 14px;
+    }
+    .actI-head em { font-style: normal; color: #c8a96e; }
+    .actI-sub {
+      font-family: 'Playfair Display', 'Cormorant Garamond', serif;
+      font-style: italic;
+      font-size: 17px;
+      color: rgba(255,255,255,0.55);
+      text-align: center;
+      max-width: 600px;
+      margin: 0 auto 56px;
+      line-height: 1.55;
+    }
+    .actI-triptych {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 18px;
+      max-width: 880px;
+      width: 100%;
+      margin-bottom: 60px;
+    }
+    .actI-poster {
+      aspect-ratio: 2/3;
+      border-radius: 6px;
+      overflow: hidden;
+      position: relative;
+      box-shadow:
+        0 30px 60px rgba(0,0,0,0.6),
+        inset 0 0 0 1px rgba(200,169,110,0.18);
+      background: #111;
+    }
+    .actI-poster img {
+      width: 100%; height: 100%;
+      object-fit: cover;
+      filter: brightness(0.85) saturate(0.85);
+    }
+    .actI-poster::after {
+      content: '';
+      position: absolute; inset: 0;
+      background: linear-gradient(180deg, transparent 60%, rgba(0,0,0,0.6) 100%);
+      pointer-events: none;
+    }
+
+    /* Ticker tape */
+    .actI-ticker {
+      position: relative;
+      width: 100vw;
+      margin-left: calc(50% - 50vw);
+      overflow: hidden;
+      padding: 14px 0;
+      border-top: 0.5px solid rgba(200,169,110,0.18);
+      border-bottom: 0.5px solid rgba(200,169,110,0.18);
+      background: rgba(200,169,110,0.04);
+    }
+    .actI-ticker-track {
+      display: inline-flex;
+      gap: 56px;
+      white-space: nowrap;
+      animation: tickerScroll 32s linear infinite;
+      will-change: transform;
+    }
+    .actI-ticker-item {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 16px;
+      letter-spacing: 0.28em;
+      color: #c8a96e;
+    }
+    .actI-ticker-dot { color: rgba(200,169,110,0.5); }
+    @keyframes tickerScroll {
+      from { transform: translateX(0); }
+      to   { transform: translateX(-50%); }
+    }
+
+    /* ─── ACT II — WORDS THAT CHANGED CINEMA ─── */
+    #actII { background: #0d0d0d; }
+    .actII-head {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: clamp(2rem, 5vw, 3.6rem);
+      letter-spacing: 0.08em;
+      color: #f0ede6;
+      text-align: center;
+      margin-bottom: 60px;
+    }
+    .actII-head em { font-style: normal; color: #c8a96e; }
+    .actII-quotes {
+      max-width: 760px;
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 32px;
+      margin-bottom: 56px;
+    }
+    .actII-quote {
+      opacity: 0;
+      transform: translateX(-40px);
+      transition: opacity 0.7s cubic-bezier(0.22,1,0.36,1), transform 0.7s cubic-bezier(0.22,1,0.36,1);
+      padding-left: 22px;
+      border-left: 1.5px solid rgba(200,169,110,0.35);
+    }
+    .actII-quote.in-view { opacity: 1; transform: translateX(0); }
+    .actII-quote[data-stagger="0"] { transition-delay: 0.00s; }
+    .actII-quote[data-stagger="1"] { transition-delay: 0.15s; }
+    .actII-quote[data-stagger="2"] { transition-delay: 0.30s; }
+    .actII-quote[data-stagger="3"] { transition-delay: 0.45s; }
+    .actII-quote[data-stagger="4"] { transition-delay: 0.60s; }
+    .actII-speaker {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 13px;
+      letter-spacing: 0.22em;
+      color: #c8a96e;
+      margin-bottom: 8px;
+    }
+    .actII-text {
+      font-family: 'Playfair Display', 'Cormorant Garamond', serif;
+      font-style: italic;
+      font-weight: 400;
+      font-size: clamp(20px, 2.4vw, 26px);
+      color: #f0ede6;
+      line-height: 1.45;
+    }
+    .actII-cta {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 14px;
+      letter-spacing: 0.28em;
+      color: #c8a96e;
+      text-align: center;
+      padding-top: 32px;
+      border-top: 0.5px solid rgba(200,169,110,0.2);
+      width: 200px;
+    }
+
+    /* ─── ACT IV — THE AI NEVER LIES. ─── */
+    #actIV {
+      background:
+        radial-gradient(ellipse 60% 70% at 50% 50%, rgba(200,169,110,0.05), transparent 70%),
+        #080808;
+    }
+    .actIV-head {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: clamp(2rem, 5vw, 3.6rem);
+      letter-spacing: 0.06em;
+      color: #f0ede6;
+      text-align: center;
+      margin-bottom: 48px;
+    }
+    .actIV-head em { font-style: normal; color: #c8a96e; }
+    .actIV-score {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: clamp(8rem, 18vw, 14rem);
+      line-height: 0.9;
+      color: #c8a96e;
+      text-align: center;
+      margin-bottom: 6px;
+      letter-spacing: -0.02em;
+    }
+    .actIV-score-sub {
+      font-family: 'Inter', sans-serif;
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.32em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.4);
+      text-align: center;
+      margin-bottom: 52px;
+    }
+    .actIV-meters {
+      max-width: 680px;
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 22px;
+    }
+    .actIV-meter-row {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+    .actIV-meter-label {
+      font-family: 'Inter', sans-serif;
+      font-size: 12px;
+      font-weight: 500;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.7);
+      width: 160px;
+      flex-shrink: 0;
+    }
+    .actIV-meter-bar {
+      flex: 1;
+      height: 4px;
+      background: rgba(255,255,255,0.06);
+      border-radius: 2px;
+      position: relative;
+      overflow: hidden;
+    }
+    .actIV-meter-fill {
+      position: absolute;
+      top: 0; left: 0; bottom: 0;
+      background: linear-gradient(90deg, #9a7d4e, #c8a96e, #e8c98a);
+      border-radius: 2px;
+      transform: scaleX(0);
+      transform-origin: left center;
+      transition: transform 1.2s cubic-bezier(0.22,1,0.36,1);
+    }
+    .in-view .actIV-meter-fill { transform: scaleX(1); }
+    .actIV-meter-val {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 18px;
+      color: #c8a96e;
+      width: 38px;
+      text-align: right;
+      flex-shrink: 0;
+    }
+
+    /* ─── ACT V — 50+ ICONIC MOMENTS. ─── */
+    #actV { background: #0d0d0d; }
+    .actV-head {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: clamp(2rem, 5vw, 3.6rem);
+      letter-spacing: 0.06em;
+      color: #f0ede6;
+      text-align: center;
+      margin-bottom: 12px;
+    }
+    .actV-head em { font-style: normal; color: #c8a96e; }
+    .actV-sub {
+      font-family: 'Playfair Display', 'Cormorant Garamond', serif;
+      font-style: italic;
+      font-size: 15px;
+      color: rgba(255,255,255,0.5);
+      text-align: center;
+      margin-bottom: 48px;
+    }
+    .actV-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      grid-template-rows: repeat(2, 1fr);
+      gap: 16px;
+      max-width: 1000px;
+      width: 100%;
+    }
+    .actV-card {
+      aspect-ratio: 2/3;
+      position: relative;
+      border-radius: 10px;
+      overflow: hidden;
+      background: #111;
+      box-shadow: 0 24px 50px rgba(0,0,0,0.55);
+      opacity: 0;
+      transform: translateY(40px) scale(0.96);
+      transition: opacity 0.8s cubic-bezier(0.22,1,0.36,1), transform 0.8s cubic-bezier(0.22,1,0.36,1);
+    }
+    .actV-card.in-view { opacity: 1; transform: translateY(0) scale(1); }
+    .actV-card[data-stagger="0"] { transition-delay: 0.00s; }
+    .actV-card[data-stagger="1"] { transition-delay: 0.10s; }
+    .actV-card[data-stagger="2"] { transition-delay: 0.20s; }
+    .actV-card[data-stagger="3"] { transition-delay: 0.30s; }
+    .actV-card[data-stagger="4"] { transition-delay: 0.40s; }
+    .actV-card[data-stagger="5"] { transition-delay: 0.50s; }
+    .actV-card img {
+      width: 100%; height: 100%;
+      object-fit: cover;
+      animation: actVBreathe 6s ease-in-out infinite;
+    }
+    @keyframes actVBreathe {
+      0%, 100% { filter: brightness(0.78) saturate(0.85); }
+      50%      { filter: brightness(0.92) saturate(1.0);  }
+    }
+    .actV-card::after {
+      content: '';
+      position: absolute; inset: 0;
+      background: linear-gradient(180deg, transparent 50%, rgba(0,0,0,0.75) 100%);
+      pointer-events: none;
+    }
+    .actV-card-badge {
+      position: absolute;
+      top: 12px; right: 12px;
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 10px;
+      letter-spacing: 0.2em;
+      color: #0a0a0a;
+      background: #c8a96e;
+      padding: 3px 8px;
+      border-radius: 4px;
+      z-index: 2;
+    }
+    .actV-card-title {
+      position: absolute;
+      left: 14px; right: 14px; bottom: 12px;
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 16px;
+      letter-spacing: 0.08em;
+      color: #f0ede6;
+      z-index: 2;
+    }
+
+    /* ─── ACT VII — FINALE: YOUR SCENE STARTS NOW. ─── */
+    #actVII {
+      background:
+        radial-gradient(ellipse 55% 60% at 50% 50%, rgba(200,169,110,0.08), transparent 65%),
+        #080808;
+      padding: 140px 24px;
+    }
+    #actVII::before {
+      content: '';
+      position: absolute;
+      inset: -10%;
+      background: radial-gradient(circle at 50% 50%, rgba(200,169,110,0.16), transparent 50%);
+      animation: actVIIBreathe 8s ease-in-out infinite;
+      pointer-events: none;
+    }
+    @keyframes actVIIBreathe {
+      0%, 100% { opacity: 0.35; transform: scale(0.9); }
+      50%      { opacity: 0.7;  transform: scale(1.05); }
+    }
+    .actVII-stack {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: clamp(3.5rem, 12vw, 9rem);
+      line-height: 0.92;
+      letter-spacing: 0.02em;
+      color: #f0ede6;
+      text-align: center;
+      margin-bottom: 28px;
+      position: relative;
+      z-index: 2;
+    }
+    .actVII-stack div em { font-style: normal; color: #c8a96e; }
+    .actVII-sub {
+      font-family: 'Playfair Display', 'Cormorant Garamond', serif;
+      font-style: italic;
+      font-size: 17px;
+      color: rgba(255,255,255,0.55);
+      text-align: center;
+      max-width: 540px;
+      margin: 0 auto 44px;
+      position: relative;
+      z-index: 2;
+    }
+    .actVII-cta {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 18px;
+      letter-spacing: 0.18em;
+      color: #0a0a0a;
+      background: linear-gradient(180deg, #e8c98a, #c8a96e);
+      border: none;
+      border-radius: 100px;
+      padding: 20px 52px;
+      cursor: pointer;
+      box-shadow: 0 0 60px rgba(200,169,110,0.25), 0 20px 40px rgba(0,0,0,0.5);
+      transition: transform 0.25s ease;
+      position: relative;
+      z-index: 2;
+    }
+    .actVII-cta:hover { transform: scale(1.04); }
+    .actVII-proof {
+      margin-top: 56px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 14px;
+      position: relative;
+      z-index: 2;
+    }
+    .actVII-avatars {
+      display: flex;
+    }
+    .actVII-avatars span {
+      width: 30px; height: 30px;
+      border-radius: 50%;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      background: rgba(200,169,110,0.12);
+      border: 1.5px solid #080808;
+      margin-left: -8px;
+    }
+    .actVII-avatars span:first-child { margin-left: 0; }
+    .actVII-proof-text {
+      font-family: 'Inter', sans-serif;
+      font-size: 12px;
+      font-weight: 500;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.55);
+    }
+
+    /* Hide all Acts in app-mode (consistent with existing pattern) */
+    body.app-mode #actI,
+    body.app-mode #actII,
+    body.app-mode #actIV,
+    body.app-mode #actV,
+    body.app-mode #actVII { display: none; }
+
+    @media (max-width: 768px) {
+      .act-vlabel { display: none; }
+      .actI-triptych { grid-template-columns: repeat(3, 1fr); gap: 8px; }
+      .actV-grid { grid-template-columns: 1fr 1fr; grid-template-rows: repeat(3, 1fr); }
+      .actI-ticker-track { animation-duration: 22s; }
+      .actIV-meter-label { width: 110px; font-size: 10px; }
+      .actVII-cta { padding: 18px 38px; font-size: 16px; }
+    }
   </style>
   <script type="module" src="https://unpkg.com/@splinetool/viewer@1.12.90/build/spline-viewer.js"></script>
 </head>
@@ -3034,6 +3522,226 @@
 })();
 </script>
 </section>
+
+<!-- ═══════════════════════════ CINEMATIC ACTS — narrative scroll ═══════════════════════════ -->
+<div class="act-grain" aria-hidden="true"></div>
+
+<!-- ─── ACT I — YOUR VOICE. YOUR STAGE. ─── -->
+<section class="act-section" id="actI">
+  <div class="act-vlabel">ACT <em>I</em></div>
+  <div class="actI-eyebrow act-anim">Open the curtain</div>
+  <h2 class="actI-head act-anim" data-delay="100">YOUR VOICE. <em>YOUR STAGE.</em></h2>
+  <p class="actI-sub act-anim" data-delay="200">The greatest actors in history once stood exactly where you are.</p>
+  <div class="actI-triptych act-anim" data-delay="300">
+    <div class="actI-poster"><img src="/static/posters/godfather.jpg" alt="The Godfather" loading="lazy"></div>
+    <div class="actI-poster"><img src="/static/posters/dead_poets.jpg" alt="Dead Poets Society" loading="lazy"></div>
+    <div class="actI-poster"><img src="/static/posters/forrest_gump.jpg" alt="Forrest Gump" loading="lazy"></div>
+  </div>
+  <div class="actI-ticker act-anim" data-delay="400">
+    <div class="actI-ticker-track">
+      <span class="actI-ticker-item">PRONUNCIATION</span><span class="actI-ticker-dot">•</span>
+      <span class="actI-ticker-item">SYNC SCORE</span><span class="actI-ticker-dot">•</span>
+      <span class="actI-ticker-item">FLUENCY RANK</span><span class="actI-ticker-dot">•</span>
+      <span class="actI-ticker-item">50+ SCENES</span><span class="actI-ticker-dot">•</span>
+      <span class="actI-ticker-item">PRONUNCIATION</span><span class="actI-ticker-dot">•</span>
+      <span class="actI-ticker-item">SYNC SCORE</span><span class="actI-ticker-dot">•</span>
+      <span class="actI-ticker-item">FLUENCY RANK</span><span class="actI-ticker-dot">•</span>
+      <span class="actI-ticker-item">50+ SCENES</span><span class="actI-ticker-dot">•</span>
+    </div>
+  </div>
+</section>
+
+<!-- ─── ACT II — WORDS THAT CHANGED CINEMA ─── -->
+<section class="act-section" id="actII">
+  <div class="act-vlabel">ACT <em>II</em></div>
+  <h2 class="actII-head act-anim">WORDS THAT CHANGED <em>CINEMA</em></h2>
+  <div class="actII-quotes" id="actIIQuotes">
+    <div class="actII-quote" data-stagger="0">
+      <div class="actII-speaker">MARLON BRANDO · THE GODFATHER</div>
+      <div class="actII-text">"I'm gonna make him an offer he can't refuse."</div>
+    </div>
+    <div class="actII-quote" data-stagger="1">
+      <div class="actII-speaker">ROBIN WILLIAMS · DEAD POETS SOCIETY</div>
+      <div class="actII-text">"Carpe diem. Seize the day, boys."</div>
+    </div>
+    <div class="actII-quote" data-stagger="2">
+      <div class="actII-speaker">TOM HANKS · FORREST GUMP</div>
+      <div class="actII-text">"Life is like a box of chocolates."</div>
+    </div>
+    <div class="actII-quote" data-stagger="3">
+      <div class="actII-speaker">RUSSELL CROWE · GLADIATOR</div>
+      <div class="actII-text">"Are you not entertained?"</div>
+    </div>
+    <div class="actII-quote" data-stagger="4">
+      <div class="actII-speaker">HEATH LEDGER · THE DARK KNIGHT</div>
+      <div class="actII-text">"Why so serious?"</div>
+    </div>
+  </div>
+  <div class="actII-cta act-anim" data-delay="500">MIRROR SCORES YOUR DELIVERY</div>
+</section>
+
+<!-- ─── ACT IV — THE AI NEVER LIES. ─── -->
+<section class="act-section" id="actIV">
+  <div class="act-vlabel">ACT <em>IV</em></div>
+  <h2 class="actIV-head act-anim">THE AI <em>NEVER LIES.</em></h2>
+  <div class="actIV-score act-anim" data-delay="100" id="actIVScore" data-target="94">0</div>
+  <div class="actIV-score-sub act-anim" data-delay="200">Mirror sync score · last take</div>
+  <div class="actIV-meters">
+    <div class="actIV-meter-row act-anim" data-delay="300">
+      <span class="actIV-meter-label">Pronunciation</span>
+      <div class="actIV-meter-bar"><div class="actIV-meter-fill" style="width:96%"></div></div>
+      <span class="actIV-meter-val">96</span>
+    </div>
+    <div class="actIV-meter-row act-anim" data-delay="400">
+      <span class="actIV-meter-label">Rhythm</span>
+      <div class="actIV-meter-bar"><div class="actIV-meter-fill" style="width:91%"></div></div>
+      <span class="actIV-meter-val">91</span>
+    </div>
+    <div class="actIV-meter-row act-anim" data-delay="500">
+      <span class="actIV-meter-label">Emotional Match</span>
+      <div class="actIV-meter-bar"><div class="actIV-meter-fill" style="width:88%"></div></div>
+      <span class="actIV-meter-val">88</span>
+    </div>
+    <div class="actIV-meter-row act-anim" data-delay="500">
+      <span class="actIV-meter-label">Sync Score</span>
+      <div class="actIV-meter-bar"><div class="actIV-meter-fill" style="width:94%"></div></div>
+      <span class="actIV-meter-val">94</span>
+    </div>
+  </div>
+</section>
+
+<!-- ─── ACT V — 50+ ICONIC MOMENTS. ─── -->
+<section class="act-section" id="actV">
+  <div class="act-vlabel">ACT <em>V</em></div>
+  <h2 class="actV-head act-anim">50+ <em>ICONIC</em> MOMENTS.</h2>
+  <p class="actV-sub act-anim" data-delay="100">From whispered confessions to roared battle cries.</p>
+  <div class="actV-grid">
+    <div class="actV-card" data-stagger="0">
+      <img src="/static/posters/godfather.jpg" alt="The Godfather" loading="lazy">
+      <span class="actV-card-badge">LVL 1</span>
+      <div class="actV-card-title">THE GODFATHER</div>
+    </div>
+    <div class="actV-card" data-stagger="1">
+      <img src="/static/posters/fight_club.jpg" alt="Fight Club" loading="lazy">
+      <span class="actV-card-badge">LVL 2</span>
+      <div class="actV-card-title">FIGHT CLUB</div>
+    </div>
+    <div class="actV-card" data-stagger="2">
+      <img src="/static/posters/dead_poets.jpg" alt="Dead Poets Society" loading="lazy">
+      <span class="actV-card-badge">LVL 1</span>
+      <div class="actV-card-title">DEAD POETS</div>
+    </div>
+    <div class="actV-card" data-stagger="3">
+      <img src="/static/posters/gladiator.jpg" alt="Gladiator" loading="lazy">
+      <span class="actV-card-badge">LVL 3</span>
+      <div class="actV-card-title">GLADIATOR</div>
+    </div>
+    <div class="actV-card" data-stagger="4">
+      <img src="/static/posters/dark_knight.jpg" alt="The Dark Knight" loading="lazy">
+      <span class="actV-card-badge">LVL 3</span>
+      <div class="actV-card-title">DARK KNIGHT</div>
+    </div>
+    <div class="actV-card" data-stagger="5">
+      <img src="/static/posters/forrest_gump.jpg" alt="Forrest Gump" loading="lazy">
+      <span class="actV-card-badge">LVL 1</span>
+      <div class="actV-card-title">FORREST GUMP</div>
+    </div>
+  </div>
+</section>
+
+<!-- ─── ACT VII — FINALE: YOUR SCENE STARTS NOW. ─── -->
+<section class="act-section" id="actVII">
+  <div class="act-vlabel">ACT <em>VII</em></div>
+  <div class="actVII-stack act-anim">
+    <div>YOUR</div>
+    <div>SCENE</div>
+    <div>STARTS</div>
+    <div><em>NOW.</em></div>
+  </div>
+  <p class="actVII-sub act-anim" data-delay="200">50 users already speaking cinema. The next great performance is yours.</p>
+  <button class="actVII-cta act-anim" data-delay="300" id="actVIIStartBtn">START PRACTICING →</button>
+  <div class="actVII-proof act-anim" data-delay="400">
+    <div class="actVII-avatars">
+      <span>🎭</span><span>🎬</span><span>🎞️</span><span>🎤</span><span>⭐</span>
+    </div>
+    <div class="actVII-proof-text">50+ learners · 20+ countries</div>
+  </div>
+</section>
+
+<script>
+(function(){
+  // Skip everything when user lands in app-mode (logged in)
+  if (document.body.classList.contains('app-mode')) return;
+
+  // CTA wiring — re-uses the existing landing register flow without modifying it
+  var ctaBtn = document.getElementById('actVIIStartBtn');
+  if (ctaBtn) {
+    ctaBtn.addEventListener('click', function(){
+      if (typeof window.mlOpenAuth === 'function') {
+        window.mlOpenAuth('register');
+      } else {
+        var hero = document.getElementById('heroStartBtn');
+        if (hero) hero.click();
+      }
+    });
+  }
+
+  // IntersectionObserver — entry animations at 0.25 threshold
+  if (!('IntersectionObserver' in window)) {
+    // Fallback: reveal everything immediately
+    document.querySelectorAll('.act-anim, .actII-quote, .actV-card').forEach(function(el){
+      el.classList.add('in-view');
+    });
+    return;
+  }
+
+  var counterStarted = {};
+  function runCounter(el){
+    var key = el.id || 'anon';
+    if (counterStarted[key]) return;
+    counterStarted[key] = true;
+    var target = parseInt(el.dataset.target || '0', 10);
+    var dur = 1600;
+    var start = performance.now();
+    function tick(now){
+      var p = Math.min((now - start) / dur, 1);
+      var eased = 1 - Math.pow(1 - p, 3);
+      el.textContent = Math.round(eased * target);
+      if (p < 1) requestAnimationFrame(tick);
+    }
+    requestAnimationFrame(tick);
+  }
+
+  var obs = new IntersectionObserver(function(entries){
+    entries.forEach(function(entry){
+      if (!entry.isIntersecting) return;
+      var el = entry.target;
+      el.classList.add('in-view');
+      // If the section itself enters, propagate in-view to its meter fills' container
+      if (el.id === 'actIV') {
+        var score = document.getElementById('actIVScore');
+        if (score) runCounter(score);
+      }
+      // Stagger children (quotes / cards) when their section enters
+      if (el.id === 'actII' || el.id === 'actV') {
+        el.querySelectorAll('.actII-quote, .actV-card').forEach(function(child){
+          child.classList.add('in-view');
+        });
+      }
+      obs.unobserve(el);
+    });
+  }, { threshold: 0.25 });
+
+  // Observe both the section roots (for child stagger + counter trigger) and each .act-anim
+  ['actI','actII','actIV','actV','actVII'].forEach(function(id){
+    var el = document.getElementById(id);
+    if (el) obs.observe(el);
+  });
+  document.querySelectorAll('.act-anim').forEach(function(el){ obs.observe(el); });
+  // Also observe meter rows individually so each row's fill animates as it enters
+  document.querySelectorAll('#actIV .actIV-meter-row').forEach(function(el){ obs.observe(el); });
+})();
+</script>
 
 <!-- ===== WHAT IS MIRROR — Aceternity 3D scroll ===== -->
 <div class="what-scroll-outer" id="whatScrollOuter">
