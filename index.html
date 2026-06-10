@@ -3351,7 +3351,32 @@
       .mw-grid { grid-template-columns: 1fr; }
       .mw-dim { display: none; }
     }
+    /* ===== Mux video player (used in #mirrorMethod) ===== */
+    .scene-video {
+      width: 100%;
+      max-width: 900px;
+      margin: 0 auto;
+      aspect-ratio: 16 / 9;
+      overflow: hidden;
+      border-radius: 16px;
+      border: 1px solid rgba(200,169,110,0.15);
+    }
+    .scene-video mux-player {
+      width: 100%;
+      height: 100%;
+      --media-primary-color: #c8a96e;
+      --media-secondary-color: #060609;
+      --media-background-color: #060609;
+    }
+    /* Override the original absolute-positioned .mm-card so it flows below the new video */
+    #mirrorMethod > .mm-card {
+      position: relative;
+      left: auto; right: auto; bottom: auto;
+      max-width: 900px;
+      margin: 24px auto 0;
+    }
   </style>
+  <script src="https://cdn.jsdelivr.net/npm/@mux/mux-player" defer></script>
   <script type="module" src="https://unpkg.com/@splinetool/viewer@1.12.90/build/spline-viewer.js"></script>
 </head>
 <body>
@@ -3884,14 +3909,17 @@
 <section class="ms-section" id="mirrorMethod">
   <div class="mm-eyebrow ms-anim">The Mirror Method</div>
   <h2 class="mm-head ms-anim d1">See a take<br>come together</h2>
-  <div class="mm-frame ms-anim d2">
-    <div class="mm-frame-img"></div>
-    <div class="mm-frame-overlay"></div>
-    <button class="mm-play" type="button" aria-label="Watch a scene">▶</button>
-    <div class="mm-card">
-      <p class="mm-card-body">Pick a scene. Hear the line. Speak it back. Our engine scores your delivery against the original performance &mdash; word by word, beat by beat &mdash; until it sounds like you own it.</p>
-      <button class="mm-ghost" type="button" id="mmWatchBtn">Watch a scene &rarr;</button>
-    </div>
+  <div class="scene-video ms-anim d2">
+    <mux-player
+      playback-id="r1BCbuq01pu4L6Q71btkOiBb01i01KEEWEO7Bfl745dhpI"
+      metadata-video-title="Mirror — Scene Preview"
+      controls
+      preload="metadata"
+    ></mux-player>
+  </div>
+  <div class="mm-card ms-anim d3">
+    <p class="mm-card-body">Pick a scene. Hear the line. Speak it back. Our engine scores your delivery against the original performance &mdash; word by word, beat by beat &mdash; until it sounds like you own it.</p>
+    <button class="mm-ghost" type="button" id="mmWatchBtn">Watch a scene &rarr;</button>
   </div>
 </section>
 
