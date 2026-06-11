@@ -16,7 +16,7 @@
       document.head.appendChild(style);
     })();
   </script>
-  <title>MIRRORSPEAK — Cinematic Language Learning</title>
+  <title>MIRROR — Learn English Through Cinema</title>
   <link rel="icon" href="/static/favicon.svg" type="image/svg+xml" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -2725,7 +2725,7 @@
       width: 200px;
     }
 
-    /* ─── ACT IV — THE AI NEVER LIES. ─── */
+    /* ─── ACT III — THE AI NEVER LIES. ─── */
     #actIV {
       background:
         radial-gradient(ellipse 60% 70% at 50% 50%, rgba(200,169,110,0.05), transparent 70%),
@@ -2808,7 +2808,7 @@
       flex-shrink: 0;
     }
 
-    /* ─── ACT V — 50+ ICONIC MOMENTS. ─── */
+    /* ─── ACT IV — 47+ ICONIC MOMENTS. ─── */
     #actV { background: #0d0d0d; }
     .actV-head {
       font-family: 'Bebas Neue', sans-serif;
@@ -2890,7 +2890,7 @@
       z-index: 2;
     }
 
-    /* ─── ACT VII — FINALE: YOUR SCENE STARTS NOW. ─── */
+    /* ─── ACT V — FINALE: YOUR SCENE STARTS NOW. ─── */
     #actVII {
       background:
         radial-gradient(ellipse 55% 60% at 50% 50%, rgba(200,169,110,0.08), transparent 65%),
@@ -3488,6 +3488,21 @@
       max-width: 900px;
       margin: 24px auto 0;
     }
+
+    /* ===== Landing cleanup: hide legacy marketing surfaces ===== */
+    /* heroStartBtn stays inside .hero in the DOM (mlOpenAuth() programmatically clicks it),
+       but the legacy hero shell is no longer rendered. .hero is the legacy hero section
+       (ACT THE Scene. / AI-Powered Movie English). */
+    .hero,
+    #howItWorks,
+    #whatScrollOuter,
+    .site-footer { display: none !important; }
+
+    /* #levelsSection (Three Acts marketing) — scoped to landing only.
+       The existing `body.app-mode #levelsSection { display: none }` rule still applies in
+       app mode; openLevelPanel() opens a separate panel and does not require this section
+       to be visible. */
+    body:not(.app-mode) #levelsSection { display: none !important; }
   </style>
   <script src="https://cdn.jsdelivr.net/npm/@mux/mux-player" defer></script>
   <script type="module" src="https://unpkg.com/@splinetool/viewer@1.12.90/build/spline-viewer.js"></script>
@@ -3762,7 +3777,7 @@
       <button class="ml-pill-btn ml-on" onclick="mlPill(this)">CREATE</button>
       <button class="ml-pill-btn" onclick="mlPill(this)">EXPLORE</button>
     </div>
-    <div class="ml-topright">50+ USERS<br>ACTIVE NOW</div>
+    <div class="ml-topright">LEARNERS IN<br>20+ COUNTRIES</div>
   </div>
 
   <div id="mlCenter">
@@ -4101,7 +4116,7 @@
         <div class="mw-card-arrow" aria-hidden="true">&rarr;</div>
         <div class="mw-card-tag">PRACTICE</div>
         <div class="mw-card-title">Scene Studio</div>
-        <p class="mw-card-desc">50+ iconic moments to step into. Read the script, hit record, and deliver the line in your own voice.</p>
+        <p class="mw-card-desc">47+ iconic moments to step into. Read the script, hit record, and deliver the line in your own voice.</p>
       </div>
     </div>
     <div class="mw-card ms-anim d1">
@@ -4187,11 +4202,11 @@
       <span class="actI-ticker-item">PRONUNCIATION</span><span class="actI-ticker-dot">•</span>
       <span class="actI-ticker-item">SYNC SCORE</span><span class="actI-ticker-dot">•</span>
       <span class="actI-ticker-item">FLUENCY RANK</span><span class="actI-ticker-dot">•</span>
-      <span class="actI-ticker-item">50+ SCENES</span><span class="actI-ticker-dot">•</span>
+      <span class="actI-ticker-item">47+ SCENES</span><span class="actI-ticker-dot">•</span>
       <span class="actI-ticker-item">PRONUNCIATION</span><span class="actI-ticker-dot">•</span>
       <span class="actI-ticker-item">SYNC SCORE</span><span class="actI-ticker-dot">•</span>
       <span class="actI-ticker-item">FLUENCY RANK</span><span class="actI-ticker-dot">•</span>
-      <span class="actI-ticker-item">50+ SCENES</span><span class="actI-ticker-dot">•</span>
+      <span class="actI-ticker-item">47+ SCENES</span><span class="actI-ticker-dot">•</span>
     </div>
   </div>
 </section>
@@ -4225,11 +4240,11 @@
   <div class="actII-cta act-anim" data-delay="500">MIRROR SCORES YOUR DELIVERY</div>
 </section>
 
-<!-- ─── ACT IV — THE AI NEVER LIES. ─── -->
+<!-- ─── ACT III — THE AI NEVER LIES. ─── -->
 <section class="act-section" id="actIV">
-  <div class="act-vlabel">ACT <em>IV</em></div>
+  <div class="act-vlabel">ACT <em>III</em></div>
   <h2 class="actIV-head act-anim">THE AI <em>NEVER LIES.</em></h2>
-  <div class="actIV-score act-anim" data-delay="100" id="actIVScore" data-target="94">0</div>
+  <div class="actIV-score act-anim" data-delay="100" id="actIVScore" data-target="94">94</div>
   <div class="actIV-score-sub act-anim" data-delay="200">Mirror sync score · last take</div>
   <div class="actIV-meters">
     <div class="actIV-meter-row act-anim" data-delay="300">
@@ -4255,10 +4270,10 @@
   </div>
 </section>
 
-<!-- ─── ACT V — 50+ ICONIC MOMENTS. ─── -->
+<!-- ─── ACT IV — 47+ ICONIC MOMENTS. ─── -->
 <section class="act-section" id="actV">
-  <div class="act-vlabel">ACT <em>V</em></div>
-  <h2 class="actV-head act-anim">50+ <em>ICONIC</em> MOMENTS.</h2>
+  <div class="act-vlabel">ACT <em>IV</em></div>
+  <h2 class="actV-head act-anim">47+ <em>ICONIC</em> MOMENTS.</h2>
   <p class="actV-sub act-anim" data-delay="100">From whispered confessions to roared battle cries.</p>
   <div class="actV-grid">
     <div class="actV-card" data-stagger="0">
@@ -4294,16 +4309,16 @@
   </div>
 </section>
 
-<!-- ─── ACT VII — FINALE: YOUR SCENE STARTS NOW. ─── -->
+<!-- ─── ACT V — FINALE: YOUR SCENE STARTS NOW. ─── -->
 <section class="act-section" id="actVII">
-  <div class="act-vlabel">ACT <em>VII</em></div>
+  <div class="act-vlabel">ACT <em>V</em></div>
   <div class="actVII-stack act-anim">
     <div>YOUR</div>
     <div>SCENE</div>
     <div>STARTS</div>
     <div><em>NOW.</em></div>
   </div>
-  <p class="actVII-sub act-anim" data-delay="200">50 users already speaking cinema. The next great performance is yours.</p>
+  <p class="actVII-sub act-anim" data-delay="200">Learners in 20+ countries are already speaking cinema. The next great performance is yours.</p>
   <button class="actVII-cta act-anim" data-delay="300" id="actVIIStartBtn">START PRACTICING →</button>
   <div class="actVII-proof act-anim" data-delay="400">
     <div class="actVII-avatars">
@@ -4385,6 +4400,21 @@
   document.querySelectorAll('.act-anim').forEach(function(el){ obs.observe(el); });
   // Also observe meter rows individually so each row's fill animates as it enters
   document.querySelectorAll('#actIV .actIV-meter-row').forEach(function(el){ obs.observe(el); });
+
+  // Direct observer on the score element at low threshold — guarantees the count-up
+  // fires even if the section's 0.25 trigger never crosses (tall mobile viewports).
+  var scoreEl = document.getElementById('actIVScore');
+  if (scoreEl && 'IntersectionObserver' in window) {
+    var scoreObs = new IntersectionObserver(function(entries){
+      entries.forEach(function(entry){
+        if (entry.isIntersecting) {
+          runCounter(scoreEl);
+          scoreObs.unobserve(scoreEl);
+        }
+      });
+    }, { threshold: 0.1 });
+    scoreObs.observe(scoreEl);
+  }
 })();
 </script>
 
@@ -4467,7 +4497,7 @@
         <h3 class="level-card-title">Intermediate</h3>
         <p class="level-card-desc">Rhythm and emotion start to matter.</p>
         <div class="level-card-meta" id="clvLock2Meta">
-          <span>6 Scenes · Score 60% to unlock</span>
+          <span>20 Scenes · Score 60% to unlock</span>
         </div>
       </div>
       <div class="level-card-edt locked" onclick="openLevelPanel(3)">
@@ -4475,7 +4505,7 @@
         <h3 class="level-card-title">Advanced</h3>
         <p class="level-card-desc">Accent precision and raw delivery.</p>
         <div class="level-card-meta" id="clvLock3Meta">
-          <span>1 Scene · Score 70% to unlock</span>
+          <span>7 Scenes · Score 70% to unlock</span>
         </div>
       </div>
     </div>
@@ -4514,7 +4544,7 @@
       </div>
       <div class="pro-price-sub" data-yearly-text="billed yearly ($47.88/year)" data-monthly-text="">billed yearly ($47.88/year)</div>
       <ul class="price-card-features">
-        <li>All 75 scenes</li>
+        <li>All 47 scenes</li>
         <li>Spanish translations</li>
         <li>Advanced ranks &amp; missions</li>
         <li>Priority new releases</li>
@@ -4567,7 +4597,7 @@
 
       <div class="hero-btns">
         <button class="hero-btn hero-btn--primary" id="heroStartBtn">Start for Free</button>
-        <a href="#howItWorks" class="hero-btn hero-btn--ghost">
+        <a href="#mirrorMethod" class="hero-btn hero-btn--ghost">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
           How It Works
         </a>
@@ -4597,7 +4627,7 @@
   <div class="stats-bar">
     <div class="stats-inner">
       <div class="stat-item">
-        <span class="stat-val">27+</span>
+        <span class="stat-val">47+</span>
         <span class="stat-lbl">Movie Scenes</span>
       </div>
       <div class="stat-item">
@@ -4679,7 +4709,7 @@
   <!-- ── COMPACT NAV BAR ── -->
   <nav class="app-nav" id="appNav">
     <div class="app-nav-inner">
-      <a class="app-nav-logo" href="#">MIRROR<em>SPEAK</em></a>
+      <a class="app-nav-logo" href="#">MIRROR</a>
       <div class="app-nav-right">
         <button class="btn-my-progress app-nav-progress" id="btnMyProgress">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -5331,7 +5361,7 @@
   <div class="pro-upgrade-card pro-locked" id="proUpgradeCard">
     <div class="pro-upgrade-inner">
       <div class="pro-upgrade-eyebrow">Mirror Pro</div>
-      <div class="pro-upgrade-title">Unlock all <em>75 scenes</em></div>
+      <div class="pro-upgrade-title">Unlock all <em>47 scenes</em></div>
       <div class="pro-upgrade-features">
         <span>Spanish translations</span>
         <span>Advanced ranks</span>
