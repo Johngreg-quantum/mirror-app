@@ -3503,6 +3503,81 @@
        app mode; openLevelPanel() opens a separate panel and does not require this section
        to be visible. */
     body:not(.app-mode) #levelsSection { display: none !important; }
+
+    /* ===== Cinematic 3D layer (landing-wow) ===== */
+    /* Effect 1+2 target — single transform writer in JS */
+    #ml-frame {
+      will-change: transform;
+      transform-origin: 50% 50%;
+    }
+
+    /* Effect 3 — spotlight cursor */
+    #mlSpotlight {
+      position: fixed;
+      top: 0; left: 0;
+      width: 600px; height: 600px;
+      pointer-events: none;
+      background: radial-gradient(circle,
+        rgba(200,169,110,0.07) 0%,
+        rgba(200,169,110,0.025) 35%,
+        transparent 60%);
+      z-index: 9998;
+      opacity: 0;
+      transition: opacity 0.6s ease;
+      mix-blend-mode: screen;
+      will-change: transform;
+    }
+    #mlSpotlight.on { opacity: 1; }
+    body.app-mode #mlSpotlight { display: none !important; }
+
+    /* Effect 4 — tilt card chrome */
+    #mirrorWhat { perspective: 1400px; }
+    #mirrorWhat .mw-card {
+      transform-style: preserve-3d;
+      transition: transform 0.6s cubic-bezier(0.25,0.46,0.45,0.94);
+      will-change: transform;
+    }
+    #mirrorWhat .mw-card.tilting { transition: none; }
+    #mirrorWhat .mw-card-img img {
+      transition: transform 0.6s cubic-bezier(0.25,0.46,0.45,0.94);
+      will-change: transform;
+    }
+    .mw-sheen {
+      position: absolute;
+      inset: 0;
+      border-radius: 16px;
+      z-index: 2;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.4s ease;
+      mix-blend-mode: overlay;
+    }
+    #mirrorWhat .mw-card.tilting .mw-sheen { opacity: 1; }
+
+    /* Effect 5 — ACT II quote depth reveal (overrides earlier translateX rule) */
+    #actII { perspective: 1200px; }
+    .actII-quote {
+      transform: scale(0.85) translateZ(-120px);
+    }
+    .actII-quote.in-view {
+      transform: scale(1) translateZ(0);
+    }
+
+    /* Universal guard — strip every effect when user prefers reduced motion */
+    @media (prefers-reduced-motion: reduce) {
+      #ml-frame { transform: none !important; will-change: auto; }
+      #mlSpotlight { display: none !important; }
+      #mirrorWhat .mw-card { transform: none !important; transition: none !important; }
+      #mirrorWhat .mw-card-img img { transform: none !important; }
+      .mw-sheen { display: none !important; }
+      .actII-quote { transform: none !important; }
+      .actII-quote.in-view { transform: none !important; }
+    }
+
+    /* Coarse-pointer guard — hide the spotlight on touch devices */
+    @media (pointer: coarse) {
+      #mlSpotlight { display: none !important; }
+    }
   </style>
   <script src="https://cdn.jsdelivr.net/npm/@mux/mux-player" defer></script>
   <script type="module" src="https://unpkg.com/@splinetool/viewer@1.12.90/build/spline-viewer.js"></script>
@@ -6090,6 +6165,238 @@ function checkLevel2Unlock() {
   var cta = document.getElementById('mpCta');
   if (playBtn) playBtn.addEventListener('click', playScene);
   if (cta) cta.addEventListener('click', playScene);
+})();
+</script>
+
+<!-- ═══════════════════════════ LANDING-WOW: cinematic 3D layer ═══════════════════════════ -->
+<script>
+(function(){
+  // Hard stop in app mode (token-resume short-circuit; user reloads landing only if logged out)
+  if (document.body.classList.contains('app-mode')) return;
+
+  var mqReduce = window.matchMedia('(prefers-reduced-motion: reduce)');
+  var mqCoarse = window.matchMedia('(pointer: coarse)');
+  var reduce   = mqReduce.matches;
+  var coarse   = mqCoarse.matches;
+
+  function lerp(a, b, t){ return a + (b - a) * t; }
+
+  // ── Shared cleanup registry — drained when app-mode is detected ──
+  var teardownFns = [];
+  function teardown(){
+    while (teardownFns.length) {
+      try { teardownFns.pop()(); } catch(e){}
+    }
+  }
+  // Watch for app-mode activation (enterAppMode sets body.app-mode); remove all listeners.
+  var bodyClassObs = new MutationObserver(function(){
+    if (document.body.classList.contains('app-mode')) {
+      teardown();
+      bodyClassObs.disconnect();
+    }
+  });
+  bodyClassObs.observe(document.body, { attributes: true, attributeFilter: ['class'] });
+  teardownFns.push(function(){ bodyClassObs.disconnect(); });
+
+  // ═════════════════════════════════════════════════════════════════════
+  // EFFECT 1 + 2 — Hero camera push-in + mouse parallax (single writer on #ml-frame)
+  // mlApply3DCurve() writes to .ml-mrow / .ml-card transforms, NOT #ml-frame, so we own it.
+  // ═════════════════════════════════════════════════════════════════════
+  var heroFrame = document.getElementById('ml-frame');
+  if (heroFrame && !reduce) {
+    var hero = {
+      tgtScale: 1, tgtZ: 0, tgtRX: 0, tgtRY: 0,
+      curScale: 1, curZ: 0, curRX: 0, curRY: 0,
+      queued: false
+    };
+    function writeHero(){
+      hero.queued = false;
+      hero.curScale = lerp(hero.curScale, hero.tgtScale, 0.08);
+      hero.curZ     = lerp(hero.curZ,     hero.tgtZ,     0.08);
+      hero.curRX    = lerp(hero.curRX,    hero.tgtRX,    0.06);
+      hero.curRY    = lerp(hero.curRY,    hero.tgtRY,    0.06);
+      heroFrame.style.transform =
+        'perspective(1600px) ' +
+        'translateZ(' + hero.curZ.toFixed(2) + 'px) ' +
+        'scale(' + hero.curScale.toFixed(4) + ') ' +
+        'rotateX(' + hero.curRX.toFixed(3) + 'deg) ' +
+        'rotateY(' + hero.curRY.toFixed(3) + 'deg)';
+      var settled =
+        Math.abs(hero.curScale - hero.tgtScale) < 0.0005 &&
+        Math.abs(hero.curZ     - hero.tgtZ)     < 0.1 &&
+        Math.abs(hero.curRX    - hero.tgtRX)    < 0.01 &&
+        Math.abs(hero.curRY    - hero.tgtRY)    < 0.01;
+      if (!settled) requestHero();
+    }
+    function requestHero(){
+      if (hero.queued) return;
+      hero.queued = true;
+      requestAnimationFrame(writeHero);
+    }
+
+    // Effect 1 — dolly push-in driven by scrollY
+    function onHeroScroll(){
+      if (document.body.classList.contains('app-mode')) return;
+      var maxScroll = window.innerHeight * 1.2;
+      var p = Math.min(Math.max(window.scrollY / maxScroll, 0), 1);
+      var eased = p * p * (3 - 2 * p); // smoothstep ≈ cubic-bezier(0.25,0.46,0.45,0.94)
+      hero.tgtScale = 1 + eased * 0.18;
+      hero.tgtZ     = eased * 60;
+      requestHero();
+    }
+    window.addEventListener('scroll', onHeroScroll, { passive: true });
+    teardownFns.push(function(){ window.removeEventListener('scroll', onHeroScroll); });
+    onHeroScroll();
+
+    // Effect 2 — mouse parallax tilt (desktop only)
+    if (!coarse) {
+      function onHeroMouse(e){
+        if (document.body.classList.contains('app-mode')) return;
+        var nx = (e.clientX / window.innerWidth  - 0.5) * 2;
+        var ny = (e.clientY / window.innerHeight - 0.5) * 2;
+        hero.tgtRY =  nx * 4;    // ±4°
+        hero.tgtRX = -ny * 2.5;  // ±2.5°
+        requestHero();
+      }
+      function onHeroLeave(){
+        hero.tgtRX = 0; hero.tgtRY = 0;
+        requestHero();
+      }
+      window.addEventListener('mousemove', onHeroMouse, { passive: true });
+      window.addEventListener('mouseleave', onHeroLeave, { passive: true });
+      teardownFns.push(function(){
+        window.removeEventListener('mousemove', onHeroMouse);
+        window.removeEventListener('mouseleave', onHeroLeave);
+      });
+    }
+
+    teardownFns.push(function(){ heroFrame.style.transform = 'none'; });
+  }
+
+  // ═════════════════════════════════════════════════════════════════════
+  // EFFECT 3 — Spotlight cursor (desktop only)
+  // ═════════════════════════════════════════════════════════════════════
+  if (!coarse && !reduce) {
+    var spotlight = document.createElement('div');
+    spotlight.id = 'mlSpotlight';
+    spotlight.setAttribute('aria-hidden', 'true');
+    document.body.appendChild(spotlight);
+    var spot = {
+      tx: window.innerWidth / 2, ty: window.innerHeight / 2,
+      x:  window.innerWidth / 2, y:  window.innerHeight / 2,
+      queued: false
+    };
+    function writeSpot(){
+      spot.queued = false;
+      spot.x = lerp(spot.x, spot.tx, 0.18);
+      spot.y = lerp(spot.y, spot.ty, 0.18);
+      spotlight.style.transform = 'translate3d(' + (spot.x - 300) + 'px,' + (spot.y - 300) + 'px,0)';
+      if (Math.abs(spot.x - spot.tx) > 0.5 || Math.abs(spot.y - spot.ty) > 0.5) requestSpot();
+    }
+    function requestSpot(){
+      if (spot.queued) return;
+      spot.queued = true;
+      requestAnimationFrame(writeSpot);
+    }
+    function onSpotMove(e){
+      if (document.body.classList.contains('app-mode')) return;
+      spot.tx = e.clientX; spot.ty = e.clientY;
+      if (!spotlight.classList.contains('on')) spotlight.classList.add('on');
+      requestSpot();
+    }
+    function onSpotLeave(){ spotlight.classList.remove('on'); }
+    document.addEventListener('mousemove', onSpotMove, { passive: true });
+    document.addEventListener('mouseleave', onSpotLeave, { passive: true });
+    spotlight.style.transform = 'translate3d(' + (spot.x - 300) + 'px,' + (spot.y - 300) + 'px,0)';
+    teardownFns.push(function(){
+      document.removeEventListener('mousemove', onSpotMove);
+      document.removeEventListener('mouseleave', onSpotLeave);
+      if (spotlight.parentNode) spotlight.parentNode.removeChild(spotlight);
+    });
+  }
+
+  // ═════════════════════════════════════════════════════════════════════
+  // EFFECT 4 — Tilt cards on #mirrorWhat .mw-card (desktop only)
+  // Each card carries its own rAF-loop and sheen overlay.
+  // ═════════════════════════════════════════════════════════════════════
+  if (!coarse && !reduce) {
+    document.querySelectorAll('#mirrorWhat .mw-card').forEach(function(card){
+      var imgWrap = card.querySelector('.mw-card-img');
+      var img = imgWrap ? imgWrap.querySelector('img') : null;
+      var sheen = document.createElement('div');
+      sheen.className = 'mw-sheen';
+      card.appendChild(sheen);
+      var s = { tx: 0, ty: 0, x: 0, y: 0, sheenX: 50, queued: false, active: false };
+
+      function write(){
+        s.queued = false;
+        s.x = lerp(s.x, s.tx, 0.18);
+        s.y = lerp(s.y, s.ty, 0.18);
+        card.style.transform =
+          'perspective(900px) rotateX(' + s.x.toFixed(2) + 'deg) rotateY(' + s.y.toFixed(2) + 'deg)';
+        if (img) {
+          img.style.transform =
+            'translateZ(' + (s.active ? 28 : 0) + 'px) scale(' + (s.active ? 1.05 : 1) + ')';
+        }
+        sheen.style.background =
+          'linear-gradient(' + (135 + s.y * 8).toFixed(1) + 'deg, ' +
+          'transparent ' + Math.max(0, s.sheenX - 30).toFixed(1) + '%, ' +
+          'rgba(200,169,110,0.22) ' + s.sheenX.toFixed(1) + '%, ' +
+          'transparent ' + Math.min(100, s.sheenX + 30).toFixed(1) + '%)';
+        var settled = Math.abs(s.x - s.tx) < 0.05 && Math.abs(s.y - s.ty) < 0.05;
+        if (!settled) req();
+      }
+      function req(){
+        if (s.queued) return;
+        s.queued = true;
+        requestAnimationFrame(write);
+      }
+      function onMove(e){
+        if (document.body.classList.contains('app-mode')) return;
+        var rect = card.getBoundingClientRect();
+        var nx = ((e.clientX - rect.left) / rect.width  - 0.5) * 2;
+        var ny = ((e.clientY - rect.top)  / rect.height - 0.5) * 2;
+        s.tx = -ny * 6;
+        s.ty =  nx * 6;
+        s.sheenX = ((e.clientX - rect.left) / rect.width) * 100;
+        s.active = true;
+        card.classList.add('tilting');
+        req();
+      }
+      function onLeave(){
+        s.tx = 0; s.ty = 0; s.active = false;
+        card.classList.remove('tilting');
+        req();
+        // Reset image transform with the (re-enabled) CSS transition
+        if (img) img.style.transform = '';
+      }
+      card.addEventListener('mousemove', onMove, { passive: true });
+      card.addEventListener('mouseleave', onLeave, { passive: true });
+      teardownFns.push(function(){
+        card.removeEventListener('mousemove', onMove);
+        card.removeEventListener('mouseleave', onLeave);
+        if (sheen.parentNode) sheen.parentNode.removeChild(sheen);
+        card.classList.remove('tilting');
+        card.style.transform = '';
+        if (img) img.style.transform = '';
+      });
+    });
+  }
+
+  // ═════════════════════════════════════════════════════════════════════
+  // EFFECT 5 — ACT II quote depth reveal
+  // CSS-only: .actII-quote starts at scale(0.85) translateZ(-120px),
+  // resolves to flat/full when .in-view is added by the existing observer.
+  // Stagger delays are inherited from the existing [data-stagger="N"] rules.
+  // No JS needed here.
+  // ═════════════════════════════════════════════════════════════════════
+
+  // Live-toggle reduce-motion mid-page: if user enables it, drain everything.
+  if (mqReduce.addEventListener) {
+    mqReduce.addEventListener('change', function(e){ if (e.matches) teardown(); });
+  } else if (mqReduce.addListener) {
+    mqReduce.addListener(function(e){ if (e.matches) teardown(); });
+  }
 })();
 </script>
 </body>
