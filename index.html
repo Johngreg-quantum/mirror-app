@@ -6596,5 +6596,290 @@ function checkLevel2Unlock() {
   }
 })();
 </script>
+
+<!-- ═══════════════════════════ SCREEN TEST — Three.js + audio (3/3) ═══════════════════════════ -->
+<script>
+(function(){
+  if (!document.getElementById('mlStage')) return;
+  if (typeof THREE === 'undefined') {
+    console.warn('[mlStage] THREE not loaded — Three.js stage skipped');
+    return;
+  }
+
+  var reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  function webglOK(){
+    try {
+      var c = document.createElement('canvas');
+      return !!(c.getContext('webgl2') || c.getContext('webgl'));
+    } catch(e){ return false; }
+  }
+
+  // POSTERS: index-aligned with the three swatch buttons (godfather / fight_club / gladiator).
+  // Procedural canvas data here is the silent fallback if /static/posters/{id}.jpg fails to load.
+  var POSTERS = [
+    { id:'godfather',  title:['THE','GODFATHER'], level:'LEVEL I · BEGINNER',     tint:'#2a1410' },
+    { id:'fight_club', title:['FIGHT','CLUB'],    level:'LEVEL II · INTERMEDIATE', tint:'#10202a' },
+    { id:'gladiator',  title:['GLADIATOR',''],    level:'LEVEL III · ADVANCED',   tint:'#241c0c' }
+  ];
+  var POSTER_INDEX = { godfather:0, fight_club:1, gladiator:2 };
+
+  var canvas   = document.getElementById('mlsCanvas');
+  var fallback = document.getElementById('mlsCardFallback');
+  var stage    = document.getElementById('mlStage');
+
+  // ── Audio toggle (Web Audio projector hum) — wired in both modes ──
+  var actx = null, hum = null;
+  function buildHum(){
+    actx = new (window.AudioContext || window.webkitAudioContext)();
+    var len = actx.sampleRate * 2;
+    var buf = actx.createBuffer(1, len, actx.sampleRate);
+    var d = buf.getChannelData(0);
+    for (var i = 0; i < len; i++) d[i] = Math.random() * 2 - 1;
+    var src = actx.createBufferSource(); src.buffer = buf; src.loop = true;
+    var lp = actx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 220;
+    var gain = actx.createGain(); gain.gain.value = 0;
+    var lfo = actx.createOscillator(); lfo.frequency.value = 0.5;
+    var lfoG = actx.createGain(); lfoG.gain.value = 0.008;
+    lfo.connect(lfoG).connect(gain.gain);
+    src.connect(lp); lp.connect(gain); gain.connect(actx.destination);
+    src.start(); lfo.start();
+    return gain;
+  }
+  function wireAudio(){
+    var audioBtn = document.getElementById('mlAudioToggle');
+    if (!audioBtn) return;
+    audioBtn.addEventListener('click', function(){
+      if (!actx) hum = buildHum();
+      if (actx.state === 'suspended') actx.resume();
+      var on = audioBtn.getAttribute('aria-pressed') !== 'true';
+      audioBtn.setAttribute('aria-pressed', on);
+      audioBtn.textContent = on ? 'AUDIO ● ON' : 'AUDIO ✕ OFF';
+      hum.gain.linearRampToValueAtTime(on ? 0.03 : 0, actx.currentTime + 0.6);
+    });
+  }
+
+  // ── CSS fallback path: no WebGL, or user prefers reduced motion ──
+  if (reduced || !webglOK()) {
+    if (canvas) canvas.style.display = 'none';
+    if (fallback) {
+      fallback.style.display = 'block';
+      fallback.style.backgroundImage = "url('/static/posters/godfather.jpg')";
+    }
+    document.querySelectorAll('.mls-sw').forEach(function(btn){
+      btn.addEventListener('click', function(){
+        var active = document.querySelector('.mls-sw.active');
+        if (active) active.classList.remove('active');
+        btn.classList.add('active');
+        if (fallback) {
+          fallback.style.backgroundImage = "url('/static/posters/" + btn.dataset.poster + ".jpg')";
+        }
+        var q = document.getElementById('mlsQuote');
+        if (q) q.innerHTML = btn.dataset.quote;
+      });
+    });
+    wireAudio();
+    return;
+  }
+
+  // ── Three.js path ──
+  var card, frontMat, renderer, camera, scene, textures = [];
+  var currentIdx = 0;
+  var mouseX = 0, mouseY = 0;
+  var animLoopOn = false, initStarted = false;
+  // Owned/written by commit 2's GSAP timeline; we only read it.
+  var rot = window.mlsRot = window.mlsRot || { y: 0 };
+
+  // Procedural poster fallback — verbatim from prototype drawPoster()
+  function drawPoster(p){
+    var c = document.createElement('canvas'); c.width = 512; c.height = 768;
+    var x = c.getContext('2d');
+    var g = x.createLinearGradient(0,0,0,768);
+    g.addColorStop(0,'#141414'); g.addColorStop(.55, p.tint); g.addColorStop(1,'#060606');
+    x.fillStyle = g; x.fillRect(0,0,512,768);
+    var r = x.createRadialGradient(256,250,30, 256,250,330);
+    r.addColorStop(0,'rgba(200,169,110,0.30)'); r.addColorStop(1,'rgba(200,169,110,0)');
+    x.fillStyle = r; x.fillRect(0,0,512,768);
+    x.strokeStyle = 'rgba(200,169,110,0.85)'; x.lineWidth = 3; x.strokeRect(26,26,460,716);
+    x.strokeStyle = 'rgba(200,169,110,0.25)'; x.lineWidth = 1; x.strokeRect(40,40,432,688);
+    x.fillStyle = '#f0e9da'; x.textAlign = 'center';
+    x.font = '700 86px "Bebas Neue", sans-serif';
+    var lines = p.title.filter(Boolean);
+    lines.forEach(function(ln,i){ x.fillText(ln, 256, 320 + i*86); });
+    x.fillStyle = '#c8a96e'; x.fillRect(216, 480, 80, 2);
+    x.font = '400 19px "Space Mono", monospace';
+    x.fillStyle = '#c8a96e';
+    x.fillText(p.level, 256, 540);
+    x.font = '400 15px "Space Mono", monospace';
+    x.fillStyle = 'rgba(154,148,138,0.8)';
+    x.fillText('M I R R O R', 256, 690);
+    var tex = new THREE.CanvasTexture(c);
+    tex.anisotropy = 4;
+    return tex;
+  }
+
+  function initThree(){
+    scene = new THREE.Scene();
+    camera = new THREE.PerspectiveCamera(35, 1, 0.1, 100);
+    renderer = new THREE.WebGLRenderer({ canvas: canvas, alpha: true, antialias: true });
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+
+    textures = POSTERS.map(drawPoster);
+
+    var edge = new THREE.MeshStandardMaterial({ color:0x161310, roughness:.6, metalness:.4 });
+    var back = new THREE.MeshStandardMaterial({ color:0x1a1610, roughness:.7, metalness:.3 });
+    frontMat = new THREE.MeshStandardMaterial({ map:textures[0], roughness:.55, metalness:.15 });
+
+    card = new THREE.Mesh(
+      new THREE.BoxGeometry(2.2, 3.3, 0.07),
+      [edge, edge, edge, edge, frontMat, back]
+    );
+    card.position.y = -0.15;
+    scene.add(card);
+
+    scene.add(new THREE.AmbientLight(0xffffff, 0.35));
+    var key = new THREE.PointLight(0xc8a96e, 1.6, 30);
+    key.position.set(0, 4, 5); scene.add(key);
+    var fill = new THREE.DirectionalLight(0xffffff, 0.35);
+    fill.position.set(-4, 1, 6); scene.add(fill);
+
+    resize();
+
+    // Load real posters from /static/posters/{id}.jpg, replace procedural on success.
+    // Silent fallback on error — procedural canvas already in place.
+    var loader = new THREE.TextureLoader();
+    POSTERS.forEach(function(p, idx){
+      loader.load(
+        '/static/posters/' + p.id + '.jpg',
+        function(tex){
+          if (THREE.SRGBColorSpace) tex.colorSpace = THREE.SRGBColorSpace;
+          tex.anisotropy = 4;
+          textures[idx] = tex;
+          if (currentIdx === idx) {
+            frontMat.map = tex;
+            frontMat.needsUpdate = true;
+          }
+        },
+        undefined,
+        function(){}
+      );
+    });
+
+    var resizeTimer = null;
+    window.addEventListener('resize', function(){
+      if (resizeTimer) clearTimeout(resizeTimer);
+      resizeTimer = setTimeout(resize, 120);
+    });
+    window.addEventListener('mousemove', function(e){
+      mouseX = (e.clientX / window.innerWidth)  * 2 - 1;
+      mouseY = (e.clientY / window.innerHeight) * 2 - 1;
+    }, { passive: true });
+  }
+
+  function resize(){
+    if (!renderer || !canvas) return;
+    var w = canvas.clientWidth || window.innerWidth;
+    var h = canvas.clientHeight || window.innerHeight;
+    renderer.setSize(w, h, false);
+    camera.aspect = w / h;
+    camera.position.z = camera.aspect < 0.85 ? 10.5 : 7.6;
+    camera.updateProjectionMatrix();
+  }
+
+  // Locked motion values from prototype:
+  //   idle Y-sway:   sin(time*0.5) * 0.045
+  //   idle X-sway:   sin(time*0.35) * 0.02
+  //   Y float:       -0.15 + sin(time*0.7) * 0.05
+  //   parallax X/Y:  mouseX*0.12 / mouseY*0.06
+  //   lerp factor:   0.06 (rot) / 0.05 (Y position)
+  function tick(t){
+    if (!card || !renderer) return;
+    var time = t * 0.001;
+    var idle    = Math.sin(time * 0.5) * 0.045;
+    var targetY = rot.y + idle + mouseX * 0.12;
+    var targetX = Math.sin(time * 0.35) * 0.02 + mouseY * 0.06;
+    card.rotation.y += (targetY - card.rotation.y) * 0.06;
+    card.rotation.x += (targetX - card.rotation.x) * 0.06;
+    card.position.y += ((-0.15 + Math.sin(time * 0.7) * 0.05) - card.position.y) * 0.05;
+    renderer.render(scene, camera);
+  }
+
+  function startLoop(){
+    if (animLoopOn || !renderer) return;
+    animLoopOn = true;
+    renderer.setAnimationLoop(tick);
+  }
+  function stopLoop(){
+    if (!animLoopOn || !renderer) return;
+    animLoopOn = false;
+    renderer.setAnimationLoop(null);
+  }
+
+  // setPoster accepts either string id ('godfather') or numeric index (0).
+  // Prototype script uses indices; our HTML uses string IDs (spec §3) so we bridge.
+  function setPoster(idOrIdx){
+    var idx = typeof idOrIdx === 'number' ? idOrIdx : POSTER_INDEX[idOrIdx];
+    if (idx == null) return;
+    currentIdx = idx;
+    if (!frontMat) return;
+    frontMat.map = textures[idx];
+    frontMat.needsUpdate = true;
+    if (typeof gsap !== 'undefined' && card) {
+      gsap.fromTo(card.scale, {x:.95,y:.95,z:.95}, {x:1,y:1,z:1, duration:.5, ease:'back.out(2.2)'});
+    }
+  }
+
+  function bootstrap(){
+    if (initStarted) return;
+    initStarted = true;
+    requestAnimationFrame(function(){
+      initThree();
+      startLoop();
+    });
+  }
+
+  // Swatches — Three.js path
+  document.querySelectorAll('.mls-sw').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      var active = document.querySelector('.mls-sw.active');
+      if (active) active.classList.remove('active');
+      btn.classList.add('active');
+      setPoster(btn.dataset.poster);
+      var q = document.getElementById('mlsQuote');
+      if (q && typeof gsap !== 'undefined') {
+        gsap.fromTo(q, {opacity:0, y:8}, {opacity:1, y:0, duration:.4,
+          onStart:function(){ q.innerHTML = btn.dataset.quote; }});
+      } else if (q) {
+        q.innerHTML = btn.dataset.quote;
+      }
+    });
+  });
+
+  // Lazy init + pause-when-offscreen (rootMargin 200px per spec §6.2)
+  var io = new IntersectionObserver(function(entries){
+    entries.forEach(function(entry){
+      if (entry.isIntersecting) {
+        if (!initStarted) bootstrap();
+        else startLoop();
+      } else if (initStarted) {
+        stopLoop();
+      }
+    });
+  }, { rootMargin: '200px' });
+  io.observe(stage);
+
+  wireAudio();
+
+  // Drain on app-mode (no listener removal needed beyond stopping the rAF loop and
+  // disconnecting observers; the CSS rule body.app-mode #mlStage { display:none } hides the section).
+  var bodyObs = new MutationObserver(function(){
+    if (document.body.classList.contains('app-mode')) {
+      stopLoop();
+      io.disconnect();
+      bodyObs.disconnect();
+    }
+  });
+  bodyObs.observe(document.body, { attributes: true, attributeFilter: ['class'] });
+})();
+</script>
 </body>
 </html>
