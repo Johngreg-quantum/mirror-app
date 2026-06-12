@@ -3581,6 +3581,12 @@
   </style>
   <script src="https://cdn.jsdelivr.net/npm/@mux/mux-player" defer></script>
   <script type="module" src="https://unpkg.com/@splinetool/viewer@1.12.90/build/spline-viewer.js"></script>
+
+  <!-- Screen Test stage — CDN deps -->
+  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/0.160.0/three.min.js"></script>
 </head>
 <body>
 
@@ -4125,6 +4131,111 @@
     <button class="mm-ghost" type="button" id="mmWatchBtn">Watch a scene &rarr;</button>
   </div>
 </section>
+
+<!-- ═══════════════════════════ SCREEN TEST — pinned 3D stage ═══════════════════════════ -->
+<style>
+  /* Stage CSS — verbatim from approved prototype (overrides spec §4 wherever they differ) */
+  #mlStage{position:relative;height:100vh;overflow:hidden;isolation:isolate}
+  .mls-spot{position:absolute;inset:0;z-index:0;pointer-events:none;
+    background:radial-gradient(ellipse 55% 42% at 50% 40%,rgba(200,169,110,.20),transparent 65%),
+               radial-gradient(ellipse 85% 55% at 50% 112%,rgba(200,169,110,.06),transparent 70%)}
+  #mlsCanvas{position:absolute;inset:0;width:100%;height:100%;z-index:1;display:block}
+
+  .mls-beat{position:absolute;left:50%;top:7%;transform:translateX(-50%);text-align:center;z-index:2;opacity:0;width:min(92vw,760px);pointer-events:none}
+  .mls-kicker{font-family:'Space Mono',monospace;font-size:.62rem;letter-spacing:.4em;color:#c8a96e;opacity:.85}
+  .mls-h{font-family:'Bebas Neue',sans-serif;font-size:clamp(2.4rem,6.5vw,4.8rem);line-height:.95;margin:.3em 0;letter-spacing:.02em}
+  .mls-h em{font-family:'Playfair Display',serif;font-style:italic;color:#c8a96e;letter-spacing:0}
+  .mls-sub{color:#9a948a;font-weight:300}
+  .mls-quote{font-family:'Playfair Display',serif;font-style:italic;font-size:clamp(1.05rem,2.4vw,1.5rem);color:#e8e2d6;margin-top:4px}
+
+  .mls-wave{display:flex;gap:5px;justify-content:center;margin-top:16px;height:32px;align-items:flex-end}
+  .mls-wave span{width:4px;background:#c8a96e;height:18%;border-radius:2px;box-shadow:0 0 8px rgba(200,169,110,.4)}
+
+  .mls-score{font-family:'Space Mono',monospace;font-size:clamp(3.6rem,11vw,7.5rem);color:#c8a96e;line-height:1;text-shadow:0 0 50px rgba(200,169,110,.35)}
+  .mls-scorelabel{font-family:'Space Mono',monospace;font-size:.6rem;letter-spacing:.32em;color:#6b6457;margin-top:4px}
+  .mls-subscores{display:flex;gap:26px;justify-content:center;color:#9a948a;font-family:'Space Mono',monospace;font-size:.68rem;letter-spacing:.1em;margin-top:16px;flex-wrap:wrap}
+  .mls-subscores b{color:#f5f0e8;margin-left:6px;font-weight:700}
+
+  .mls-swatches{position:absolute;left:50%;bottom:5%;transform:translateX(-50%);z-index:3;display:flex;gap:14px;align-items:center;flex-wrap:wrap;justify-content:center}
+  .mls-sw{width:46px;height:46px;border-radius:50%;border:1px solid rgba(200,169,110,.45);background:rgba(8,8,8,.65);color:#c8a96e;font-family:'Bebas Neue',sans-serif;font-size:1.15rem;cursor:pointer;transition:all .25s ease}
+  .mls-sw.active,.mls-sw:hover{background:#c8a96e;color:#080808;box-shadow:0 0 26px rgba(200,169,110,.5)}
+  .mls-sw-label{width:100%;text-align:center;font-family:'Space Mono',monospace;font-size:.55rem;letter-spacing:.32em;color:#6b6457;margin-top:8px}
+
+  #mlAudioToggle{position:fixed;left:14px;top:50%;z-index:950;transform:translateY(-50%) rotate(180deg);writing-mode:vertical-rl;background:none;border:none;cursor:pointer;color:#6b6457;font-family:'Space Mono',monospace;font-size:.6rem;letter-spacing:.32em;transition:color .25s;padding:10px 6px}
+  #mlAudioToggle[aria-pressed="true"]{color:#c8a96e}
+
+  /* CSS fallback card (spec §4 — prototype is silent on this selector) */
+  #mlsCardFallback{
+    display:none; position:absolute; left:50%; top:50%; z-index:1;
+    width:min(46vw,260px); aspect-ratio:2/3;
+    transform:translate(-50%,-50%);
+    background-size:cover; background-position:center;
+    border-radius:10px;
+    box-shadow:0 40px 80px rgba(0,0,0,.7), 0 0 60px rgba(200,169,110,.18);
+  }
+
+  /* Hide audio toggle in app mode (consistent with all other landing chrome) */
+  body.app-mode #mlAudioToggle,
+  body.app-mode #mlStage { display: none !important; }
+
+  /* Reduced-motion safety: works even when GSAP/Three never load. Prototype script
+     also calls gsap.set(...) in this case; this CSS rule guarantees the static
+     stack works if JS is blocked or CDNs fail. */
+  @media (prefers-reduced-motion: reduce){
+    .mls-beat{ position:relative; left:auto; top:auto; transform:none; opacity:1; margin:60px auto; }
+    #mlStage{ height:auto; min-height:100vh; }
+  }
+  @media (max-width:768px){ #mlAudioToggle{left:5px} }
+</style>
+
+<section id="mlStage" aria-label="The Screen Test">
+  <div class="mls-spot"></div>
+
+  <canvas id="mlsCanvas"></canvas>
+  <div id="mlsCardFallback"></div>
+
+  <!-- BEAT 1 -->
+  <div class="mls-beat" id="mlsBeat1">
+    <p class="mls-kicker">SCREEN TEST &middot; 01</p>
+    <h2 class="mls-h">WATCH THE <em>SCENE</em></h2>
+    <p class="mls-sub">Every take starts with the original.</p>
+  </div>
+
+  <!-- BEAT 2 -->
+  <div class="mls-beat" id="mlsBeat2">
+    <p class="mls-kicker">SCREEN TEST &middot; 02</p>
+    <h2 class="mls-h">SPEAK THE <em>LINE</em></h2>
+    <p class="mls-quote" id="mlsQuote">&ldquo;I&rsquo;m gonna make him an offer he can&rsquo;t refuse.&rdquo;</p>
+    <div class="mls-wave" aria-hidden="true">
+      <span></span><span></span><span></span><span></span><span></span>
+      <span></span><span></span><span></span><span></span><span></span>
+    </div>
+  </div>
+
+  <!-- BEAT 3 -->
+  <div class="mls-beat" id="mlsBeat3">
+    <p class="mls-kicker">SCREEN TEST &middot; 03</p>
+    <h2 class="mls-h">THE AI <em>NEVER LIES</em></h2>
+    <div class="mls-score"><span id="mlsScoreNum">0</span></div>
+    <div class="mls-scorelabel">SYNC SCORE</div>
+    <div class="mls-subscores">
+      <div>PRONUNCIATION <b data-target="96">0</b></div>
+      <div>RHYTHM <b data-target="91">0</b></div>
+      <div>EMOTION <b data-target="88">0</b></div>
+    </div>
+  </div>
+
+  <!-- Level swatches -->
+  <div class="mls-swatches" role="tablist" aria-label="Choose a level">
+    <button class="mls-sw active" data-poster="godfather"  data-quote="&ldquo;I&rsquo;m gonna make him an offer he can&rsquo;t refuse.&rdquo;">I</button>
+    <button class="mls-sw"        data-poster="fight_club" data-quote="&ldquo;The first rule is: you do not talk about it.&rdquo;">II</button>
+    <button class="mls-sw"        data-poster="gladiator"  data-quote="&ldquo;Are you not entertained?&rdquo;">III</button>
+    <p class="mls-sw-label">CHOOSE YOUR LEVEL</p>
+  </div>
+</section>
+
+<!-- Global ambient audio toggle (fixed, left edge) -->
+<button id="mlAudioToggle" aria-pressed="false">AUDIO &times; OFF</button>
 
 <!-- ─── SECTION 3 — Philosophy: Fluency × Cinema (cinematic video hero) ─── -->
 <section class="ms-section" id="mirrorPhilosophy">
