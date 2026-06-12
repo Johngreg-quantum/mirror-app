@@ -6263,6 +6263,92 @@ function checkLevel2Unlock() {
 })();
 </script>
 
+<!-- ═══════════════════════════ SCREEN TEST — pinned timeline (2/3) ═══════════════════════════ -->
+<script>
+(function(){
+  if (!document.getElementById('mlStage')) return;
+  if (typeof gsap === 'undefined' || typeof ScrollTrigger === 'undefined') {
+    console.warn('[mlStage] GSAP/ScrollTrigger not loaded — skipping timeline');
+    return;
+  }
+
+  var reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  gsap.registerPlugin(ScrollTrigger);
+  ScrollTrigger.config({ ignoreMobileResize: true });
+
+  // Shared rotation handle — commit 3's Three.js scene reads window.mlsRot.y
+  // every frame to drive the card. In this commit it's tweened but unobserved.
+  window.mlsRot = window.mlsRot || { y: 0 };
+  var rot = window.mlsRot;
+
+  function initScroll(){
+    if (reduced){
+      gsap.set('.mls-beat', { opacity:1, position:'relative', left:'auto', top:'auto', xPercent:0 });
+      return;
+    }
+
+    var tl = gsap.timeline({
+      scrollTrigger:{
+        trigger:'#mlStage', start:'top top', end:'+=300%',
+        pin:true, scrub:0.8, anticipatePin:1
+      }
+    });
+
+    // BEAT 1 — face camera
+    tl.fromTo('#mlsBeat1', {opacity:0, y:40}, {opacity:1, y:0, duration:1})
+      .to(rot, {y:0, duration:.6}, '<')
+      .to({}, {duration:1})
+      .to('#mlsBeat1', {opacity:0, y:-30, duration:.6});
+
+    // BEAT 2 — speak the line (rot.y = 0.62)
+    tl.fromTo('#mlsBeat2', {opacity:0, y:40}, {opacity:1, y:0, duration:1})
+      .to(rot, {y:0.62, duration:1.2}, '<')
+      .to({}, {duration:1})
+      .to('#mlsBeat2', {opacity:0, y:-30, duration:.6});
+
+    // BEAT 3 — sync score (rot.y = -0.52, score 0 → 94)
+    var score = {v:0};
+    tl.fromTo('#mlsBeat3', {opacity:0, y:40}, {opacity:1, y:0, duration:1})
+      .to(rot, {y:-0.52, duration:1.4}, '<')
+      .to(score, {v:94, duration:1.5, snap:'v',
+          onUpdate:function(){ document.getElementById('mlsScoreNum').textContent = score.v; }}, '<')
+      .to({}, {duration:1.2});
+
+    // Sub-scores: one-shot count-up when Beat 3 enters viewport
+    document.querySelectorAll('.mls-subscores b').forEach(function(el){
+      var o = {v:0}, target = +el.dataset.target;
+      ScrollTrigger.create({
+        trigger:'#mlStage', start:'top -180%', once:true,
+        onEnter:function(){
+          gsap.to(o, {v:target, duration:1.2, snap:'v',
+            onUpdate:function(){ el.textContent = o.v; }});
+        }
+      });
+    });
+
+    // Waveform — continuous random-height yoyo, refreshes target each repeat
+    gsap.to('.mls-wave span', {
+      height: function(){ return (20 + Math.random()*75) + '%'; },
+      duration: .28, ease:'sine.inOut',
+      stagger:{ each:.05, repeat:-1, yoyo:true },
+      repeatRefresh: true
+    });
+  }
+
+  // Defer init until fonts settle so the pin measures correct layout heights
+  if (document.fonts && document.fonts.ready) {
+    document.fonts.ready.then(initScroll);
+  } else if (document.readyState === 'complete') {
+    initScroll();
+  } else {
+    window.addEventListener('load', initScroll);
+  }
+  // Refresh once all assets (incl. images above/below the pin) finish loading
+  window.addEventListener('load', function(){ ScrollTrigger.refresh(); });
+})();
+</script>
+
 <script>
 (function(){
   var cinema = document.getElementById('mpCinema');
