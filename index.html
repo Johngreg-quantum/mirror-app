@@ -4186,6 +4186,29 @@
     #mlStage{ height:auto; min-height:100vh; }
   }
   @media (max-width:768px){ #mlAudioToggle{left:5px} }
+
+  /* iOS / touch-device fallback (fix/ios-mobile-pin).
+     iOS Safari's dynamic 100vh corrupts ScrollTrigger pin-spacer math when the
+     URL bar collapses mid-scroll, pushing content below #mlStage off-screen.
+     On any touch-primary device OR narrow viewport we render the beats as a
+     static vertical stack — no pin, no Three.js, no rAF. */
+  @media (max-width:768px), (pointer:coarse) {
+    #mlStage { height: auto; min-height: 100vh; overflow: visible; }
+    .mls-beat {
+      position: relative; left: auto; top: auto;
+      transform: none; opacity: 1;
+      margin: 60px auto;
+    }
+    #mlsCanvas { display: none; }
+    #mlsCardFallback {
+      display: block; position: relative; left: auto; top: auto;
+      transform: none; margin: 32px auto 0;
+    }
+    .mls-swatches {
+      position: relative; left: auto; bottom: auto;
+      transform: none; margin: 40px auto 0;
+    }
+  }
 </style>
 
 <section id="mlStage" aria-label="The Screen Test">
@@ -6273,6 +6296,10 @@ function checkLevel2Unlock() {
   }
 
   var reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  // Mobile / touch-device guard — see fix/ios-mobile-pin commit message.
+  // pointer:coarse handles all iOS devices (iPhone any orientation, iPad any orientation,
+  // Android); the width check is the safety belt for narrow desktop windows.
+  var isMobile = matchMedia('(max-width: 768px)').matches || matchMedia('(pointer: coarse)').matches;
 
   gsap.registerPlugin(ScrollTrigger);
   ScrollTrigger.config({ ignoreMobileResize: true });
@@ -6283,7 +6310,8 @@ function checkLevel2Unlock() {
   var rot = window.mlsRot;
 
   function initScroll(){
-    if (reduced){
+    if (reduced || isMobile){
+      // No pin, no scrub. Flatten beats; CSS @media also handles this if JS bails.
       gsap.set('.mls-beat', { opacity:1, position:'relative', left:'auto', top:'auto', xPercent:0 });
       return;
     }
@@ -6607,6 +6635,9 @@ function checkLevel2Unlock() {
   }
 
   var reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  // See commit 2 timeline IIFE for rationale; same guard reused here so both IIFEs
+  // bail symmetrically on iOS / iPad / touch devices.
+  var isMobile = matchMedia('(max-width: 768px)').matches || matchMedia('(pointer: coarse)').matches;
   function webglOK(){
     try {
       var c = document.createElement('canvas');
@@ -6658,8 +6689,9 @@ function checkLevel2Unlock() {
     });
   }
 
-  // ── CSS fallback path: no WebGL, or user prefers reduced motion ──
-  if (reduced || !webglOK()) {
+  // ── CSS fallback path: no WebGL, reduced motion, OR mobile/touch device ──
+  // (Mobile path added by fix/ios-mobile-pin to avoid the iOS dynamic-viewport bug.)
+  if (reduced || isMobile || !webglOK()) {
     if (canvas) canvas.style.display = 'none';
     if (fallback) {
       fallback.style.display = 'block';
