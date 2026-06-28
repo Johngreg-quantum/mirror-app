@@ -32,8 +32,11 @@ load_dotenv()
 
 app = FastAPI(title="MIRROR — Movie Scene Language Learning")
 
-@app.get("/health")
+@app.api_route("/health", methods=["GET", "HEAD"])
 async def health_check():
+    # HEAD: FastAPI/Starlette strips the body automatically, only headers are sent.
+    # UptimeRobot's free plan sends HEAD; without this it 405'd and the monitor
+    # showed "Down" for 2 months, defeating the Render keep-alive.
     return {"status": "ok", "timestamp": datetime.now(timezone.utc).isoformat()}
 
 # ---------------------------------------------------------------------------
