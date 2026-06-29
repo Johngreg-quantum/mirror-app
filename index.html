@@ -3997,19 +3997,31 @@
         card.className = 'ml-card';
         card.style.cssText = 'width:' + cardW + 'px;height:' + rowH + 'px;position:relative;border-radius:14px;';
 
+        // <picture> with WebP source + JPG fallback (~85% smaller WebP, ~77% smaller JPG).
+        // loading="lazy" lets the browser defer cards that aren't in the initial viewport;
+        // the marquee's auto-scroll triggers normal loading once they slide in.
+        const picture = document.createElement('picture');
+        picture.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;display:block;';
+        const source = document.createElement('source');
+        source.srcset = '/static/posters/' + s.id + '.webp';
+        source.type = 'image/webp';
+        picture.appendChild(source);
         const img = document.createElement('img');
         img.src = '/static/posters/' + s.id + '.jpg';
         img.alt = '';
-        img.style.cssText = 'width:100%;height:100%;object-fit:cover;display:block;position:absolute;inset:0;';
+        img.loading = 'lazy';
+        img.decoding = 'async';
+        img.style.cssText = 'width:100%;height:100%;object-fit:cover;display:block;';
         img.onerror = function(){
-          this.style.display = 'none';
+          picture.style.display = 'none';
           card.style.background = s.bg;
         };
+        picture.appendChild(img);
 
         const grad = document.createElement('div');
         grad.className = 'ml-card-grad';
 
-        card.appendChild(img);
+        card.appendChild(picture);
         card.appendChild(grad);
         track.appendChild(card);
       });
