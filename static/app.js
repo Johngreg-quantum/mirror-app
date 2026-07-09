@@ -691,6 +691,7 @@ onSubmit('loginForm', async e => {
     authUser  = { username: data.username };
     localStorage.setItem('mirror_token', authToken);
     await enterAuthenticatedApp();
+    closeAuthModal();
   } catch (err) {
     renderAuthErrorDisplay({
       message: err.message,
@@ -750,6 +751,7 @@ onSubmit('registerForm', async e => {
     authUser  = { username: data.username };
     localStorage.setItem('mirror_token', authToken);
     await enterAuthenticatedApp({ showOnboarding: true });
+    closeAuthModal();
   } catch (err) {
     renderAuthErrorDisplay({
       message: err.message,
