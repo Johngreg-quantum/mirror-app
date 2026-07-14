@@ -224,22 +224,6 @@
       padding: 0 52px;
       box-sizing: border-box;
     }
-    .hero-spline-bg {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      z-index: 0;
-      pointer-events: none;
-    }
-    .hero-spline-bg spline-viewer {
-      --background-color: transparent;
-      width: 100%;
-      height: 100%;
-      display: block;
-      opacity: 0.45;
-    }
     .hero::before {
       content: '';
       position: absolute;
@@ -379,14 +363,6 @@
     .proof-text strong { color: var(--text-primary); }
 
     /* Poster stack */
-    spline-viewer #logo,
-    spline-viewer .logo {
-      display: none !important;
-      opacity: 0 !important;
-    }
-    spline-viewer::part(watermark) { display: none !important; }
-    spline-viewer::part(logo) { display: none !important; }
-    spline-viewer > div[style*="bottom"] { display: none !important; }
     .poster-fan { display: none; }
     .float-card { display: none; }
     .poster-stack { position: relative; width: 220px; height: 290px; }
@@ -3580,7 +3556,6 @@
     }
   </style>
   <script src="https://cdn.jsdelivr.net/npm/@mux/mux-player" defer></script>
-  <script type="module" src="https://unpkg.com/@splinetool/viewer@1.12.90/build/spline-viewer.js"></script>
 
   <!-- Screen Test stage — CDN deps -->
   <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
@@ -4810,13 +4785,6 @@
         </div>
         <div class="proof-text"><strong>50+ learners</strong> practicing now &mdash; join them</div>
       </div>
-    </div>
-
-    <!-- Right: Spline 3D -->
-    <div class="hero-spline-bg">
-      <spline-viewer
-        url="https://prod.spline.design/0vxAKSGjSw0DFVfI/scene.splinecode">
-      </spline-viewer>
     </div>
 
   </section>
@@ -6881,11 +6849,18 @@ function checkLevel2Unlock() {
 
   wireAudio();
 
-  // Drain on app-mode (no listener removal needed beyond stopping the rAF loop and
-  // disconnecting observers; the CSS rule body.app-mode #mlStage { display:none } hides the section).
+  // Drain on app-mode: stop rAF, release WebGL context (free GPU memory so the
+  // scene-modal YouTube video composite path isn't starved on desktop Chrome),
+  // and disconnect observers. The CSS rule body.app-mode #mlStage { display:none }
+  // hides the section.
   var bodyObs = new MutationObserver(function(){
     if (document.body.classList.contains('app-mode')) {
       stopLoop();
+      if (renderer) {
+        renderer.dispose();
+        if (renderer.forceContextLoss) renderer.forceContextLoss();
+        renderer = null;
+      }
       io.disconnect();
       bodyObs.disconnect();
     }
