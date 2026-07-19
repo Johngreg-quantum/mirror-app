@@ -6832,11 +6832,17 @@ function checkLevel2Unlock() {
 
   wireAudio();
 
-  // Drain on app-mode (no listener removal needed beyond stopping the rAF loop and
-  // disconnecting observers; the CSS rule body.app-mode #mlStage { display:none } hides the section).
+  // Drain on app-mode: stop rAF, release WebGL context (free GPU memory so the
+  // post-login compositor path isn't starved on desktop Chrome), and disconnect
+  // observers. The CSS rule body.app-mode #mlStage { display:none } hides the section.
   var bodyObs = new MutationObserver(function(){
     if (document.body.classList.contains('app-mode')) {
       stopLoop();
+      if (renderer) {
+        renderer.dispose();
+        if (renderer.forceContextLoss) renderer.forceContextLoss();
+        renderer = null;
+      }
       io.disconnect();
       bodyObs.disconnect();
     }
