@@ -569,6 +569,7 @@ async function enterAuthenticatedApp(options = {}) {
       if (btn) btn.click();
     }, 800);
   }
+  console.log('[TRACE] enterAuthenticatedApp:end');
 }
 
 onClick('btnLogout', logout);
@@ -788,6 +789,7 @@ async function loadScenes() {
 }
 
 function renderCards() {
+  console.log('[TRACE] renderCards:start scenes-count=' + Object.keys(scenes || {}).length);
   refreshSceneCardsSurface({
     createCardElement: makeCard,
     grids: {

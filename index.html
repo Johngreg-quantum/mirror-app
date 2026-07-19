@@ -5866,10 +5866,12 @@ function switchTab(tab) {
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 function enterAppMode() {
+  console.log('[TRACE] enterAppMode:start');
   var landing = document.getElementById('mirrorLanding');
   if (landing) { landing.style.display = 'none'; }
   document.body.classList.add('app-mode');
   document.getElementById('bottomNav').classList.add('visible');
+  console.log('[TRACE] enterAppMode:bottomNav-shown');
   document.getElementById('appShell').style.display = 'block';
   document.getElementById('siteNav').style.display = 'none';
   document.querySelectorAll('.lb-section').forEach(el => el.style.display = 'none');
@@ -6003,10 +6005,14 @@ function enterAppMode() {
     window.scrollTo(0, 0);
   }, 300);
 
+  console.log('[TRACE] enterAppMode:before-preload-remove');
   var preload = document.getElementById('preloadHide');
   if (preload) preload.remove();
   document.getElementById('appShell').style.opacity = '1';
   document.body.style.overflow = '';
+  var _appShellEl = document.getElementById('appShell');
+  console.log('[TRACE] enterAppMode:preload-removed appShell.display=' + (_appShellEl && _appShellEl.style.display) + ' opacity=' + (_appShellEl && _appShellEl.style.opacity) + ' computedDisplay=' + (_appShellEl && getComputedStyle(_appShellEl).display));
+  console.log('[TRACE] enterAppMode:end');
 }
 
 // Level 1 quiz logic moved to static/app.js — see QuizController.
