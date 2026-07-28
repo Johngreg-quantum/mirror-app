@@ -6312,6 +6312,24 @@ function checkLevel2Unlock() {
   }
   // Refresh once all assets (incl. images above/below the pin) finish loading
   window.addEventListener('load', function(){ ScrollTrigger.refresh(); });
+
+  // Drain on app-mode: revert the #mlStage pin (removes its ~3676px pin-spacer
+  // wrapper that would otherwise push #appScreen / #appShell down one viewport
+  // on the login path) and kill any other #mlStage-scoped triggers. Only touches
+  // triggers whose .trigger is #mlStage or a descendant; app-shell triggers, if
+  // any are added later, are left alone.
+  var stDrainObs = new MutationObserver(function(){
+    if (!document.body.classList.contains('app-mode')) return;
+    ScrollTrigger.getAll().forEach(function(t){
+      var trg = t.trigger;
+      if (trg && (trg.id === 'mlStage' || (trg.closest && trg.closest('#mlStage')))) {
+        t.kill(true);   // revert:true reverts the pin and removes the pin-spacer
+      }
+    });
+    ScrollTrigger.refresh();
+    stDrainObs.disconnect();
+  });
+  stDrainObs.observe(document.body, { attributes: true, attributeFilter: ['class'] });
 })();
 </script>
 
