@@ -577,12 +577,13 @@ def init_db():
                 cur.execute(f"ALTER TABLE scores ADD COLUMN {col} {dfn}")
             except sqlite3.OperationalError:
                 pass  # column already exists
-        # Non-destructive migration for users.points / streak / last_daily / is_pro
+        # Non-destructive migration for users.points / streak / last_daily / is_pro / avatar_scene_id
         for col, dfn in [
-            ("points",     "INTEGER DEFAULT 0"),
-            ("streak",     "INTEGER DEFAULT 0"),
-            ("last_daily", "TEXT"),
-            ("is_pro",     "BOOLEAN DEFAULT FALSE"),
+            ("points",           "INTEGER DEFAULT 0"),
+            ("streak",           "INTEGER DEFAULT 0"),
+            ("last_daily",       "TEXT"),
+            ("is_pro",           "BOOLEAN DEFAULT FALSE"),
+            ("avatar_scene_id",  "TEXT"),
         ]:
             try:
                 cur.execute(f"ALTER TABLE users ADD COLUMN {col} {dfn}")
@@ -592,10 +593,11 @@ def init_db():
     if USE_PG:
         # Non-destructive migrations for PostgreSQL
         for col, dfn in [
-            ("points",     "INTEGER DEFAULT 0"),
-            ("streak",     "INTEGER DEFAULT 0"),
-            ("last_daily", "TEXT"),
-            ("is_pro",     "BOOLEAN DEFAULT FALSE"),
+            ("points",           "INTEGER DEFAULT 0"),
+            ("streak",           "INTEGER DEFAULT 0"),
+            ("last_daily",       "TEXT"),
+            ("is_pro",           "BOOLEAN DEFAULT FALSE"),
+            ("avatar_scene_id",  "TEXT"),
         ]:
             cur.execute(f"ALTER TABLE users ADD COLUMN IF NOT EXISTS {col} {dfn}")
         cur.execute("""
@@ -1665,12 +1667,13 @@ async def get_profile(user: dict = Depends(current_user)):
     conn = get_conn()
     cur  = conn.cursor()
 
-    cur.execute(f"SELECT points, streak, last_daily FROM users WHERE id = {PH}", (user["id"],))
+    cur.execute(f"SELECT points, streak, last_daily, avatar_scene_id FROM users WHERE id = {PH}", (user["id"],))
     row = cur.fetchone()
-    total_points   = int(row[0]) if row and row[0] else 0
-    streak         = int(row[1]) if row and row[1] else 0
-    last_daily     = row[2] if row else None
-    today_str      = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    total_points    = int(row[0]) if row and row[0] else 0
+    streak          = int(row[1]) if row and row[1] else 0
+    last_daily      = row[2] if row else None
+    avatar_scene_id = row[3] if row else None
+    today_str       = datetime.now(timezone.utc).strftime("%Y-%m-%d")
     daily_done_today = (last_daily == today_str)
 
     # Per-scene stats: attempt count + best score
@@ -1705,7 +1708,68 @@ async def get_profile(user: dict = Depends(current_user)):
         "streak":                streak,
         "daily_done_today":      daily_done_today,
         "daily_scene_id":        get_daily_scene_id(),
+        "avatar_scene_id":       avatar_scene_id,
     }
+
+
+@app.post("/api/profile/avatar")
+async def set_avatar(payload: dict, user: dict = Depends(current_user)):
+    """Set (or clear) the user's chosen avatar scene poster.
+
+    The frontend unlock UI is cosmetic only — this endpoint is the real gate.
+    A caller can POST any scene_id; the endpoint rejects it unless BOTH:
+      1. scene_id is a known id from scene_config (path-safety — this value
+         ends up in an <img src> client-side, so an arbitrary string can't
+         reach the column).
+      2. The user has scored >= 60 on that scene.
+
+    Pass null / empty scene_id to clear back to the default icon.
+
+    NOTE: the 60-point unlock threshold is duplicated in three places:
+      - static/app.js makeCard() (isDone gate on scene cards)
+      - index.html renderLevelsPath() (Levels-path .done state)
+      - this endpoint (avatar unlock gate)
+    Any change to the threshold must update all three; there is no shared
+    constant today.
+    """
+    scene_id = payload.get("scene_id")
+
+    # null / empty → clear back to default icon
+    if scene_id is None or scene_id == "":
+        conn = get_conn()
+        cur  = conn.cursor()
+        cur.execute(f"UPDATE users SET avatar_scene_id = NULL WHERE id = {PH}", (user["id"],))
+        conn.commit()
+        conn.close()
+        return {"avatar_scene_id": None}
+
+    if not isinstance(scene_id, str):
+        raise HTTPException(400, "scene_id must be a string or null")
+
+    # Path-safety gate: must be a known scene id from scene_config
+    if scene_id not in SCENES:
+        raise HTTPException(400, "Unknown scene_id")
+
+    # Unlock gate: user must have scored >= 60 on this scene
+    conn = get_conn()
+    cur  = conn.cursor()
+    cur.execute(
+        f"SELECT COALESCE(MAX(sync_score), 0) FROM scores WHERE user_id = {PH} AND scene_id = {PH}",
+        (user["id"], scene_id),
+    )
+    row = cur.fetchone()
+    best = float(row[0] or 0) if row else 0.0
+    if best < 60:
+        conn.close()
+        raise HTTPException(403, "Scene not yet unlocked")
+
+    cur.execute(
+        f"UPDATE users SET avatar_scene_id = {PH} WHERE id = {PH}",
+        (scene_id, user["id"]),
+    )
+    conn.commit()
+    conn.close()
+    return {"avatar_scene_id": scene_id}
 
 
 @app.post("/api/quiz-pass")
