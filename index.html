@@ -1113,6 +1113,132 @@
     .glc-title { font-family:'Playfair Display',serif; font-style:italic; font-size:19px; color:rgba(255,255,255,0.4); margin-bottom:3px; }
     .glc-sub { font-family:'DM Sans',sans-serif; font-size:10px; color:#333; }
 
+    /* ═══ VERTICAL LEVELS PATH — Duolingo-style serpentine ═══ */
+    /* Hide legacy gateway cards. !important beats checkLevel2Unlock's inline
+       style.display toggle on #gwLevel2 so the old row can't reappear on L2 unlock. */
+    #panelLevels #gwLevel1,
+    #panelLevels #gwLevel2,
+    #panelLevels #gwLevel2Locked,
+    #panelLevels > .gw-locked-card { display: none !important; }
+
+    .lp-path {
+      display: flex; flex-direction: column; align-items: stretch;
+      max-width: 340px; margin: 0 auto; padding: 18px 0 40px;
+      gap: 18px;
+    }
+    .lp-band {
+      align-self: stretch; text-align: center;
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 13px; letter-spacing: 0.32em;
+      color: rgba(200,169,110,0.75);
+      padding: 14px 0 6px;
+      border-top: 0.5px solid rgba(200,169,110,0.15);
+      margin-top: 8px;
+    }
+    .lp-band:first-child { border-top: 0; margin-top: 0; }
+    .lp-band.locked {
+      color: rgba(255,255,255,0.4);
+      border-top-color: rgba(255,255,255,0.06);
+      font-size: 11px; letter-spacing: 0.28em;
+      padding: 22px 0 10px;
+    }
+    .lp-band-lock { font-size: 20px; display: block; margin-bottom: 6px; opacity: 0.7; }
+    .lp-band-sub {
+      display: block; margin-top: 6px;
+      font-family: 'DM Sans', sans-serif; font-size: 10px;
+      letter-spacing: 0.14em; color: rgba(255,255,255,0.28);
+      text-transform: none;
+    }
+
+    .lp-node {
+      position: relative;
+      width: 72px; height: 72px; border-radius: 50%;
+      overflow: visible; cursor: pointer;
+      background: #0d0d0d;
+      transition: transform 0.2s ease;
+    }
+    .lp-node.slot-l { align-self: flex-start; margin-left: 18px; }
+    .lp-node.slot-c { align-self: center; }
+    .lp-node.slot-r { align-self: flex-end; margin-right: 18px; }
+    .lp-node:active { transform: scale(0.94); }
+
+    .lp-node-img {
+      position: absolute; inset: 0;
+      border-radius: 50%; overflow: hidden;
+      background: #0d0d0d;
+    }
+    .lp-node-img img {
+      width: 100%; height: 100%;
+      object-fit: cover; object-position: center 30%;
+      display: block;
+    }
+    .lp-node-fallback { position: absolute; inset: 0; border-radius: 50%; }
+
+    .lp-node.done .lp-node-img {
+      box-shadow: 0 0 0 2px #c8a96e, 0 4px 14px rgba(0,0,0,0.5);
+    }
+    .lp-check {
+      position: absolute; right: -2px; bottom: -2px;
+      width: 22px; height: 22px; border-radius: 50%;
+      background: #c8a96e; color: #0a0a0a;
+      display: flex; align-items: center; justify-content: center;
+      font-family: 'DM Sans', sans-serif; font-size: 12px; font-weight: 700;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.5);
+    }
+
+    .lp-node.current { width: 84px; height: 84px; margin-bottom: 20px; }
+    .lp-node.current .lp-node-img {
+      box-shadow: 0 0 0 2px #e8c98e, 0 6px 20px rgba(200,169,110,0.35);
+    }
+    /* Composited glow ring — animates transform + opacity only.
+       No box-shadow animation (that repaints; this repo has GPU-pressure history). */
+    .lp-node.current::before {
+      content: '';
+      position: absolute; inset: -6px;
+      border-radius: 50%;
+      border: 2px solid #e8c98e;
+      opacity: 0.7;
+      transform: scale(1);
+      animation: lp-pulse 1.8s ease-out infinite;
+      pointer-events: none;
+      will-change: transform, opacity;
+    }
+    @keyframes lp-pulse {
+      0%   { transform: scale(1);    opacity: 0.7; }
+      100% { transform: scale(1.35); opacity: 0;   }
+    }
+    .lp-now-pill {
+      position: absolute; left: 50%; bottom: -18px;
+      transform: translateX(-50%);
+      background: #c8a96e; color: #0a0a0a;
+      font-family: 'DM Sans', sans-serif; font-size: 9px; font-weight: 700;
+      letter-spacing: 0.14em; text-transform: uppercase;
+      padding: 3px 8px; border-radius: 10px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.6);
+      white-space: nowrap;
+    }
+
+    .lp-node.upcoming .lp-node-img img,
+    .lp-node.upcoming .lp-node-fallback {
+      filter: grayscale(0.85) brightness(0.55);
+    }
+    .lp-node.upcoming .lp-node-img {
+      box-shadow: 0 0 0 1px rgba(255,255,255,0.06);
+    }
+
+    .lp-trail {
+      align-self: center;
+      display: flex; flex-direction: column; gap: 5px;
+      padding: 2px 0;
+    }
+    .lp-trail span {
+      width: 4px; height: 4px; border-radius: 50%;
+      background: rgba(200,169,110,0.25);
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .lp-node.current::before { animation: none; }
+    }
+
     /* ── MY WORDS PANEL ── */
     #panelWords { background: #060810; overflow-y: auto; }
 
@@ -5588,6 +5714,10 @@
     <div style="font-family:'DM Sans',sans-serif;font-size:11px;color:rgba(255,255,255,0.25);">Act scenes · Pass the quiz · Level up</div>
   </div>
 
+  <!-- Vertical serpentine path — new primary Levels view. Legacy gateway cards
+       below stay in DOM (project rule) and are hidden via #panelLevels rule. -->
+  <div id="levelsPath"></div>
+
   <!-- LEVEL 1 GATEWAY -->
   <div class="gw-card" id="gwLevel1">
     <div class="gw-closed">
@@ -6178,6 +6308,210 @@ function checkLevel2Unlock() {
     if (unlocked) unlocked.style.display = 'none';
   }
 }
+
+/* ═══════════════════════════ VERTICAL LEVELS PATH ═══════════════════════════
+   Reads CLV_LEVELS (authoritative per-level scene mapping + order, populated
+   by applySceneConfig in app.js) and userProgress; wires each node to
+   openModal(id, scenes[id]) — same handler the gateway tiles use. Wraps
+   buildGatewayLevel1/2 and checkLevel2Unlock so it re-renders on every state
+   change. Legacy gateway cards stay in DOM (project rule); CSS hides them.  */
+(function(){
+  var SLOTS = ['slot-l', 'slot-c', 'slot-r'];
+  var LEVEL_LABELS = { 1: 'BEGINNER', 2: 'INTERMEDIATE', 3: 'ADVANCED' };
+
+  function esc(str){ return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+  function renderNode(id, s, slot, stateClasses, color){
+    var poster = (s.ui && s.ui.poster_image) ? s.ui.poster_image : '';
+    var safeId = String(id).replace(/'/g, "\\'");
+    var label = esc(s.movie || s.title || id);
+    var isDone = stateClasses.indexOf('done') !== -1;
+    var isCurrent = stateClasses.indexOf('current') !== -1;
+    return '<div class="lp-node ' + slot + ' ' + stateClasses.join(' ') + '"' +
+             ' onclick="if(typeof openModal===\'function\') openModal(\'' + safeId + '\', scenes[\'' + safeId + '\'])"' +
+             ' role="button" tabindex="0" aria-label="' + label + '">' +
+      '<div class="lp-node-img">' +
+        (poster
+          ? '<img src="' + esc(poster) + '" alt="" onerror="this.style.display=\'none\'">'
+          : '<div class="lp-node-fallback" style="background:linear-gradient(160deg,' + color + ',#080808);"></div>') +
+      '</div>' +
+      (isDone                    ? '<div class="lp-check">&#10003;</div>' : '') +
+      (isCurrent && !isDone      ? '<div class="lp-now-pill">Now</div>'   : '') +
+    '</div>';
+  }
+
+  function isL2Unlocked(){
+    // Primary: derive from userProgress the same way checkLevel2Unlock does
+    // (quiz_passed flag OR any L1 scene with best_scores >= 70). Default LOCKED
+    // when userProgress isn't loaded yet — never render L2 as unlocked on unknown state.
+    if (typeof userProgress === 'undefined' || !userProgress) return false;
+    if (userProgress._quizPassed) return true;
+    var bs = userProgress.best_scores || {};
+    var l1 = (typeof CLV_LEVELS !== 'undefined' && CLV_LEVELS && CLV_LEVELS[0] && Array.isArray(CLV_LEVELS[0].scenes))
+      ? CLV_LEVELS[0].scenes : [];
+    for (var i = 0; i < l1.length; i++) {
+      if (typeof bs[l1[i]] === 'number' && bs[l1[i]] >= 70) return true;
+    }
+    // Secondary: honor the inline signal checkLevel2Unlock has already set,
+    // in case a future path sets _quizPassed via a channel we don't see.
+    var gwL2 = document.getElementById('gwLevel2');
+    if (gwL2 && gwL2.style.display && gwL2.style.display !== 'none') return true;
+    return false;
+  }
+
+  function renderLevelsPath(){
+    var host = document.getElementById('levelsPath');
+    if (!host) return;
+    // CLV_LEVELS is a bare identifier from app.js's classic script scope. If it
+    // hasn't populated yet (pre-fetch), no-op — wrapped builders will re-render
+    // once ensureSceneConfig resolves.
+    if (typeof CLV_LEVELS === 'undefined' || !CLV_LEVELS || !CLV_LEVELS.length) return;
+    if (typeof scenes === 'undefined' || !scenes) return;
+
+    var bestScores = (typeof userProgress !== 'undefined' && userProgress && userProgress.best_scores) || {};
+
+    // L2 gate — derived from userProgress directly (see isL2Unlocked). Defaults
+    // to LOCKED when userProgress isn't loaded, so the immediate paint can't
+    // flash L2 nodes as unlocked before checkLevel2Unlock runs.
+    var l2Locked = !isL2Unlocked();
+
+    // Build groups from CLV_LEVELS (authoritative order, no difficulty leakage).
+    // L1 always shown. L2 respects the existing unlock gate. L3 always locked
+    // (matches current app-mode behavior: no L3 gateway exists today).
+    var groups = CLV_LEVELS.map(function(lv){
+      var label = LEVEL_LABELS[lv.level] || ('LEVEL ' + lv.level);
+      if (lv.level === 2 && l2Locked) {
+        return { label: label, sceneIds: [], locked: { title: 'LEVEL 2 · Locked', sub: 'Pass the Level 1 Quiz to unlock' } };
+      }
+      if (lv.level >= 3) {
+        return { label: label, sceneIds: [], locked: { title: 'LEVEL ' + lv.level + ' · Coming soon', sub: 'Idioms · Sarcasm · Accents' } };
+      }
+      return { label: label, sceneIds: (lv.scenes || []).slice(), locked: null };
+    });
+
+    // "Current" = first scene in level-then-order iteration with best_scores[id]
+    // missing OR < 60. Threshold matches existing isDone convention.
+    var currentId = null;
+    for (var gi = 0; gi < groups.length && !currentId; gi++){
+      var ids = groups[gi].sceneIds;
+      for (var i = 0; i < ids.length; i++){
+        var id = ids[i];
+        var sc = bestScores[id];
+        if (typeof sc !== 'number' || sc < 60) { currentId = id; break; }
+      }
+    }
+    // Edge case: every scene in every unlocked group is >= 60 (e.g. all L1
+    // done, L2 locked). Fall back to the last done scene in the last unlocked
+    // group so the user still sees a "you are here" anchor. That node renders
+    // with BOTH .done and .current classes — check overlay + glow ring + pill.
+    if (!currentId) {
+      for (var lg = groups.length - 1; lg >= 0 && !currentId; lg--){
+        var lids = groups[lg].sceneIds;
+        for (var lj = lids.length - 1; lj >= 0; lj--){
+          if (typeof bestScores[lids[lj]] === 'number' && bestScores[lids[lj]] >= 60) {
+            currentId = lids[lj];
+            break;
+          }
+        }
+      }
+    }
+
+    var out = [];
+    var slotIdx = 0;   // JS-assigned serpentine index; ignores banner/trail siblings
+    groups.forEach(function(g){
+      if (g.locked){
+        out.push(
+          '<div class="lp-band locked">' +
+            '<span class="lp-band-lock">&#128274;</span>' +
+            esc(g.locked.title) +
+            '<span class="lp-band-sub">' + esc(g.locked.sub) + '</span>' +
+          '</div>'
+        );
+        return;
+      }
+      out.push('<div class="lp-band">' + esc(g.label) + '</div>');
+      g.sceneIds.forEach(function(id, i){
+        var s = scenes[id];
+        if (!s) return;
+        var sc = bestScores[id];
+        var done = (typeof sc === 'number' && sc >= 60);
+        var isCurrent = (id === currentId);
+        var stateClasses = [];
+        if (done) stateClasses.push('done');
+        if (isCurrent) stateClasses.push('current');
+        if (!done && !isCurrent) stateClasses.push('upcoming');
+        var color = (s.ui && s.ui.card_color) ? s.ui.card_color : '#1a1a1a';
+        var slot = SLOTS[slotIdx % 3];
+        slotIdx++;
+        if (i > 0) out.push('<div class="lp-trail"><span></span><span></span><span></span></div>');
+        out.push(renderNode(id, s, slot, stateClasses, color));
+      });
+    });
+
+    host.className = 'lp-path';
+    host.innerHTML = out.join('');
+
+    // Auto-scroll the current node into view — only when #panelLevels is the
+    // active panel, so a background re-render (post-score refresh while user is
+    // on Home/Ranks/etc.) doesn't yank their scroll position on another tab.
+    var panel = document.getElementById('panelLevels');
+    if (panel && panel.classList.contains('active') && currentId){
+      var node = host.querySelector('.lp-node.current');
+      if (node && typeof node.scrollIntoView === 'function'){
+        try { node.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
+        catch (e) { node.scrollIntoView(); }   // Safari fallback for missing options
+      }
+    }
+  }
+
+  window.renderLevelsPath = renderLevelsPath;
+
+  function wrap(name){
+    var orig = window[name];
+    if (typeof orig !== 'function') return;
+    window[name] = function(){
+      var r = orig.apply(this, arguments);
+      try { renderLevelsPath(); } catch(e){ console.warn('[levelsPath]', e); }
+      return r;
+    };
+  }
+  wrap('buildGatewayLevel1');
+  wrap('buildGatewayLevel2');
+  wrap('checkLevel2Unlock');
+
+  // Immediate guarded call — defensive in case a future refactor makes a
+  // gateway builder fire before this IIFE. renderLevelsPath already no-ops
+  // when CLV_LEVELS/scenes aren't populated yet, but the explicit call
+  // documents intent and covers the timing edge.
+  try { renderLevelsPath(); } catch(e){ console.warn('[levelsPath]', e); }
+
+  // Panel-activation observer — covers the first-visit case where the path
+  // was rendered while Home was active (so the in-render scroll no-op'd) and
+  // the user then taps the Levels tab. Fires only on inactive → active edge,
+  // so it can't fight the in-render scroll: that scroll only runs when the
+  // panel is already active, which by definition means the class didn't just
+  // change, so this observer won't fire in the same tick. Mutually exclusive.
+  (function(){
+    var panel = document.getElementById('panelLevels');
+    if (!panel || typeof MutationObserver === 'undefined') return;
+    var wasActive = panel.classList.contains('active');
+    var obs = new MutationObserver(function(){
+      var nowActive = panel.classList.contains('active');
+      if (nowActive && !wasActive){
+        // rAF so the display:block layout settles before scroll math runs.
+        requestAnimationFrame(function(){
+          var node = panel.querySelector('#levelsPath .lp-node.current');
+          if (node && typeof node.scrollIntoView === 'function'){
+            try { node.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
+            catch (e) { node.scrollIntoView(); }
+          }
+        });
+      }
+      wasActive = nowActive;
+    });
+    obs.observe(panel, { attributes: true, attributeFilter: ['class'] });
+  })();
+})();
 
 /* ===== MIRROR NAV TAP PULSE ===== */
 (function initNavPulse() {
