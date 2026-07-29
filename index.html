@@ -1239,6 +1239,130 @@
       .lp-node.current::before { animation: none; }
     }
 
+    /* ═══ MY PROFILE PANEL — Phase 1 read-only ═══ */
+    #panelProfile { max-width: 340px; margin: 0 auto; padding: 0 4px 40px; }
+
+    .pp-header {
+      display: flex; align-items: center; gap: 14px;
+      padding: 22px 4px 18px;
+      border-bottom: 0.5px solid rgba(200,169,110,0.12);
+      margin-bottom: 20px;
+    }
+    .pp-avatar {
+      width: 68px; height: 68px; border-radius: 50%;
+      background: linear-gradient(160deg, #1a1a1a, #080808);
+      border: 2px solid #c8a96e;
+      box-shadow: 0 4px 14px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.05);
+      display: flex; align-items: center; justify-content: center;
+      color: #c8a96e; flex-shrink: 0;
+    }
+    .pp-avatar svg { width: 32px; height: 32px; }
+    .pp-name {
+      font-family: 'Playfair Display', serif; font-style: italic;
+      font-size: 22px; color: #f0ede6; line-height: 1.15;
+    }
+    .pp-role {
+      font-family: 'DM Sans', sans-serif; font-size: 10px;
+      letter-spacing: 0.16em; text-transform: uppercase;
+      color: rgba(200,169,110,0.55); margin-top: 4px;
+    }
+
+    .pp-records {
+      display: flex; gap: 8px; margin: 0 0 24px;
+    }
+    .pp-record-cell {
+      flex: 1;
+      background: rgba(255,255,255,0.02);
+      border: 0.5px solid rgba(200,169,110,0.12);
+      border-radius: 12px;
+      padding: 14px 6px; text-align: center;
+    }
+    .pp-record-val {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 26px; letter-spacing: 0.06em;
+      color: #c8a96e; line-height: 1;
+    }
+    .pp-record-lbl {
+      font-family: 'DM Sans', sans-serif;
+      font-size: 9px; letter-spacing: 0.16em; text-transform: uppercase;
+      color: rgba(255,255,255,0.4); margin-top: 6px;
+    }
+
+    .pp-section-hd {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 13px; letter-spacing: 0.32em;
+      color: rgba(200,169,110,0.75);
+      padding: 14px 0 12px; margin-top: 4px;
+      border-top: 0.5px solid rgba(200,169,110,0.15);
+      text-align: center;
+    }
+
+    .pp-film { display: flex; flex-direction: column; gap: 10px; padding: 4px 0 0; }
+    .pp-film-row {
+      display: flex; align-items: center; gap: 12px;
+      padding: 10px 12px;
+      background: rgba(255,255,255,0.02);
+      border: 0.5px solid rgba(255,255,255,0.05);
+      border-radius: 12px;
+      cursor: pointer;
+      transition: background 0.2s ease;
+    }
+    .pp-film-row:active { background: rgba(255,255,255,0.05); }
+    .pp-film-poster {
+      width: 44px; height: 66px; border-radius: 6px;
+      overflow: hidden; flex-shrink: 0; background: #0d0d0d;
+    }
+    .pp-film-poster img {
+      width: 100%; height: 100%; object-fit: cover; display: block;
+    }
+    .pp-film-body { flex: 1; min-width: 0; }
+    .pp-film-title {
+      font-family: 'DM Sans', sans-serif; font-size: 14px;
+      color: #f0ede6; font-weight: 500;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .pp-film-meta {
+      font-family: 'DM Sans', sans-serif; font-size: 10px;
+      letter-spacing: 0.1em; color: rgba(255,255,255,0.35);
+      margin-top: 3px; text-transform: uppercase;
+    }
+    .pp-film-score {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 20px; letter-spacing: 0.04em;
+      flex-shrink: 0; min-width: 30px; text-align: right;
+    }
+    .pp-film-score.gold  { color: #c8a96e; }
+    .pp-film-score.muted { color: rgba(255,255,255,0.4); }
+
+    .pp-empty {
+      text-align: center; padding: 40px 20px;
+      font-family: 'Playfair Display', serif; font-style: italic;
+      font-size: 15px; color: rgba(255,255,255,0.45);
+      line-height: 1.55;
+    }
+
+    /* Skeleton rows — reserve height while /api/history resolves so the
+       filmography settles once instead of reshuffling. Static, no animation
+       (repo has GPU-pressure history with animated shimmer effects). */
+    .pp-film-skel { display: flex; flex-direction: column; gap: 10px; padding: 4px 0 0; }
+    .pp-film-skel-row {
+      display: flex; align-items: center; gap: 12px;
+      padding: 10px 12px;
+      background: rgba(255,255,255,0.015);
+      border: 0.5px solid rgba(255,255,255,0.04);
+      border-radius: 12px;
+    }
+    .pp-film-skel-poster {
+      width: 44px; height: 66px; border-radius: 6px; flex-shrink: 0;
+      background: rgba(255,255,255,0.03);
+    }
+    .pp-film-skel-lines { flex: 1; display: flex; flex-direction: column; gap: 8px; }
+    .pp-film-skel-line {
+      height: 10px; border-radius: 4px;
+      background: rgba(255,255,255,0.035);
+    }
+    .pp-film-skel-line.short { width: 42%; }
+
     /* ── MY WORDS PANEL ── */
     #panelWords { background: #060810; overflow-y: auto; }
 
@@ -5599,6 +5723,9 @@
   <button class="bn-tab" data-panel="panelWords" onclick="switchTab(this)">
     <span class="bn-icon">📖</span><span class="bn-label">My Words</span><span class="bn-dot"></span>
   </button>
+  <button class="bn-tab" data-panel="panelProfile" onclick="switchTab(this)">
+    <span class="bn-icon">👤</span><span class="bn-label">Profile</span><span class="bn-dot"></span>
+  </button>
 </nav>
 
 <div id="appShell" style="display:none; max-width:480px; margin:0 auto; padding:0 16px;">
@@ -5950,6 +6077,9 @@
 
     <div id="wordsMasteredList"></div>
   </div>
+
+  <!-- ═══ MY PROFILE PANEL — Phase 1 read-only, derived from existing data ═══ -->
+  <div class="app-panel" id="panelProfile"></div>
 </div>
 
 <script>
@@ -5996,6 +6126,10 @@ function switchTab(tab) {
     if (typeof userProfile !== 'undefined' && userProfile && typeof WordsController !== 'undefined') {
       WordsController.init();
     }
+  } else if (panel === 'panelProfile') {
+    if (appShell) appShell.style.display = 'block';
+    const pp = document.getElementById('panelProfile');
+    if (pp) pp.classList.add('active');
   }
 
   window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -6505,6 +6639,165 @@ function checkLevel2Unlock() {
             try { node.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
             catch (e) { node.scrollIntoView(); }
           }
+        });
+      }
+      wasActive = nowActive;
+    });
+    obs.observe(panel, { attributes: true, attributeFilter: ['class'] });
+  })();
+})();
+
+/* ═══════════════════════════ MY PROFILE PANEL ═══════════════════════════════
+   Phase 1 read-only. Derives header + records strip + filmography from data
+   already in memory (authUser, userProfile, userProgress, scenes, CLV_LEVELS)
+   plus a fresh /api/history fetch per panel activate (spec: no cache — a
+   scene performed after activate must still appear with fresh order).       */
+(function(){
+  function esc(str){ return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+  function currentUsername(){
+    if (typeof authUser !== 'undefined' && authUser && authUser.username) return authUser.username;
+    if (typeof userProfile !== 'undefined' && userProfile && userProfile.username) return userProfile.username;
+    return 'Actor';
+  }
+
+  function fetchHistory(){
+    if (typeof authToken === 'undefined' || !authToken) return Promise.resolve([]);
+    return fetch(API + '/api/history', { headers: { Authorization: 'Bearer ' + authToken } })
+      .then(function(r){ return r.ok ? r.json() : { history: [] }; })
+      .then(function(data){ return (data && Array.isArray(data.history)) ? data.history : []; })
+      .catch(function(){ return []; });
+  }
+
+  // Newest-first per scene from /api/history rows (ORDER BY created_at DESC,
+  // LIMIT 100). Any scene in best_scores not represented in history (played
+  // > 100 attempts ago) falls through to CLV_LEVELS order.
+  function filmographyOrder(bestScores, history){
+    var seen = {};
+    var ordered = [];
+    history.forEach(function(row){
+      var sid = row && row.scene_id;
+      if (!sid || seen[sid]) return;
+      if (typeof bestScores[sid] !== 'number') return;
+      seen[sid] = true;
+      ordered.push(sid);
+    });
+    if (typeof CLV_LEVELS !== 'undefined' && CLV_LEVELS){
+      CLV_LEVELS.forEach(function(lv){
+        (lv.scenes || []).forEach(function(sid){
+          if (seen[sid]) return;
+          if (typeof bestScores[sid] !== 'number') return;
+          seen[sid] = true;
+          ordered.push(sid);
+        });
+      });
+    }
+    return ordered;
+  }
+
+  function renderRow(sid, bestScores){
+    var s = (typeof scenes !== 'undefined' && scenes) ? scenes[sid] : null;
+    if (!s) return '';
+    var safeId = String(sid).replace(/'/g, "\\'");
+    var poster = (s.ui && s.ui.poster_image) ? s.ui.poster_image : '';
+    var title = esc(s.movie || s.title || sid);
+    var score = Math.round(bestScores[sid]);
+    var year = s.year ? esc(String(s.year)) : '';
+    var diff = s.difficulty ? esc(String(s.difficulty)) : '';
+    var meta = [year, diff].filter(Boolean).join(' · ');
+    var scoreCls = score >= 60 ? 'gold' : 'muted';
+    return '<div class="pp-film-row" onclick="if(typeof openModal===\'function\') openModal(\'' + safeId + '\', scenes[\'' + safeId + '\'])">' +
+      '<div class="pp-film-poster">' +
+        (poster ? '<img src="' + esc(poster) + '" alt="" onerror="this.style.display=\'none\'">' : '') +
+      '</div>' +
+      '<div class="pp-film-body">' +
+        '<div class="pp-film-title">' + title + '</div>' +
+        (meta ? '<div class="pp-film-meta">' + meta + '</div>' : '') +
+      '</div>' +
+      '<div class="pp-film-score ' + scoreCls + '">' + score + '</div>' +
+    '</div>';
+  }
+
+  function skeletonFilmHtml(){
+    // 3 static skeleton rows — reserves ~250px of height so the panel doesn't
+    // jump when the real filmography settles in.
+    var row =
+      '<div class="pp-film-skel-row">' +
+        '<div class="pp-film-skel-poster"></div>' +
+        '<div class="pp-film-skel-lines">' +
+          '<div class="pp-film-skel-line"></div>' +
+          '<div class="pp-film-skel-line short"></div>' +
+        '</div>' +
+      '</div>';
+    return '<div class="pp-film-skel">' + row + row + row + '</div>';
+  }
+
+  // history === null   → pending (skeleton, /api/history in flight)
+  // history === []     → resolved empty (empty-state message)
+  // history === [...]  → resolved with rows (newest-first filmography)
+  function renderProfilePanel(history){
+    var host = document.getElementById('panelProfile');
+    if (!host) return;
+
+    var bestScores = (typeof userProgress !== 'undefined' && userProgress && userProgress.best_scores) || {};
+    var scoreValues = Object.keys(bestScores)
+      .map(function(k){ return bestScores[k]; })
+      .filter(function(v){ return typeof v === 'number'; });
+    var completed = scoreValues.filter(function(v){ return v >= 60; }).length;
+    var best = scoreValues.length ? Math.round(Math.max.apply(null, scoreValues)) : 0;
+    var streak = (typeof userProfile !== 'undefined' && userProfile) ? (userProfile.streak || 0) : 0;
+    var name = currentUsername();
+
+    var filmHtml;
+    if (history === null) {
+      // Pending — reserve height with a skeleton so the list settles once.
+      filmHtml = skeletonFilmHtml();
+    } else {
+      var filmIds = filmographyOrder(bestScores, history);
+      filmHtml = filmIds.length
+        ? '<div class="pp-film">' + filmIds.map(function(id){ return renderRow(id, bestScores); }).join('') + '</div>'
+        : '<div class="pp-empty">You haven’t stepped on set yet.<br>Perform your first scene from the Levels tab &mdash;<br>your filmography starts there.</div>';
+    }
+
+    host.innerHTML =
+      '<div class="pp-header">' +
+        '<div class="pp-avatar" aria-hidden="true">' +
+          '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">' +
+            '<circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/>' +
+          '</svg>' +
+        '</div>' +
+        '<div>' +
+          '<div class="pp-name">' + esc(name) + '</div>' +
+          '<div class="pp-role">Actor &middot; In production</div>' +
+        '</div>' +
+      '</div>' +
+      '<div class="pp-records">' +
+        '<div class="pp-record-cell"><div class="pp-record-val">' + completed + '</div><div class="pp-record-lbl">Scenes</div></div>' +
+        '<div class="pp-record-cell"><div class="pp-record-val">' + best + '</div><div class="pp-record-lbl">Best Take</div></div>' +
+        '<div class="pp-record-cell"><div class="pp-record-val">' + streak + '</div><div class="pp-record-lbl">Day Streak</div></div>' +
+      '</div>' +
+      '<div class="pp-section-hd">FILMOGRAPHY</div>' +
+      filmHtml;
+  }
+
+  window.renderProfilePanel = renderProfilePanel;
+
+  // Panel-activation observer — refetch /api/history on every activate (spec:
+  // no cache, one request per tab tap). Immediate render passes null for
+  // history → header + records show real data instantly, filmography renders
+  // as a skeleton that reserves height. When /api/history resolves, one final
+  // render replaces the skeleton with the newest-first list. The filmography
+  // settles once instead of jumping.
+  (function(){
+    var panel = document.getElementById('panelProfile');
+    if (!panel || typeof MutationObserver === 'undefined') return;
+    var wasActive = panel.classList.contains('active');
+    var obs = new MutationObserver(function(){
+      var nowActive = panel.classList.contains('active');
+      if (nowActive && !wasActive){
+        try { renderProfilePanel(null); } catch(e){ console.warn('[profile]', e); }
+        fetchHistory().then(function(rows){
+          try { renderProfilePanel(rows); } catch(e){ console.warn('[profile]', e); }
         });
       }
       wasActive = nowActive;
