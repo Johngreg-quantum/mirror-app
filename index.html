@@ -1341,6 +1341,95 @@
       line-height: 1.55;
     }
 
+    /* ─── Avatar picker (Phase 2) ─── */
+    /* Header avatar becomes a button when the user has any unlock; reset
+       default button chrome so the existing 68px gold-ring look is preserved. */
+    button.pp-avatar {
+      padding: 0; font: inherit;
+      -webkit-appearance: none; appearance: none;
+      -webkit-tap-highlight-color: transparent;
+      outline: none;
+    }
+    button.pp-avatar:focus-visible {
+      outline: 2px solid #e8c98e; outline-offset: 3px;
+    }
+    .pp-avatar-poster {
+      width: 100%; height: 100%; border-radius: 50%;
+      overflow: hidden; display: block;
+    }
+    .pp-avatar-poster img {
+      width: 100%; height: 100%; object-fit: cover; object-position: center 30%;
+      display: block;
+    }
+
+    /* Inline picker — expands below the header. No max-height animation
+       (repo GPU history + layout-thrashing concern); plain display toggle. */
+    .pp-avatar-picker { display: none; margin: 0 0 20px; }
+    .pp-avatar-picker.open { display: block; }
+    .pp-avatar-picker-inner {
+      padding: 16px 12px 20px;
+      background: rgba(255,255,255,0.02);
+      border: 0.5px solid rgba(200,169,110,0.15);
+      border-radius: 14px;
+    }
+    .pp-avatar-picker-hd {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 12px; letter-spacing: 0.32em;
+      color: rgba(200,169,110,0.75);
+      text-align: center; margin-bottom: 14px;
+    }
+    .pp-avatar-grid {
+      display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px 8px;
+    }
+    .pp-avatar-choice {
+      display: flex; flex-direction: column; align-items: center;
+      gap: 5px; padding: 4px 2px; cursor: pointer;
+      background: none; border: none;
+      -webkit-appearance: none; appearance: none;
+      -webkit-tap-highlight-color: transparent;
+      outline: none;
+    }
+    .pp-avatar-choice:focus-visible .pp-avatar-choice-img {
+      border-color: #e8c98e;
+    }
+    .pp-avatar-choice[disabled] { cursor: default; }
+    .pp-avatar-choice-img {
+      width: 56px; height: 56px; border-radius: 50%;
+      overflow: hidden; background: #0d0d0d;
+      border: 1.5px solid transparent;
+      transition: border-color 0.2s ease;
+    }
+    .pp-avatar-choice-img img {
+      width: 100%; height: 100%; object-fit: cover; object-position: center 30%;
+      display: block;
+    }
+    .pp-avatar-choice-fallback {
+      position: absolute; inset: 0; border-radius: 50%;
+    }
+    .pp-avatar-choice.selected .pp-avatar-choice-img {
+      border-color: #e8c98e;
+    }
+    .pp-avatar-choice.locked .pp-avatar-choice-img img,
+    .pp-avatar-choice.locked .pp-avatar-choice-fallback {
+      filter: grayscale(0.9) brightness(0.5);
+    }
+    .pp-avatar-choice-label {
+      font-family: 'DM Sans', sans-serif; font-size: 9px;
+      letter-spacing: 0.02em; color: rgba(255,255,255,0.55);
+      text-align: center; line-height: 1.15;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+      max-width: 66px;
+    }
+    .pp-avatar-choice.locked .pp-avatar-choice-label { color: rgba(255,255,255,0.28); }
+    .pp-avatar-choice.reset .pp-avatar-choice-img {
+      background: linear-gradient(160deg, #1a1a1a, #080808);
+      border-color: rgba(200,169,110,0.35);
+      display: flex; align-items: center; justify-content: center;
+      color: #c8a96e;
+    }
+    .pp-avatar-choice.reset .pp-avatar-choice-img svg { width: 22px; height: 22px; }
+    .pp-avatar-choice.reset.selected .pp-avatar-choice-img { border-color: #e8c98e; }
+
     /* Skeleton rows — reserve height while /api/history resolves so the
        filmography settles once instead of reshuffling. Static, no animation
        (repo has GPU-pressure history with animated shimmer effects). */
@@ -6653,6 +6742,13 @@ function checkLevel2Unlock() {
    plus a fresh /api/history fetch per panel activate (spec: no cache — a
    scene performed after activate must still appear with fresh order).       */
 (function(){
+  // Module-scope cache is per-activate only (reset when the panel becomes
+  // active). It exists so an optimistic re-render triggered by tapping an
+  // avatar mid-activate doesn't flash the skeleton — history is already
+  // loaded. Cleared on every activate to honor the no-cross-activate-cache
+  // spec that prevents the filmography-goes-stale bug.
+  var state = { lastHistory: null };
+
   function esc(str){ return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 
   function currentUsername(){
@@ -6661,12 +6757,39 @@ function checkLevel2Unlock() {
     return 'Actor';
   }
 
+  function currentAvatarSid(){
+    return (typeof userProfile !== 'undefined' && userProfile) ? (userProfile.avatar_scene_id || null) : null;
+  }
+
+  function posterFor(sid){
+    var s = (typeof scenes !== 'undefined' && scenes) ? scenes[sid] : null;
+    return (s && s.ui && s.ui.poster_image) ? s.ui.poster_image : '';
+  }
+
   function fetchHistory(){
     if (typeof authToken === 'undefined' || !authToken) return Promise.resolve([]);
     return fetch(API + '/api/history', { headers: { Authorization: 'Bearer ' + authToken } })
       .then(function(r){ return r.ok ? r.json() : { history: [] }; })
       .then(function(data){ return (data && Array.isArray(data.history)) ? data.history : []; })
       .catch(function(){ return []; });
+  }
+
+  // POST /api/profile/avatar. Server-side gate is authoritative — this call
+  // will 403 if the client tries to set a scene it hasn't unlocked, or 400
+  // for an unknown id. Optimistic UI reverts on failure.
+  function postAvatar(sid){
+    if (typeof authToken === 'undefined' || !authToken) return Promise.reject(new Error('no auth'));
+    return fetch(API + '/api/profile/avatar', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + authToken
+      },
+      body: JSON.stringify({ scene_id: sid })
+    }).then(function(r){
+      if (!r.ok) throw new Error('avatar POST failed: ' + r.status);
+      return r.json();
+    });
   }
 
   // Newest-first per scene from /api/history rows (ORDER BY created_at DESC,
@@ -6732,6 +6855,79 @@ function checkLevel2Unlock() {
     return '<div class="pp-film-skel">' + row + row + row + '</div>';
   }
 
+  // Header avatar — button when the user has any unlock (so the picker
+  // has something to reveal), plain div otherwise. Poster inside if
+  // avatar_scene_id is set, default icon SVG otherwise.
+  function renderHeaderAvatar(avatarSid, hasAnyUnlock){
+    var poster = avatarSid ? posterFor(avatarSid) : '';
+    var inner = poster
+      ? '<div class="pp-avatar-poster"><img src="' + esc(poster) + '" alt="" onerror="this.style.display=\'none\'"></div>'
+      : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">' +
+          '<circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/>' +
+        '</svg>';
+    if (hasAnyUnlock){
+      return '<button type="button" class="pp-avatar" aria-label="Change avatar" onclick="window._ppTogglePicker()">' + inner + '</button>';
+    }
+    return '<div class="pp-avatar" aria-hidden="true">' + inner + '</div>';
+  }
+
+  function renderPickerCell(kind, sid, selected){
+    // Reset cell — POSTs null to clear the avatar back to default icon.
+    if (kind === 'reset'){
+      return '<button type="button" class="pp-avatar-choice reset' + (selected ? ' selected' : '') + '"' +
+               ' onclick="window._ppSelectAvatar(null)" aria-label="Use default icon">' +
+        '<div class="pp-avatar-choice-img">' +
+          '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">' +
+            '<circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/>' +
+          '</svg>' +
+        '</div>' +
+        '<div class="pp-avatar-choice-label">Default</div>' +
+      '</button>';
+    }
+    var s = (typeof scenes !== 'undefined' && scenes) ? scenes[sid] : null;
+    if (!s) return '';
+    var safeId = String(sid).replace(/'/g, "\\'");
+    var poster = posterFor(sid);
+    var title = esc(s.movie || s.title || sid);
+    var color = (s.ui && s.ui.card_color) ? s.ui.card_color : '#1a1a1a';
+    var locked = kind === 'locked';
+    var cls = 'pp-avatar-choice ' + (locked ? 'locked' : 'unlocked') + (selected ? ' selected' : '');
+    var attrs = locked
+      ? ' disabled aria-label="' + title + ' — locked, score 60% or higher to unlock"'
+      : ' onclick="window._ppSelectAvatar(\'' + safeId + '\')" aria-label="' + title + '"';
+    return '<button type="button" class="' + cls + '"' + attrs + '>' +
+      '<div class="pp-avatar-choice-img">' +
+        (poster
+          ? '<img src="' + esc(poster) + '" alt="" onerror="this.style.display=\'none\'">'
+          : '<div class="pp-avatar-choice-fallback" style="background:linear-gradient(160deg,' + color + ',#080808);"></div>') +
+      '</div>' +
+      '<div class="pp-avatar-choice-label">' + title + '</div>' +
+    '</button>';
+  }
+
+  // Picker grid — iterates CLV_LEVELS in order (authoritative source, matches
+  // Levels-path ordering) so cells appear in the same order the user sees
+  // scenes elsewhere. Reset cell always first.
+  function renderPicker(bestScores, avatarSid){
+    var cells = [renderPickerCell('reset', null, !avatarSid)];
+    if (typeof CLV_LEVELS !== 'undefined' && CLV_LEVELS){
+      CLV_LEVELS.forEach(function(lv){
+        (lv.scenes || []).forEach(function(sid){
+          if (typeof scenes === 'undefined' || !scenes[sid]) return;
+          var sc = bestScores[sid];
+          var unlocked = (typeof sc === 'number' && sc >= 60);
+          cells.push(renderPickerCell(unlocked ? 'unlocked' : 'locked', sid, avatarSid === sid));
+        });
+      });
+    }
+    return '<div class="pp-avatar-picker" id="ppAvatarPicker">' +
+      '<div class="pp-avatar-picker-inner">' +
+        '<div class="pp-avatar-picker-hd">CHOOSE AVATAR</div>' +
+        '<div class="pp-avatar-grid">' + cells.join('') + '</div>' +
+      '</div>' +
+    '</div>';
+  }
+
   // history === null   → pending (skeleton, /api/history in flight)
   // history === []     → resolved empty (empty-state message)
   // history === [...]  → resolved with rows (newest-first filmography)
@@ -6747,6 +6943,8 @@ function checkLevel2Unlock() {
     var best = scoreValues.length ? Math.round(Math.max.apply(null, scoreValues)) : 0;
     var streak = (typeof userProfile !== 'undefined' && userProfile) ? (userProfile.streak || 0) : 0;
     var name = currentUsername();
+    var avatarSid = currentAvatarSid();
+    var hasAnyUnlock = completed > 0;
 
     var filmHtml;
     if (history === null) {
@@ -6761,16 +6959,13 @@ function checkLevel2Unlock() {
 
     host.innerHTML =
       '<div class="pp-header">' +
-        '<div class="pp-avatar" aria-hidden="true">' +
-          '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">' +
-            '<circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/>' +
-          '</svg>' +
-        '</div>' +
+        renderHeaderAvatar(avatarSid, hasAnyUnlock) +
         '<div>' +
           '<div class="pp-name">' + esc(name) + '</div>' +
           '<div class="pp-role">Actor &middot; In production</div>' +
         '</div>' +
       '</div>' +
+      renderPicker(bestScores, avatarSid) +
       '<div class="pp-records">' +
         '<div class="pp-record-cell"><div class="pp-record-val">' + completed + '</div><div class="pp-record-lbl">Scenes</div></div>' +
         '<div class="pp-record-cell"><div class="pp-record-val">' + best + '</div><div class="pp-record-lbl">Best Take</div></div>' +
@@ -6782,12 +6977,51 @@ function checkLevel2Unlock() {
 
   window.renderProfilePanel = renderProfilePanel;
 
+  // Toggle the picker open/closed. innerHTML rebuilds regenerate the DOM
+  // fresh each time, so the picker starts closed on every render — the
+  // user tapping the header avatar is the only way to open it.
+  window._ppTogglePicker = function(){
+    var el = document.getElementById('ppAvatarPicker');
+    if (!el) return;
+    el.classList.toggle('open');
+  };
+
+  // Select an avatar (or null to reset to icon). Server-side gate is the
+  // real one (validates scene_id ∈ scene_config AND best_score >= 60);
+  // this optimistic path just prevents the obvious no-op cases and reverts
+  // if the POST fails. Re-renders reuse state.lastHistory so the filmography
+  // doesn't flash the skeleton — no cross-activate cache is created, only
+  // within-activate reuse.
+  window._ppSelectAvatar = function(sid){
+    if (typeof userProfile === 'undefined' || !userProfile) return;
+    var prev = userProfile.avatar_scene_id || null;
+    if (sid === prev) {
+      // Same choice — just close the picker, no POST.
+      var el = document.getElementById('ppAvatarPicker');
+      if (el) el.classList.remove('open');
+      return;
+    }
+    // Optimistic: update in memory + re-render immediately.
+    userProfile.avatar_scene_id = sid;
+    try { renderProfilePanel(state.lastHistory); } catch(e){ console.warn('[profile]', e); }
+    postAvatar(sid).catch(function(err){
+      // Revert on failure — server rejected (403 unlock gate, 400 unknown id,
+      // network error). Log; existing app has no toast utility we can rely on
+      // here without breaking scope.
+      console.warn('[profile] avatar POST failed, reverting', err);
+      userProfile.avatar_scene_id = prev;
+      try { renderProfilePanel(state.lastHistory); } catch(e){ console.warn('[profile]', e); }
+    });
+  };
+
   // Panel-activation observer — refetch /api/history on every activate (spec:
-  // no cache, one request per tab tap). Immediate render passes null for
-  // history → header + records show real data instantly, filmography renders
-  // as a skeleton that reserves height. When /api/history resolves, one final
-  // render replaces the skeleton with the newest-first list. The filmography
-  // settles once instead of jumping.
+  // no cross-activate cache, one request per tab tap). Immediate render passes
+  // null for history → header + records show real data instantly, filmography
+  // renders as a skeleton that reserves height. When /api/history resolves,
+  // one final render replaces the skeleton with the newest-first list.
+  // state.lastHistory is stashed AFTER the fetch so optimistic re-renders
+  // triggered mid-activate (e.g. avatar selection) reuse it instead of
+  // reflashing the skeleton.
   (function(){
     var panel = document.getElementById('panelProfile');
     if (!panel || typeof MutationObserver === 'undefined') return;
@@ -6795,8 +7029,10 @@ function checkLevel2Unlock() {
     var obs = new MutationObserver(function(){
       var nowActive = panel.classList.contains('active');
       if (nowActive && !wasActive){
+        state.lastHistory = null;   // reset per-activate cache
         try { renderProfilePanel(null); } catch(e){ console.warn('[profile]', e); }
         fetchHistory().then(function(rows){
+          state.lastHistory = rows;
           try { renderProfilePanel(rows); } catch(e){ console.warn('[profile]', e); }
         });
       }
