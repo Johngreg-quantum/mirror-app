@@ -2597,6 +2597,22 @@ const RanksController = {
   bindShare() {
     const btn = document.getElementById('ranksShareBtn');
     if (btn) btn.onclick = () => this.shareProgress();
+    const copyBtn = document.getElementById('ranksShareCopy');
+    if (copyBtn) copyBtn.onclick = () => this.copyShareLink();
+    const xBtn = document.getElementById('ranksShareX');
+    if (xBtn) xBtn.onclick = () => this.shareToIntent('x');
+    const fbBtn = document.getElementById('ranksShareFb');
+    if (fbBtn) fbBtn.onclick = () => this.shareToIntent('facebook');
+  },
+
+  // Native share button is hidden (never removed) when the platform can't take
+  // the payload. Runs on every render so it reflects the live data — the
+  // payload isn't buildable until this.data exists.
+  syncShareButtons() {
+    const btn = document.getElementById('ranksShareBtn');
+    if (!btn) return;
+    const payload = this.sharePayload();
+    btn.style.display = (payload && this.canNativeShare(payload)) ? '' : 'none';
   },
 
   async load() {
@@ -2617,6 +2633,7 @@ const RanksController = {
     this.renderFeed(d);
     this.renderStandings(d);
     this.renderRewards(d);
+    this.syncShareButtons();
   },
 
   renderFeed(d) {
@@ -2762,18 +2779,74 @@ const RanksController = {
     }).join('');
   },
 
-  shareProgress() {
+  // The URL travels in its own `url` member rather than trailing the text as a
+  // schemeless string. Facebook's share extension consumes `url` and file
+  // attachments only — with text alone it opened an empty composer. It still
+  // drops `text` (Platform Policy 2.3, since 2017), so the FB composer shows
+  // the OG link card and no caption; that is the expected result, not a bug.
+  sharePayload() {
     const d = this.data;
-    if (!d) return;
-    const text = `I'm better than ${d.percentile}% of Mirror users! 🎬 ${d.scenes_completed} scenes completed · ${d.streak}-day streak · ${d.weekly_xp} XP this week. Practice English with iconic movie scenes → mirror-app-z8wr.onrender.com`;
-    if (navigator.share) {
-      navigator.share({ text });
-    } else {
-      navigator.clipboard.writeText(text).then(() => {
-        const btn = document.getElementById('ranksShareBtn');
-        if (btn) { btn.textContent = 'COPIED TO CLIPBOARD'; setTimeout(() => btn.textContent = 'SHARE MY PROGRESS', 2000); }
-      });
-    }
+    if (!d) return null;
+    return {
+      title: 'Mirror',
+      text: `I'm better than ${d.percentile}% of Mirror users! 🎬 ${d.scenes_completed} scenes completed · ${d.streak}-day streak · ${d.weekly_xp} XP this week. Practice English with iconic movie scenes.`,
+      url: resolveAppUrl('/'),
+    };
+  },
+
+  // Native share is offered only when the platform can actually take this
+  // payload. Note canShare() returns true on desktop Chrome/Edge too — no API
+  // distinguishes the Windows sheet from the iOS one — so the intent row below
+  // is always rendered and this button is an addition, never the only option.
+  // The canShare/share two-step matters for iOS 12.2–14, which ship share()
+  // without canShare(); gating on canShare alone would drop them.
+  canNativeShare(payload) {
+    if (!navigator.share) return false;
+    return navigator.canShare ? navigator.canShare(payload) : true;
+  },
+
+  shareProgress() {
+    const payload = this.sharePayload();
+    if (!payload) return;
+    if (!this.canNativeShare(payload)) { this.copyShareLink(); return; }
+    navigator.share(payload).catch((err) => {
+      // AbortError just means the sheet was dismissed — not a failure, and it
+      // must not fall through to a fallback the user didn't ask for.
+      if (err && err.name === 'AbortError') return;
+      this.copyShareLink();
+    });
+  },
+
+  // Same interaction as the challenge modal's copy button (see btnCopyLink in
+  // createChallenge): write, confirm on the label, revert after 2s.
+  copyShareLink() {
+    const payload = this.sharePayload();
+    if (!payload) return;
+    const btn = document.getElementById('ranksShareCopy');
+    const revert = (msg) => {
+      if (!btn) return;
+      btn.textContent = msg;
+      setTimeout(() => { btn.textContent = 'COPY LINK'; }, 2000);
+    };
+    // navigator.clipboard is undefined outside secure contexts (plain http on a
+    // LAN IP), which throws rather than rejecting — check before calling.
+    if (!navigator.clipboard || !navigator.clipboard.writeText) { revert('COPY UNAVAILABLE'); return; }
+    navigator.clipboard.writeText(`${payload.text} ${payload.url}`)
+      .then(() => revert('COPIED'))
+      .catch(() => revert('COPY FAILED'));
+  },
+
+  shareToIntent(which) {
+    const payload = this.sharePayload();
+    if (!payload) return;
+    const text = encodeURIComponent(payload.text);
+    const url  = encodeURIComponent(payload.url);
+    // Facebook accepts `u` only — the `quote` param is deprecated and ignored,
+    // so this preview is built entirely from the target page's OG tags.
+    const href = which === 'facebook'
+      ? `https://www.facebook.com/sharer/sharer.php?u=${url}`
+      : `https://twitter.com/intent/tweet?text=${text}&url=${url}`;
+    window.open(href, '_blank', 'noopener');
   },
 };
 

@@ -1560,6 +1560,26 @@
     #ranksShareBtn { display: block; margin: 0 1rem 1rem; padding: 0.85rem; background: linear-gradient(135deg, rgba(200,169,110,0.15), rgba(200,169,110,0.08)); border: 1px solid rgba(200,169,110,0.3); border-radius: 14px; font-family: 'Bebas Neue', sans-serif; font-size: 1rem; letter-spacing: 0.1em; color: #c8a96e; text-align: center; cursor: pointer; width: calc(100% - 2rem); transition: all 0.2s; }
     #ranksShareBtn:hover { background: rgba(200,169,110,0.15); }
 
+    /* Direct share targets. Deliberately not reusing .btn-copy-link from the
+       challenge modal — that is styled against --surface/--border for a
+       different panel and reads as foreign here. Same interaction, gold
+       treatment matching #ranksShareBtn. */
+    #ranksShareRow { display: flex; gap: 8px; margin: 0 1rem 1rem; }
+    .ranks-share-intent {
+      flex: 1; padding: 0.6rem 0.4rem;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(200,169,110,0.22);
+      border-radius: 12px;
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 0.78rem; letter-spacing: 0.08em;
+      color: rgba(200,169,110,0.85);
+      text-align: center; cursor: pointer;
+      transition: background 0.2s, border-color 0.2s;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .ranks-share-intent:hover { background: rgba(200,169,110,0.12); border-color: rgba(200,169,110,0.4); }
+    .ranks-share-intent:focus-visible { outline: 2px solid #e8c98e; outline-offset: 2px; }
+
     .ranks-divider-label { font-family: 'Bebas Neue', sans-serif; font-size: 0.75rem; letter-spacing: 0.14em; color: rgba(200,169,110,0.35); padding: 0.9rem 1rem 0.4rem; }
 
     .ranks-feed-item { display: flex; align-items: flex-start; gap: 10px; padding: 0.85rem 1rem; border-bottom: 0.5px solid rgba(255,255,255,0.05); }
@@ -6077,6 +6097,14 @@
         <div class="ranks-stat-card"><div class="ranks-stat-num" id="rStat4">–</div><div class="ranks-stat-lbl">WORDS MASTERED</div></div>
       </div>
       <button id="ranksShareBtn">SHARE MY PROGRESS</button>
+      <!-- Always rendered. navigator.canShare() cannot tell a good mobile share
+           sheet from the Windows one, so these direct targets are the reliable
+           path on desktop; #ranksShareBtn above is hidden when unusable. -->
+      <div id="ranksShareRow">
+        <button class="ranks-share-intent" id="ranksShareX">X</button>
+        <button class="ranks-share-intent" id="ranksShareFb">FACEBOOK</button>
+        <button class="ranks-share-intent" id="ranksShareCopy">COPY LINK</button>
+      </div>
       <div class="ranks-divider-label">FRIEND ACTIVITY</div>
       <div id="ranksFeedList"></div>
     </div>
