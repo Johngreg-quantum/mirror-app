@@ -1541,8 +1541,12 @@ async def get_ranks_social(user: dict = Depends(current_user)):
     words_mastered = int(cur.fetchone()[0] or 0)
 
     # Feed — 10 most recent submissions across all users
+    # avatar_scene_id rides the existing LEFT JOIN — no extra join. It is NULL
+    # for guest rows (no user_id) and for anyone who hasn't picked an avatar;
+    # the client falls back to initials in both cases.
     cur.execute(
-        "SELECT s.scene_id, s.sync_score, s.created_at, COALESCE(u.username, s.username) "
+        "SELECT s.scene_id, s.sync_score, s.created_at, COALESCE(u.username, s.username), "
+        "u.avatar_scene_id "
         "FROM scores s LEFT JOIN users u ON s.user_id = u.id "
         "ORDER BY s.created_at DESC LIMIT 10"
     )
@@ -1555,6 +1559,7 @@ async def get_ranks_social(user: dict = Depends(current_user)):
         feed.append({
             "username":   uname,
             "initials":   (uname[:2].upper() if uname else "??"),
+            "avatar_scene_id": r[4],
             "action":     "completed" if score >= 60 else "practiced",
             "scene_id":   sid,
             "score":      round(score, 1),
@@ -1562,9 +1567,12 @@ async def get_ranks_social(user: dict = Depends(current_user)):
             "created_at": created.isoformat() if hasattr(created, "isoformat") else created,
         })
 
-    # Top 10 leaderboard (and slice the first 3 for the podium)
+    # Top 10 leaderboard (and slice the first 3 for the podium). avatar_scene_id
+    # is a plain column on the same 10 users rows — no join, no extra query. The
+    # client resolves the poster URL from the scene config it already holds, so
+    # only the id crosses the wire. NULL for anyone who hasn't picked one.
     cur.execute(
-        "SELECT id, username, COALESCE(points, 0) FROM users "
+        "SELECT id, username, COALESCE(points, 0), avatar_scene_id FROM users "
         "ORDER BY COALESCE(points, 0) DESC LIMIT 10"
     )
     top_rows    = cur.fetchall()
@@ -1578,6 +1586,7 @@ async def get_ranks_social(user: dict = Depends(current_user)):
         entry = {
             "username":       uname,
             "initials":       (uname[:2].upper() if uname else "??"),
+            "avatar_scene_id": r[3],
             "total_points":   pts,
             "division_name":  div["name"],
             "division_color": div["color"],

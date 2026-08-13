@@ -2554,6 +2554,22 @@ window.WordsController = WordsController;
 // ══════════════════════════════════════════════
 // RANKS — social/standings/rewards controller
 // ══════════════════════════════════════════════
+
+// Poster crop for a user's chosen avatar scene. /api/ranks/social sends only
+// the scene id; the URL is resolved here from the scene config already in
+// memory, exactly like posterFor() behind the profile header. Returns '' when
+// the user has no avatar, when the config isn't loaded yet, or when the id
+// isn't in it — every one of those leaves the initials showing.
+function ranksAvatarImg(avatarSceneId) {
+  if (!avatarSceneId) return '';
+  const s = (typeof scenes !== 'undefined' && scenes) ? scenes[avatarSceneId] : null;
+  const poster = (s && s.ui && s.ui.poster_image) ? s.ui.poster_image : '';
+  if (!poster) return '';
+  const safe = String(poster).replace(/&/g, '&amp;').replace(/"/g, '&quot;')
+                             .replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  return `<img src="${safe}" alt="" onerror="this.style.display='none'">`;
+}
+
 const RanksController = {
   data: null,
   loaded: false,
@@ -2643,7 +2659,7 @@ const RanksController = {
                   : score >= 70 ? '<span class="ranks-feed-badge badge-blue-pill">' + score + '%</span>'
                   : '<span class="ranks-feed-badge badge-fire">🔥 ' + score + '%</span>';
       return `<div class="ranks-feed-item">
-        <div class="ranks-avatar">${f.initials}</div>
+        <div class="ranks-avatar">${f.initials}${ranksAvatarImg(f.avatar_scene_id)}</div>
         <div style="flex:1;">
           <div class="ranks-feed-name">${f.username}</div>
           <div class="ranks-feed-text">practiced <em style="color:rgba(255,255,255,0.55)">${f.scene_id.replace(/_/g,' ')}</em></div>
@@ -2672,7 +2688,7 @@ const RanksController = {
       <div class="podium-col">
         ${rankLabels[i] ? `<div style="font-family:'Bebas Neue',sans-serif;font-size:0.58rem;color:rgba(200,169,110,0.55);letter-spacing:0.1em;">${rankLabels[i]}</div>` : ''}
         <div class="podium-uname" style="color:${colors[i]}">${u.username.substring(0,8)}</div>
-        <div class="podium-av" style="width:${sizes[i]};height:${sizes[i]};background:${colors[i]}22;border:2px solid ${colors[i]};font-size:0.72rem;color:${colors[i]}">${u.initials}</div>
+        <div class="podium-av" style="width:${sizes[i]};height:${sizes[i]};background:${colors[i]}22;border:2px solid ${colors[i]};font-size:0.72rem;color:${colors[i]}">${u.initials}${ranksAvatarImg(u.avatar_scene_id)}</div>
         <div class="podium-xp" style="color:${colors[i]}">${u.total_points.toLocaleString()} xp</div>
         <div class="podium-bar" style="height:${heights[i]};background:linear-gradient(180deg,${colors[i]}30,${colors[i]}0d);border-top:2px solid ${colors[i]};border-left:1px solid ${colors[i]}33;border-right:1px solid ${colors[i]}33;">
           <div class="podium-num" style="font-size:${fontSizes[i]};color:${colors[i]}">${labels[i]}</div>
@@ -2688,7 +2704,7 @@ const RanksController = {
       const avBg = rank <= 3 ? `${rc}22` : 'rgba(255,255,255,0.05)';
       return `<div class="ranks-lb-row ${u.is_me ? 'is-me' : ''}">
         <div class="ranks-lb-rank" style="color:${rc}">${u.is_me ? 'YOU' : rank}</div>
-        <div class="ranks-lb-av" style="background:${avBg};color:${rc};border:1px solid ${rc}44">${u.initials}</div>
+        <div class="ranks-lb-av" style="background:${avBg};color:${rc};border:1px solid ${rc}44">${u.initials}${ranksAvatarImg(u.avatar_scene_id)}</div>
         <div class="ranks-lb-name" style="${u.is_me ? 'color:#c8a96e' : ''}">${u.username}</div>
         <div class="ranks-lb-pts">${u.total_points.toLocaleString()} xp</div>
       </div>`;
@@ -2700,7 +2716,7 @@ const RanksController = {
       const toTop3 = myRank > 3 ? d.leaderboard[2].total_points - me.total_points : 0;
       youEl.innerHTML = `
         <div class="ranks-lb-rank" style="color:rgba(200,169,110,0.4);font-family:'Bebas Neue',sans-serif;font-size:1rem;">${myRank}</div>
-        <div class="ranks-lb-av" style="width:32px;height:32px;background:rgba(200,169,110,0.15);border:1px solid rgba(200,169,110,0.35);color:#c8a96e;font-size:0.68rem;">${me.initials}</div>
+        <div class="ranks-lb-av" style="width:32px;height:32px;background:rgba(200,169,110,0.15);border:1px solid rgba(200,169,110,0.35);color:#c8a96e;font-size:0.68rem;">${me.initials}${ranksAvatarImg(me.avatar_scene_id)}</div>
         <div style="flex:1;">
           <div style="font-size:0.8rem;color:#c8a96e;font-weight:500;">You (${me.username})</div>
           ${toTop3 > 0 ? `<div style="font-size:0.62rem;color:rgba(255,255,255,0.3);margin-top:1px;">${toTop3.toLocaleString()} xp to top 3</div>` : '<div style="font-size:0.62rem;color:#c8a96e;margin-top:1px;">You\'re in the top 3!</div>'}
