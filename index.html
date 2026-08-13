@@ -3967,7 +3967,11 @@
   <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/0.160.0/three.min.js"></script>
+  <!-- Three.js is NOT loaded here. It was a synchronous 654 KB <script> in
+       <head> — the largest asset on the page — blocking the parser to power
+       #mlStage, which body.app-mode hides outright, so every logged-in user
+       downloaded it for pixels they never see. It is now fetched lazily by the
+       IntersectionObserver loader just before </body>. -->
 </head>
 <body>
 
@@ -7533,10 +7537,14 @@ function checkLevel2Unlock() {
 
 <!-- ═══════════════════════════ SCREEN TEST — Three.js + audio (3/3) ═══════════════════════════ -->
 <script>
-(function(){
+(function initMlStage(){
   if (!document.getElementById('mlStage')) return;
+  // Three.js is lazy-loaded now (see the loader below), so on first run it is
+  // normally absent. Wait for the loader's signal and re-enter. If the load
+  // fails the event never fires and the stage is simply skipped — the same
+  // graceful degradation this guard always provided.
   if (typeof THREE === 'undefined') {
-    console.warn('[mlStage] THREE not loaded — Three.js stage skipped');
+    document.addEventListener('mlstage:three-ready', initMlStage, { once: true });
     return;
   }
 
@@ -7819,6 +7827,49 @@ function checkLevel2Unlock() {
     }
   });
   bodyObs.observe(document.body, { attributes: true, attributeFilter: ['class'] });
+})();
+</script>
+
+<script>
+// ── Three.js lazy loader for #mlStage ──────────────────────────────────────
+// Fetches Three.js only when the Screen Test stage is about to come into view,
+// then signals the stage IIFE above via 'mlstage:three-ready'.
+//
+// The key property: an IntersectionObserver never fires for an element inside a
+// display:none subtree. body.app-mode hides #mlStage, so logged-in users now
+// never download the library at all — previously they paid 654 KB of
+// render-blocking script for a hidden section.
+(function(){
+  var THREE_SRC = 'https://cdnjs.cloudflare.com/ajax/libs/three.js/0.160.0/three.min.js';
+  var stage = document.getElementById('mlStage');
+  if (!stage || typeof THREE !== 'undefined') return;
+
+  var started = false;
+  function loadThree(){
+    if (started) return;
+    started = true;
+    var s = document.createElement('script');
+    s.src = THREE_SRC;
+    s.async = true;
+    s.onload = function(){ document.dispatchEvent(new Event('mlstage:three-ready')); };
+    s.onerror = function(){
+      // Nothing to clean up — the stage's own `typeof THREE === 'undefined'`
+      // guard means a failed load degrades to no 3D card, not a broken page.
+      console.warn('[mlStage] Three.js failed to load — stage skipped');
+    };
+    document.head.appendChild(s);
+  }
+
+  // No IntersectionObserver (very old browsers): load eagerly rather than
+  // silently dropping the stage.
+  if (!('IntersectionObserver' in window)) { loadThree(); return; }
+
+  var io = new IntersectionObserver(function(entries){
+    for (var i = 0; i < entries.length; i++) {
+      if (entries[i].isIntersecting) { io.disconnect(); loadThree(); return; }
+    }
+  }, { rootMargin: '400px' });
+  io.observe(stage);
 })();
 </script>
 </body>
