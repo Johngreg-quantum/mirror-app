@@ -3551,17 +3551,23 @@
     }
     @media (prefers-reduced-motion: reduce) { .mp-head { animation: none; } }
 
+    /* Chrome neutralised — this was the video's frame (black fill, gradient
+       border, deep shadow). Keeping it would put a card inside a card now that
+       .mp-glass is the only content, so it is reduced to a plain centring
+       container and .mp-glass is the single card. */
     .mp-cinema {
       position: relative;
       max-width: 1280px;
       margin: 0 auto;
-      border-radius: 24px;
-      overflow: hidden;
+      border-radius: 0;
+      overflow: visible;
       isolation: isolate;
-      background: #0a0a0e;
-      box-shadow: 0 40px 120px rgba(0,0,0,0.6), 0 8px 30px rgba(0,0,0,0.5);
+      background: transparent;
+      box-shadow: none;
     }
     .mp-cinema::before {
+      /* Part of the neutralised video frame — see .mp-cinema above. */
+      display: none;
       content: '';
       position: absolute; inset: 0; border-radius: 24px; padding: 1px;
       background: linear-gradient(135deg, rgba(200,169,110,0.5),
@@ -3573,7 +3579,10 @@
       pointer-events: none;
       z-index: 6;
     }
-    .mp-video-wrap { position: relative; aspect-ratio: 21 / 9; width: 100%; }
+    /* aspect-ratio was reserving a full-width 21:9 box for the video. With the
+       video hidden that became an empty gap, so the wrapper now sizes to the
+       glass card it still contains. */
+    .mp-video-wrap { position: relative; aspect-ratio: auto; width: 100%; }
     .mp-video-wrap video,
     .mp-video-wrap mux-player {
       position: absolute; inset: 0; width: 100%; height: 100%;
@@ -3588,7 +3597,6 @@
         radial-gradient(ellipse 120% 90% at 50% 30%, transparent 55%, rgba(6,6,9,0.45) 100%);
     }
     .mp-play {
-      display: none;
       position: absolute; top: 38%; left: 50%;
       transform: translate(-50%, -50%);
       z-index: 4;
@@ -3616,18 +3624,39 @@
       filter: drop-shadow(0 2px 8px rgba(0,0,0,0.6)); }
     .mp-cinema.playing .mp-play { opacity: 0; pointer-events: none; transition: opacity 0.4s; }
 
+    /* ── Video removed from this section — the glass card stands alone. ──
+       Elements are hidden, never deleted (project rule). Hidden individually
+       rather than via .mp-video-wrap because .mp-glass is a CHILD of that
+       wrapper and would disappear with it.
+
+       This also supersedes d31ffc4, which added `display: none` to .mp-play
+       but placed it before that rule's own `display: flex` — the later
+       declaration won, so the gold play button was never actually hidden.
+       That dead declaration has been removed; the button is hidden here.
+
+       #mpCta only — #mmWatchBtn in the section above is deliberately untouched. */
+    .mp-video-wrap mux-player,
+    .mp-grade,
+    .mp-play,
+    #mpCta { display: none; }
+
+    /* Was an absolute overlay pinned to the video's lower-left. Now the only
+       thing in the section, so it centres itself as a normal block. `relative`
+       is kept because .mp-glass::before draws the border via inset positioning.
+
+       backdrop-filter is gone: with no video behind it there is nothing to
+       blur but black, so it cost GPU work for no visible result. The card's
+       own background carries the frosted look instead, at raised alpha —
+       the previous 0.018 midpoint was invisible against #0a0a0e. */
     .mp-glass {
-      position: absolute;
-      left: clamp(20px, 4vw, 52px);
-      bottom: clamp(20px, 4vw, 48px);
+      position: relative;
       z-index: 5;
-      max-width: min(560px, calc(100% - 40px));
-      padding: clamp(22px, 3vw, 36px) clamp(24px, 3.2vw, 40px);
+      max-width: min(680px, calc(100% - 32px));
+      margin: 0 auto;
+      padding: clamp(24px, 3vw, 38px) clamp(24px, 3.2vw, 40px);
       border-radius: 20px;
-      background: linear-gradient(160deg, rgba(255,255,255,0.055),
-        rgba(255,255,255,0.018) 55%, rgba(200,169,110,0.035));
-      backdrop-filter: blur(18px) saturate(1.25);
-      -webkit-backdrop-filter: blur(18px) saturate(1.25);
+      background: linear-gradient(160deg, rgba(255,255,255,0.06),
+        rgba(255,255,255,0.03) 55%, rgba(200,169,110,0.045));
       box-shadow: inset 0 1px 0 rgba(255,255,255,0.12), 0 24px 60px rgba(0,0,0,0.45);
     }
     .mp-glass::before {
@@ -3696,13 +3725,16 @@
     }
 
     @media (max-width: 860px) {
-      .mp-video-wrap { aspect-ratio: 16 / 10; }
+      /* aspect-ratio and the -28px top margin both existed to overlap the card
+         onto the video. With no video the ratio reserved an empty box and the
+         negative margin pulled the card up under the heading. */
+      .mp-video-wrap { aspect-ratio: auto; }
       .mp-play { top: 32%; width: 68px; height: 68px; }
       .mp-glass {
         position: relative; left: auto; bottom: auto;
-        max-width: none; margin: -28px 14px 0;
+        max-width: none; margin: 0 14px;
       }
-      .mp-cinema { overflow: visible; border-radius: 24px 24px 0 0; }
+      .mp-cinema { overflow: visible; border-radius: 0; }
       .mp-cinema::before { display: none; }
       .mp-whyrow { grid-template-columns: 1fr; gap: 28px; margin-top: 44px; }
       .mp-why-divider {
@@ -3925,7 +3957,11 @@
       #mlSpotlight { display: none !important; }
     }
   </style>
-  <script src="https://cdn.jsdelivr.net/npm/@mux/mux-player" defer></script>
+  <!-- Mux Player script removed: the Fluency × Cinema video is hidden, and the
+       library was 285 KB gzipped on every landing-page load. The <mux-player>
+       element is retained but never upgrades without this script, so it also
+       stops fetching its 173 KB poster. Restore this tag to bring the video
+       back (see the "video removed" rule in the Section 3 CSS). -->
 
   <!-- Screen Test stage — CDN deps -->
   <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
