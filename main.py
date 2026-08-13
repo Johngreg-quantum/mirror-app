@@ -14,11 +14,12 @@ import traceback
 logger = logging.getLogger(__name__)
 from collections import defaultdict, deque
 from datetime import datetime, timedelta, timezone, date
+from email.utils import formatdate
 from typing import Optional
 
 from fastapi import FastAPI, File, UploadFile, Form, HTTPException, Depends, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import HTMLResponse, JSONResponse
+from fastapi.responses import HTMLResponse, JSONResponse, Response
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
@@ -807,17 +808,83 @@ def calc_points(score: float, is_first_attempt: bool) -> int:
 # Routes — frontend
 # ---------------------------------------------------------------------------
 
-def _read_html_file(path: str, missing_title: str):
+# Cache of (stat_key, etag, body, last_modified) per shell path. The HTML shells
+# only change on deploy, so hashing 327 KB on every navigation would be pure
+# waste — but keying on (mtime_ns, size) means an edited file is still picked up
+# immediately in local dev without a restart.
+_HTML_SHELL_CACHE: dict = {}
+
+
+def _html_shell(path: str):
+    """Read an HTML shell, returning (etag, body, last_modified).
+
+    Re-reads and re-hashes only when the file's mtime or size changes.
+    """
+    st = os.stat(path)
+    stat_key = (st.st_mtime_ns, st.st_size)
+
+    cached = _HTML_SHELL_CACHE.get(path)
+    if cached and cached[0] == stat_key:
+        return cached[1], cached[2], cached[3]
+
+    with open(path, "r", encoding="utf-8") as f:
+        body = f.read()
+    etag = '"%s"' % hashlib.sha1(body.encode("utf-8")).hexdigest()
+    last_modified = formatdate(st.st_mtime, usegmt=True)
+    _HTML_SHELL_CACHE[path] = (stat_key, etag, body, last_modified)
+    return etag, body, last_modified
+
+
+def _if_none_match_hit(request: Request, etag: str) -> bool:
+    """True when the client already holds this exact entity.
+
+    Handles a comma-separated list and the weak-validator "W/" prefix, both of
+    which are legal in If-None-Match.
+    """
+    header = request.headers.get("if-none-match") if request else None
+    if not header:
+        return False
+    if header.strip() == "*":
+        return True
+    for tag in header.split(","):
+        tag = tag.strip()
+        if tag.startswith("W/"):
+            tag = tag[2:]
+        if tag == etag:
+            return True
+    return False
+
+
+def _read_html_file(path: str, missing_title: str, request: Request = None):
+    """Serve an HTML shell with revalidation headers.
+
+    These shells were previously returned as bare strings, so they carried no
+    ETag, Last-Modified or Cache-Control at all — every navigation re-downloaded
+    the full document (327 KB for index.html). They now revalidate: a repeat
+    visit sends If-None-Match and gets a 304 with no body.
+
+    Cache-Control is "no-cache" rather than a max-age: the shell must never be
+    served stale from cache after a deploy, but it may be reused once the ETag
+    is confirmed unchanged.
+    """
     try:
-        with open(path, "r", encoding="utf-8") as f:
-            return f.read()
-    except FileNotFoundError:
+        etag, body, last_modified = _html_shell(path)
+    except (FileNotFoundError, OSError):
         return HTMLResponse(f"<h1>{missing_title}</h1>", status_code=404)
+
+    headers = {
+        "ETag": etag,
+        "Last-Modified": last_modified,
+        "Cache-Control": "no-cache, must-revalidate",
+    }
+    if _if_none_match_hit(request, etag):
+        return Response(status_code=304, headers=headers)
+    return HTMLResponse(body, headers=headers)
 
 
 @app.get("/", response_class=HTMLResponse)
-async def cinematic_landing():
-    return _read_html_file(_INDEX_HTML_PATH, "index.html not found")
+async def cinematic_landing(request: Request):
+    return _read_html_file(_INDEX_HTML_PATH, "index.html not found", request)
 
 
 @app.get("/app", response_class=HTMLResponse)
@@ -828,30 +895,32 @@ async def cinematic_landing():
 @app.get("/app/scene/{scene_id}", response_class=HTMLResponse)
 @app.get("/app/challenge/{challenge_id}", response_class=HTMLResponse)
 async def new_shell_app_entry(
+    request: Request,
     scene_id: Optional[str] = None,
     challenge_id: Optional[str] = None,
 ):
-    return _read_html_file(_NEW_SHELL_INDEX_HTML_PATH, "app index.html not found")
+    return _read_html_file(_NEW_SHELL_INDEX_HTML_PATH, "app index.html not found", request)
 
 
 @app.get("/scene/{scene_id}", response_class=HTMLResponse)
 @app.get("/challenge/{challenge_id}", response_class=HTMLResponse)
 async def new_shell_legacy_links(
+    request: Request,
     scene_id: Optional[str] = None,
     challenge_id: Optional[str] = None,
 ):
-    return _read_html_file(_NEW_SHELL_INDEX_HTML_PATH, "app index.html not found")
+    return _read_html_file(_NEW_SHELL_INDEX_HTML_PATH, "app index.html not found", request)
 
 
 @app.get("/legacy", response_class=HTMLResponse)
-async def legacy_app_entry():
-    return _read_html_file(_INDEX_HTML_PATH, "index.html not found")
+async def legacy_app_entry(request: Request):
+    return _read_html_file(_INDEX_HTML_PATH, "index.html not found", request)
 
 
 @app.get("/legacy/challenge/{challenge_id}", response_class=HTMLResponse)
-async def legacy_challenge_page(challenge_id: str):
+async def legacy_challenge_page(request: Request, challenge_id: str):
     """Serve the SPA for challenge links so the JS can read the path and render the challenge screen."""
-    return _read_html_file(_INDEX_HTML_PATH, "index.html not found")
+    return _read_html_file(_INDEX_HTML_PATH, "index.html not found", request)
 
 
 # ---------------------------------------------------------------------------
