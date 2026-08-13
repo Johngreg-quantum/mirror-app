@@ -28,10 +28,12 @@ function formatRuntime(scene) {
   return `${seconds}s`;
 }
 
+// WebP variants; the .jpg originals remain on disk as a manual fallback.
+// See optimize_cards.py for how both are generated.
 function posterFallback(level) {
-  if (level === 1) return '/static/beginner-card.jpg';
-  if (level === 2) return '/static/intermediate-card.jpg';
-  return '/static/advanced-card.jpg';
+  if (level === 1) return '/static/beginner-card.webp';
+  if (level === 2) return '/static/intermediate-card.webp';
+  return '/static/advanced-card.webp';
 }
 
 export function adaptSceneConfig(rawConfig, { progress = null, daily = null } = {}) {

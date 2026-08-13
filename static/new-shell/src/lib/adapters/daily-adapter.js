@@ -25,7 +25,7 @@ export function adaptDailyChallenge(rawDaily, scenes = [], profile = null) {
       personalBest: null,
       locked: false,
       isDaily: true,
-      imageUrl: rawDaily.scene?.ui?.poster_image || '/static/beginner-card.jpg',
+      imageUrl: rawDaily.scene?.ui?.poster_image || '/static/beginner-card.webp',
     },
     resetLabel: `Resets in ${hours}h ${minutes}m`,
     rewardPoints: 250,
