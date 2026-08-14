@@ -137,7 +137,20 @@ def _check_submit_rate(user_id: int, conn) -> None:
 
 # ---------------------------------------------------------------------------
 DB_PATH   = "mirror.db"
-SECRET    = os.getenv("JWT_SECRET", "change-me-to-a-long-random-string-in-production")
+
+# JWT signing secret. Fail closed at startup: a missing or default secret means
+# every token is forgeable by anyone who can read this public repo, so we refuse
+# to boot rather than fall back to a known value. On Render a failed startup
+# keeps the previous healthy deploy serving; locally it means JWT_SECRET must be
+# set in the environment (or .env) before the app will run.
+_DEFAULT_JWT_SECRET = "change-me-to-a-long-random-string-in-production"
+SECRET    = os.getenv("JWT_SECRET", "")
+if not SECRET or SECRET == _DEFAULT_JWT_SECRET:
+    raise RuntimeError(
+        "JWT_SECRET is not set (or is still the default placeholder). Set it to a "
+        "strong random value, e.g. `python -c \"import secrets; print(secrets.token_hex(32))\"`. "
+        "Refusing to start — otherwise every auth token would be forgeable."
+    )
 ALGORITHM = "HS256"
 TOKEN_TTL = 30  # days
 APP_BASE_URL = os.getenv("APP_BASE_URL", "").rstrip("/")
