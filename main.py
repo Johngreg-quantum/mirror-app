@@ -1076,15 +1076,27 @@ async def lemonsqueezy_webhook(request: Request):
     raw_body = await request.body()
     signature = request.headers.get("X-Signature", "")
 
+    # Fail closed: an unset signing secret means we cannot verify anything, so
+    # this endpoint must reject rather than silently trust the body. Previously
+    # a missing secret skipped verification entirely — an unsigned request could
+    # then flip any user's is_pro. This only disables the one endpoint (returns
+    # 503); the rest of the app keeps serving, since billing is not core.
+    if not LS_SIGNING_SECRET:
+        logger.error(
+            "SECURITY: /api/billing/webhook received a request but "
+            "LEMONSQUEEZY_SIGNING_SECRET is not set — rejecting. Set it in the "
+            "environment to enable signature verification."
+        )
+        raise HTTPException(status_code=503, detail="Webhook verification unavailable")
+
     # Verify HMAC-SHA256 signature
-    if LS_SIGNING_SECRET:
-        expected = hmac.new(
-            LS_SIGNING_SECRET.encode("utf-8"),
-            raw_body,
-            hashlib.sha256
-        ).hexdigest()
-        if not hmac.compare_digest(expected, signature):
-            raise HTTPException(status_code=401, detail="Invalid signature")
+    expected = hmac.new(
+        LS_SIGNING_SECRET.encode("utf-8"),
+        raw_body,
+        hashlib.sha256
+    ).hexdigest()
+    if not hmac.compare_digest(expected, signature):
+        raise HTTPException(status_code=401, detail="Invalid signature")
 
     try:
         payload = json.loads(raw_body)
