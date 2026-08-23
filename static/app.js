@@ -1427,7 +1427,7 @@ function renderLeaderboard(data) {
     createElement: function(tagName) { return document.createElement(tagName); },
     data: data,
     getSceneColor: getSceneColor,
-    onTabSelected: switchTab,
+    onTabSelected: switchLeaderboardTab,
     refs: {
       tabsEl: document.getElementById('lbTabs'),
       panelsEl: document.getElementById('lbPanels'),
@@ -1437,7 +1437,7 @@ function renderLeaderboard(data) {
   });
 }
 
-function switchTab(sid) {
+function switchLeaderboardTab(sid) {
   switchLeaderboardTabSurface({
     panels: document.querySelectorAll('.lb-panel'),
     sceneId: sid,
