@@ -1,11 +1,13 @@
 # MIRROR — Privacy Policy (DRAFT for review)
 
-> **Status: DRAFT — no placeholders left, but not yet reviewed.** Before
-> publishing: have it read by someone qualified (see §9 — the controller is
-> US-based while the policy is framed around UK/EU GDPR), and close the erasure
-> open item in §4. This reflects what the app does today (transcription via
-> OpenAI; transcripts persisted). Update it whenever a new processor — e.g.
-> Azure Pronunciation Assessment — is added, *before* that processor goes live.
+> **Status: DRAFT — no placeholders left, but not yet reviewed.** Two open
+> items are called out inline and both need building before wide release: the
+> account-deletion path (§4) and the first-run consent notice (§6). It also
+> needs reading by someone qualified — see §9, the controller is US-based while
+> the policy is framed around UK/EU GDPR. This reflects what the app does today
+> (transcription via OpenAI; transcripts persisted). Update it whenever a new
+> processor — e.g. Azure Pronunciation Assessment — is added, *before* that
+> processor goes live.
 
 **Effective date:** August 22, 2026
 **Data controller:** John Greg (sole trader), 14610 Bull Run Road, Miami Lakes,
@@ -38,10 +40,11 @@ by our payment processor (see §5).
 - **To provide the service** (score your speech, track progress, run
   leaderboards): lawful basis **performance of a contract** (Art. 6(1)(b)).
 - **To process your voice recordings** specifically: lawful basis **your
-  consent** (Art. 6(1)(a)), which you give before recording for the first time
-  (see §6). You can withdraw consent at any time by stopping recording and/or
-  deleting your account; withdrawal does not affect processing already carried
-  out.
+  consent** (Art. 6(1)(a)), which you give by granting microphone access and
+  choosing to record (see §6, including the open item there — we have not yet
+  built a consent step). You can withdraw consent at any time by stopping
+  recording and/or deleting your account; withdrawal does not affect processing
+  already carried out.
 - **To secure the service** (rate-limiting, abuse prevention): **legitimate
   interests** (Art. 6(1)(f)).
 
@@ -96,10 +99,16 @@ required, ask for your consent **before** enabling it.
 
 ## 6. Consent to recording
 
-Before your **first** recording, the app shows a consent notice explaining that
-your audio will be sent to our transcription provider and that a transcript will
-be stored, with a link to this policy. You must accept to record. See the app's
-first-run recording screen.
+Recording is always deliberate. Your browser asks for microphone permission the
+first time, and audio is captured only while you are actively recording a scene
+— never in the background. When you submit a recording, that audio is sent to
+our transcription provider and the resulting transcript is stored against your
+account, as described in §4.
+
+> **Open item — consent notice.** The app does **not** yet show a first-run
+> consent notice before your first recording, and the recording screen does not
+> link to this policy. Today this document is the only place that disclosure is
+> made. Build the in-app consent step before wide release.
 
 ## 7. Your rights
 
