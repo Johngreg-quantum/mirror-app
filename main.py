@@ -32,7 +32,17 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-app = FastAPI(title="MIRROR — Movie Scene Language Learning")
+# Interactive API docs are disabled. There is no public API and no third-party
+# developers, so /docs, /redoc and /openapi.json only published the full
+# endpoint surface and request schemas to anyone who asked. Set these back to
+# their defaults (or to unguessable paths) if an external integration ever
+# needs them.
+app = FastAPI(
+    title="MIRROR — Movie Scene Language Learning",
+    docs_url=None,
+    redoc_url=None,
+    openapi_url=None,
+)
 
 @app.api_route("/health", methods=["GET", "HEAD"])
 async def health_check():
