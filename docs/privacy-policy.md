@@ -1,6 +1,6 @@
 # MIRROR — Privacy Policy
 
-**Effective date:** August 22, 2026
+**Effective date:** August 23, 2026
 **Data controller:** John Greg (sole trader), 14610 Bull Run Road, Miami Lakes,
 FL 33014, USA, contact contact@mirrorspeak.app.
 
