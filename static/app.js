@@ -153,6 +153,13 @@ let DEFAULT_UNLOCKED_SCENES = [];
 const APP_BASE = (window.MIRROR_APP_BASE || '').replace(/\/$/, '');
 const API = APP_BASE;
 
+// Canonical public origin, for links that leave the app: share sheets, social
+// intents, copied links. Deliberately not window.location.origin — the old
+// onrender hostname still serves the app, and a link shared from there should
+// still read mirrorspeak.app. Kept separate from APP_BASE/API, which must stay
+// same-origin so API calls never turn cross-origin.
+const CANONICAL_ORIGIN = 'https://mirrorspeak.app';
+
 // ══════════════════════════════════════════════
 // SHARED ORCHESTRATION UTILITIES
 // ══════════════════════════════════════════════
@@ -2797,7 +2804,7 @@ const RanksController = {
     return {
       title: 'Mirror',
       text: `I'm better than ${d.percentile}% of Mirror users! 🎬 ${d.scenes_completed} scenes completed · ${d.streak}-day streak · ${d.weekly_xp} XP this week. Practice English with iconic movie scenes.`,
-      url: resolveAppUrl('/'),
+      url: CANONICAL_ORIGIN + '/',
     };
   },
 

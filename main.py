@@ -47,6 +47,10 @@ async def health_check():
 # matter only for external/cross-origin callers.
 # ---------------------------------------------------------------------------
 _ALLOWED_ORIGINS = [
+    "https://mirrorspeak.app",
+    "https://www.mirrorspeak.app",
+    # Render's own hostname still serves the app and is kept working
+    # deliberately — old links, bookmarks and the health monitor use it.
     "https://mirror-app-z8wr.onrender.com",
     "http://localhost:8000",
     "http://127.0.0.1:8000",
@@ -156,6 +160,13 @@ if not SECRET or SECRET == _DEFAULT_JWT_SECRET:
 ALGORITHM = "HS256"
 TOKEN_TTL = 30  # days
 APP_BASE_URL = os.getenv("APP_BASE_URL", "").rstrip("/")
+
+# Absolute origin for URLs that leave the app entirely — links handed to an
+# external service, which cannot resolve a relative path. build_app_url() below
+# stays relative when APP_BASE_URL is unset (correct for in-app links); this
+# falls back to the canonical public domain instead, since "/" would be
+# meaningless to a payment provider.
+CANONICAL_BASE_URL = APP_BASE_URL or "https://mirrorspeak.app"
 
 # Lemon Squeezy billing
 LS_API_KEY        = os.getenv("LEMONSQUEEZY_API_KEY", "")
@@ -1190,8 +1201,8 @@ async def create_checkout(request: Request, user: dict = Depends(current_user)):
                     }
                 },
                 "product_options": {
-                    "redirect_url": "https://mirror-app-z8wr.onrender.com/?checkout=success",
-                    "receipt_link_url": "https://mirror-app-z8wr.onrender.com/?checkout=success",
+                    "redirect_url": f"{CANONICAL_BASE_URL}/?checkout=success",
+                    "receipt_link_url": f"{CANONICAL_BASE_URL}/?checkout=success",
                 }
             },
             "relationships": {
