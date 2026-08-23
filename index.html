@@ -6518,7 +6518,7 @@ function buildGatewayLevel1() {
   if (grid) {
     grid.innerHTML = begannerScenes.map(([id,s]) => {
       const score = bestScores[id] ? Math.round(bestScores[id]) : null;
-      const isDone = score !== null && score >= 60;
+      const isDone = score !== null && score >= SCORE.PASS;
       const isCurrent = !isDone && Object.keys(bestScores).length > 0 && !isDone;
       const isLocked = !score && !isCurrent;
       const poster = (s.ui && s.ui.poster_image) ? s.ui.poster_image : '';
@@ -6550,7 +6550,7 @@ function buildGatewayLevel2() {
   const allScenes = scenes || {};
   const level2Scenes = Object.entries(allScenes).filter(([id, s]) => (s.difficulty || '').toLowerCase() === 'intermediate');
   const total = level2Scenes.length;
-  const completed = level2Scenes.filter(([id]) => bestScores[id] && bestScores[id] >= 60).length;
+  const completed = level2Scenes.filter(([id]) => bestScores[id] && bestScores[id] >= SCORE.PASS).length;
   const pct = total > 0 ? Math.round((completed / total) * 100) : 0;
 
   const prog = document.getElementById('gwProg2');
@@ -6582,7 +6582,7 @@ function buildGatewayLevel2() {
   if (grid) {
     grid.innerHTML = level2Scenes.map(([id, s]) => {
       const score = bestScores[id] ? Math.round(bestScores[id]) : null;
-      const isDone = score !== null && score >= 60;
+      const isDone = score !== null && score >= SCORE.PASS;
       const color = (s.ui && s.ui.card_color) ? s.ui.card_color : '#1a1a1a';
       const poster = (s.ui && s.ui.poster_image) ? s.ui.poster_image : '';
       const cls = isDone ? 't-done' : (score ? 't-current' : 't-locked');
@@ -6703,17 +6703,17 @@ function checkLevel2Unlock() {
     });
 
     // "Current" = first scene in level-then-order iteration with best_scores[id]
-    // missing OR < 60. Threshold matches existing isDone convention.
+    // missing OR < SCORE.PASS. Threshold matches existing isDone convention.
     var currentId = null;
     for (var gi = 0; gi < groups.length && !currentId; gi++){
       var ids = groups[gi].sceneIds;
       for (var i = 0; i < ids.length; i++){
         var id = ids[i];
         var sc = bestScores[id];
-        if (typeof sc !== 'number' || sc < 60) { currentId = id; break; }
+        if (typeof sc !== 'number' || sc < SCORE.PASS) { currentId = id; break; }
       }
     }
-    // Edge case: every scene in every unlocked group is >= 60 (e.g. all L1
+    // Edge case: every scene in every unlocked group is >= SCORE.PASS (e.g. all L1
     // done, L2 locked). Fall back to the last done scene in the last unlocked
     // group so the user still sees a "you are here" anchor. That node renders
     // with BOTH .done and .current classes — check overlay + glow ring + pill.
@@ -6721,7 +6721,7 @@ function checkLevel2Unlock() {
       for (var lg = groups.length - 1; lg >= 0 && !currentId; lg--){
         var lids = groups[lg].sceneIds;
         for (var lj = lids.length - 1; lj >= 0; lj--){
-          if (typeof bestScores[lids[lj]] === 'number' && bestScores[lids[lj]] >= 60) {
+          if (typeof bestScores[lids[lj]] === 'number' && bestScores[lids[lj]] >= SCORE.PASS) {
             currentId = lids[lj];
             break;
           }
@@ -6747,7 +6747,7 @@ function checkLevel2Unlock() {
         var s = scenes[id];
         if (!s) return;
         var sc = bestScores[id];
-        var done = (typeof sc === 'number' && sc >= 60);
+        var done = (typeof sc === 'number' && sc >= SCORE.PASS);
         var isCurrent = (id === currentId);
         var stateClasses = [];
         if (done) stateClasses.push('done');

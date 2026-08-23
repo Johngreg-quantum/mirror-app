@@ -45,6 +45,8 @@ const APP_LEVEL_PANEL_ORCHESTRATION = window.MIRROR_APP_LEVEL_PANEL_ORCHESTRATIO
 const LEVEL_NAMES = FRONTEND_CONFIG.LEVEL_NAMES;
 const LEVEL_UI_META = FRONTEND_CONFIG.LEVEL_UI_META;
 const WAVE_BARS = FRONTEND_CONFIG.WAVE_BARS;
+// Score thresholds — see static/app-config.js (mirrors main.py SCORE_*).
+const SCORE = FRONTEND_CONFIG.SCORE || {};
 const {
   buildCircleSVG,
   formatAvgPb,
@@ -382,7 +384,7 @@ let userProgress = {
   level: 1,
   best_scores: {},
   unlocked_scenes: [],
-  next_level: { level: 2, required_score: 60, best_score: 0 },
+  next_level: { level: 2, required_score: SCORE.PASS, best_score: 0 },
 };
 let userProfile = { streak: 0, total_points: 0 };
 
@@ -510,7 +512,7 @@ function clearAuth() {
 function logout() {
   authToken = null;
   userProfile = null;
-  if (typeof userProgress !== 'undefined') userProgress = { level: 1, best_scores: {}, unlocked_scenes: [], next_level: { level: 2, required_score: 60, best_score: 0 } };
+  if (typeof userProgress !== 'undefined') userProgress = { level: 1, best_scores: {}, unlocked_scenes: [], next_level: { level: 2, required_score: SCORE.PASS, best_score: 0 } };
   localStorage.removeItem('mirror_token');
   sessionStorage.clear();
   document.body.classList.remove('app-mode');
@@ -3140,7 +3142,7 @@ const QuizController = {
   async showResults() {
     const total = this.questions.length;
     const pct = Math.round((this.score/total)*100);
-    const passed = pct >= 70;
+    const passed = pct >= SCORE.PROFICIENT;
     ['quizQuestionNum','quizQuestionText','quizQuestionType','quizPosterWrap','quizOptions','quizWordOrder','quizFeedback','quizNextBtn','quizComboBadge'].forEach(id => {
       const el = document.getElementById(id); if(el) el.style.display='none';
     });

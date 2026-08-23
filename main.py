@@ -450,7 +450,7 @@ async def update_missions(username: str, scene_id: str, score: float,
 
         advances = (
             (mid == "daily"           and scene_id == daily_today) or
-            (mid == "pronunciation"   and score_pct >= 85)         or
+            (mid == "pronunciation"   and score_pct >= SCORE_TIER_STRONG) or
             (mid == "genre_drama"     and genre == "drama")        or
             (mid == "sprint"          and take_number == 1 and duration > 0 and duration <= 240) or
             (mid == "weekly_thriller" and genre == "thriller")
@@ -801,18 +801,36 @@ def sync_score(expected: str, transcribed: str) -> float:
     return round(ratio * 100, 1)
 
 
+# ---------------------------------------------------------------------------
+# Score thresholds (0-100 scale)
+#
+# Single source of truth for every score comparison, so a scoring-engine
+# recalibration is an edit here rather than a hunt through scattered magic
+# numbers. The frontend mirror lives in static/app-config.js (SCORE).
+#
+# NOTE: the level-unlock scores in scene_config.json (L2 unlock_score = 60,
+# L3 = 70) intentionally mirror SCORE_PASS / SCORE_PROFICIENT. A recalibration
+# must revisit that file too — these constants do not feed it.
+# ---------------------------------------------------------------------------
+SCORE_PASS        = 60.0   # scene "completed": counts as done, unlocks avatar use
+SCORE_PROFICIENT  = 70.0   # translation unlock, Level-1 quiz pass, first points tier
+SCORE_TIER_STRONG = 85.0   # points tier
+SCORE_TIER_ELITE  = 95.0   # points tier
+SCORE_PERFECT     = 100.0  # points tier / perfect-take flag
+
+
 def calc_points(score: float, is_first_attempt: bool) -> int:
     """Return points earned for a single submission."""
     pts = 0
     if is_first_attempt:
         pts += 10
-    if score >= 100:
+    if score >= SCORE_PERFECT:
         pts += 100
-    elif score >= 95:
+    elif score >= SCORE_TIER_ELITE:
         pts += 75
-    elif score >= 85:
+    elif score >= SCORE_TIER_STRONG:
         pts += 50
-    elif score >= 70:
+    elif score >= SCORE_PROFICIENT:
         pts += 25
     return pts
 
@@ -1414,7 +1432,7 @@ async def submit_recording(
     cur.execute(f"SELECT points FROM users WHERE id = {PH}", (user["id"],))
     total_points = cur.fetchone()[0] or 0
 
-    # Check translation unlock: 3+ attempts AND best score >= 70%
+    # Check translation unlock: 3+ attempts AND best score >= SCORE_PROFICIENT
     cur.execute(
         f"SELECT COUNT(*), MAX(sync_score) FROM scores WHERE user_id = {PH} AND scene_id = {PH}",
         (user["id"], scene_id),
@@ -1422,7 +1440,7 @@ async def submit_recording(
     row = cur.fetchone()
     total_attempts = row[0]
     best_score_scene = float(row[1] or 0)
-    translation_unlocked = total_attempts >= 3 and best_score_scene >= 70
+    translation_unlocked = total_attempts >= 3 and best_score_scene >= SCORE_PROFICIENT
 
     # Advance any active missions and roll user_streak XP/streak counters.
     # take_number is 1-based: this submission's position in the user's history
@@ -1451,7 +1469,7 @@ async def submit_recording(
         "points_earned":        pts_earned,
         "total_points":         total_points,
         "division":             division,
-        "is_perfect":           score >= 100,
+        "is_perfect":           score >= SCORE_PERFECT,
         "is_first_attempt":     is_first_attempt,
         "translation_unlocked": translation_unlocked,
         "translation":          scene.get("translation") if translation_unlocked else None,
@@ -1553,10 +1571,10 @@ async def get_leaderboard():
 
 def _tier_points(score: float) -> int:
     """Score-tier portion of calc_points (omits first-attempt bonus)."""
-    if score >= 100: return 100
-    if score >= 95:  return 75
-    if score >= 85:  return 50
-    if score >= 70:  return 25
+    if score >= SCORE_PERFECT:     return 100
+    if score >= SCORE_TIER_ELITE:  return 75
+    if score >= SCORE_TIER_STRONG: return 50
+    if score >= SCORE_PROFICIENT:  return 25
     return 0
 
 
@@ -1596,10 +1614,10 @@ async def get_ranks_social(user: dict = Depends(current_user)):
     )
     weekly_xp = sum(_tier_points(float(r[0] or 0)) for r in cur.fetchall())
 
-    # Scenes completed — distinct scenes whose best score >= 60
+    # Scenes completed — distinct scenes whose best score >= SCORE_PASS
     cur.execute(
         f"SELECT scene_id FROM scores WHERE user_id = {PH} "
-        f"GROUP BY scene_id HAVING MAX(sync_score) >= 60",
+        f"GROUP BY scene_id HAVING MAX(sync_score) >= {SCORE_PASS}",
         (user["id"],),
     )
     scenes_completed = len(cur.fetchall())
@@ -1631,7 +1649,7 @@ async def get_ranks_social(user: dict = Depends(current_user)):
             "username":   uname,
             "initials":   (uname[:2].upper() if uname else "??"),
             "avatar_scene_id": r[4],
-            "action":     "completed" if score >= 60 else "practiced",
+            "action":     "completed" if score >= SCORE_PASS else "practiced",
             "scene_id":   sid,
             "score":      round(score, 1),
             "points":     _tier_points(score),
@@ -1770,7 +1788,7 @@ async def get_profile(user: dict = Depends(current_user)):
     for r in scene_rows:
         sid, attempts, best = r[0], int(r[1]), float(r[2] or 0)
         scene_stats[sid] = {"attempts": attempts, "best_score": round(best, 1)}
-        if attempts >= 3 and best >= 70:
+        if attempts >= 3 and best >= SCORE_PROFICIENT:
             translations_unlocked.append(sid)
 
     division      = get_division(total_points)
@@ -1801,7 +1819,7 @@ async def set_avatar(payload: dict, user: dict = Depends(current_user)):
       1. scene_id is a known id from scene_config (path-safety — this value
          ends up in an <img src> client-side, so an arbitrary string can't
          reach the column).
-      2. The user has scored >= 60 on that scene.
+      2. The user has scored >= SCORE_PASS on that scene.
 
     Pass null / empty scene_id to clear back to the default icon.
 
@@ -1830,7 +1848,7 @@ async def set_avatar(payload: dict, user: dict = Depends(current_user)):
     if scene_id not in SCENES:
         raise HTTPException(400, "Unknown scene_id")
 
-    # Unlock gate: user must have scored >= 60 on this scene
+    # Unlock gate: user must have scored >= SCORE_PASS on this scene
     conn = get_conn()
     cur  = conn.cursor()
     cur.execute(
@@ -1839,7 +1857,7 @@ async def set_avatar(payload: dict, user: dict = Depends(current_user)):
     )
     row = cur.fetchone()
     best = float(row[0] or 0) if row else 0.0
-    if best < 60:
+    if best < SCORE_PASS:
         conn.close()
         raise HTTPException(403, "Scene not yet unlocked")
 
@@ -1858,7 +1876,7 @@ async def quiz_pass(payload: dict, user: dict = Depends(current_user)):
     Level 1 quiz, so the existing unlock logic opens Level 2."""
     quiz  = payload.get("quiz", "")
     score = float(payload.get("score", 0))
-    if quiz != "level1" or score < 70:
+    if quiz != "level1" or score < SCORE_PROFICIENT:
         raise HTTPException(400, "Invalid quiz pass")
     beginner_scenes = [sid for sid, s in SCENES.items() if s.get("difficulty", "").lower() == "beginner"]
     if not beginner_scenes:
@@ -1880,7 +1898,7 @@ async def quiz_pass(payload: dict, user: dict = Depends(current_user)):
 @app.get("/api/translations")
 async def get_translations(user: dict = Depends(current_user)):
     """Return {scene_id: spanish_translation} for every scene the user has
-    unlocked translations on (3+ attempts AND best score >= 70%)."""
+    unlocked translations on (3+ attempts AND best score >= SCORE_PROFICIENT)."""
     conn = get_conn()
     cur  = conn.cursor()
     cur.execute(
@@ -1894,7 +1912,7 @@ async def get_translations(user: dict = Depends(current_user)):
     result: dict[str, str] = {}
     for r in rows:
         sid, attempts, best = r[0], int(r[1]), float(r[2] or 0)
-        if attempts >= 3 and best >= 70:
+        if attempts >= 3 and best >= SCORE_PROFICIENT:
             translation = SCENES.get(sid, {}).get("translation")
             if translation:
                 result[sid] = translation
