@@ -2624,6 +2624,11 @@ const RanksController = {
       const res = await fetch('/api/ranks/social', { headers: { 'Authorization': 'Bearer ' + authToken } });
       if (!res.ok) return;
       this.data = await res.json();
+      // ranksAvatarImg() resolves poster URLs from `scenes`, so the config has
+      // to be in memory before the one and only render — otherwise every avatar
+      // falls back to initials for the rest of the session. A config failure
+      // still renders (initials everywhere), same as before.
+      await ensureSceneConfig().catch(() => {});
       this.loaded = true;
       this.render();
     } catch(e) { console.error('RanksController load error', e); }
