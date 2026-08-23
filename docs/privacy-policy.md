@@ -1,13 +1,4 @@
-# MIRROR — Privacy Policy (DRAFT for review)
-
-> **Status: DRAFT — no placeholders left, but not yet reviewed.** Two open
-> items are called out inline and both need building before wide release: the
-> account-deletion path (§4) and the first-run consent notice (§6). It also
-> needs reading by someone qualified — see §9, the controller is US-based while
-> the policy is framed around UK/EU GDPR. This reflects what the app does today
-> (transcription via OpenAI; transcripts persisted). Update it whenever a new
-> processor — e.g. Azure Pronunciation Assessment — is added, *before* that
-> processor goes live.
+# MIRROR — Privacy Policy
 
 **Effective date:** August 22, 2026
 **Data controller:** John Greg (sole trader), 14610 Bull Run Road, Miami Lakes,

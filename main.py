@@ -976,6 +976,10 @@ async def legacy_challenge_page(request: Request, challenge_id: str):
 # ---------------------------------------------------------------------------
 # Routes — rendered markdown documents
 # ---------------------------------------------------------------------------
+# docs/privacy-policy-notes.md holds the working notes for the policy — review
+# questions, maintenance reminders — and is deliberately NOT routed. Only the
+# policy itself is public; keep notes-to-self out of the served document.
+#
 # The privacy policy is rendered from docs/privacy-policy.md at request time
 # rather than converted to a committed .html file, so the published page is
 # always exactly the committed text — there is no second copy to drift. Parsing
