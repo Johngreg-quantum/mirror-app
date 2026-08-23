@@ -1309,6 +1309,15 @@
       text-align: center;
     }
 
+    .pp-legal {
+      text-align: center; padding: 22px 0 8px; margin-top: 18px;
+      border-top: 0.5px solid rgba(200,169,110,0.12);
+    }
+    .pp-legal a {
+      font-size: 11px; letter-spacing: 0.08em;
+      color: rgba(200,169,110,0.5); text-decoration: none;
+    }
+
     .pp-film { display: flex; flex-direction: column; gap: 10px; padding: 4px 0 0; }
     .pp-film-row {
       display: flex; align-items: center; gap: 12px;
@@ -4256,7 +4265,7 @@
   </div>
 
   <div class="ml-corner" style="bottom:16px;left:18px;">ENGLISH<br>THROUGH CINEMA</div>
-  <div class="ml-corner" style="bottom:16px;right:18px;text-align:right;">ACT · SCORE<br>MASTER</div>
+  <div class="ml-corner" style="bottom:16px;right:18px;text-align:right;">ACT · SCORE<br>MASTER<br><a href="/privacy" style="color:rgba(200,169,110,0.45);text-decoration:none;">PRIVACY</a></div>
 </div>
 
 <div id="mlSidebar" style="
@@ -7062,7 +7071,11 @@ function checkLevel2Unlock() {
         '<div class="pp-record-cell"><div class="pp-record-val">' + streak + '</div><div class="pp-record-lbl">Day Streak</div></div>' +
       '</div>' +
       '<div class="pp-section-hd">FILMOGRAPHY</div>' +
-      filmHtml;
+      filmHtml +
+      // Only in-app surface that links to the policy — the landing footer is
+      // hidden by the landing-cleanup rules, so the corner link covers logged-out
+      // visitors and this covers signed-in ones.
+      '<div class="pp-legal"><a href="/privacy">Privacy Policy</a></div>';
   }
 
   window.renderProfilePanel = renderProfilePanel;

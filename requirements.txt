@@ -13,6 +13,7 @@ httptools==0.7.1
 httpx==0.28.1
 idna==3.11
 jiter==0.13.0
+Markdown==3.7
 openai==2.23.0
 passlib==1.7.4
 pyasn1==0.6.2

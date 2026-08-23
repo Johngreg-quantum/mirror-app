@@ -23,6 +23,7 @@ from fastapi.responses import HTMLResponse, JSONResponse, Response
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
+import markdown
 import openai
 import httpx
 from jose import JWTError, jwt
@@ -66,6 +67,7 @@ _STATIC_DIR = os.path.join(_APP_DIR, "static")
 _INDEX_HTML_PATH = os.path.join(_APP_DIR, "index.html")
 _NEW_SHELL_INDEX_HTML_PATH = os.path.join(_STATIC_DIR, "new-shell", "index.html")
 _SCENE_CONFIG_PATH = os.path.join(_APP_DIR, "scene_config.json")
+_PRIVACY_MD_PATH = os.path.join(_APP_DIR, "docs", "privacy-policy.md")
 if os.path.isdir(_STATIC_DIR):
     app.mount("/static", StaticFiles(directory=_STATIC_DIR), name="static")
 
@@ -902,7 +904,13 @@ def _read_html_file(path: str, missing_title: str, request: Request = None):
         etag, body, last_modified = _html_shell(path)
     except (FileNotFoundError, OSError):
         return HTMLResponse(f"<h1>{missing_title}</h1>", status_code=404)
+    return _revalidating_html(request, etag, body, last_modified)
 
+
+def _revalidating_html(request: Request, etag: str, body: str, last_modified: str):
+    """Return `body` with revalidation headers, or a 304 when the client's
+    If-None-Match already matches. Shared by the HTML shells and the rendered
+    markdown pages, which cache on the same (mtime_ns, size) key."""
     headers = {
         "ETag": etag,
         "Last-Modified": last_modified,
@@ -952,6 +960,122 @@ async def legacy_app_entry(request: Request):
 async def legacy_challenge_page(request: Request, challenge_id: str):
     """Serve the SPA for challenge links so the JS can read the path and render the challenge screen."""
     return _read_html_file(_INDEX_HTML_PATH, "index.html not found", request)
+
+
+# ---------------------------------------------------------------------------
+# Routes — rendered markdown documents
+# ---------------------------------------------------------------------------
+# The privacy policy is rendered from docs/privacy-policy.md at request time
+# rather than converted to a committed .html file, so the published page is
+# always exactly the committed text — there is no second copy to drift. Parsing
+# is cached on (mtime_ns, size) like the HTML shells above, so this costs one
+# parse per deploy, and repeat visits still 304.
+
+_MD_PAGE_CACHE: dict = {}
+
+_MD_PAGE_STYLE = """
+  :root { --bg:#080808; --gold:#c8a96e; --text:rgba(240,237,230,0.82); --muted:rgba(240,237,230,0.45); --line:rgba(200,169,110,0.18); }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--text);
+         font-family:'DM Sans',-apple-system,BlinkMacSystemFont,sans-serif;
+         font-weight:300; font-size:16px; line-height:1.75;
+         -webkit-font-smoothing:antialiased; }
+  .md-bar { border-bottom:1px solid var(--line); padding:18px 20px; }
+  .md-bar a { font-family:'Bebas Neue',sans-serif; font-size:17px; letter-spacing:0.2em;
+              color:var(--gold); text-decoration:none; }
+  .md-wrap { max-width:44rem; margin:0 auto; padding:40px 20px 72px; }
+  .md-wrap h1 { font-family:'Bebas Neue',sans-serif; font-weight:400; font-size:2rem;
+                letter-spacing:0.06em; color:var(--gold); line-height:1.15; margin:0 0 28px; }
+  .md-wrap h2 { font-family:'Bebas Neue',sans-serif; font-weight:400; font-size:1.3rem;
+                letter-spacing:0.06em; color:var(--gold); margin:44px 0 12px;
+                padding-top:20px; border-top:1px solid var(--line); }
+  .md-wrap p, .md-wrap li { margin:0 0 14px; }
+  .md-wrap ul, .md-wrap ol { padding-left:1.2em; }
+  .md-wrap li { margin-bottom:8px; }
+  .md-wrap a { color:var(--gold); text-decoration:underline; text-underline-offset:2px; }
+  .md-wrap strong { color:rgba(240,237,230,0.96); font-weight:600; }
+  .md-wrap hr { border:0; border-top:1px solid var(--line); margin:32px 0; }
+  .md-wrap code { font-size:0.88em; background:rgba(200,169,110,0.09);
+                  padding:1px 5px; border-radius:3px; color:var(--gold); }
+  .md-wrap blockquote { margin:20px 0; padding:14px 18px; border-left:2px solid var(--gold);
+                        background:rgba(200,169,110,0.05); color:var(--muted); }
+  .md-wrap blockquote p:last-child { margin-bottom:0; }
+  .md-table-wrap { overflow-x:auto; margin:0 0 20px; -webkit-overflow-scrolling:touch; }
+  .md-wrap table { border-collapse:collapse; width:100%; min-width:34rem; font-size:0.86rem; }
+  .md-wrap th, .md-wrap td { border:1px solid var(--line); padding:9px 12px;
+                             text-align:left; vertical-align:top; }
+  .md-wrap th { color:var(--gold); font-weight:500; background:rgba(200,169,110,0.06);
+                white-space:nowrap; }
+  .md-foot { border-top:1px solid var(--line); margin-top:56px; padding-top:20px;
+             font-size:0.8rem; color:var(--muted); }
+  .md-foot a { color:var(--gold); }
+  @media (min-width:720px) { body { font-size:17px; } .md-wrap { padding:56px 32px 96px; }
+                             .md-wrap h1 { font-size:2.6rem; } }
+"""
+
+_MD_PAGE_TEMPLATE = """<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>__TITLE__</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>__STYLE__</style>
+</head>
+<body>
+<div class="md-bar"><a href="/">MIRROR</a></div>
+<main class="md-wrap">
+__BODY__
+<div class="md-foot"><a href="/">&larr; Back to MIRROR</a></div>
+</main>
+</body>
+</html>
+"""
+
+
+def _md_page(path: str, title: str):
+    """Render a markdown file to a full HTML page, cached on (mtime_ns, size).
+
+    Tables get an overflow-x wrapper so a wide processor table scrolls inside
+    itself on a phone instead of forcing the whole page sideways.
+    """
+    st = os.stat(path)
+    stat_key = (st.st_mtime_ns, st.st_size)
+
+    cached = _MD_PAGE_CACHE.get(path)
+    if cached and cached[0] == stat_key:
+        return cached[1], cached[2], cached[3]
+
+    with open(path, "r", encoding="utf-8") as f:
+        source = f.read()
+
+    body = markdown.markdown(source, extensions=["tables"])
+    body = body.replace("<table>", '<div class="md-table-wrap"><table>')
+    body = body.replace("</table>", "</table></div>")
+
+    page = (
+        _MD_PAGE_TEMPLATE
+        .replace("__TITLE__", title)
+        .replace("__STYLE__", _MD_PAGE_STYLE)
+        .replace("__BODY__", body)
+    )
+    etag = '"%s"' % hashlib.sha1(page.encode("utf-8")).hexdigest()
+    last_modified = formatdate(st.st_mtime, usegmt=True)
+    _MD_PAGE_CACHE[path] = (stat_key, etag, page, last_modified)
+    return etag, page, last_modified
+
+
+@app.get("/privacy", response_class=HTMLResponse)
+async def privacy_policy(request: Request):
+    """Public privacy policy. Path is relative, so it serves correctly on every
+    domain pointed at this service."""
+    try:
+        etag, body, last_modified = _md_page(_PRIVACY_MD_PATH, "Privacy Policy — MIRROR")
+    except (FileNotFoundError, OSError):
+        return HTMLResponse("<h1>Privacy policy not found</h1>", status_code=404)
+    return _revalidating_html(request, etag, body, last_modified)
 
 
 # ---------------------------------------------------------------------------
