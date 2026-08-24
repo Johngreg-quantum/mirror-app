@@ -23,19 +23,7 @@ function waveformLevel(status) {
   return 0.3 + Math.random() * 0.7;
 }
 
-export function createSceneRuntimeStore({
-  canRecord = false,
-  disabledReason = '',
-  requireConsent,
-} = {}) {
-  // Required, and deliberately not defaulted. A default would have to either
-  // fail open (recording without the §6 notice — the bug this gate exists to
-  // prevent) or fail closed silently (recording mysteriously dead). Throwing
-  // here turns an omission into an immediate, obvious construction error.
-  if (typeof requireConsent !== 'function') {
-    throw new Error('createSceneRuntimeStore requires a requireConsent gate.');
-  }
-
+export function createSceneRuntimeStore({ canRecord = false, disabledReason = '' } = {}) {
   let snapshot = createSnapshot();
   let recorder = null;
   let startRequest = null;
@@ -72,13 +60,6 @@ export function createSceneRuntimeStore({
       requireAvailable();
 
       if (snapshot.status === 'recording') {
-        return;
-      }
-
-      // Consent gate (privacy policy §6) — before any state mutation and before
-      // getUserMedia, so declining leaves the take untouched and the browser's
-      // own mic prompt never precedes the explanation of what the audio is for.
-      if (!await requireConsent()) {
         return;
       }
 
