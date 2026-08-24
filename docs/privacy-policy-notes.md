@@ -6,8 +6,7 @@ Working notes for `privacy-policy.md`. **Not published** — only
 
 Keep notes-to-self in this file. The published policy should contain only
 things a user needs to know — including honest disclosures of what the app
-does *not* yet do, which is why the §4 and §6 open items live there and not
-here.
+does *not* yet do, which is why the §6 open item lives there and not here.
 
 ## Needs review by someone qualified
 
@@ -28,15 +27,40 @@ while the data controller is a **Florida sole trader** (see the header and
 
 ## Open items tracked in the published policy
 
-Both are disclosed to users on purpose and should be removed from the policy
-only when the corresponding feature actually ships:
+Disclosed to users on purpose; remove from the policy only when the
+corresponding feature actually ships:
 
-- **§4 — right to erasure.** No self-service account deletion exists. Deletion
-  requests to contact@mirrorspeak.app must be actioned by hand against the
-  database until an in-app path is built.
 - **§6 — consent notice.** No first-run consent screen exists, and the
   recording screen does not link to the policy. §3 leans on Art. 6(1)(a)
-  consent, so this gap is the weakest point in the document.
+  consent, so this gap is now the weakest point in the document.
+
+## Closed: §4 right to erasure
+
+Self-service deletion shipped — `DELETE /api/account` plus the **Delete my
+account** control in the Profile panel. The §4 open-item blockquote is gone and
+§4/§7 now describe the real mechanism. Notes for whoever maintains this:
+
+- **Erasure spans six tables and there are no foreign keys**, so nothing
+  cascades. `_USER_DATA_TABLES` in `main.py` is the authoritative list. **Any
+  new table holding user data must be added there** or that data survives
+  deletion and the policy becomes untrue.
+- **Two tables key on username, not user_id** (`user_missions`, `user_streak`).
+  Deleting a user frees the username for re-registration, so those rows must go
+  in the same transaction or the next person to claim the name inherits them.
+  This is why §4 tells users the username becomes available again.
+- **Tokens are stateless.** `require_live_user()` checks the user row still
+  exists on every authed request; without it a stale token re-creates the
+  username-keyed rows via `seed_user_missions()`.
+- **Subscriptions block deletion with a 409.** We store `is_pro` but never the
+  Lemon Squeezy subscription id, so we cannot cancel on the user's behalf. This
+  is a deliberate, disclosed limitation, not a permanent refusal of erasure —
+  the email route in §4/§7 is the fallback. Storing the subscription id so the
+  cancel can happen server-side is the follow-up that removes the gate; when it
+  lands, update the §4 paragraph that tells users to cancel first.
+- **Apple** requires an in-app deletion path for App Store approval
+  (guideline 5.1.1(v)); the Profile-tab control is what satisfies it. Note that
+  if billing ever moves to Apple IAP, we cannot cancel those subscriptions at
+  all and the copy must tell users to manage it in App Store settings instead.
 
 ## Maintenance
 

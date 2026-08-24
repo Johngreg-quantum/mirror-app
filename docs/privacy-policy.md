@@ -65,11 +65,27 @@ When you submit a recording:
   account exists.
 - **Request/IP logs:** retained for 30 days.
 
-> **Open item — right to erasure.** The app currently has **no self-service
-> account-deletion mechanism**. Under GDPR you must be able to honour deletion
-> requests. Until an in-app "delete my account" feature exists, deletion
-> requests to contact@mirrorspeak.app must be actioned manually against the
-> database. Build the in-app path before wide release.
+**Deleting your account.** You can delete your account at any time from the
+**Profile** tab in the app — open Profile and choose **Delete my account** at
+the bottom of the panel. You will be asked to type your username and re-enter
+your password to confirm.
+
+Deletion is immediate and permanent. It erases your account and sign-in
+details, every recording transcript and score, your points, rank and division,
+your day streak and mission progress, your vocabulary mastery, and any
+challenge links you created. It cannot be undone, and because we do not retain
+your voice recordings there is no backup to restore from.
+
+Two things worth knowing. If you have an active MIRROR Pro subscription you
+must cancel it before deleting your account — we do not hold the details needed
+to cancel it on your behalf, and deleting the account first would leave the
+subscription still billing you; the app will tell you this and point you to the
+cancellation link. And once your account is deleted your username becomes
+available for anyone to register again; a new account using it inherits nothing
+from yours.
+
+If you would rather not use the in-app path, or you cannot sign in, email
+contact@mirrorspeak.app and we will action the deletion for you.
 
 ## 5. Processors and third parties
 
@@ -107,6 +123,12 @@ Subject to applicable law, you can request to: access your data; correct it;
 delete it ("right to be forgotten"); export it; restrict or object to
 processing; and withdraw consent. Contact contact@mirrorspeak.app. You may also
 complain to your local data-protection authority (in the UK, the ICO).
+
+**Erasure you can exercise yourself.** You do not need to ask us to delete your
+data — the **Delete my account** control in the app's Profile tab erases your
+account and everything tied to it immediately. See §4 for exactly what is
+removed and what to do first if you have an active subscription. The email
+route above remains available if you prefer it or cannot sign in.
 
 ## 8. Children
 
