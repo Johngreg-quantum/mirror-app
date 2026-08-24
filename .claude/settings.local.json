@@ -3,9 +3,20 @@
     "allow": [
       "Bash(python:*)",
       "WebSearch",
-      "Bash(git add *)",
-      "Bash(git commit *)",
-      "Bash(git push *)"
+      "PowerShell(python \"C:\\\\Users\\\\John\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\c--Users-John-Documents-mirror-app\\\\bfed8108-8382-4de7-8847-cde803e4996a\\\\scratchpad\\\\check_step2_dom.py\")",
+      "PowerShell(\"--- confirm step 2 commit is on the remote ---\")",
+      "PowerShell(Get-ChildItem static -File | Where-Object { $_.Name -match 'card\\\\.\\(jpg|webp\\)' } | Select-Object Name,@{n='KB';e={[math]::Round\\($_.Length/1KB,1\\)}} | Format-Table -AutoSize; \"=== posters webp coverage ===\"; $p=Get-ChildItem static\\\\posters; \"jpg: $\\(\\($p|?{$_.Extension -eq '.jpg'}\\).Count\\)  webp: $\\(\\($p|?{$_.Extension -eq '.webp'}\\).Count\\)\"; \"=== backdrops ===\"; $b=Get-ChildItem static\\\\backdrops; \"jpg: $\\(\\($b|?{$_.Extension -eq '.jpg'}\\).Count\\)  webp: $\\(\\($b|?{$_.Extension -eq '.webp'}\\).Count\\)\")",
+      "Bash(node --check static/app.js)",
+      "Bash(python \"C:/Users/John/AppData/Local/Temp/claude/c--Users-John-Documents-mirror-app/5a096645-35a4-4a99-bcf5-847eca64ecbe/scratchpad/test_delete_account.py\")",
+      "Bash(python \"C:/Users/John/.claude/skills/webapp-testing/scripts/with_server.py\" --server \"python run_test_server.py\" --port 8899 --timeout 60 -- python browser_test.py)",
+      "Bash(git status:*)",
+      "Bash(git diff:*)",
+      "Bash(git log:*)",
+      "Bash(git remote -v)",
+      "Bash(git show:*)",
+      "Bash(grep:*)",
+      "Bash(ls:*)",
+      "Bash(cat:*)"
     ]
   }
 }
