@@ -2230,29 +2230,63 @@ async def set_avatar(payload: dict, user: dict = Depends(current_user)):
     return {"avatar_scene_id": scene_id}
 
 
+# Which level each quiz unlocks. "level1" is the Level 1 quiz, which opens
+# Level 2. Adding a Level 3 quiz means one more entry here and nothing else.
+QUIZ_UNLOCKS = {"level1": 2, "level2": 3}
+
+
 @app.post("/api/quiz-pass")
 async def quiz_pass(payload: dict, user: dict = Depends(current_user)):
-    """Register a qualifying Beginner-level score when the user passes the
-    Level 1 quiz, so the existing unlock logic opens Level 2."""
+    """Register a qualifying score when the user passes a level quiz, so the
+    existing score-driven unlock logic opens the next level.
+
+    There is no separate grant mechanism: /api/progress decides the user's level
+    purely from `scores`, so a quiz pass is recorded as a synthetic row marked
+    '[quiz pass]' on a scene belonging to the level below the one being opened.
+
+    The scene is taken from LEVELS, not from the scene's `difficulty` tag,
+    because LEVELS is what the unlock check reads. Those two disagree: level 2
+    lists 20 scenes while 26 are tagged "intermediate", the extra six belonging
+    to level 3. Selecting by difficulty could therefore write the row onto a
+    level-3 scene, which would never satisfy the level-3 unlock. They coincide
+    for level 1 today, which is why the old difficulty-based lookup worked.
+    """
     quiz  = payload.get("quiz", "")
     score = float(payload.get("score", 0))
-    if quiz != "level1" or score < SCORE_PROFICIENT:
-        raise HTTPException(400, "Invalid quiz pass")
-    beginner_scenes = [sid for sid, s in SCENES.items() if s.get("difficulty", "").lower() == "beginner"]
-    if not beginner_scenes:
+
+    target_level = QUIZ_UNLOCKS.get(quiz)
+    if target_level is None:
+        raise HTTPException(400, "Unknown quiz")
+    if score < SCORE_PROFICIENT:
+        raise HTTPException(400, "Quiz score is below the pass mark")
+
+    target_def = next((l for l in LEVELS if l["level"] == target_level), None)
+    prev_def   = next((l for l in LEVELS if l["level"] == target_level - 1), None)
+    if not target_def or not prev_def or not prev_def.get("scenes"):
         return {"unlocked": False}
-    sid   = beginner_scenes[0]
-    scene = SCENES[sid]
+
+    sid = prev_def["scenes"][0]
+    scene = SCENES.get(sid)
+    if not scene:
+        return {"unlocked": False}
+
+    # Write the qualifying score for this specific unlock rather than a magic
+    # number. The old hardcoded 75.0 cleared level 2's threshold of 60 by
+    # accident of being larger; it would have silently stopped unlocking if a
+    # threshold were ever raised above it.
+    granted = float(target_def.get("unlock_score", SCORE_PROFICIENT))
+
     conn  = get_conn()
     cur   = conn.cursor()
     cur.execute(
         f"INSERT INTO scores (scene_id, movie, quote, transcription, sync_score, username, user_id) "
         f"VALUES ({PH}, {PH}, {PH}, {PH}, {PH}, {PH}, {PH})",
-        (sid, scene.get("movie", ""), scene.get("quote", ""), "[quiz pass]", 75.0, user["username"], user["id"]),
+        (sid, scene.get("movie", ""), scene.get("quote", ""), "[quiz pass]", granted,
+         user["username"], user["id"]),
     )
     conn.commit()
     conn.close()
-    return {"unlocked": True}
+    return {"unlocked": True, "level": target_level, "score": granted}
 
 
 @app.get("/api/translations")

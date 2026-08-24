@@ -1116,6 +1116,11 @@
     .gw-tile-score.sc-gold { background:rgba(200,169,110,0.9); color:#0a0a0a; }
     .gw-tile-score.sc-green { background:rgba(106,170,46,0.9); color:#fff; }
     .gw-quiz-bar { border-radius:12px; overflow:hidden; cursor:pointer; }
+    /* Make the "complete all scenes" label a real precondition, not decoration.
+       Opt-in via .qb-gated so this applies only where it is wanted — the Level 1
+       bar is deliberately left ungated, since its quiz works today and gating it
+       would remove a shortcut users already rely on. */
+    .gw-quiz-bar.qb-gated:not(.qb-ready) { pointer-events:none; opacity:0.55; cursor:default; }
     .gw-quiz-inner { display:flex; align-items:center; justify-content:space-between; padding:14px 16px; background:rgba(200,169,110,0.08); border:0.5px solid rgba(200,169,110,0.15); transition:background 0.2s; }
     .gw-quiz-bar.qb-ready .gw-quiz-inner { background:#c8a96e; border-color:#c8a96e; }
     .gw-quiz-inner:hover { background:rgba(200,169,110,0.15); }
@@ -6298,7 +6303,7 @@
     <div class="gw-panel">
       <div class="gw-panel-inner">
         <div class="gw-scene-grid" id="gwGrid2"></div>
-        <div class="gw-quiz-bar" id="gwQuizBar2" onclick="openQuiz('L2')">
+        <div class="gw-quiz-bar qb-gated" id="gwQuizBar2" onclick="openQuiz('L2')">
           <div class="gw-quiz-inner">
             <div>
               <div class="gw-ql" id="gwQuizLabel2">Complete all 20 scenes to unlock Level 3</div>

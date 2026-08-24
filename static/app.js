@@ -209,6 +209,33 @@ function setBodyScrollLocked(locked) {
   }
 }
 
+// ══════════════════════════════════════════════
+// WRITE FAILURE REPORTING
+// ══════════════════════════════════════════════
+// fetch() only rejects on network errors — a 404 or 500 resolves normally with
+// res.ok === false. A write wrapped in `if (res.ok) { ... }` with no else
+// therefore fails completely silently: no console output, no user feedback, and
+// the UI carries on as though it succeeded. The Level 2 quiz shipped pointing at
+// an endpoint that never existed and went unnoticed for three months for exactly
+// this reason. Every write that can lose user data routes its failures here.
+//
+// Toasts are debounced per label so a burst (e.g. rapid flashcard taps while
+// offline) surfaces once rather than stacking.
+const _writeFailureLastToast = {};
+
+function reportWriteFailure(label, res, userMessage, err) {
+  const status = res ? res.status : 0;
+  // Built as one string rather than with %s placeholders so the line reads the
+  // same in the console, in captured logs, and in test harnesses.
+  console.error('[write-failed] ' + label + ' status=' + (status || 'network'), err || '');
+  if (!userMessage) return;
+  const now = Date.now();
+  if (_writeFailureLastToast[label] && now - _writeFailureLastToast[label] < 8000) return;
+  _writeFailureLastToast[label] = now;
+  if (typeof showToast === 'function') showToast(userMessage, 4000);
+}
+window.reportWriteFailure = reportWriteFailure;
+
 function isOverlayOpen(id) {
   return el(id).classList.contains('open');
 }
@@ -2576,14 +2603,28 @@ const WordsController = {
     if (!this.queue.length) return;
     const word = this.vocab[this.queue[0]];
     if (!word) return;
-    const newCount = Math.min((this.mastery[word.en] || 0) + 1, 3);
+    const prevCount = this.mastery[word.en] || 0;
+    const newCount = Math.min(prevCount + 1, 3);
     this.mastery[word.en] = newCount;
     const sceneId = this.scenes[this.sceneIdx] && this.scenes[this.sceneIdx].id;
+    // The optimistic bump above is deliberate — the card should advance without
+    // waiting on the network. But the write was previously `.catch(() => {})`
+    // with no .ok check, so a failed save left the session showing mastery the
+    // server never recorded, and it vanished on reload. Roll the local count
+    // back on failure so what is on screen matches what was stored.
+    const self = this;
     fetch(`${API}/api/vocab/mastery`, {
       method:  'POST',
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${authToken}` },
       body:    JSON.stringify({ scene_id: sceneId, word_en: word.en, correct: true }),
-    }).catch(() => {});
+    }).then(function(r){
+      if (r.ok) return;
+      self.mastery[word.en] = prevCount;
+      reportWriteFailure('vocab-mastery', r, "Couldn't save your word progress.");
+    }).catch(function(e){
+      self.mastery[word.en] = prevCount;
+      reportWriteFailure('vocab-mastery', null, "Couldn't save your word progress.", e);
+    });
     this.updateProgress();
     this.animateExit('right', () => {
       if (newCount >= 3) this.queue.shift();
@@ -2595,12 +2636,11 @@ const WordsController = {
     if (!this.queue.length) return;
     const word = this.vocab[this.queue[0]];
     if (!word) return;
-    const sceneId = this.scenes[this.sceneIdx] && this.scenes[this.sceneIdx].id;
-    fetch(`${API}/api/vocab/mastery`, {
-      method:  'POST',
-      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${authToken}` },
-      body:    JSON.stringify({ scene_id: sceneId, word_en: word.en, correct: false }),
-    }).catch(() => {});
+    // No request here on purpose. POST /api/vocab/mastery returns
+    // {"noop": true} without touching the database when correct is false —
+    // failed attempts deliberately do not reset progress. Sending it anyway
+    // spent a round trip per "Again" tap to achieve nothing. If the server ever
+    // starts recording misses, re-add the call *with* .ok handling.
     this.animateExit('left', () => {
       this.queue.push(this.queue.shift());
     });
@@ -3323,21 +3363,29 @@ const QuizController = {
       try {
         const authToken = localStorage.getItem('mirror_token');
         const isL2 = this.level === 'L2';
-        const url  = isL2 ? '/api/quiz2-pass' : '/api/quiz-pass';
-        const body = isL2 ? { score: pct } : { quiz: 'level1', score: pct };
-        const res = await fetch(url, {
+        // One endpoint, parameterised by level. This used to fork to
+        // '/api/quiz2-pass' for L2 — a URL that was never implemented, so every
+        // L2 pass 404'd silently from 2026-05-14 until it was fixed.
+        const res = await fetch(`${API}/api/quiz-pass`, {
           method: 'POST',
           headers: {
             'Authorization': 'Bearer ' + authToken,
             'Content-Type': 'application/json'
           },
-          body: JSON.stringify(body)
+          body: JSON.stringify({ quiz: isL2 ? 'level2' : 'level1', score: pct })
         });
         if (res.ok) {
           if (typeof userProgress !== 'undefined') userProgress._quizPassed = true;
           if (!isL2 && typeof checkLevel2Unlock === 'function') checkLevel2Unlock();
+        } else {
+          // fetch() does not reject on HTTP errors, so without this branch a
+          // 4xx/5xx just skipped the unlock with no console output and no user
+          // feedback. That is exactly how the L2 404 hid for three months.
+          reportWriteFailure('quiz-pass', res, 'Your quiz result could not be saved.');
         }
-      } catch(e) { console.error('quiz-pass error', e); }
+      } catch(e) {
+        reportWriteFailure('quiz-pass', null, 'Your quiz result could not be saved.', e);
+      }
     }
   },
 
