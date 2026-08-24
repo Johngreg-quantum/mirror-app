@@ -1392,6 +1392,70 @@
       .da-input { font-size: 16px; }
     }
 
+    /* First-run recording consent (privacy policy §6). Informational, not a
+       warning — gold rather than the delete modal's red.
+
+       z-index MUST stay above the scene modal. This notice is opened from
+       *inside* the recording modal, whose .overlay sits at 99999 (as does
+       .quiz-overlay). At a lower value the notice renders behind an opaque
+       backdrop: invisible, untappable, and the record button hangs forever
+       waiting for an Accept that cannot be reached. That shipped once. */
+    .rc-overlay {
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.88);
+      backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+      z-index: 100000;
+      display: flex; align-items: center; justify-content: center;
+      padding: 24px;
+      opacity: 0; pointer-events: none; transition: opacity 0.25s;
+    }
+    .rc-overlay.open { opacity: 1; pointer-events: all; }
+    .rc-box {
+      background: var(--surface);
+      border: 1px solid rgba(200,169,110,0.28);
+      border-radius: 18px;
+      padding: 30px 26px 26px;
+      width: 100%; max-width: 380px;
+      max-height: calc(100vh - 48px); overflow-y: auto;
+      transform: translateY(18px) scale(0.985); transition: transform 0.25s;
+    }
+    .rc-overlay.open .rc-box { transform: translateY(0) scale(1); }
+    .rc-title {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 22px; letter-spacing: 0.06em;
+      color: #fff; margin: 0 0 14px;
+    }
+    .rc-body {
+      font-size: 13.5px; line-height: 1.65;
+      color: rgba(255,255,255,0.66); margin: 0 0 12px;
+    }
+    .rc-body strong { color: rgba(255,255,255,0.9); font-weight: 600; }
+    .rc-error { font-size: 12px; color: var(--red); min-height: 17px; line-height: 1.45; padding-top: 2px; }
+    .rc-actions {
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 12px; margin-top: 10px;
+    }
+    .rc-legal {
+      font-size: 11px; letter-spacing: 0.06em;
+      color: rgba(200,169,110,0.6); text-decoration: none; white-space: nowrap;
+    }
+    .rc-legal:hover { color: rgba(200,169,110,0.9); }
+    .rc-accept {
+      flex: 1; padding: 12px; min-height: 44px;
+      background: var(--gold); color: #000; border: none;
+      font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 700;
+      border-radius: 8px; cursor: pointer; letter-spacing: 0.04em;
+      touch-action: manipulation; -webkit-tap-highlight-color: transparent;
+      transition: filter 0.2s, opacity 0.2s;
+    }
+    .rc-accept:hover:not(:disabled) { filter: brightness(1.12); }
+    @media (max-width: 480px) {
+      .rc-box { padding: 24px 18px 20px; }
+      .rc-actions { flex-direction: column-reverse; align-items: stretch; }
+      .rc-accept { width: 100%; }
+      .rc-legal { text-align: center; padding: 4px 0 2px; }
+    }
+
     .pp-film { display: flex; flex-direction: column; gap: 10px; padding: 4px 0 0; }
     .pp-film-row {
       display: flex; align-items: center; gap: 12px;
@@ -5886,6 +5950,31 @@
         <button class="da-confirm" type="submit" id="daConfirm" disabled>Delete forever</button>
       </div>
     </form>
+  </div>
+</div>
+
+<!-- First-run recording consent (privacy policy §6). Opened by startRec() when
+     the account has not consented; acceptance is stored on the user record, so
+     this appears once per account, not once per device. Accepting starts the
+     recording directly — see acceptRecordingConsent() in static/app.js for why
+     getUserMedia must run first in that handler. -->
+<div class="rc-overlay" id="recConsentOverlay">
+  <div class="rc-box" role="dialog" aria-modal="true" aria-labelledby="rcTitle">
+    <h2 class="rc-title" id="rcTitle">Before you record</h2>
+    <p class="rc-body">
+      When you submit a take, your audio is sent to <strong>OpenAI</strong> to be
+      turned into text. They delete it within 30 days and never use it for training.
+    </p>
+    <p class="rc-body">
+      We don't keep the audio. We do keep the <strong>transcript and your score</strong>,
+      saved to your account so you can see your progress. Deleting your account
+      erases both.
+    </p>
+    <div class="rc-error" id="rcError"></div>
+    <div class="rc-actions">
+      <a class="rc-legal" href="/privacy" target="_blank" rel="noopener">Privacy Policy</a>
+      <button class="rc-accept" type="button" id="rcAccept">Got it — start recording</button>
+    </div>
   </div>
 </div>
 

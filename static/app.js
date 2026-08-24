@@ -252,8 +252,13 @@ function bindBackdropDismiss(id, onClose) {
 }
 
 function handleGlobalEscape() {
-  // Modal close priority is intentional: auth > progress > scene modal.
-  if (isOverlayOpen('authModalOverlay')) {
+  // Modal close priority is intentional: consent > auth > progress > scene
+  // modal. Consent sits first because it opens on top of the scene modal —
+  // without it here, Escape would dismiss the notice AND close the scene the
+  // user was about to record, dumping them back to the browser.
+  if (isOverlayOpen('recConsentOverlay')) {
+    closeRecordingConsent();
+  } else if (isOverlayOpen('authModalOverlay')) {
     closeAuthModal();
   } else if (isOverlayOpen('progressOverlay')) {
     closeProgressDashboard();
@@ -566,6 +571,11 @@ async function enterAuthenticatedApp(options = {}) {
       const meData = await meResp.json();
       window.mirrorIsPro = meData.is_pro || false;
       document.body.classList.toggle('is-pro', window.mirrorIsPro);
+      // Carry the recording-consent flag onto authUser. The login/register
+      // handlers set authUser from the auth response, which has no consent
+      // field, so without this a returning user who already accepted would be
+      // asked again on this session's first recording.
+      if (authUser) authUser.recording_consent = !!meData.recording_consent;
     }
   } catch(e) {
     window.mirrorIsPro = false;
@@ -1136,16 +1146,114 @@ function stopRecordingCleanup() {
   if (micStream) micStream = null;
 }
 
+// ══════════════════════════════════════════════
+// RECORDING CONSENT — first-run notice (privacy policy §6)
+// ══════════════════════════════════════════════
+// Acceptance lives on the user record (users.recording_consent_at), not in
+// localStorage, so it follows the account across devices and is asked once.
+//
+// Shape matters here, and it is why this is not a promise the record button
+// awaits. getUserMedia needs a user gesture, and on iOS Safari the transient
+// activation does not reliably survive a network round-trip. So:
+//
+//   tap Record   → synchronous consent check; if unconsented, show notice, stop
+//   tap Accept   → getUserMedia FIRST (this click is the gesture), then the
+//                  consent POST, then recording
+//
+// Nothing is ever awaited between a tap and getUserMedia.
+
+// Synchronous. Unknown state reads as "not consented": showing the notice twice
+// is harmless, recording without it is not.
+function hasRecordingConsent() {
+  return !!(typeof authUser !== 'undefined' && authUser && authUser.recording_consent === true);
+}
+
+function closeRecordingConsent() {
+  const overlay = document.getElementById('recConsentOverlay');
+  if (overlay) overlay.classList.remove('open');
+  const errEl = document.getElementById('rcError');
+  if (errEl) errEl.textContent = '';
+}
+
+// Escape is handled by handleGlobalEscape(), which closes this first — a local
+// listener here would fire alongside it and close the scene modal underneath.
+function openRecordingConsent() {
+  const overlay = document.getElementById('recConsentOverlay');
+  if (!overlay) return;
+  const errEl = document.getElementById('rcError');
+  if (errEl) errEl.textContent = '';
+  overlay.classList.add('open');
+}
+
+// Fire-and-forget. The user consented by clicking Accept; persisting that is
+// bookkeeping, so a failed POST must not cost them the take they just started.
+// The failure mode is that they are asked again next session, which is the
+// harmless direction.
+function postRecordingConsent() {
+  const token = (typeof authToken !== 'undefined' && authToken)
+    ? authToken : localStorage.getItem('mirror_token');
+  if (!token) return;
+  fetch(`${API}/api/consent/recording`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${token}` },
+  }).then(r => {
+    if (!r.ok) throw new Error('consent POST failed: ' + r.status);
+    if (typeof authUser !== 'undefined' && authUser) authUser.recording_consent = true;
+  }).catch(err => {
+    // Left unconsented on purpose so the notice returns next time.
+    console.warn('[consent] not persisted; will re-prompt', err);
+  });
+}
+
+function acceptRecordingConsent() {
+  // ORDER IS LOAD-BEARING. getUserMedia must be the first thing this handler
+  // does, so it executes inside the Accept click's gesture. Moving the POST
+  // above it — or awaiting anything first — reintroduces the iOS failure.
+  const streamPromise = navigator.mediaDevices.getUserMedia({ audio: true });
+  postRecordingConsent();
+  closeRecordingConsent();
+  beginRecording(streamPromise);
+}
+
+onClick('rcAccept', acceptRecordingConsent);
+// Backdrop tap declines. No mic was acquired, so there is nothing to release.
+(function wireRecordingConsentBackdrop() {
+  const overlay = document.getElementById('recConsentOverlay');
+  if (!overlay) return;
+  overlay.addEventListener('click', ev => {
+    if (ev.target === overlay) closeRecordingConsent();
+  });
+})();
+
 onClick('btnRecord', startRec);
 onClick('btnStop', stopRec);
 onClick('btnPlay', togglePlayback);
 onClick('btnAnalyze', analyze);
 
-async function startRec() {
+function startRec() {
+  // Consent gate (privacy policy §6). Deliberately a SYNCHRONOUS check: nothing
+  // may be awaited between the user's tap and getUserMedia, or iOS Safari can
+  // lose the transient activation that getUserMedia requires. An unconsented
+  // user gets the notice and nothing else happens — the mic is never touched
+  // before consent, so the browser's own permission prompt cannot appear ahead
+  // of the explanation of what the audio is for. Recording then starts from the
+  // notice's own Accept click, which is a fresh gesture of its own.
+  if (!hasRecordingConsent()) {
+    openRecordingConsent();
+    return;
+  }
+  // First statement after a synchronous boolean check, so this runs in the same
+  // task as the click.
+  beginRecording(navigator.mediaDevices.getUserMedia({ audio: true }));
+}
+
+async function beginRecording(streamPromise) {
   // Ownership point: browser permission, MediaRecorder construction, blob
   // creation, timer start, and empty-recording handling all stay together.
+  // Takes an already-issued getUserMedia promise so the call itself can live
+  // inside whichever click gesture triggered it.
   try {
-    micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    micStream = await streamPromise;
   } catch (err) {
     if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
       alert('Microphone access denied. Please allow microphone access in your browser settings and try again.');

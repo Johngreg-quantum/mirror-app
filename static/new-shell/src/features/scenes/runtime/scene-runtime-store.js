@@ -23,7 +23,19 @@ function waveformLevel(status) {
   return 0.3 + Math.random() * 0.7;
 }
 
-export function createSceneRuntimeStore({ canRecord = false, disabledReason = '' } = {}) {
+export function createSceneRuntimeStore({
+  canRecord = false,
+  disabledReason = '',
+  consentGate,
+} = {}) {
+  // Required, and deliberately not defaulted. A default would either fail open
+  // (recording without the §6 notice — the bug this exists to prevent) or fail
+  // closed silently (recording mysteriously dead). Throwing turns an omission
+  // into an immediate, obvious construction error.
+  if (!consentGate || typeof consentGate.hasConsented !== 'function') {
+    throw new Error('createSceneRuntimeStore requires a consentGate.');
+  }
+
   let snapshot = createSnapshot();
   let recorder = null;
   let startRequest = null;
@@ -55,14 +67,36 @@ export function createSceneRuntimeStore({ canRecord = false, disabledReason = ''
     }
   }
 
-  async function startRecording() {
+  // Split so getUserMedia can be issued inside whichever click gesture
+  // triggered it — the Record button when already consented, or the notice's
+  // Accept button on the first run. Nothing may be awaited before it.
+  function startRecording() {
     try {
       requireAvailable();
+    } catch (error) {
+      logFrontendError(error, { phase: 'recording-start', surface: 'scene-runtime' });
+      setSnapshot({ status: 'error', error, level: 0 });
+      return;
+    }
 
-      if (snapshot.status === 'recording') {
-        return;
-      }
+    if (snapshot.status === 'recording') {
+      return;
+    }
 
+    // Consent gate (§6). Synchronous: an unconsented tap shows the notice and
+    // stops here, leaving the take untouched and the mic never opened, so the
+    // browser's permission prompt cannot precede the explanation. Accepting
+    // calls back into beginRecording() from its own gesture.
+    if (!consentGate.hasConsented()) {
+      consentGate.show();
+      return;
+    }
+
+    beginRecording(startMediaRecording());
+  }
+
+  async function beginRecording(recorderPromise) {
+    try {
       playback.stop();
       snapshot.audioBlob = null;
       snapshot.durationMs = 0;
@@ -74,7 +108,9 @@ export function createSceneRuntimeStore({ canRecord = false, disabledReason = ''
         durationMs: 0,
       });
       timer.start(0);
-      startRequest = startMediaRecording();
+      // Already issued by the caller inside the click gesture — do not call
+      // startMediaRecording() here, or getUserMedia moves out of the gesture.
+      startRequest = recorderPromise;
       const activeRecorder = await startRequest;
       startRequest = null;
 
@@ -235,6 +271,11 @@ export function createSceneRuntimeStore({ canRecord = false, disabledReason = ''
       return snapshot;
     },
     startRecording,
+    // Called from the consent notice's Accept click. Issues getUserMedia as the
+    // first statement so it stays inside that gesture.
+    beginRecordingFromGesture() {
+      beginRecording(startMediaRecording());
+    },
     stopRecording,
     playRecording,
     stopPlayback,

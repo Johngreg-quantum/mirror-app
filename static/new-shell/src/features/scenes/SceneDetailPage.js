@@ -29,6 +29,7 @@ import {
 import { createAnalyzeStore } from './runtime/analyze-store.js';
 import { createPostScoreRefreshStore } from './runtime/post-score-refresh-store.js';
 import { createSceneRuntimeStore } from './runtime/scene-runtime-store.js';
+import { createRecordingConsentNotice } from './runtime/recording-consent.js';
 
 function buildSceneDetailViewModel({
   sceneId,
@@ -417,9 +418,24 @@ function renderSceneDetailSurface({
     session,
     progressError: currentViewModel.progressError,
   });
-  const runtime = createSceneRuntimeStore({
+  // First-run recording notice (§6). Seeded from the session so an account that
+  // already accepted — in either shell, on any device — is not asked again.
+  // onAccept fires inside the notice's click handler and is what issues
+  // getUserMedia, keeping it within a user gesture.
+  let runtime = null;
+  const consentGate = createRecordingConsentNotice({
+    hasConsented: session?.user?.recordingConsent === true,
+    onAccept: () => runtime?.beginRecordingFromGesture(),
+    // Deliberately no session refresh on success. Forcing one here re-renders
+    // this page, which disposes the runtime that the Accept click just started
+    // recording on — the take dies and the UI drops back to "Ready". The gate
+    // tracks acceptance locally for this page, and /api/auth/me reports it on
+    // the next navigation, so nothing needs the refresh.
+  });
+  runtime = createSceneRuntimeStore({
     canRecord: !runtimeDisabledReason,
     disabledReason: runtimeDisabledReason,
+    consentGate,
   });
   const analyzeStore = createAnalyzeStore({
     runtime,
