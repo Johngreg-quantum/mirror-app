@@ -31,11 +31,10 @@ by our payment processor (see §5).
 - **To provide the service** (score your speech, track progress, run
   leaderboards): lawful basis **performance of a contract** (Art. 6(1)(b)).
 - **To process your voice recordings** specifically: lawful basis **your
-  consent** (Art. 6(1)(a)), which you give by granting microphone access and
-  choosing to record (see §6, including the open item there — we have not yet
-  built a consent step). You can withdraw consent at any time by stopping
-  recording and/or deleting your account; withdrawal does not affect processing
-  already carried out.
+  consent** (Art. 6(1)(a)), which you give by accepting the recording notice
+  shown before your first recording, and then by choosing to record (see §6).
+  You can withdraw consent at any time by stopping recording and/or deleting
+  your account; withdrawal does not affect processing already carried out.
 - **To secure the service** (rate-limiting, abuse prevention): **legitimate
   interests** (Art. 6(1)(f)).
 
@@ -112,10 +111,24 @@ first time, and audio is captured only while you are actively recording a scene
 our transcription provider and the resulting transcript is stored against your
 account, as described in §4.
 
-> **Open item — consent notice.** The app does **not** yet show a first-run
-> consent notice before your first recording, and the recording screen does not
-> link to this policy. Today this document is the only place that disclosure is
-> made. Build the in-app consent step before wide release.
+**The notice you see first.** Before your first ever recording, the app shows a
+short notice explaining that your audio is sent to OpenAI to be turned into
+text, that OpenAI deletes it within 30 days and does not use it for training,
+that we do not keep the audio ourselves, and that we do keep the transcript and
+your score against your account. It links to this policy, and you have to accept
+it before any recording starts. Nothing touches your microphone until you
+accept, so the notice always comes before your browser's own microphone prompt.
+
+We record that you accepted, along with the date and which version of this
+policy was current at the time, so we can show what you agreed to. Because that
+is stored against your account rather than in your browser, you are asked once —
+not again on a new phone or a different browser. If you have recorded with us
+before this notice existed, you will see it the next time you record.
+
+Declining is always possible: close the notice and no recording starts, no audio
+is captured, and your microphone is never opened. You can withdraw consent
+afterwards by deleting your account (§4), which erases your transcripts and
+scores along with it.
 
 ## 7. Your rights
 

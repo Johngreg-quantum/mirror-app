@@ -5,8 +5,11 @@ Working notes for `privacy-policy.md`. **Not published** — only
 `docs/` is served, and `/static` is mounted from `static/`, not from here.
 
 Keep notes-to-self in this file. The published policy should contain only
-things a user needs to know — including honest disclosures of what the app
-does *not* yet do, which is why the §6 open item lives there and not here.
+things a user needs to know — including honest disclosures of what the app does
+*not* yet do. There are currently **no open items**: both the §4 erasure gap and
+the §6 consent gap have shipped, and the policy describes real behaviour
+throughout. If a future gap opens, disclose it in the policy as a blockquote and
+track it under a heading here, the way those two were.
 
 ## Needs review by someone qualified
 
@@ -25,14 +28,57 @@ while the data controller is a **Florida sole trader** (see the header and
   GDPR Art. 8 range (13–16 depending on member state). Fine if intentional;
   worth confirming.
 
-## Open items tracked in the published policy
+## Closed: §6 consent to recording
 
-Disclosed to users on purpose; remove from the policy only when the
-corresponding feature actually ships:
+The first-run recording notice shipped. §6 describes the real flow and §3 no
+longer points at an open item. This one broke production on its first attempt,
+so the notes are specific:
 
-- **§6 — consent notice.** No first-run consent screen exists, and the
-  recording screen does not link to the policy. §3 leans on Art. 6(1)(a)
-  consent, so this gap is now the weakest point in the document.
+- **There are two shells and therefore two notices.** `static/app.js` serves `/`
+  and `/legacy`; `static/new-shell/` serves `/app/*`, `/scene/:id` and
+  `/challenge/:id`. Each has its own recorder and its own `getUserMedia` call.
+  **Any third recording entry point needs its own gate**, or `/scene/:id` — the
+  shareable link format — records with no notice while §6 claims otherwise.
+- **NEVER await anything between a tap and `getUserMedia`.** iOS Safari requires
+  a user gesture, and the transient activation does not reliably survive a
+  network round-trip. The first attempt awaited a consent promise before
+  `getUserMedia`; the shape now is: an unconsented tap shows the notice and
+  returns, and the notice's own Accept click issues `getUserMedia` as its first
+  statement. Both shells split `startRecording` / `beginRecording` for exactly
+  this reason — do not merge them back.
+- **The consent POST is fire-and-forget, on purpose.** The user consented by
+  clicking Accept; persisting it is bookkeeping. Awaiting it before recording
+  would put a network round-trip inside the gesture. A failed POST means they
+  are asked again next session, which is the harmless direction.
+- **The mic is never opened before consent.** An earlier design held the stream
+  open while the user read the notice; that lights the iOS recording indicator
+  during a privacy notice and puts the browser's permission prompt ahead of the
+  explanation. §6 promises this does not happen.
+- **z-index must stay above 99999.** The notice opens from *inside* the scene
+  modal, whose `.overlay` is at 99999 (as is `.quiz-overlay`). It first shipped
+  at 9600, rendered behind an opaque backdrop, and hung the record button
+  forever on an Accept nobody could reach — with no console error, because
+  nothing threw. Both notices are now at 100000.
+- **Escape ordering.** `handleGlobalEscape()` in `static/app.js` has an
+  intentional priority chain; the consent overlay is first. Without that, Escape
+  dismissed the notice *and* closed the scene modal underneath.
+- **New shell: do not refresh the session on accept.** `refreshSession({force})`
+  re-renders `SceneDetailPage`, disposing the runtime the Accept click just
+  started recording on. The gate tracks acceptance locally; `/api/auth/me`
+  reports it on the next navigation.
+- **`consentGate` is a required option with no default** on
+  `createSceneRuntimeStore`. A default would fail open or fail closed silently.
+  Do not "fix" it by adding one.
+- **Consent is server state** — `users.recording_consent_at` plus
+  `recording_consent_version`, set by `POST /api/consent/recording` and read via
+  `/api/auth/me`, which both shells already call at boot. A timestamp rather
+  than a boolean because Art. 7(1) requires being able to *demonstrate* consent.
+- **`RECORDING_CONSENT_VERSION` must equal the policy's effective date.**
+  Bumping it does not re-prompt anyone; the gate checks only whether
+  `recording_consent_at` is set.
+- **Existing users are prompted on their next recording**, because the migration
+  leaves their columns NULL. That is the point. Do not backfill them as
+  consented — that fabricates a record of consent that was never given.
 
 ## Closed: §4 right to erasure
 
