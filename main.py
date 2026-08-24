@@ -2234,6 +2234,13 @@ async def set_avatar(payload: dict, user: dict = Depends(current_user)):
 # Level 2. Adding a Level 3 quiz means one more entry here and nothing else.
 QUIZ_UNLOCKS = {"level1": 2, "level2": 3}
 
+# How far above the unlock threshold a quiz pass is recorded. Level 1's
+# threshold is 60, so this reproduces the historical 75.0 exactly; keeping the
+# margin rather than writing the threshold itself means the score never sits on
+# the boundary, and never silently changes which _tier_points() band it falls
+# into when a threshold moves.
+QUIZ_PASS_MARGIN = 15.0
+
 
 @app.post("/api/quiz-pass")
 async def quiz_pass(payload: dict, user: dict = Depends(current_user)):
@@ -2270,11 +2277,15 @@ async def quiz_pass(payload: dict, user: dict = Depends(current_user)):
     if not scene:
         return {"unlocked": False}
 
-    # Write the qualifying score for this specific unlock rather than a magic
-    # number. The old hardcoded 75.0 cleared level 2's threshold of 60 by
-    # accident of being larger; it would have silently stopped unlocking if a
-    # threshold were ever raised above it.
-    granted = float(target_def.get("unlock_score", SCORE_PROFICIENT))
+    # Derived from the threshold this pass has to clear, not a magic number: the
+    # old hardcoded 75.0 cleared level 2's threshold of 60 only by being larger,
+    # and would have silently stopped unlocking if a threshold were raised past
+    # it. Written *above* the threshold rather than exactly at it — sitting on
+    # the boundary leaves no headroom, and for level 1 it would drop the
+    # long-standing 75.0 to 60.0, which crosses a _tier_points() boundary and
+    # would quietly halve what a quiz pass is worth in weekly XP (50 -> 25).
+    # QUIZ_PASS_MARGIN is 15 precisely so level 1 still grants 75.0.
+    granted = min(100.0, float(target_def.get("unlock_score", SCORE_PROFICIENT)) + QUIZ_PASS_MARGIN)
 
     conn  = get_conn()
     cur   = conn.cursor()
