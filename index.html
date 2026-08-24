@@ -1317,6 +1317,80 @@
       font-size: 11px; letter-spacing: 0.08em;
       color: rgba(200,169,110,0.5); text-decoration: none;
     }
+    /* Deliberately the quietest thing on the panel: same size and weight as the
+       privacy link beside it, neutral until hover. Destructive and permanent,
+       so it should be findable but never invite a stray tap. */
+    .pp-legal-sep { color: rgba(255,255,255,0.16); font-size: 11px; margin: 0 8px; }
+    .pp-delete {
+      background: none; border: none; padding: 0;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 11px; letter-spacing: 0.08em;
+      color: rgba(255,255,255,0.28); cursor: pointer;
+      transition: color 0.2s ease;
+    }
+    .pp-delete:hover { color: rgba(214,92,92,0.85); }
+
+    .da-overlay {
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.86);
+      backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+      z-index: 9500;
+      display: flex; align-items: center; justify-content: center;
+      padding: 24px;
+      opacity: 0; pointer-events: none; transition: opacity 0.25s;
+    }
+    .da-overlay.open { opacity: 1; pointer-events: all; }
+    .da-box {
+      background: var(--surface);
+      border: 1px solid rgba(214,92,92,0.28);
+      border-radius: 18px;
+      padding: 30px 26px 26px;
+      width: 100%; max-width: 400px;
+      max-height: calc(100vh - 48px); overflow-y: auto;
+      transform: translateY(18px) scale(0.985); transition: transform 0.25s;
+    }
+    .da-overlay.open .da-box { transform: translateY(0) scale(1); }
+    .da-title {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 22px; letter-spacing: 0.06em;
+      color: #fff; margin: 0 0 12px;
+    }
+    .da-body { font-size: 13px; line-height: 1.6; color: rgba(255,255,255,0.62); margin: 0 0 8px; }
+    .da-list {
+      font-size: 13px; line-height: 1.7; color: rgba(255,255,255,0.62);
+      margin: 0 0 14px; padding-left: 18px;
+    }
+    .da-warn {
+      font-size: 12px; line-height: 1.55; color: rgba(214,92,92,0.92);
+      background: rgba(214,92,92,0.07);
+      border: 0.5px solid rgba(214,92,92,0.2);
+      border-radius: 8px; padding: 10px 12px; margin: 0 0 16px;
+    }
+    .da-label {
+      display: block; font-size: 11px; letter-spacing: 0.06em;
+      color: rgba(255,255,255,0.42); margin: 0 0 6px;
+    }
+    .da-field { margin-bottom: 12px; }
+    .da-error { font-size: 12px; color: var(--red); min-height: 17px; line-height: 1.45; padding-top: 2px; }
+    .da-actions { display: flex; gap: 10px; margin-top: 6px; }
+    .da-cancel, .da-confirm {
+      flex: 1; padding: 12px; min-height: 44px;
+      font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 700;
+      border-radius: 8px; cursor: pointer; letter-spacing: 0.04em;
+      touch-action: manipulation; -webkit-tap-highlight-color: transparent;
+      transition: filter 0.2s, opacity 0.2s;
+    }
+    .da-cancel {
+      background: var(--surface-2); border: 1px solid var(--border);
+      color: rgba(255,255,255,0.8);
+    }
+    .da-confirm { background: #b33b3b; border: none; color: #fff; }
+    .da-confirm:hover:not(:disabled) { filter: brightness(1.12); }
+    .da-confirm:disabled { opacity: 0.35; cursor: not-allowed; }
+    @media (max-width: 480px) {
+      .da-box { padding: 24px 18px 20px; }
+      .da-input { font-size: 16px; }
+    }
 
     .pp-film { display: flex; flex-direction: column; gap: 10px; padding: 4px 0 0; }
     .pp-film-row {
@@ -5778,6 +5852,43 @@
   </div>
 </div>
 
+<!-- Delete-account confirmation. Two independent gates, both re-checked by the
+     server: typing the username guards against an accidental tap, and the
+     password proves the person holding the device owns the account (the token
+     alone sits in localStorage for days). -->
+<div class="da-overlay" id="deleteAccountOverlay">
+  <div class="da-box" role="dialog" aria-modal="true" aria-labelledby="daTitle">
+    <h2 class="da-title" id="daTitle">Delete your account</h2>
+    <p class="da-body">This permanently erases:</p>
+    <ul class="da-list">
+      <li>Your account and sign-in details</li>
+      <li>Every take you've recorded, and its transcript</li>
+      <li>Your scores, points, rank and division</li>
+      <li>Your day streak and mission progress</li>
+      <li>Your vocabulary mastery and filmography</li>
+    </ul>
+    <p class="da-warn">This cannot be undone. Your recordings are not kept on our
+      servers, so there is no backup to restore from.</p>
+    <form class="da-form" id="deleteAccountForm">
+      <div class="da-field">
+        <label class="da-label" for="daUsername">Type your username <strong id="daExpected"></strong> to confirm</label>
+        <input class="auth-input da-input" type="text" id="daUsername" autocomplete="off"
+               autocapitalize="none" autocorrect="off" spellcheck="false" maxlength="30" />
+      </div>
+      <div class="da-field">
+        <label class="da-label" for="daPassword">Enter your password</label>
+        <input class="auth-input da-input" type="password" id="daPassword"
+               autocomplete="current-password" maxlength="128" />
+      </div>
+      <div class="da-error" id="daError"></div>
+      <div class="da-actions">
+        <button class="da-cancel" type="button" id="daCancel">Keep my account</button>
+        <button class="da-confirm" type="submit" id="daConfirm" disabled>Delete forever</button>
+      </div>
+    </form>
+  </div>
+</div>
+
 <script src="/static/app-config.js"></script>
 <script src="/static/app-helpers.js"></script>
 <script src="/static/app-view-helpers.js"></script>
@@ -7075,8 +7186,127 @@ function checkLevel2Unlock() {
       // Only in-app surface that links to the policy — the landing footer is
       // hidden by the landing-cleanup rules, so the corner link covers logged-out
       // visitors and this covers signed-in ones.
-      '<div class="pp-legal"><a href="/privacy">Privacy Policy</a></div>';
+      '<div class="pp-legal"><a href="/privacy">Privacy Policy</a>' +
+        '<span class="pp-legal-sep">&middot;</span>' +
+        '<button type="button" class="pp-delete" id="ppDeleteBtn">Delete my account</button>' +
+      '</div>';
+
+    var delBtn = document.getElementById('ppDeleteBtn');
+    if (delBtn) delBtn.addEventListener('click', openDeleteModal);
   }
+
+  /* ── Delete account ─────────────────────────────────────────────────────
+     The typed-username check here is a convenience that keeps the button
+     disabled until the intent is unambiguous; the server re-checks both it and
+     the password, so nothing depends on this running. */
+  function daEl(id){ return document.getElementById(id); }
+
+  function daSetError(msg){
+    var e = daEl('daError');
+    if (e) e.textContent = msg || '';
+  }
+
+  function daSyncConfirmState(){
+    var btn  = daEl('daConfirm');
+    var name = daEl('daUsername');
+    var pw   = daEl('daPassword');
+    if (!btn || !name || !pw) return;
+    btn.disabled = (name.value.trim() !== currentUsername()) || pw.value.length === 0;
+  }
+
+  function closeDeleteModal(){
+    var ov = daEl('deleteAccountOverlay');
+    if (ov) ov.classList.remove('open');
+    var name = daEl('daUsername'); if (name) name.value = '';
+    var pw   = daEl('daPassword'); if (pw) pw.value = '';
+    daSetError('');
+    daSyncConfirmState();
+    document.removeEventListener('keydown', daOnKeydown);
+  }
+
+  function daOnKeydown(ev){
+    if (ev.key === 'Escape') closeDeleteModal();
+  }
+
+  function openDeleteModal(){
+    var ov = daEl('deleteAccountOverlay');
+    if (!ov) return;
+    var expected = daEl('daExpected');
+    if (expected) expected.textContent = currentUsername();
+    daSetError('');
+    var name = daEl('daUsername'); if (name) name.value = '';
+    var pw   = daEl('daPassword'); if (pw) pw.value = '';
+    daSyncConfirmState();
+    ov.classList.add('open');
+    document.addEventListener('keydown', daOnKeydown);
+    if (name) setTimeout(function(){ name.focus(); }, 60);
+  }
+
+  function submitDeleteAccount(ev){
+    ev.preventDefault();
+    var btn  = daEl('daConfirm');
+    var name = daEl('daUsername');
+    var pw   = daEl('daPassword');
+    if (!btn || !name || !pw || btn.disabled) return;
+
+    var token = (typeof authToken !== 'undefined' && authToken)
+      ? authToken : localStorage.getItem('mirror_token');
+    if (!token) { daSetError('You are signed out. Sign in again to delete your account.'); return; }
+
+    btn.disabled = true;
+    btn.textContent = 'Deleting…';
+    daSetError('');
+
+    fetch(API + '/api/account', {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + token
+      },
+      body: JSON.stringify({
+        password: pw.value,
+        confirm_username: name.value.trim()
+      })
+    }).then(function(r){
+      return r.json().catch(function(){ return {}; }).then(function(data){
+        return { ok: r.ok, status: r.status, data: data };
+      });
+    }).then(function(res){
+      if (res.ok) {
+        // Hard navigation rather than logout(): the account is gone, so the
+        // safest thing is to drop every scrap of in-memory and stored state.
+        try { localStorage.removeItem('mirror_token'); } catch (e) {}
+        try { localStorage.clear(); } catch (e) {}
+        try { sessionStorage.clear(); } catch (e) {}
+        window.location.replace('/?deleted=1');
+        return;
+      }
+      btn.disabled = false;
+      btn.textContent = 'Delete forever';
+      var detail = (res.data && res.data.detail) ? res.data.detail : '';
+      if (res.status === 401 && !detail) detail = 'Password is incorrect.';
+      daSetError(detail || 'Could not delete your account. Please try again.');
+      if (res.status === 401) { pw.value = ''; daSyncConfirmState(); pw.focus(); }
+    }).catch(function(){
+      btn.disabled = false;
+      btn.textContent = 'Delete forever';
+      daSetError('Network error — your account was not deleted. Please try again.');
+    });
+  }
+
+  (function wireDeleteModal(){
+    var form   = daEl('deleteAccountForm');
+    var cancel = daEl('daCancel');
+    var ov     = daEl('deleteAccountOverlay');
+    var name   = daEl('daUsername');
+    var pw     = daEl('daPassword');
+    if (form)   form.addEventListener('submit', submitDeleteAccount);
+    if (cancel) cancel.addEventListener('click', closeDeleteModal);
+    if (name)   name.addEventListener('input', daSyncConfirmState);
+    if (pw)     pw.addEventListener('input', daSyncConfirmState);
+    // Click the backdrop (but not the box) to dismiss.
+    if (ov) ov.addEventListener('click', function(ev){ if (ev.target === ov) closeDeleteModal(); });
+  })();
 
   window.renderProfilePanel = renderProfilePanel;
 

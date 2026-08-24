@@ -787,6 +787,16 @@ class LoginRequest(BaseModel):
     password: str = Field(..., max_length=128)
 
 
+class DeleteAccountRequest(BaseModel):
+    """Both fields are required and both are checked server-side. The typed
+    username guards against an accidental click; the password proves the person
+    at the keyboard owns the account, since the token alone lives in
+    localStorage for TOKEN_TTL days and a borrowed device would otherwise be
+    enough to erase it."""
+    password:         str = Field(..., max_length=128)
+    confirm_username: str = Field(..., max_length=30)
+
+
 def hash_pw(password: str) -> str:
     return pwd_ctx.hash(password)
 
@@ -806,8 +816,31 @@ def decode_token(creds: Optional[HTTPAuthorizationCredentials]) -> dict:
     except (JWTError, KeyError, ValueError):
         raise HTTPException(401, "Invalid or expired token")
 
+def require_live_user(user: dict) -> dict:
+    """Reject a token whose account no longer exists.
+
+    Tokens are stateless and stay valid for TOKEN_TTL days, so deleting a user
+    row does not invalidate tokens already issued to them. Without this check a
+    stale token can still reach the write endpoints and *re-create* the rows the
+    deletion just removed — `/api/submit` and `/api/missions` both call
+    seed_user_missions(), which INSERTs into the username-keyed user_missions /
+    user_streak tables. Because usernames are freed for re-registration on
+    delete, those resurrected rows would then be inherited by whoever next
+    claims the name. One indexed primary-key lookup closes that off.
+    """
+    conn = get_conn()
+    try:
+        cur = conn.cursor()
+        cur.execute(f"SELECT 1 FROM users WHERE id = {PH}", (user["id"],))
+        if cur.fetchone() is None:
+            raise HTTPException(401, "Account no longer exists")
+    finally:
+        conn.close()
+    return user
+
+
 def current_user(creds: HTTPAuthorizationCredentials = Depends(bearer)) -> dict:
-    return decode_token(creds)
+    return require_live_user(decode_token(creds))
 
 
 # ---------------------------------------------------------------------------
@@ -1183,6 +1216,100 @@ async def me(user: dict = Depends(current_user)):
     }
 
 
+# Every table that stores something about a user, as
+# (table, column, which key to bind). There are no foreign keys anywhere in this
+# schema and therefore no ON DELETE CASCADE, so erasure has to name each table
+# explicitly. Note the split: most tables key on user_id, but user_missions and
+# user_streak key on *username only*. Since deleting a user frees their username
+# for re-registration, missing those two would hand the next person to claim the
+# name the deleted user's streak, XP and mission progress.
+# challenges appears twice on purpose: current code fills both challenger_user_id
+# and challenger_username, but older rows may carry only the name.
+_USER_DATA_TABLES = [
+    ("word_mastery",  "user_id",             "id"),
+    ("scores",        "user_id",             "id"),
+    ("challenges",    "challenger_user_id",  "id"),
+    ("challenges",    "challenger_username", "username"),
+    ("user_missions", "username",            "username"),
+    ("user_streak",   "username",            "username"),
+]
+
+
+@app.delete("/api/account")
+async def delete_account(req: DeleteAccountRequest, user: dict = Depends(current_user)):
+    """Permanently erase the authenticated user's account and all data tied to
+    it (GDPR Art. 17). Irreversible — there is no soft-delete tombstone.
+
+    An active subscription blocks the delete with a 409: we store only the
+    is_pro flag, never the Lemon Squeezy subscription id, so there is nothing to
+    call the cancel API with. Deleting anyway would leave the subscription
+    billing a card for an account that no longer exists.
+    """
+    conn = get_conn()
+    cur  = conn.cursor()
+    try:
+        cur.execute(
+            f"SELECT username, password_hash, is_pro FROM users WHERE id = {PH}",
+            (user["id"],),
+        )
+        row = cur.fetchone()
+        if row is None:
+            raise HTTPException(401, "Account no longer exists")
+
+        db_username, password_hash, is_pro = row[0], row[1], row[2]
+
+        # Password first: a wrong password should not reveal whether the typed
+        # username matched.
+        try:
+            password_ok = verify_pw(req.password, password_hash)
+        except Exception:
+            password_ok = False
+        if not password_ok:
+            raise HTTPException(401, "Password is incorrect")
+
+        # Re-check the typed confirmation server-side — the client check is a
+        # convenience, not the gate.
+        if req.confirm_username.strip() != db_username:
+            raise HTTPException(400, "The username you typed does not match your account")
+
+        if is_pro:
+            raise HTTPException(
+                409,
+                "You have an active MIRROR Pro subscription. Cancel it first, "
+                "then come back and delete your account. Use the subscription "
+                "management link in your Lemon Squeezy receipt email, or email "
+                "contact@mirrorspeak.app and we will cancel it for you. "
+                "Your account has not been deleted.",
+            )
+
+        # Bind username from the database row, not from the JWT — the token
+        # carries a snapshot that may be stale.
+        keys = {"id": user["id"], "username": db_username}
+        deleted = {}
+        for table, column, key in _USER_DATA_TABLES:
+            cur.execute(f"DELETE FROM {table} WHERE {column} = {PH}", (keys[key],))
+            deleted[f"{table}.{column}"] = cur.rowcount
+
+        cur.execute(f"DELETE FROM users WHERE id = {PH}", (user["id"],))
+        deleted["users"] = cur.rowcount
+
+        conn.commit()
+    except HTTPException:
+        conn.rollback()
+        raise
+    except Exception:
+        conn.rollback()
+        logger.exception("[account] delete failed for user_id=%s", user["id"])
+        raise HTTPException(500, "Could not delete the account. Nothing was changed.")
+    finally:
+        conn.close()
+
+    # Deliberately logs the numeric id and row counts only — no username or
+    # email — so the audit line does not re-retain what was just erased.
+    logger.info("[account] deleted user_id=%s rows=%s", user["id"], deleted)
+    return {"deleted": True}
+
+
 # ─── Lemon Squeezy billing ───────────────────────────────────────────────────
 
 @app.post("/api/billing/checkout")
@@ -1468,7 +1595,8 @@ async def submit_recording(
     duration_seconds: float = Form(0.0),
     creds: HTTPAuthorizationCredentials = Depends(bearer),
 ):
-    user = decode_token(creds)  # raises 401 if missing / invalid
+    # raises 401 if the token is missing / invalid, or if the account was deleted
+    user = require_live_user(decode_token(creds))
 
     if scene_id not in SCENES:
         raise HTTPException(400, "Invalid scene_id")
