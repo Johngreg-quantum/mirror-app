@@ -566,6 +566,11 @@ async function enterAuthenticatedApp(options = {}) {
       const meData = await meResp.json();
       window.mirrorIsPro = meData.is_pro || false;
       document.body.classList.toggle('is-pro', window.mirrorIsPro);
+      // Carry the recording-consent flag onto authUser. The login/register
+      // handlers set authUser from the auth response, which has no consent
+      // field, so without this a returning user who already accepted would be
+      // asked again on this session's first recording.
+      if (authUser) authUser.recording_consent = !!meData.recording_consent;
     }
   } catch(e) {
     window.mirrorIsPro = false;
@@ -1136,12 +1141,91 @@ function stopRecordingCleanup() {
   if (micStream) micStream = null;
 }
 
+// ══════════════════════════════════════════════
+// RECORDING CONSENT — first-run notice (privacy policy §6)
+// ══════════════════════════════════════════════
+// Acceptance lives on the user record (users.recording_consent_at), not in
+// localStorage, so it follows the account across devices and is asked once.
+// Unknown state is treated as "not consented": showing the notice twice is
+// harmless, silently recording without it is not.
+function ensureRecordingConsent() {
+  if (typeof authUser !== 'undefined' && authUser && authUser.recording_consent === true) {
+    return Promise.resolve(true);
+  }
+
+  const overlay = document.getElementById('recConsentOverlay');
+  const accept  = document.getElementById('rcAccept');
+  const errEl   = document.getElementById('rcError');
+  // No modal in the DOM means the gate cannot be shown. Refuse rather than
+  // fall through to recording — failing open here would defeat the point.
+  if (!overlay || !accept) return Promise.resolve(false);
+
+  return new Promise(resolve => {
+    let settled = false;
+
+    function close(result) {
+      if (settled) return;
+      settled = true;
+      overlay.classList.remove('open');
+      document.removeEventListener('keydown', onKey);
+      overlay.removeEventListener('click', onBackdrop);
+      accept.removeEventListener('click', onAccept);
+      if (errEl) errEl.textContent = '';
+      accept.disabled = false;
+      accept.textContent = 'Got it — start recording';
+      resolve(result);
+    }
+
+    function onKey(ev)      { if (ev.key === 'Escape') close(false); }
+    function onBackdrop(ev) { if (ev.target === overlay) close(false); }
+
+    function onAccept() {
+      const token = (typeof authToken !== 'undefined' && authToken)
+        ? authToken : localStorage.getItem('mirror_token');
+      if (!token) { close(false); return; }
+
+      accept.disabled = true;
+      accept.textContent = 'Saving…';
+      if (errEl) errEl.textContent = '';
+
+      fetch(`${API}/api/consent/recording`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+      }).then(r => {
+        if (!r.ok) throw new Error('consent POST failed: ' + r.status);
+        // Only mark consented once the server has stored it, so a failed save
+        // means the notice appears again rather than being silently skipped.
+        if (typeof authUser !== 'undefined' && authUser) authUser.recording_consent = true;
+        close(true);
+      }).catch(() => {
+        accept.disabled = false;
+        accept.textContent = 'Got it — start recording';
+        if (errEl) errEl.textContent = 'Could not save your choice. Please try again.';
+      });
+    }
+
+    accept.addEventListener('click', onAccept);
+    overlay.addEventListener('click', onBackdrop);
+    document.addEventListener('keydown', onKey);
+    overlay.classList.add('open');
+  });
+}
+window.ensureRecordingConsent = ensureRecordingConsent;
+
 onClick('btnRecord', startRec);
 onClick('btnStop', stopRec);
 onClick('btnPlay', togglePlayback);
 onClick('btnAnalyze', analyze);
 
 async function startRec() {
+  // Consent gate (privacy policy §6). Must come before getUserMedia so the
+  // browser's own mic prompt does not appear ahead of the explanation of what
+  // the audio is used for. This is the legacy shell's only recording entry
+  // point — the daily challenge opens the same modal and the same #btnRecord;
+  // the quiz never records. The new shell has its own gate in
+  // scene-runtime-store.js.
+  if (!(await ensureRecordingConsent())) return;
+
   // Ownership point: browser permission, MediaRecorder construction, blob
   // creation, timer start, and empty-recording handling all stay together.
   try {

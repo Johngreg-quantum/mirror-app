@@ -178,6 +178,14 @@ APP_BASE_URL = os.getenv("APP_BASE_URL", "").rstrip("/")
 # meaningless to a payment provider.
 CANONICAL_BASE_URL = APP_BASE_URL or "https://mirrorspeak.app"
 
+# Version stamped onto a user's recording consent, so a stored consent records
+# which text was actually shown. Keep this equal to the effective date in the
+# header of docs/privacy-policy.md. Bump it only for changes that alter what the
+# user is consenting to (what is collected, who processes it, retention) — a
+# bump does NOT re-prompt anyone on its own; re-prompting would be a deliberate
+# extra change to the consent check.
+RECORDING_CONSENT_VERSION = "2026-08-23"
+
 # Lemon Squeezy billing
 LS_API_KEY        = os.getenv("LEMONSQUEEZY_API_KEY", "")
 LS_SIGNING_SECRET = os.getenv("LEMONSQUEEZY_SIGNING_SECRET", "")
@@ -555,6 +563,53 @@ async def update_missions(username: str, scene_id: str, score: float,
 # Database initialisation
 # ---------------------------------------------------------------------------
 
+# Columns added to `users` after the original CREATE TABLE. Shared by the SQLite
+# and PostgreSQL migration paths so the two backends cannot drift apart.
+#
+# recording_consent_at / recording_consent_version record that the user accepted
+# the first-run recording notice (privacy policy §6). A timestamp rather than a
+# boolean because GDPR Art. 7(1) requires being able to *demonstrate* consent was
+# given, and the version pins which text they saw — without it, a later material
+# change to §4/§5 leaves no way to tell who consented to what.
+_USERS_MIGRATION_COLUMNS = [
+    ("points",                     "INTEGER DEFAULT 0"),
+    ("streak",                     "INTEGER DEFAULT 0"),
+    ("last_daily",                 "TEXT"),
+    ("is_pro",                     "BOOLEAN DEFAULT FALSE"),
+    ("avatar_scene_id",            "TEXT"),
+    ("recording_consent_at",       "TEXT"),
+    ("recording_consent_version",  "TEXT"),
+]
+
+
+def _verify_users_columns(cur, sqlite: bool) -> None:
+    """Fail startup loudly if a migrated column is missing.
+
+    The SQLite ALTER loop cannot distinguish "already exists" from a genuine
+    failure without inspecting the error string, and a missed column does not
+    surface until a request reads it and 500s with "no such column". Checking
+    here turns that into a startup error naming the column, which on Render
+    keeps the previous healthy deploy serving instead of shipping a broken one.
+    """
+    if sqlite:
+        cur.execute("PRAGMA table_info(users)")
+        present = {row[1] for row in cur.fetchall()}
+    else:
+        cur.execute(
+            "SELECT column_name FROM information_schema.columns "
+            "WHERE table_name = 'users'"
+        )
+        present = {row[0] for row in cur.fetchall()}
+
+    missing = [col for col, _ in _USERS_MIGRATION_COLUMNS if col not in present]
+    if missing:
+        raise RuntimeError(
+            "users table is missing migrated column(s): "
+            + ", ".join(missing)
+            + " — the ALTER did not apply. Fix the schema before serving."
+        )
+
+
 def init_db():
     conn = get_conn()
     cur  = conn.cursor()
@@ -614,29 +669,26 @@ def init_db():
                 cur.execute(f"ALTER TABLE scores ADD COLUMN {col} {dfn}")
             except sqlite3.OperationalError:
                 pass  # column already exists
-        # Non-destructive migration for users.points / streak / last_daily / is_pro / avatar_scene_id
-        for col, dfn in [
-            ("points",           "INTEGER DEFAULT 0"),
-            ("streak",           "INTEGER DEFAULT 0"),
-            ("last_daily",       "TEXT"),
-            ("is_pro",           "BOOLEAN DEFAULT FALSE"),
-            ("avatar_scene_id",  "TEXT"),
-        ]:
+        # Non-destructive migration for users.points / streak / last_daily /
+        # is_pro / avatar_scene_id / recording consent
+        for col, dfn in _USERS_MIGRATION_COLUMNS:
             try:
                 cur.execute(f"ALTER TABLE users ADD COLUMN {col} {dfn}")
-            except sqlite3.OperationalError:
-                pass  # column already exists
+            except sqlite3.OperationalError as exc:
+                # Only "duplicate column name" means the migration already ran.
+                # A blanket `pass` here used to swallow genuine failures too, so
+                # a column could silently never be added and every read of it
+                # then 500'd with "no such column" and nothing in the log
+                # pointing at the cause. Anything else re-raises.
+                if "duplicate column name" not in str(exc).lower():
+                    raise
+        _verify_users_columns(cur, sqlite=True)
 
     if USE_PG:
         # Non-destructive migrations for PostgreSQL
-        for col, dfn in [
-            ("points",           "INTEGER DEFAULT 0"),
-            ("streak",           "INTEGER DEFAULT 0"),
-            ("last_daily",       "TEXT"),
-            ("is_pro",           "BOOLEAN DEFAULT FALSE"),
-            ("avatar_scene_id",  "TEXT"),
-        ]:
+        for col, dfn in _USERS_MIGRATION_COLUMNS:
             cur.execute(f"ALTER TABLE users ADD COLUMN IF NOT EXISTS {col} {dfn}")
+        _verify_users_columns(cur, sqlite=False)
         cur.execute("""
             CREATE TABLE IF NOT EXISTS challenges (
                 id                  SERIAL PRIMARY KEY,
@@ -1198,22 +1250,59 @@ async def login(req: LoginRequest):
 async def me(user: dict = Depends(current_user)):
     conn = get_conn()
     cur = conn.cursor()
+    # Both shells call this at boot, so the consent flag rides the query that
+    # was already happening — the gate costs no extra round-trip.
     try:
         cur.execute(
-            f"SELECT is_pro FROM users WHERE id = {PH}",
+            f"SELECT is_pro, recording_consent_at FROM users WHERE id = {PH}",
             (user["id"],)
         )
         row = cur.fetchone()
         is_pro = bool(row[0]) if row and row[0] else False
+        # Fail closed: if this read fails we report "not consented", which shows
+        # the notice again. Showing it twice is harmless; skipping it is the
+        # failure that matters, so the error path must never imply consent.
+        recording_consent = bool(row[1]) if row and row[1] else False
     except Exception:
         is_pro = False
+        recording_consent = False
     finally:
         conn.close()
     return {
         "id": user["id"],
         "username": user["username"],
         "is_pro": is_pro,
+        "recording_consent": recording_consent,
     }
+
+
+@app.post("/api/consent/recording")
+async def accept_recording_consent(user: dict = Depends(current_user)):
+    """Record that the user accepted the first-run recording notice (§6).
+
+    Idempotent: re-accepting refreshes nothing if consent already exists, so a
+    double-tap or a stale client cannot overwrite the original timestamp — the
+    first acceptance is the one that has to be demonstrable.
+    """
+    now = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S")
+    conn = get_conn()
+    cur  = conn.cursor()
+    try:
+        cur.execute(
+            f"UPDATE users SET recording_consent_at = {PH}, "
+            f"recording_consent_version = {PH} "
+            f"WHERE id = {PH} AND recording_consent_at IS NULL",
+            (now, RECORDING_CONSENT_VERSION, user["id"]),
+        )
+        conn.commit()
+    except Exception:
+        conn.rollback()
+        logger.exception("[consent] failed to record for user_id=%s", user["id"])
+        raise HTTPException(500, "Could not save your choice. Please try again.")
+    finally:
+        conn.close()
+
+    return {"recording_consent": True}
 
 
 # Every table that stores something about a user, as

@@ -29,6 +29,7 @@ import {
 import { createAnalyzeStore } from './runtime/analyze-store.js';
 import { createPostScoreRefreshStore } from './runtime/post-score-refresh-store.js';
 import { createSceneRuntimeStore } from './runtime/scene-runtime-store.js';
+import { createRecordingConsentGate } from './runtime/recording-consent.js';
 
 function buildSceneDetailViewModel({
   sceneId,
@@ -420,6 +421,13 @@ function renderSceneDetailSurface({
   const runtime = createSceneRuntimeStore({
     canRecord: !runtimeDisabledReason,
     disabledReason: runtimeDisabledReason,
+    // First-run recording notice (§6). Seeded from the session so an account
+    // that already accepted — in either shell, on any device — is not asked
+    // again; refreshed after acceptance so the rest of the app agrees.
+    requireConsent: createRecordingConsentGate({
+      hasConsented: session?.user?.recordingConsent === true,
+      onConsented: () => actions?.session?.refreshSession?.({ force: true }),
+    }),
   });
   const analyzeStore = createAnalyzeStore({
     runtime,
