@@ -4447,7 +4447,11 @@
     {id:'rocky',               bg:'linear-gradient(135deg,#120000,#260000)'},
     {id:'dead_poets',          bg:'linear-gradient(135deg,#001412,#002a24)'},
     {id:'gladiator',           bg:'linear-gradient(135deg,#120800,#241500)'},
-    {id:'good_will_hunting',   bg:'linear-gradient(135deg,#0a0a1a,#14142a)'},
+    // good_will_hunting is deliberately absent: static/posters/good_will_hunting.webp
+    // does not exist and the .jpg is a 9-byte stub, so every landing-page load
+    // spent two requests (a 404 then a broken file) to render the gradient
+    // fallback. Restore this entry once a real poster is generated — the scene
+    // itself is fine and its backdrop is intact.
     {id:'shawshank',           bg:'linear-gradient(135deg,#100e00,#201c00)'},
     {id:'braveheart',          bg:'linear-gradient(135deg,#1a1200,#302200)'},
     {id:'jerry_maguire',       bg:'linear-gradient(135deg,#0a0018,#180030)'},
@@ -4543,6 +4547,10 @@
         img.alt = '';
         img.loading = 'lazy';
         img.decoding = 'async';
+        // The marquee is decorative. On a constrained connection its posters
+        // would otherwise compete with the stylesheet, fonts and app scripts
+        // for the same few connections, pushing first paint out.
+        img.fetchPriority = 'low';
         img.style.cssText = 'width:100%;height:100%;object-fit:cover;display:block;';
         img.onerror = function(){
           picture.style.display = 'none';
@@ -4842,7 +4850,7 @@
       </div>
     </div>
     <div class="mw-card ms-anim d1">
-      <div class="mw-card-img"><img src="/static/posters/whiplash.jpg" alt="" loading="lazy"></div>
+      <div class="mw-card-img"><picture><source srcset="/static/posters/whiplash.webp" type="image/webp"><img src="/static/posters/whiplash.jpg" alt="" loading="lazy" decoding="async"></picture></div>
       <div class="mw-card-body">
         <div class="mw-card-arrow" aria-hidden="true">&rarr;</div>
         <div class="mw-card-tag">FEEDBACK</div>
@@ -4851,7 +4859,7 @@
       </div>
     </div>
     <div class="mw-card ms-anim d2">
-      <div class="mw-card-img"><img src="/static/posters/gladiator.jpg" alt="" loading="lazy"></div>
+      <div class="mw-card-img"><picture><source srcset="/static/posters/gladiator.webp" type="image/webp"><img src="/static/posters/gladiator.jpg" alt="" loading="lazy" decoding="async"></picture></div>
       <div class="mw-card-body">
         <div class="mw-card-arrow" aria-hidden="true">&rarr;</div>
         <div class="mw-card-tag">PROGRESS</div>
@@ -4860,7 +4868,7 @@
       </div>
     </div>
     <div class="mw-card ms-anim d3">
-      <div class="mw-card-img"><img src="/static/posters/top_gun.jpg" alt="" loading="lazy"></div>
+      <div class="mw-card-img"><picture><source srcset="/static/posters/top_gun.webp" type="image/webp"><img src="/static/posters/top_gun.jpg" alt="" loading="lazy" decoding="async"></picture></div>
       <div class="mw-card-body">
         <div class="mw-card-arrow" aria-hidden="true">&rarr;</div>
         <div class="mw-card-tag">HABIT</div>
@@ -4915,9 +4923,9 @@
   <h2 class="actI-head act-anim" data-delay="100">YOUR VOICE. <em>YOUR STAGE.</em></h2>
   <p class="actI-sub act-anim" data-delay="200">The greatest actors in history once stood exactly where you are.</p>
   <div class="actI-triptych act-anim" data-delay="300">
-    <div class="actI-poster"><img src="/static/posters/godfather.jpg" alt="The Godfather" loading="lazy"></div>
-    <div class="actI-poster"><img src="/static/posters/dead_poets.jpg" alt="Dead Poets Society" loading="lazy"></div>
-    <div class="actI-poster"><img src="/static/posters/forrest_gump.jpg" alt="Forrest Gump" loading="lazy"></div>
+    <div class="actI-poster"><picture><source srcset="/static/posters/godfather.webp" type="image/webp"><img src="/static/posters/godfather.jpg" alt="The Godfather" loading="lazy" decoding="async"></picture></div>
+    <div class="actI-poster"><picture><source srcset="/static/posters/dead_poets.webp" type="image/webp"><img src="/static/posters/dead_poets.jpg" alt="Dead Poets Society" loading="lazy" decoding="async"></picture></div>
+    <div class="actI-poster"><picture><source srcset="/static/posters/forrest_gump.webp" type="image/webp"><img src="/static/posters/forrest_gump.jpg" alt="Forrest Gump" loading="lazy" decoding="async"></picture></div>
   </div>
   <div class="actI-ticker act-anim" data-delay="400">
     <div class="actI-ticker-track">
@@ -4999,32 +5007,32 @@
   <p class="actV-sub act-anim" data-delay="100">From whispered confessions to roared battle cries.</p>
   <div class="actV-grid">
     <div class="actV-card" data-stagger="0">
-      <img src="/static/posters/godfather.jpg" alt="The Godfather" loading="lazy">
+      <picture><source srcset="/static/posters/godfather.webp" type="image/webp"><img src="/static/posters/godfather.jpg" alt="The Godfather" loading="lazy" decoding="async"></picture>
       <span class="actV-card-badge">LVL 1</span>
       <div class="actV-card-title">THE GODFATHER</div>
     </div>
     <div class="actV-card" data-stagger="1">
-      <img src="/static/posters/fight_club.jpg" alt="Fight Club" loading="lazy">
+      <picture><source srcset="/static/posters/fight_club.webp" type="image/webp"><img src="/static/posters/fight_club.jpg" alt="Fight Club" loading="lazy" decoding="async"></picture>
       <span class="actV-card-badge">LVL 2</span>
       <div class="actV-card-title">FIGHT CLUB</div>
     </div>
     <div class="actV-card" data-stagger="2">
-      <img src="/static/posters/dead_poets.jpg" alt="Dead Poets Society" loading="lazy">
+      <picture><source srcset="/static/posters/dead_poets.webp" type="image/webp"><img src="/static/posters/dead_poets.jpg" alt="Dead Poets Society" loading="lazy" decoding="async"></picture>
       <span class="actV-card-badge">LVL 1</span>
       <div class="actV-card-title">DEAD POETS</div>
     </div>
     <div class="actV-card" data-stagger="3">
-      <img src="/static/posters/gladiator.jpg" alt="Gladiator" loading="lazy">
+      <picture><source srcset="/static/posters/gladiator.webp" type="image/webp"><img src="/static/posters/gladiator.jpg" alt="Gladiator" loading="lazy" decoding="async"></picture>
       <span class="actV-card-badge">LVL 3</span>
       <div class="actV-card-title">GLADIATOR</div>
     </div>
     <div class="actV-card" data-stagger="4">
-      <img src="/static/posters/dark_knight.jpg" alt="The Dark Knight" loading="lazy">
+      <picture><source srcset="/static/posters/dark_knight.webp" type="image/webp"><img src="/static/posters/dark_knight.jpg" alt="The Dark Knight" loading="lazy" decoding="async"></picture>
       <span class="actV-card-badge">LVL 3</span>
       <div class="actV-card-title">DARK KNIGHT</div>
     </div>
     <div class="actV-card" data-stagger="5">
-      <img src="/static/posters/forrest_gump.jpg" alt="Forrest Gump" loading="lazy">
+      <picture><source srcset="/static/posters/forrest_gump.webp" type="image/webp"><img src="/static/posters/forrest_gump.jpg" alt="Forrest Gump" loading="lazy" decoding="async"></picture>
       <span class="actV-card-badge">LVL 1</span>
       <div class="actV-card-title">FORREST GUMP</div>
     </div>
