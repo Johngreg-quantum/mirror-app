@@ -5,11 +5,8 @@ Working notes for `privacy-policy.md`. **Not published** — only
 `docs/` is served, and `/static` is mounted from `static/`, not from here.
 
 Keep notes-to-self in this file. The published policy should contain only
-things a user needs to know — including honest disclosures of what the app does
-*not* yet do. There are currently **no open items**: both the §4 erasure gap and
-the §6 consent gap have shipped, and the policy describes real behaviour
-throughout. If a future gap opens, disclose it in the policy as a blockquote and
-track it under a heading here, the way those two were.
+things a user needs to know — including honest disclosures of what the app
+does *not* yet do, which is why the §6 open item lives there and not here.
 
 ## Needs review by someone qualified
 
@@ -28,43 +25,14 @@ while the data controller is a **Florida sole trader** (see the header and
   GDPR Art. 8 range (13–16 depending on member state). Fine if intentional;
   worth confirming.
 
-## Closed: §6 consent to recording
+## Open items tracked in the published policy
 
-The first-run recording notice shipped. §6 now describes the real flow and §3 no
-longer points at an open item. Notes for whoever maintains this:
+Disclosed to users on purpose; remove from the policy only when the
+corresponding feature actually ships:
 
-- **There are two shells and therefore two gates.** `static/app.js` serves `/`
-  and `/legacy`; `static/new-shell/` serves `/app/*`, `/scene/:id` and
-  `/challenge/:id`. Each has its own recorder and its own `getUserMedia` call,
-  so each needs its own gate:
-  - legacy — `ensureRecordingConsent()` awaited at the top of `startRec()`
-  - new shell — `createRecordingConsentGate()` passed into
-    `createSceneRuntimeStore({ requireConsent })`, awaited in `startRecording()`
-  **Any third recording entry point must be gated too.** Gating one shell and
-  not the other would leave `/scene/:id` — the shareable link format — able to
-  record with no notice, while §6 claims otherwise.
-- **`requireConsent` is a required option with no default.** A default would
-  either fail open (recording without the notice) or fail closed silently
-  (recording mysteriously dead), so `createSceneRuntimeStore` throws when it is
-  missing. That is deliberate; do not "fix" it by adding a default.
-- **Consent is server state, not localStorage** — `users.recording_consent_at`
-  plus `recording_consent_version`, set by `POST /api/consent/recording` and
-  read via `/api/auth/me`, which both shells already call at boot. A timestamp
-  rather than a boolean because Art. 7(1) requires being able to *demonstrate*
-  consent; the version pins which text was shown.
-- **`RECORDING_CONSENT_VERSION` in `main.py` must equal the policy's effective
-  date.** Bumping it does **not** re-prompt anyone — the gate checks only
-  whether `recording_consent_at` is set. If a future change to §4/§5 is material
-  enough to need fresh consent, that re-prompt is a separate, deliberate change
-  to the consent check.
-- **Unknown consent state always reads as "not consented"** on both the server
-  (`/api/auth/me` error path) and the clients. Showing the notice twice is
-  harmless; skipping it is not.
-- **Existing users are prompted on their next recording**, because the migration
-  leaves their columns NULL. That is the point, not a side effect — everyone who
-  recorded before this shipped did so without an informed consent step. Do not
-  backfill them as consented; that would fabricate a record of consent that was
-  never given.
+- **§6 — consent notice.** No first-run consent screen exists, and the
+  recording screen does not link to the policy. §3 leans on Art. 6(1)(a)
+  consent, so this gap is now the weakest point in the document.
 
 ## Closed: §4 right to erasure
 
