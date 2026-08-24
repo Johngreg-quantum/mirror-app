@@ -555,6 +555,46 @@ async def update_missions(username: str, scene_id: str, score: float,
 # Database initialisation
 # ---------------------------------------------------------------------------
 
+# Columns added to `users` after the original CREATE TABLE. Shared by the SQLite
+# and PostgreSQL migration paths so the two backends cannot drift apart.
+_USERS_MIGRATION_COLUMNS = [
+    ("points",           "INTEGER DEFAULT 0"),
+    ("streak",           "INTEGER DEFAULT 0"),
+    ("last_daily",       "TEXT"),
+    ("is_pro",           "BOOLEAN DEFAULT FALSE"),
+    ("avatar_scene_id",  "TEXT"),
+]
+
+
+def _verify_users_columns(cur, sqlite: bool) -> None:
+    """Fail startup loudly if a migrated column is missing.
+
+    The SQLite ALTER loop cannot distinguish "already exists" from a genuine
+    failure without inspecting the error string, and a missed column does not
+    surface until a request reads it and 500s with "no such column" — with
+    nothing in the log pointing at the cause. Checking here turns that into a
+    startup error naming the column, which on Render keeps the previous healthy
+    deploy serving instead of shipping a broken one.
+    """
+    if sqlite:
+        cur.execute("PRAGMA table_info(users)")
+        present = {row[1] for row in cur.fetchall()}
+    else:
+        cur.execute(
+            "SELECT column_name FROM information_schema.columns "
+            "WHERE table_name = 'users'"
+        )
+        present = {row[0] for row in cur.fetchall()}
+
+    missing = [col for col, _ in _USERS_MIGRATION_COLUMNS if col not in present]
+    if missing:
+        raise RuntimeError(
+            "users table is missing migrated column(s): "
+            + ", ".join(missing)
+            + " — the ALTER did not apply. Fix the schema before serving."
+        )
+
+
 def init_db():
     conn = get_conn()
     cur  = conn.cursor()
@@ -615,28 +655,23 @@ def init_db():
             except sqlite3.OperationalError:
                 pass  # column already exists
         # Non-destructive migration for users.points / streak / last_daily / is_pro / avatar_scene_id
-        for col, dfn in [
-            ("points",           "INTEGER DEFAULT 0"),
-            ("streak",           "INTEGER DEFAULT 0"),
-            ("last_daily",       "TEXT"),
-            ("is_pro",           "BOOLEAN DEFAULT FALSE"),
-            ("avatar_scene_id",  "TEXT"),
-        ]:
+        for col, dfn in _USERS_MIGRATION_COLUMNS:
             try:
                 cur.execute(f"ALTER TABLE users ADD COLUMN {col} {dfn}")
-            except sqlite3.OperationalError:
-                pass  # column already exists
+            except sqlite3.OperationalError as exc:
+                # Only "duplicate column name" means the migration already ran.
+                # A blanket `pass` here used to swallow genuine failures too, so
+                # a column could silently never be added and every read of it
+                # then 500'd with "no such column". Anything else re-raises.
+                if "duplicate column name" not in str(exc).lower():
+                    raise
+        _verify_users_columns(cur, sqlite=True)
 
     if USE_PG:
         # Non-destructive migrations for PostgreSQL
-        for col, dfn in [
-            ("points",           "INTEGER DEFAULT 0"),
-            ("streak",           "INTEGER DEFAULT 0"),
-            ("last_daily",       "TEXT"),
-            ("is_pro",           "BOOLEAN DEFAULT FALSE"),
-            ("avatar_scene_id",  "TEXT"),
-        ]:
+        for col, dfn in _USERS_MIGRATION_COLUMNS:
             cur.execute(f"ALTER TABLE users ADD COLUMN IF NOT EXISTS {col} {dfn}")
+        _verify_users_columns(cur, sqlite=False)
         cur.execute("""
             CREATE TABLE IF NOT EXISTS challenges (
                 id                  SERIAL PRIMARY KEY,
