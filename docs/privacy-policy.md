@@ -75,11 +75,15 @@ your day streak and mission progress, your vocabulary mastery, and any
 challenge links you created. It cannot be undone, and because we do not retain
 your voice recordings there is no backup to restore from.
 
-Two things worth knowing. If you have an active MIRROR Pro subscription you
-must cancel it before deleting your account — we do not hold the details needed
-to cancel it on your behalf, and deleting the account first would leave the
-subscription still billing you; the app will tell you this and point you to the
-cancellation link. And once your account is deleted your username becomes
+Two things worth knowing. If you have an active MIRROR Pro subscription, we
+cancel it for you as part of the deletion — you will not be billed again. The
+cancellation happens before anything is erased, so if it fails for any reason
+your account is left untouched rather than deleted with a subscription still
+running. Note that cancelling stops future payments but does not refund the
+period you have already paid for, and it is not possible for us to end that
+period early. In the rare case where we cannot cancel automatically, the app
+tells you so and gives you a link to cancel it yourself; nothing is deleted
+until that is done. And once your account is deleted your username becomes
 available for anyone to register again; a new account using it inherits nothing
 from yours.
 
@@ -139,9 +143,10 @@ complain to your local data-protection authority (in the UK, the ICO).
 
 **Erasure you can exercise yourself.** You do not need to ask us to delete your
 data — the **Delete my account** control in the app's Profile tab erases your
-account and everything tied to it immediately. See §4 for exactly what is
-removed and what to do first if you have an active subscription. The email
-route above remains available if you prefer it or cannot sign in.
+account and everything tied to it immediately, cancelling any active
+subscription along the way. See §4 for exactly what is removed and how the
+subscription is handled. The email route above remains available if you prefer
+it or cannot sign in.
 
 ## 8. Children
 

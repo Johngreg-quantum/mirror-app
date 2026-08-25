@@ -97,12 +97,26 @@ account** control in the Profile panel. The §4 open-item blockquote is gone and
 - **Tokens are stateless.** `require_live_user()` checks the user row still
   exists on every authed request; without it a stale token re-creates the
   username-keyed rows via `seed_user_missions()`.
-- **Subscriptions block deletion with a 409.** We store `is_pro` but never the
-  Lemon Squeezy subscription id, so we cannot cancel on the user's behalf. This
-  is a deliberate, disclosed limitation, not a permanent refusal of erasure —
-  the email route in §4/§7 is the fallback. Storing the subscription id so the
-  cancel can happen server-side is the follow-up that removes the gate; when it
-  lands, update the §4 paragraph that tells users to cancel first.
+- **Subscriptions are cancelled as part of deletion, and the ordering is the
+  whole safety property.** `DELETE /api/account` runs in three phases:
+  authenticate, cancel, erase. The cancel happens **outside and before** the
+  deletion transaction, because a database transaction cannot roll back an HTTP
+  call to Lemon Squeezy — deleting first would risk an erased account whose
+  card keeps being charged. Every cancel failure returns 502 with nothing
+  deleted. **Do not "tidy" this into one transaction, and do not move the
+  cancel after the deletes.**
+  - A 404 from Lemon Squeezy counts as success: nothing is left to bill, and
+    refusing would trap the user forever.
+  - `is_pro` set with no `ls_subscription_id` still yields a 409 — that is the
+    pre-webhook case. It hands over `ls_customer_portal_url` when we have one.
+  - Cancelling stops future billing but does not end the subscription: status
+    becomes `cancelled` and access runs to `ends_at`. Lemon Squeezy has no
+    immediate-expiry API. §4 states the current period is not refunded; that
+    wording is deliberate, and the alternative — blocking deletion until the
+    period ends — was rejected as trapping people in an account they asked to
+    erase.
+  - No backfill was written: there were no existing subscribers when this
+    shipped, and the webhook covers everyone from then on.
 - **Apple** requires an in-app deletion path for App Store approval
   (guideline 5.1.1(v)); the Profile-tab control is what satisfies it. Note that
   if billing ever moves to Apple IAP, we cannot cancel those subscriptions at
