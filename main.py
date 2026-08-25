@@ -575,6 +575,14 @@ _USERS_MIGRATION_COLUMNS = [
     ("avatar_scene_id",            "TEXT"),
     ("recording_consent_at",       "TEXT"),
     ("recording_consent_version",  "TEXT"),
+    # Lemon Squeezy identifiers, captured from the webhook. Without the
+    # subscription id there is no way back from a user to their subscription,
+    # so deleting a subscriber's account would leave it billing a card for an
+    # account that no longer exists. The portal URL is a pre-signed self-service
+    # link, used to give a subscriber a working way out when we cannot cancel
+    # for them.
+    ("ls_subscription_id",         "TEXT"),
+    ("ls_customer_portal_url",     "TEXT"),
 ]
 
 
@@ -1323,48 +1331,71 @@ async def delete_account(req: DeleteAccountRequest, user: dict = Depends(current
     """Permanently erase the authenticated user's account and all data tied to
     it (GDPR Art. 17). Irreversible — there is no soft-delete tombstone.
 
-    An active subscription blocks the delete with a 409: we store only the
-    is_pro flag, never the Lemon Squeezy subscription id, so there is nothing to
-    call the cancel API with. Deleting anyway would leave the subscription
-    billing a card for an account that no longer exists.
+    A subscriber's subscription is cancelled first, and only a confirmed cancel
+    lets the deletion proceed. The ordering is the whole safety property: a
+    database transaction cannot roll back an HTTP call to a third party, so
+    deleting first and cancelling second would risk an erased account whose card
+    keeps being charged. Cancelling first risks, at worst, a cancelled
+    subscription on an account that still exists — annoying, retryable, and
+    strictly the better failure.
     """
+    # ── Phase 1: authenticate the request. No data is touched here. ──────────
     conn = get_conn()
     cur  = conn.cursor()
     try:
         cur.execute(
-            f"SELECT username, password_hash, is_pro FROM users WHERE id = {PH}",
+            f"SELECT username, password_hash, is_pro, ls_subscription_id, "
+            f"ls_customer_portal_url FROM users WHERE id = {PH}",
             (user["id"],),
         )
         row = cur.fetchone()
         if row is None:
             raise HTTPException(401, "Account no longer exists")
-
         db_username, password_hash, is_pro = row[0], row[1], row[2]
+        subscription_id, portal_url = row[3], row[4]
+    finally:
+        conn.close()
 
-        # Password first: a wrong password should not reveal whether the typed
-        # username matched.
+    # Password first: a wrong password should not reveal whether the typed
+    # username matched.
+    try:
+        password_ok = verify_pw(req.password, password_hash)
+    except Exception:
+        password_ok = False
+    if not password_ok:
+        raise HTTPException(401, "Password is incorrect")
+
+    # Re-check the typed confirmation server-side — the client check is a
+    # convenience, not the gate.
+    if req.confirm_username.strip() != db_username:
+        raise HTTPException(400, "The username you typed does not match your account")
+
+    # ── Phase 2: cancel the subscription BEFORE deleting anything. ───────────
+    if is_pro:
+        if not subscription_id:
+            # Pre-dates the webhook storing the id, so we cannot cancel for
+            # them. Hand over the self-service route rather than a dead end.
+            raise HTTPException(409, _subscription_blocked_message(portal_url))
         try:
-            password_ok = verify_pw(req.password, password_hash)
-        except Exception:
-            password_ok = False
-        if not password_ok:
-            raise HTTPException(401, "Password is incorrect")
-
-        # Re-check the typed confirmation server-side — the client check is a
-        # convenience, not the gate.
-        if req.confirm_username.strip() != db_username:
-            raise HTTPException(400, "The username you typed does not match your account")
-
-        if is_pro:
-            raise HTTPException(
-                409,
-                "You have an active MIRROR Pro subscription. Cancel it first, "
-                "then come back and delete your account. Use the subscription "
-                "management link in your Lemon Squeezy receipt email, or email "
-                "contact@mirrorspeak.app and we will cancel it for you. "
-                "Your account has not been deleted.",
+            await _cancel_ls_subscription(str(subscription_id))
+        except SubscriptionCancelError as exc:
+            logger.error(
+                "[account] refusing to delete user_id=%s — cancel failed: %s",
+                user["id"], exc,
             )
+            raise HTTPException(
+                502,
+                "We could not cancel your MIRROR Pro subscription just now, so "
+                "your account has not been deleted — deleting it would leave the "
+                "subscription billing you. Please try again in a moment, or "
+                "email contact@mirrorspeak.app and we will sort it out.",
+            )
+        logger.info("[account] cancelled subscription for user_id=%s", user["id"])
 
+    # ── Phase 3: erase. Only reached once nothing can still bill them. ───────
+    conn = get_conn()
+    cur  = conn.cursor()
+    try:
         # Bind username from the database row, not from the JWT — the token
         # carries a snapshot that may be stale.
         keys = {"id": user["id"], "username": db_username}
@@ -1460,6 +1491,82 @@ async def create_checkout(request: Request, user: dict = Depends(current_user)):
     return {"checkout_url": checkout_url}
 
 
+def _subscription_blocked_message(portal_url: Optional[str]) -> str:
+    """Message for a subscriber whose subscription we cannot cancel ourselves.
+
+    Only reachable when is_pro is set but no subscription id was ever captured
+    — i.e. a subscription that predates the webhook storing it. The portal URL
+    is a pre-signed Lemon Squeezy self-service link; when we have one, give it
+    rather than sending them to hunt through their email.
+    """
+    if portal_url:
+        return (
+            "You have an active MIRROR Pro subscription, and we could not cancel "
+            "it automatically. Cancel it here first, then delete your account: "
+            f"{portal_url} — or email contact@mirrorspeak.app and we will do it "
+            "for you. Your account has not been deleted."
+        )
+    return (
+        "You have an active MIRROR Pro subscription, and we could not cancel it "
+        "automatically. Use the subscription management link in your Lemon "
+        "Squeezy receipt email to cancel it first, then delete your account — "
+        "or email contact@mirrorspeak.app and we will do it for you. "
+        "Your account has not been deleted."
+    )
+
+
+class SubscriptionCancelError(Exception):
+    """Raised when a Lemon Squeezy subscription could not be cancelled.
+
+    Deliberately distinct from HTTPException: the caller decides what status to
+    surface, and — critically — treats this as "delete nothing".
+    """
+
+
+async def _cancel_ls_subscription(subscription_id: str) -> None:
+    """Cancel a Lemon Squeezy subscription, or raise SubscriptionCancelError.
+
+    DELETE /v1/subscriptions/{id} stops future billing immediately. It does not
+    end the subscription there and then: status becomes "cancelled" and the
+    customer keeps access until `ends_at`, after which it becomes "expired".
+    Lemon Squeezy has no API for immediate expiry, and that is fine here — the
+    requirement is that nothing bills a deleted account, not that access stops
+    to the second.
+
+    Raising rather than returning a bool is intentional. Every failure path must
+    abort the deletion, and an exception cannot be accidentally ignored the way
+    a falsy return can.
+    """
+    if not LS_API_KEY:
+        raise SubscriptionCancelError("Lemon Squeezy API key is not configured")
+
+    try:
+        async with httpx.AsyncClient() as client:
+            resp = await client.delete(
+                f"https://api.lemonsqueezy.com/v1/subscriptions/{subscription_id}",
+                headers={
+                    "Authorization": f"Bearer {LS_API_KEY}",
+                    "Accept": "application/vnd.api+json",
+                },
+                timeout=15,
+            )
+    except Exception as exc:
+        # Network error or timeout — we do not know whether the cancel landed,
+        # so we must assume it did not and leave the account alone.
+        raise SubscriptionCancelError(f"could not reach Lemon Squeezy: {exc}") from exc
+
+    if resp.status_code == 404:
+        # Already gone from their side. Nothing left to bill, so this is success
+        # for our purposes — refusing here would trap the user forever.
+        logger.info("[billing] subscription %s already absent at Lemon Squeezy", subscription_id)
+        return
+
+    if resp.status_code not in (200, 201, 204):
+        raise SubscriptionCancelError(
+            f"Lemon Squeezy returned {resp.status_code}"
+        )
+
+
 @app.post("/api/billing/webhook")
 async def lemonsqueezy_webhook(request: Request):
     """Receive Lemon Squeezy webhook events and update user pro status."""
@@ -1517,15 +1624,34 @@ async def lemonsqueezy_webhook(request: Request):
             except (KeyError, TypeError):
                 is_active = True  # assume active if we can't read status
 
+            # Capture the identifiers this payload carries. Only is_pro used to
+            # be stored, which left no route from a user back to their
+            # subscription — so an account deletion could not cancel it.
+            sub_id = str(payload.get("data", {}).get("id") or "") or None
+            try:
+                portal = payload["data"]["attributes"]["urls"]["customer_portal"] or None
+            except (KeyError, TypeError):
+                portal = None
+
+            # COALESCE so a later payload that omits a field cannot blank one we
+            # already hold — losing the id would silently restore the old
+            # cannot-cancel state.
             cur.execute(
-                f"UPDATE users SET is_pro = {PH} WHERE id = {PH}",
-                (is_active, user_id)
+                f"UPDATE users SET is_pro = {PH}, "
+                f"ls_subscription_id = COALESCE({PH}, ls_subscription_id), "
+                f"ls_customer_portal_url = COALESCE({PH}, ls_customer_portal_url) "
+                f"WHERE id = {PH}",
+                (is_active, sub_id, portal, user_id)
             )
             conn.commit()
 
         elif event in ("subscription_cancelled", "subscription_expired"):
+            # Clear the identifiers along with is_pro: the subscription is no
+            # longer cancellable, and a stale id would make a later deletion
+            # attempt call the API for nothing.
             cur.execute(
-                f"UPDATE users SET is_pro = {PH} WHERE id = {PH}",
+                f"UPDATE users SET is_pro = {PH}, ls_subscription_id = NULL, "
+                f"ls_customer_portal_url = NULL WHERE id = {PH}",
                 (False, user_id)
             )
             conn.commit()

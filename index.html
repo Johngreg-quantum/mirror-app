@@ -5956,6 +5956,14 @@
     </ul>
     <p class="da-warn">This cannot be undone. Your recordings are not kept on our
       servers, so there is no backup to restore from.</p>
+    <!-- Subscribers only — revealed by openDeleteModal() when authUser.is_pro.
+         Deleting cancels the subscription, and the current paid period is not
+         refunded; saying so here is the honest alternative to blocking the
+         deletion until the period ends, which would trap someone in an account
+         they have asked to erase. -->
+    <p class="da-warn da-warn-sub" id="daProWarn" hidden>Your MIRROR Pro
+      subscription will be cancelled as part of this. You won't be billed again,
+      but the current paid period is not refunded.</p>
     <form class="da-form" id="deleteAccountForm">
       <div class="da-field">
         <label class="da-label" for="daUsername">Type your username <strong id="daExpected"></strong> to confirm</label>
@@ -7348,6 +7356,16 @@ function checkLevel2Unlock() {
     daSetError('');
     var name = daEl('daUsername'); if (name) name.value = '';
     var pw   = daEl('daPassword'); if (pw) pw.value = '';
+    // Only warn about the subscription if there is one. window.mirrorIsPro is
+    // set from /api/auth/me at boot; authUser.is_pro covers the path where the
+    // session object carries it. Unknown state hides the line rather than
+    // warning everyone about a subscription they do not have.
+    var proWarn = daEl('daProWarn');
+    if (proWarn) {
+      var isPro = (typeof window.mirrorIsPro !== 'undefined' && window.mirrorIsPro === true)
+        || (typeof authUser !== 'undefined' && authUser && authUser.is_pro === true);
+      proWarn.hidden = !isPro;
+    }
     daSyncConfirmState();
     ov.classList.add('open');
     document.addEventListener('keydown', daOnKeydown);
