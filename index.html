@@ -7581,6 +7581,24 @@ function boot(){
   gsap.registerPlugin(ScrollTrigger);
   ScrollTrigger.config({ ignoreMobileResize: true });
 
+  // Pin distance, resolved to pixels ONCE.
+  //
+  // Two things are going on here.
+  //
+  // 1. Length. On a phone a 300% pin means three full screens of swiping while
+  //    the view is deliberately held still, which reads as the page having
+  //    frozen — there is no scrollbar to show progress. Mobile gets 100%; the
+  //    desktop scrub is unchanged.
+  //
+  // 2. Units. `end: '+=300%'` is viewport-relative, so the pin-spacer is
+  //    recomputed whenever the viewport metric changes — and on iOS the URL bar
+  //    collapsing mid-scroll does exactly that. 300% of an ~80px change is
+  //    ~240px, which matched the measured shift: everything below #mlStage
+  //    jumped up 244px as the pin released. Resolving to a fixed pixel value at
+  //    init makes the spacer deterministic, so a later refresh cannot resize it.
+  var MLS_MOBILE = matchMedia('(max-width: 768px), (pointer: coarse)').matches;
+  var MLS_PIN_PX = Math.round(window.innerHeight * (MLS_MOBILE ? 1 : 3));
+
   // Shared rotation handle — commit 3's Three.js scene reads window.mlsRot.y
   // every frame to drive the card. In this commit it's tweened but unobserved.
   window.mlsRot = window.mlsRot || { y: 0 };
@@ -7594,7 +7612,7 @@ function boot(){
 
     var tl = gsap.timeline({
       scrollTrigger:{
-        trigger:'#mlStage', start:'top top', end:'+=300%',
+        trigger:'#mlStage', start:'top top', end:'+=' + MLS_PIN_PX,
         pin:true, scrub:0.8, anticipatePin:1
       }
     });
@@ -7623,7 +7641,10 @@ function boot(){
     document.querySelectorAll('.mls-subscores b').forEach(function(el){
       var o = {v:0}, target = +el.dataset.target;
       ScrollTrigger.create({
-        trigger:'#mlStage', start:'top -180%', once:true,
+        // 60% of the way through the pin, whatever the pin length is. The old
+        // fixed '-180%' was 60% of a 300% pin; left as-is it would sit past the
+        // end of the shortened mobile pin and the count-up would never fire.
+        trigger:'#mlStage', start:'top -' + Math.round(MLS_PIN_PX * 0.6), once:true,
         onEnter:function(){
           gsap.to(o, {v:target, duration:1.2, snap:'v',
             onUpdate:function(){ el.textContent = o.v; }});
@@ -7930,12 +7951,17 @@ function boot(){
 <script>
 (function initMlStage(){
   if (!document.getElementById('mlStage')) return;
-  // Three.js is lazy-loaded now (see the loader below), so on first run it is
-  // normally absent. Wait for the loader's signal and re-enter. If the load
-  // fails the event never fires and the stage is simply skipped — the same
-  // graceful degradation this guard always provided.
-  if (typeof THREE === 'undefined') {
+  // Three.js is lazy-loaded (see the loader below), so on first run it is
+  // normally absent. Wait for the loader's signal and re-enter.
+  //
+  // Two signals, not one. 'three-ready' means the library arrived; 'three-
+  // skipped' means the loader decided not to fetch it at all (mobile) and this
+  // should proceed in 2D. Without the second, skipping the download would leave
+  // the section dead — the swatches, the audio toggle and the fallback card are
+  // all wired below this guard, in the branch that runs when there is no WebGL.
+  if (typeof THREE === 'undefined' && !window.mlsSkip3D) {
     document.addEventListener('mlstage:three-ready', initMlStage, { once: true });
+    document.addEventListener('mlstage:three-skipped', initMlStage, { once: true });
     return;
   }
 
@@ -7991,8 +8017,8 @@ function boot(){
     });
   }
 
-  // ── CSS fallback path: no WebGL, or user prefers reduced motion ──
-  if (reduced || !webglOK()) {
+  // ── CSS fallback path: no Three.js, no WebGL, or reduced motion ──
+  if (reduced || typeof THREE === 'undefined' || !webglOK()) {
     if (canvas) canvas.style.display = 'none';
     if (fallback) {
       fallback.style.display = 'block';
@@ -8246,9 +8272,23 @@ function boot(){
     document.head.appendChild(s);
   }
 
+  // Skip the 3D card on phones. Three.js is 132 KB gzipped and ~3s of download
+  // on cellular, arriving exactly as the user scrolls into the section, and it
+  // competes for bandwidth with the marquee posters still streaming in. The
+  // stage's own `typeof THREE === 'undefined'` guard already degrades to the
+  // 2D fallback card, so nothing breaks — the section just costs nothing.
+  var THREE_ON_MOBILE = !matchMedia('(max-width: 768px), (pointer: coarse)').matches;
+
   var startedThree = false;
   function loadThree(){
     if (startedThree || typeof THREE !== 'undefined') return;
+    if (!THREE_ON_MOBILE) {
+      // Tell the stage to stop waiting and render its 2D card, rather than
+      // sitting on a 'three-ready' event that will never arrive.
+      window.mlsSkip3D = true;
+      document.dispatchEvent(new Event('mlstage:three-skipped'));
+      return;
+    }
     startedThree = true;
     inject(THREE_SRC,
       function(){ document.dispatchEvent(new Event('mlstage:three-ready')); },
