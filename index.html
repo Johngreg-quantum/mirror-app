@@ -5471,7 +5471,11 @@
   <!-- ═══ CINEMATIC FEATURED HERO ═══ -->
   <section class="hero-featured" id="heroFeatured">
     <div class="hero-featured-poster" id="heroPoster">
-      <img id="heroPosterImg" src="" alt="" />
+      <!-- No src attribute. An empty src is invalid per the HTML spec and
+           resolves against the base URL, so the element pointed at this
+           document; some engines refetch it. app.js sets .src once a scene
+           backdrop is known. -->
+      <img id="heroPosterImg" alt="" />
       <div class="hero-featured-gradient"></div>
     </div>
 
@@ -6051,7 +6055,11 @@
   <!-- Scene poster -->
   <div style="padding:1rem 1.5rem 0;">
     <div id="quizPosterWrap" style="width:100%; height:160px; border-radius:16px; overflow:hidden; background:rgba(255,255,255,0.04); border:0.5px solid rgba(255,255,255,0.08); position:relative;">
-      <img id="quizPosterImg" src="" alt="" style="width:100%; height:100%; object-fit:cover; display:block;">
+      <!-- No src attribute, and hidden until QuizController sets one — see the
+           heroPosterImg note. The controller already does `display = ''` when it
+           has a poster and `display = 'none'` on error, so starting hidden
+           matches its own logic. -->
+      <img id="quizPosterImg" alt="" style="width:100%; height:100%; object-fit:cover; display:none;">
       <div id="quizPosterOverlay" style="position:absolute; inset:0; background:linear-gradient(to top, rgba(0,0,0,0.7), transparent); display:flex; align-items:flex-end; padding:0.7rem 0.9rem;">
         <div id="quizPosterMovie" style="font-family:'Bebas Neue',sans-serif; font-size:1rem; letter-spacing:0.08em; color:#c8a96e;"></div>
       </div>
@@ -6079,7 +6087,7 @@
 
   <!-- Next button -->
   <div style="padding:0.8rem 1.5rem 0;">
-    <button id="quizNextBtn" style="display:none; width:100%; padding:0.9rem; background:linear-gradient(135deg,rgba(200,169,110,0.15),rgba(200,169,110,0.08)); border:1px solid rgba(200,169,110,0.3); border-radius:14px; font-family:'Bebas Neue',sans-serif; font-size:1rem; letter-spacing:0.1em; color:#c8a96e; cursor:pointer;">NEXT →</button>
+    <button id="quizNextBtn" style="display:none; width:100%; padding:0.9rem; background:linear-gradient(135deg,rgba(200,169,110,0.15),rgba(200,169,110,0.08)); border:1px solid rgba(200,169,110,0.3); border-radius:14px; font-family:'Bebas Neue',sans-serif; font-size:1rem; letter-spacing:0.1em; color:#c8a96e; cursor:pointer;">SIGUIENTE →</button>
   </div>
 
   <!-- Results screen -->
@@ -6111,7 +6119,7 @@
 
       <div id="quizMotivation" class="qr-motivation"></div>
 
-      <button id="quizDoneBtn" class="qr-continue">CONTINUE →</button>
+      <button id="quizDoneBtn" class="qr-continue">CONTINUAR →</button>
     </div>
   </div>
 
@@ -6211,7 +6219,7 @@
     <div style="flex:1; height:3px; background:rgba(255,255,255,0.06); border-radius:3px;">
       <div id="level1ProgressBar" style="height:3px; background:#c8a96e; border-radius:3px; width:0%; transition:width 0.6s ease;"></div>
     </div>
-    <div id="level1ProgressLabel" style="font-family:'DM Sans',sans-serif; font-size:11px; color:#c8a96e; white-space:nowrap;">0 / 27 scenes</div>
+    <div id="level1ProgressLabel" style="font-family:'DM Sans',sans-serif; font-size:11px; color:#c8a96e; white-space:nowrap;"></div>
   </div>
 
   <!-- Level 2 — locked -->
@@ -6234,15 +6242,12 @@
     <div style="font-size:28px;">🔒</div>
   </div>
 
-  <!-- Level 4 — locked -->
-  <div style="background:rgba(255,255,255,0.02); border:0.5px solid rgba(255,255,255,0.07); border-radius:16px; padding:16px; margin-bottom:24px; display:flex; align-items:center; justify-content:space-between; opacity:0.2;">
-    <div>
-      <div style="font-family:'DM Sans',sans-serif; font-size:9px; letter-spacing:2px; text-transform:uppercase; color:#555; margin-bottom:4px;">Level 4</div>
-      <div style="font-family:'Georgia',serif; font-size:17px; color:#fff; margin-bottom:2px;">Fluency</div>
-      <div style="font-family:'DM Sans',sans-serif; font-size:11px; color:#444;">Complete Level 3 to unlock</div>
-    </div>
-    <div style="font-size:28px;">🔒</div>
-  </div>
+  <!-- A "Level 4 · Fluency" card used to sit here. There is no level 4:
+       scene_config.json defines three levels (20 / 20 / 7 scenes), and the
+       server's unlock logic reads that same list, so the card advertised a
+       level that could never unlock. Removed rather than hidden — it is
+       markup this panel owns, not a legacy surface kept alive for a
+       dependency. -->
 
   </div>
   <div class="app-panel" id="panelLevels">
@@ -6566,7 +6571,20 @@ function enterAppMode() {
   const sg = document.getElementById('scenesGrid');
   if (sg) sg.style.display = 'none';
   // update home panel stats from real API data
-  const completed = Object.keys(userProgress.best_scores || {}).length;
+  //
+  // Level 1 progress is derived from CLV_LEVELS, which is built from
+  // scene_config.json's `levels` — the same list the server's unlock logic
+  // reads. It used to be `bestScores.length / 27`, which was wrong twice over:
+  // 27 matched nothing (level 1 has 20 scenes, the catalogue has 47), and the
+  // numerator counted every scene the user had ever scored, so progress on a
+  // level-2 scene inflated the level-1 bar.
+  const l1Scenes = (typeof CLV_LEVELS !== 'undefined' && CLV_LEVELS && CLV_LEVELS[0]
+    && Array.isArray(CLV_LEVELS[0].scenes)) ? CLV_LEVELS[0].scenes : [];
+  const bestScores = userProgress.best_scores || {};
+  const total = l1Scenes.length;
+  const completed = l1Scenes.filter(function(id){ return bestScores[id] !== undefined; }).length;
+  const pct = total > 0 ? Math.round((completed / total) * 100) : 0;
+
   const streak = (typeof userProfile !== 'undefined') ? (userProfile.streak || 0) : 0;
   const xp = (typeof userProfile !== 'undefined') ? (userProfile.total_points || 0) : 0;
   const el = document.getElementById('homeStreakVal');
@@ -6575,18 +6593,20 @@ function enterAppMode() {
   const label = document.getElementById('level1ProgressLabel');
   if (el) el.textContent = streak;
   if (xpEl) xpEl.textContent = xp.toLocaleString();
-  if (bar) bar.style.width = Math.round((completed / 27) * 100) + '%';
-  if (label) label.textContent = completed + ' / 27 scenes';
-  const completed2 = Object.keys(userProgress.best_scores || {}).length;
-  const total = 27;
-  const pct = Math.round((completed2 / total) * 100);
+  // Until the scene config resolves, CLV_LEVELS is empty — show nothing rather
+  // than a misleading "0 / 0". The caller re-runs once the config lands.
+  if (bar) bar.style.width = pct + '%';
+  if (label) label.textContent = total > 0 ? (completed + ' / ' + total + ' scenes') : '';
+  const completed2 = completed;
   const bar2 = document.getElementById('lvl1Bar');
   const lbl2 = document.getElementById('lvl1Label');
   const quiz = document.getElementById('lvl1QuizBtn');
   const badge = document.getElementById('lvl1Badge');
   if (bar2) bar2.style.width = pct + '%';
-  if (lbl2) lbl2.textContent = completed2 + ' / ' + total + ' scenes';
-  if (completed2 >= total) {
+  if (lbl2) lbl2.textContent = total > 0 ? (completed2 + ' / ' + total + ' scenes') : '';
+  // total === 0 means the scene config has not resolved yet; without this guard
+  // `0 >= 0` would offer the quiz to someone who has completed nothing.
+  if (total > 0 && completed2 >= total) {
     if (quiz) quiz.style.display = 'block';
     if (badge) { badge.textContent = 'Ready for Quiz!'; badge.style.background = '#c8a96e'; badge.style.color = '#0d0d0d'; }
   }
@@ -6912,6 +6932,18 @@ function checkLevel2Unlock() {
     return false;
   }
 
+  // Generic gate for level 3 and above. Level 2 keeps its own derivation
+  // (isL2Unlocked) because it has a second route in via the Level 1 quiz;
+  // everything above it is decided by the server, which returns the user's
+  // current level in userProgress.level. Unknown state reads as locked — never
+  // render a level as reachable on a guess.
+  function isLevelUnlocked(n){
+    if (n <= 1) return true;
+    if (n === 2) return isL2Unlocked();
+    if (typeof userProgress === 'undefined' || !userProgress) return false;
+    return (userProgress.level || 1) >= n;
+  }
+
   function renderLevelsPath(){
     var host = document.getElementById('levelsPath');
     if (!host) return;
@@ -6929,15 +6961,25 @@ function checkLevel2Unlock() {
     var l2Locked = !isL2Unlocked();
 
     // Build groups from CLV_LEVELS (authoritative order, no difficulty leakage).
-    // L1 always shown. L2 respects the existing unlock gate. L3 always locked
-    // (matches current app-mode behavior: no L3 gateway exists today).
+    // L1 always shown. L2 and above respect their real unlock gate.
+    //
+    // Level 3 used to be hardcoded to "Coming soon" with no scenes. It is not
+    // coming soon: scene_config gives it 7 scenes, the server unlocks it at 70%
+    // on a level-2 scene, and passing the Level 2 quiz grants it. The label was
+    // telling users a level they had earned did not exist yet.
     var groups = CLV_LEVELS.map(function(lv){
       var label = LEVEL_LABELS[lv.level] || ('LEVEL ' + lv.level);
       if (lv.level === 2 && l2Locked) {
         return { label: label, sceneIds: [], locked: { title: 'LEVEL 2 · Locked', sub: 'Pass the Level 1 Quiz to unlock' } };
       }
-      if (lv.level >= 3) {
-        return { label: label, sceneIds: [], locked: { title: 'LEVEL ' + lv.level + ' · Coming soon', sub: 'Idioms · Sarcasm · Accents' } };
+      if (lv.level >= 3 && !isLevelUnlocked(lv.level)) {
+        // Unlock copy derived from the level's own threshold rather than
+        // hardcoded, so a change to scene_config cannot make it lie.
+        var need = (typeof lv.unlock === 'number') ? lv.unlock : null;
+        return { label: label, sceneIds: [], locked: { title: 'LEVEL ' + lv.level + ' · Locked',
+          sub: need !== null
+            ? ('Score ' + need + '% on a Level ' + (lv.level - 1) + ' scene to unlock')
+            : ('Complete Level ' + (lv.level - 1) + ' to unlock') } };
       }
       return { label: label, sceneIds: (lv.scenes || []).slice(), locked: null };
     });

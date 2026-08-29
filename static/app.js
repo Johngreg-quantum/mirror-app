@@ -3314,11 +3314,16 @@ const QuizController = {
     document.getElementById('quizResultTitle').textContent = passed ? passTitle : 'SIGUE PRACTICANDO';
     document.getElementById('quizResultScore').textContent = pct+'% — '+this.score+'/'+total+' correctas'+(passed ? '' : ' · Necesitas 70% para pasar');
 
+    // Spanish, like the rest of the quiz. The questions, the feedback
+    // ("¡Correcto!"), the result title ("¡NIVEL 2 DESBLOQUEADO!") and the score
+    // line ("N correctas") are all Spanish — MIRROR teaches English to Spanish
+    // speakers, so the quiz chrome speaks the learner's language. These four
+    // lines were the odd ones out.
     const motivations = [
-      "Every scene you practice brings you closer to fluency.",
-      "You're speaking like the greats. Keep going.",
-      "Cinema is your classroom. You just aced the lesson.",
-      "Method acting, method learning. You're doing it.",
+      "Cada escena que practicas te acerca a la fluidez.",
+      "Hablas como los grandes. Sigue así.",
+      "El cine es tu aula. Acabas de bordar la lección.",
+      "Actuación de método, aprendizaje de método. Lo estás consiguiendo.",
     ];
     const motEl = document.getElementById('quizMotivation');
     if (motEl) motEl.textContent = motivations[Math.floor(Math.random() * motivations.length)];
@@ -3326,7 +3331,7 @@ const QuizController = {
     const xpBanner = document.getElementById('quizXpBanner');
     if (xpBanner) {
       const xp = passed ? 500 : 100;
-      xpBanner.querySelector('span:last-child').textContent = '+' + xp + ' XP EARNED';
+      xpBanner.querySelector('span:last-child').textContent = '+' + xp + ' XP GANADOS';
       xpBanner.style.display = passed ? 'inline-flex' : 'none';
     }
 
