@@ -88,7 +88,7 @@
         return `<span class="phon-word ${token.status}">
        <span class="phon-inner">
          <span class="phon-face phon-front">${token.word}</span>
-         <span class="phon-face phon-back">&#127466;&#127480; ${helpers.esTranslate(token.word)}</span>
+         <span class="phon-face phon-back" lang="es">&#127466;&#127480; ${helpers.esTranslate(token.word)}</span>
        </span>
      </span>`;
       }).join('');

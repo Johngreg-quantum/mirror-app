@@ -5765,7 +5765,11 @@
         </div>
         <div class="trans-reveal" id="transReveal">
           <div class="trans-reveal-label">&#127758; Spanish Translation Unlocked</div>
-          <div class="trans-text" id="transText"></div>
+          <!-- Only this node is Spanish. The label above and the line below
+               ("Spanish Translation Unlocked", "You earned this translation!")
+               address the learner in English about the translation, so the
+               attribute belongs here rather than on #transReveal. -->
+          <div class="trans-text" id="transText" lang="es"></div>
           <div class="trans-earn">You earned this translation!</div>
         </div>
         <button class="btn-try-again" id="btnTryAgain">
@@ -6080,7 +6084,11 @@
 <script src="/static/app-level-panel-orchestration.js"></script>
 <script src="/static/app.js"></script>
 
-<div class="quiz-overlay" id="quizOverlay">
+<!-- lang="es" on the whole overlay: the quiz is Spanish throughout — questions,
+     options, "¡Correcto!", and the results card nested inside this element.
+     The document stays lang="en"; only the Spanish parts are marked, so a
+     screen reader switches voice here and back again on the way out. -->
+<div class="quiz-overlay" id="quizOverlay" lang="es">
 <div id="quizInner" style="max-width:480px; margin:0 auto; padding:0 0 2rem;">
 
   <!-- Header -->
@@ -6532,7 +6540,9 @@
           </div>
           <div id="wordsCardBack" class="words-face">
             <div id="wordsStarsBack" class="words-stars"></div>
-            <div id="wordsEsWord"></div>
+            <!-- The Spanish side of the flashcard. The English word, phonetic
+                 and example around it stay unmarked, so only this switches. -->
+            <div id="wordsEsWord" lang="es"></div>
             <div id="wordsExample"></div>
           </div>
         </div>
