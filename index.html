@@ -4737,12 +4737,57 @@
   body.app-mode #mlAudioToggle,
   body.app-mode #mlStage { display: none !important; }
 
-  /* Reduced-motion safety: works even when GSAP/Three never load. Prototype script
-     also calls gsap.set(...) in this case; this CSS rule guarantees the static
-     stack works if JS is blocked or CDNs fail. */
-  @media (prefers-reduced-motion: reduce){
-    .mls-beat{ position:relative; left:auto; top:auto; transform:none; opacity:1; margin:60px auto; }
-    #mlStage{ height:auto; min-height:100vh; }
+  /* ── Static stack: phones, coarse pointers, and reduced motion ──────────────
+     The scrubbed version only ever shows ONE beat at a time, fading them in and
+     out over a card pinned in the middle of a 100vh stage. Make all three
+     visible without moving the card and beats 2 and 3 render *underneath* it —
+     measured: elementFromPoint at their centres returned #mlsCardFallback, so
+     "SPEAK THE LINE" and the sync score were unreadable behind the poster.
+
+     That is exactly what the old reduced-motion rule did: it set the beats to
+     relative/opacity:1 but left the card absolute, so anyone with the OS
+     setting on has been getting the broken version. This block replaces it and
+     covers phones too — one poster at the top, three blocks beneath it, each
+     reading as ordinary stacked content. */
+  @media (max-width: 768px), (pointer: coarse), (prefers-reduced-motion: reduce){
+    /* Grow with content instead of clipping to one viewport. Flex column only
+       to reorder: the swatches sit last in the DOM, but they choose which
+       poster is shown, so they belong directly under it rather than three
+       blocks away. Beats share one order value and keep their DOM sequence. */
+    #mlStage{
+      height:auto; min-height:0; overflow:visible; padding:72px 0 88px;
+      display:flex; flex-direction:column;
+    }
+    #mlsCardFallback{ order:1; }
+    .mls-swatches{ order:2; }
+    .mls-beat{ order:3; }
+
+    /* The card joins the flow at the top rather than floating behind the text.
+       display is set to block here because the JS fallback path only unhides it
+       when it runs; in the static layout it should always occupy its slot. */
+    #mlsCardFallback{
+      display:block; position:relative; left:auto; top:auto; transform:none;
+      width:min(52vw,220px); margin:0 auto 8px;
+    }
+    /* No 3D card in this layout — the canvas would just be an empty box. */
+    #mlsCanvas{ display:none; }
+
+    /* Swatches follow the poster instead of being pinned to the stage bottom. */
+    .mls-swatches{
+      position:relative; left:auto; bottom:auto; transform:none;
+      margin:0 auto 8px; justify-content:center;
+    }
+
+    /* The three beats become ordinary stacked blocks. */
+    .mls-beat{
+      position:relative; left:auto; top:auto; transform:none; opacity:1;
+      margin:56px auto 0; pointer-events:auto;
+    }
+    .mls-beat:first-of-type{ margin-top:40px; }
+
+    /* The spotlight wash is decorative and sized for a 100vh stage; letting it
+       stretch over a tall stacked section washes the whole thing out. */
+    .mls-spot{ display:none; }
   }
   @media (max-width:768px){ #mlAudioToggle{left:5px} }
 </style>
@@ -7639,7 +7684,11 @@ function boot(){
   //    jumped up 244px as the pin released. Resolving to a fixed pixel value at
   //    init makes the spacer deterministic, so a later refresh cannot resize it.
   var MLS_MOBILE = matchMedia('(max-width: 768px), (pointer: coarse)').matches;
-  var MLS_PIN_PX = Math.round(window.innerHeight * (MLS_MOBILE ? 1 : 3));
+  // Phones and reduced-motion users get the static stack, not a shorter pin.
+  // The pin itself was the problem on mobile: a held-still stretch reads as a
+  // freeze on a touch device, and shortening it to one viewport did not fix it.
+  var MLS_STATIC = MLS_MOBILE || reduced;
+  var MLS_PIN_PX = Math.round(window.innerHeight * 3);
 
   // Shared rotation handle — commit 3's Three.js scene reads window.mlsRot.y
   // every frame to drive the card. In this commit it's tweened but unobserved.
@@ -7647,10 +7696,12 @@ function boot(){
   var rot = window.mlsRot;
 
   function initScroll(){
-    if (reduced){
-      gsap.set('.mls-beat', { opacity:1, position:'relative', left:'auto', top:'auto', xPercent:0 });
-      return;
-    }
+    // Static layout (phone, coarse pointer, or reduced motion): no pin, no
+    // scrub, no timeline. The CSS block for these media queries lays the
+    // section out as ordinary stacked content, and the score count-up is
+    // handled by its own IntersectionObserver below — deliberately independent
+    // of GSAP, because on mobile GSAP is never loaded.
+    if (MLS_STATIC) return;
 
     var tl = gsap.timeline({
       scrollTrigger:{
@@ -7738,6 +7789,68 @@ function boot(){
   });
   stDrainObs.observe(document.body, { attributes: true, attributeFilter: ['class'] });
 }
+})();
+</script>
+
+<script>
+// ── Screen Test scores for the static layout ────────────────────────────────
+// In the scrubbed desktop version the sync score and the three sub-scores are
+// counted up by the GSAP timeline. The static stack has no timeline, and on
+// mobile GSAP is never loaded at all — so without this the section would read
+// "THE AI NEVER LIES" followed by a sync score of 0, which is worse than not
+// showing the section. Deliberately dependency-free: plain rAF and an
+// IntersectionObserver, so it runs whether or not any CDN responded.
+(function(){
+  var stage = document.getElementById('mlStage');
+  var beat3 = document.getElementById('mlsBeat3');
+  if (!stage || !beat3) return;
+
+  // Same condition as the CSS block that lays the section out statically.
+  var isStatic = matchMedia('(max-width: 768px), (pointer: coarse), (prefers-reduced-motion: reduce)').matches;
+  if (!isStatic) return;
+
+  var SYNC_TARGET = 94;
+  var reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  function countTo(el, target, ms){
+    if (!el) return;
+    // Reduced motion means no animation — show the final value immediately.
+    if (reduced || ms <= 0) { el.textContent = target; return; }
+    var start = null;
+    function step(ts){
+      if (start === null) start = ts;
+      var t = Math.min(1, (ts - start) / ms);
+      // easeOutCubic, so it settles rather than stopping dead.
+      el.textContent = Math.round(target * (1 - Math.pow(1 - t, 3)));
+      if (t < 1) requestAnimationFrame(step);
+      else el.textContent = target;
+    }
+    requestAnimationFrame(step);
+  }
+
+  var done = false;
+  function run(){
+    if (done) return;
+    done = true;
+    countTo(document.getElementById('mlsScoreNum'), SYNC_TARGET, 1200);
+    beat3.querySelectorAll('.mls-subscores b').forEach(function(el, i){
+      var target = parseInt(el.dataset.target, 10);
+      if (isNaN(target)) return;
+      // Stagger slightly so the three do not tick in lockstep.
+      setTimeout(function(){ countTo(el, target, 900); }, 200 + i * 120);
+    });
+  }
+
+  // No IntersectionObserver (very old browsers): fill the numbers in rather
+  // than leaving zeros on screen.
+  if (!('IntersectionObserver' in window)) { run(); return; }
+
+  var io = new IntersectionObserver(function(entries){
+    for (var i = 0; i < entries.length; i++){
+      if (entries[i].isIntersecting) { io.disconnect(); run(); return; }
+    }
+  }, { rootMargin: '0px 0px -15% 0px' });
+  io.observe(beat3);
 })();
 </script>
 
@@ -8341,10 +8454,22 @@ function boot(){
       });
   }
 
+  // GSAP and ScrollTrigger exist only to drive the pinned Screen Test timeline.
+  // The static layout has no timeline, so on a phone (or under reduced motion)
+  // they would be 41 KB and two round trips fetched to animate nothing. The
+  // swatch quote-change also uses gsap, but it is already guarded with
+  // `typeof gsap !== 'undefined'` and falls back to setting the text directly —
+  // the control still works, it just does not cross-fade.
+  var GSAP_NEEDED = !matchMedia('(max-width: 768px), (pointer: coarse), (prefers-reduced-motion: reduce)').matches;
+
   var startedGsap = false;
   function loadGsap(){
     if (startedGsap) return;
     startedGsap = true;
+    if (!GSAP_NEEDED) {
+      console.info('[mlStage] static layout — skipping GSAP/ScrollTrigger');
+      return;
+    }
     if (typeof gsap !== 'undefined' && typeof ScrollTrigger !== 'undefined') {
       document.dispatchEvent(new Event('mlstage:gsap-ready'));
       return;
