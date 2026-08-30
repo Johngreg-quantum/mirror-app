@@ -1402,6 +1402,106 @@
       .da-input { font-size: 16px; }
     }
 
+    /* ── Post-take reward sequence ──────────────────────────────────────────
+       One fact per screen, advanced by Continue. Steps with nothing to report
+       are skipped, so a routine take is a single screen and a big one runs five
+       or six — that variation is the point.
+
+       Presentational only: every value shown was already written server-side
+       before /api/submit responded, and the client's own post-score refresh
+       runs regardless of whether the user taps through. Dismissing at any step
+       loses nothing.
+
+       z-index sits above the scene modal (.overlay is 99999), for the same
+       reason the consent notice below does — this sequence is opened from
+       inside that modal, and at a lower value it would render behind an opaque
+       backdrop and trap the user. That mistake has shipped here once already. */
+    .rs-overlay {
+      position: fixed; inset: 0; z-index: 100001;
+      display: flex; align-items: center; justify-content: center;
+      padding: 24px;
+      background: rgba(4,4,8,0.94);
+      backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px);
+      opacity: 0; pointer-events: none; transition: opacity 0.28s ease;
+    }
+    .rs-overlay.open { opacity: 1; pointer-events: auto; }
+
+    .rs-card {
+      position: relative;
+      width: 100%; max-width: 360px; text-align: center;
+      opacity: 1; transition: opacity 0.18s ease, transform 0.18s ease;
+    }
+    /* Applied for one frame between steps so each screen enters, rather than
+       the text swapping in place. */
+    .rs-card.rs-swap { opacity: 0; transform: translateY(12px); }
+
+    .rs-icon  { font-size: 46px; line-height: 1; margin-bottom: 18px; }
+    .rs-label {
+      font-family: 'Space Mono', monospace; font-size: 10px;
+      letter-spacing: 0.34em; text-transform: uppercase;
+      color: rgba(200,169,110,0.75); margin-bottom: 14px;
+    }
+    .rs-value {
+      font-family: 'Bebas Neue', sans-serif; font-size: 68px; line-height: 0.95;
+      letter-spacing: 0.02em; color: #c8a96e; margin-bottom: 10px;
+    }
+    .rs-value sup { font-size: 26px; top: -0.5em; }
+    .rs-title {
+      font-family: 'Bebas Neue', sans-serif; font-size: 30px;
+      letter-spacing: 0.06em; color: #f0ede6; margin-bottom: 8px;
+    }
+    .rs-sub { font-size: 13px; line-height: 1.55; color: rgba(255,255,255,0.55); }
+    .rs-sub strong { color: #f0ede6; font-weight: 600; }
+
+    .rs-bar-track {
+      height: 6px; border-radius: 3px; margin: 18px auto 8px; max-width: 240px;
+      background: rgba(255,255,255,0.09); overflow: hidden;
+    }
+    .rs-bar-fill {
+      height: 100%; width: 0; border-radius: 3px; background: #c8a96e;
+      transition: width 0.7s cubic-bezier(.22,.9,.3,1);
+    }
+
+    .rs-ranks { display: flex; align-items: center; justify-content: center; gap: 16px; margin-bottom: 14px; }
+    /* An author `display` declaration beats the `hidden` attribute's UA rule,
+       so .rs-ranks stayed visible when hidden and leaked its arrow onto every
+       other step. Anything inside this overlay that toggles via `hidden` needs
+       this. */
+    .rs-overlay [hidden] { display: none !important; }
+    .rs-rank { font-family: 'Bebas Neue', sans-serif; font-size: 19px; letter-spacing: 0.08em; }
+    .rs-rank.from { color: rgba(255,255,255,0.32); }
+    .rs-arrow { color: rgba(200,169,110,0.6); font-size: 17px; }
+
+    /* Level up is the finale and gets the weight the others do not. */
+    .rs-card.rs-finale .rs-icon  { font-size: 66px; margin-bottom: 22px; }
+    .rs-card.rs-finale .rs-title { font-size: 44px; color: #c8a96e; }
+    .rs-card.rs-finale .rs-sub   { font-size: 14px; }
+    .rs-halo {
+      position: absolute; inset: -45% -25%; z-index: -1; pointer-events: none;
+      background: radial-gradient(circle at 50% 42%, rgba(200,169,110,0.22), transparent 62%);
+    }
+
+    .rs-continue {
+      width: 100%; margin-top: 30px; padding: 14px; min-height: 46px;
+      background: var(--gold); color: #0a0a0a; border: none; border-radius: 9px;
+      font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 700;
+      letter-spacing: 0.05em; cursor: pointer;
+      touch-action: manipulation; -webkit-tap-highlight-color: transparent;
+      transition: filter 0.2s;
+    }
+    .rs-continue:hover { filter: brightness(1.1); }
+    .rs-dots { display: flex; gap: 6px; justify-content: center; margin-top: 18px; }
+    .rs-dot { width: 5px; height: 5px; border-radius: 50%; background: rgba(255,255,255,0.16); }
+    .rs-dot.on { background: rgba(200,169,110,0.85); }
+
+    @media (max-width: 480px) {
+      .rs-value { font-size: 58px; }
+      .rs-card.rs-finale .rs-title { font-size: 36px; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .rs-overlay, .rs-card, .rs-bar-fill { transition: none; }
+    }
+
     /* First-run recording consent (privacy policy §6). Informational, not a
        warning — gold rather than the delete modal's red.
 
@@ -6034,6 +6134,29 @@
         <button class="da-confirm" type="submit" id="daConfirm" disabled>Delete forever</button>
       </div>
     </form>
+  </div>
+</div>
+
+<!-- Post-take reward sequence. Steps 2+ live here; step 1 is the existing
+     score card in the recording modal, which this sits on top of. Dismissing
+     returns to that card and its detail views (word breakdown, compare,
+     translation) rather than closing anything. -->
+<div class="rs-overlay" id="rewardSeq" role="dialog" aria-modal="true" aria-live="polite">
+  <div class="rs-card" id="rsCard">
+    <div class="rs-halo" id="rsHalo" hidden></div>
+    <div class="rs-icon"  id="rsIcon"></div>
+    <div class="rs-label" id="rsLabel"></div>
+    <div class="rs-value" id="rsValue"></div>
+    <div class="rs-title" id="rsTitle"></div>
+    <div class="rs-ranks" id="rsRanks" hidden>
+      <span class="rs-rank from" id="rsRankFrom"></span>
+      <span class="rs-arrow">&rarr;</span>
+      <span class="rs-rank"      id="rsRankTo"></span>
+    </div>
+    <div class="rs-bar-track" id="rsBarTrack" hidden><div class="rs-bar-fill" id="rsBarFill"></div></div>
+    <div class="rs-sub" id="rsSub"></div>
+    <button class="rs-continue" id="rsContinue" type="button">Continue</button>
+    <div class="rs-dots" id="rsDots"></div>
   </div>
 </div>
 

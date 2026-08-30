@@ -507,6 +507,11 @@ async def update_missions(username: str, scene_id: str, score: float,
         matched.append({
             "mission_id":   mid,
             "new_progress": new_progress,
+            # The goal travels with the update so the post-take sequence can
+            # render "3 / 5" without a second request. The client only holds
+            # goals if the Missions tab happens to have been opened this
+            # session, which is not something a result screen should depend on.
+            "goal":         goal,
             "completed":    new_completed,
             "xp_earned":    xp_earned,
         })
@@ -1946,7 +1951,13 @@ async def submit_recording(
     conn.commit()
     conn.close()
 
-    division = get_division(total_points)
+    # Division before and after this take. The previous one is derived from the
+    # points total minus what this take awarded, which is exact — the client
+    # could compare against its cached userProfile.division instead, but that
+    # only works while the post-score refresh happens to run after the result
+    # renders. Stating it here removes the ordering dependency.
+    division      = get_division(total_points)
+    prev_division = get_division(max(0, total_points - pts_earned))
     return {
         "transcription":        transcription,
         "expected":             expected_quote,
@@ -1955,6 +1966,7 @@ async def submit_recording(
         "points_earned":        pts_earned,
         "total_points":         total_points,
         "division":             division,
+        "prev_division":        prev_division,
         "is_perfect":           score >= SCORE_PERFECT,
         "is_first_attempt":     is_first_attempt,
         "translation_unlocked": translation_unlocked,

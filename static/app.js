@@ -1438,7 +1438,18 @@ async function analyze() {
     const data      = await res.json();
     const prevLevel = userProgress.level;
     showScore(data);
-    if (typeof MissionsController !== 'undefined') MissionsController.onSubmitResponse(data);
+    // The reward sequence owns mission XP announcements while it is running, so
+    // suppress the controller's toasts — otherwise a completed mission is
+    // celebrated twice, once as a toast behind the overlay.
+    if (typeof MissionsController !== 'undefined') {
+      MissionsController.onSubmitResponse(data, { silent: true });
+    }
+
+    // A level-up is only known after progress reloads, so the sequence cannot
+    // start until the refresh completes. The refresh itself is NOT gated on the
+    // sequence — it runs here regardless of what the user does with the UI,
+    // which is what makes dismissing mid-sequence lossless.
+    let levelUp = null;
     await refreshPostScoreSurfaces({
       activeScene: activeScene,
       previousLevel: prevLevel,
@@ -1447,8 +1458,18 @@ async function analyze() {
       loadProgress: loadProgress,
       renderCards: renderCards,
       getCurrentLevel: function() { return userProgress.level; },
-      showLevelUp: showLevelUp,
+      // Capture instead of toasting: the level-up becomes the sequence finale.
+      showLevelUp: function(lvl) { levelUp = lvl; },
     });
+
+    if (typeof RewardSequence !== 'undefined') {
+      const shown = RewardSequence.start(data, levelUp);
+      // If nothing qualified for the sequence, a level-up still deserves the
+      // toast it used to get rather than being silently dropped.
+      if (!shown && levelUp) showLevelUp(levelUp);
+    } else if (levelUp) {
+      showLevelUp(levelUp);
+    }
   } catch (err) {
     alert(`Error: ${err.message}`);
   } finally {
@@ -1486,9 +1507,22 @@ function showScore(data) {
   renderPhonemeBreakdown(data.expected, data.transcription);
   showPointsEarned(data);
 
+  // The card is step 1 of the sequence, and two of its children now have
+  // screens of their own — the PB banner (step 2) and the points block
+  // (step 3). Hide them here so the same fact is not announced twice, once on
+  // the overlay and again on the card behind it. They are restored when no
+  // sequence runs, which is what a plain take with nothing earned looks like.
+  const seq = (typeof RewardSequence !== 'undefined')
+    ? RewardSequence.build(data, null) : [];
+  const seqOwnsPb  = seq.some(function(s){ return s.label === 'New personal best'; });
+  const seqOwnsXp  = seq.some(function(s){ return s.label === 'Points earned'; });
+  setOn('ptsEarned', !seqOwnsXp);
+
   if (data.is_new_pb) {
-    setOn('pbBanner', true);
-    showPBBlast();
+    setOn('pbBanner', !seqOwnsPb);
+    // The confetti moves to the PB screen; firing it here would burst behind
+    // the overlay. showPBBlast is the step's onShow instead.
+    if (!seqOwnsPb) showPBBlast();
   }
 
   if (challengeCtx) {
@@ -1496,6 +1530,201 @@ function showScore(data) {
     challengeCtx = null;
   }
 }
+
+// ══════════════════════════════════════════════
+// POST-TAKE REWARD SEQUENCE
+// ══════════════════════════════════════════════
+// One screen per thing earned, advanced by Continue. Steps with nothing to
+// report are skipped, so a routine take shows nothing at all and a big one runs
+// five or six screens.
+//
+// Purely presentational. Every value here was written server-side before
+// /api/submit responded, and refreshPostScoreSurfaces() runs unconditionally
+// after showScore() — never gated on this UI. Tapping away at any step loses
+// nothing and leaves the app in the same state as tapping through.
+const RewardSequence = {
+  steps: [],
+  index: 0,
+
+  // Build the step list from the submit response. Order is the order shown;
+  // level-up is appended last on purpose — it is the biggest thing that can
+  // happen, and burying it behind missions and rank would waste it.
+  build(data, levelUp) {
+    const steps = [];
+
+    if (data.is_new_pb) {
+      const prev = (typeof data.prev_best === 'number') ? Math.round(data.prev_best) : null;
+      steps.push({
+        icon: '⭐', label: 'New personal best',
+        value: Math.round(data.sync_score) + '<sup>%</sup>',
+        sub: prev !== null
+          ? ('Your previous best on this scene was <strong>' + prev + '%</strong>.')
+          : 'Your first score on this scene.',
+        onShow: showPBBlast,
+      });
+    }
+
+    const xp = data.points_earned || 0;
+    if (xp > 0) {
+      steps.push({
+        icon: '⚡', label: 'Points earned',
+        value: '+' + xp,
+        sub: 'You now have <strong>' + (data.total_points || 0).toLocaleString() + '</strong> points.',
+      });
+    }
+
+    // The streak only moves when this take completed today's daily for the
+    // first time — the same condition the server uses to increment it.
+    if (data.is_daily && !data.daily_already_done && data.streak > 0) {
+      steps.push({
+        icon: '🔥', label: 'Day streak',
+        value: String(data.streak),
+        sub: data.streak === 1
+          ? 'A new streak starts today.'
+          : '<strong>' + data.streak + ' days</strong> in a row. Come back tomorrow to keep it.',
+      });
+    }
+
+    (data.missions_updated || []).forEach(function(m){
+      const meta = MISSION_META[m.mission_id] || {};
+      const goal = m.goal || 0;
+      steps.push({
+        icon: meta.icon || '🎯',
+        label: m.completed ? 'Mission complete' : 'Mission progress',
+        title: meta.title || m.mission_id,
+        bar: goal > 0 ? Math.min(100, Math.round((m.new_progress / goal) * 100)) : null,
+        sub: goal > 0
+          ? (m.new_progress + ' / ' + goal + (m.xp_earned > 0 ? ' · <strong>+' + m.xp_earned + ' XP</strong>' : ''))
+          : (m.xp_earned > 0 ? '<strong>+' + m.xp_earned + ' XP</strong>' : ''),
+      });
+    });
+
+    // prev_division comes from the server rather than a cached client value, so
+    // this does not depend on when the post-score refresh happens to run.
+    const from = data.prev_division, to = data.division;
+    if (from && to && from.name !== to.name) {
+      steps.push({
+        icon: '🏆', label: 'New rank',
+        ranks: { from: from.name, to: to.name },
+        sub: 'You reached <strong>' + to.name + '</strong>.',
+      });
+    }
+
+    if (levelUp) {
+      steps.push({
+        finale: true,
+        icon: '🎬', label: 'Level unlocked',
+        title: 'LEVEL ' + levelUp,
+        sub: 'New scenes are now available.',
+        onShow: showPBBlast,
+      });
+    }
+
+    return steps;
+  },
+
+  start(data, levelUp) {
+    this.steps = this.build(data, levelUp);
+    this.index = 0;
+    if (!this.steps.length) return false;
+    const ov = document.getElementById('rewardSeq');
+    if (!ov) return false;
+    ov.classList.add('open');
+    this.render();
+    return true;
+  },
+
+  render() {
+    const s = this.steps[this.index];
+    if (!s) return this.close();
+    const set = function(id, html, show){
+      const el = document.getElementById(id);
+      if (!el) return;
+      el.innerHTML = html || '';
+      el.hidden = !show;
+      if (!('hidden' in el)) el.style.display = show ? '' : 'none';
+    };
+    const card = document.getElementById('rsCard');
+    if (card) card.classList.toggle('rs-finale', !!s.finale);
+    const halo = document.getElementById('rsHalo');
+    if (halo) halo.hidden = !s.finale;
+
+    set('rsIcon',  s.icon,  !!s.icon);
+    set('rsLabel', s.label, !!s.label);
+    set('rsValue', s.value, !!s.value);
+    set('rsTitle', s.title, !!s.title);
+    set('rsSub',   s.sub,   !!s.sub);
+
+    const ranks = document.getElementById('rsRanks');
+    if (ranks) {
+      ranks.hidden = !s.ranks;
+      if (s.ranks) {
+        document.getElementById('rsRankFrom').textContent = s.ranks.from;
+        document.getElementById('rsRankTo').textContent   = s.ranks.to;
+      }
+    }
+
+    const track = document.getElementById('rsBarTrack');
+    const fill  = document.getElementById('rsBarFill');
+    if (track && fill) {
+      track.hidden = (s.bar === null || s.bar === undefined);
+      if (!track.hidden) {
+        fill.style.width = '0%';
+        // Next frame so the width transition actually runs.
+        requestAnimationFrame(function(){ requestAnimationFrame(function(){ fill.style.width = s.bar + '%'; }); });
+      }
+    }
+
+    const btn = document.getElementById('rsContinue');
+    if (btn) btn.textContent = (this.index === this.steps.length - 1) ? 'Done' : 'Continue';
+
+    // Dots only earn their place when there is more than one screen.
+    const dots = document.getElementById('rsDots');
+    if (dots) {
+      dots.innerHTML = this.steps.length > 1
+        ? this.steps.map(function(_, i){
+            return '<span class="rs-dot' + (i === this.index ? ' on' : '') + '"></span>';
+          }, this).join('')
+        : '';
+    }
+
+    if (typeof s.onShow === 'function') s.onShow();
+  },
+
+  next() {
+    this.index++;
+    if (this.index >= this.steps.length) return this.close();
+    const card = document.getElementById('rsCard');
+    if (!card) return this.render();
+    card.classList.add('rs-swap');
+    const self = this;
+    setTimeout(function(){ self.render(); card.classList.remove('rs-swap'); }, 180);
+  },
+
+  close() {
+    const ov = document.getElementById('rewardSeq');
+    if (ov) ov.classList.remove('open');
+    this.steps = [];
+    this.index = 0;
+  },
+
+  isOpen() {
+    const ov = document.getElementById('rewardSeq');
+    return !!(ov && ov.classList.contains('open'));
+  },
+};
+window.RewardSequence = RewardSequence;
+
+onClick('rsContinue', function(){ RewardSequence.next(); });
+// Escape and backdrop both dismiss — nothing is lost, so there is no reason to
+// trap someone in a celebration.
+document.addEventListener('keydown', function(e){
+  if (e.key === 'Escape' && RewardSequence.isOpen()) RewardSequence.close();
+});
+(function(){
+  const ov = document.getElementById('rewardSeq');
+  if (ov) ov.addEventListener('click', function(e){ if (e.target === ov) RewardSequence.close(); });
+})();
 
 function showPBBlast() {
   const COLORS = ['#C9A84C', '#fff', '#06d6a0', '#ffd166', '#f4a261', '#67e8f9'];
@@ -3628,7 +3857,11 @@ const MissionsController = {
    * Hook for /api/submit responses. Bumps mission progress bars in-place and
    * shows XP toasts for any newly-completed missions, without a full reload.
    */
-  onSubmitResponse(resp) {
+  // opts.silent suppresses the XP toasts. The post-take reward sequence gives
+  // each mission its own screen, so the toasts would double-announce it — but
+  // the local cache update and re-render below must still happen either way.
+  onSubmitResponse(resp, opts) {
+    const silent = !!(opts && opts.silent);
     if (!resp || !Array.isArray(resp.missions_updated) || !resp.missions_updated.length) return;
 
     // Update local cache so re-renders are accurate
@@ -3650,6 +3883,8 @@ const MissionsController = {
 
     // Re-render so visible bars and counters reflect new state
     if (this.loaded) this.render();
+
+    if (silent) return;
 
     // Toasts for completions only (more meaningful than every increment)
     resp.missions_updated.forEach(u => {
