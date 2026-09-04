@@ -1446,21 +1446,37 @@ async function analyze() {
     }
 
     // A level-up is only known after progress reloads, so the sequence cannot
-    // start until the refresh completes. The refresh itself is NOT gated on the
-    // sequence — it runs here regardless of what the user does with the UI,
-    // which is what makes dismissing mid-sequence lossless.
+    // start until the refresh completes — which puts two more network calls
+    // between the take and the celebration.
+    //
+    // Those calls are wrapped because a failure must not suppress the sequence.
+    // loadScores/loadProgress rejecting (a flaky connection right after a large
+    // audio upload is the plausible case) used to fall through to the catch
+    // below, alert, and show nothing — with showScore() having already hidden
+    // the PB banner and the points block on the assumption that the overlay was
+    // about to own them. The take then reported less than it did before the
+    // sequence existed.
+    //
+    // Nothing is lost when it fails: every value was written server-side before
+    // /api/submit responded, and these surfaces re-read it on the next load. The
+    // one casualty is the level-up finale, which is not knowable without the
+    // refresh — levelUp stays null and the sequence runs without that step.
     let levelUp = null;
-    await refreshPostScoreSurfaces({
-      activeScene: activeScene,
-      previousLevel: prevLevel,
-      setActiveLeaderboardTab: function(sceneId) { activeLbTab = sceneId; },
-      loadScores: loadScores,
-      loadProgress: loadProgress,
-      renderCards: renderCards,
-      getCurrentLevel: function() { return userProgress.level; },
-      // Capture instead of toasting: the level-up becomes the sequence finale.
-      showLevelUp: function(lvl) { levelUp = lvl; },
-    });
+    try {
+      await refreshPostScoreSurfaces({
+        activeScene: activeScene,
+        previousLevel: prevLevel,
+        setActiveLeaderboardTab: function(sceneId) { activeLbTab = sceneId; },
+        loadScores: loadScores,
+        loadProgress: loadProgress,
+        renderCards: renderCards,
+        getCurrentLevel: function() { return userProgress.level; },
+        // Capture instead of toasting: the level-up becomes the sequence finale.
+        showLevelUp: function(lvl) { levelUp = lvl; },
+      });
+    } catch (refreshErr) {
+      console.error('Post-score refresh failed; showing the sequence anyway.', refreshErr);
+    }
 
     if (typeof RewardSequence !== 'undefined') {
       const shown = RewardSequence.start(data, levelUp);

@@ -82,8 +82,34 @@ _INDEX_HTML_PATH = os.path.join(_APP_DIR, "index.html")
 _NEW_SHELL_INDEX_HTML_PATH = os.path.join(_STATIC_DIR, "new-shell", "index.html")
 _SCENE_CONFIG_PATH = os.path.join(_APP_DIR, "scene_config.json")
 _PRIVACY_MD_PATH = os.path.join(_APP_DIR, "docs", "privacy-policy.md")
+
+
+class _RevalidatingStaticFiles(StaticFiles):
+    """Serve /static with "no-cache" so a deploy is picked up on the next load.
+
+    StaticFiles sends ETag and Last-Modified but no Cache-Control, which leaves
+    the browser free to apply heuristic freshness (roughly 10% of the file's
+    age) and reuse app.js without asking. After a deploy that lets a device run
+    the previous build's JS against the current HTML -- the split that hid the
+    post-take reward sequence, where index.html carried the overlay element and
+    the cached app.js had no code to open it.
+
+    "no-cache" does not mean "do not store": the ETag still short-circuits the
+    body with a 304, so a revalidated hit costs headers rather than 160 KB.
+    Same reasoning as _read_html_file() below, which already does this for the
+    HTML shells -- this extends it to the scripts those shells depend on.
+    """
+
+    async def get_response(self, path: str, scope) -> Response:
+        # Overridden here rather than in file_response() so the header lands on
+        # the 304s too, not only the 200s.
+        response = await super().get_response(path, scope)
+        response.headers["Cache-Control"] = "no-cache"
+        return response
+
+
 if os.path.isdir(_STATIC_DIR):
-    app.mount("/static", StaticFiles(directory=_STATIC_DIR), name="static")
+    app.mount("/static", _RevalidatingStaticFiles(directory=_STATIC_DIR), name="static")
 
 # ---------------------------------------------------------------------------
 # Rate limiting

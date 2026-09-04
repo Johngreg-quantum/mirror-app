@@ -17,6 +17,9 @@ Users can browse scenes, record themselves, play back their take, submit for sco
 - /legacy
 - /legacy/challenge/:challengeId
 
+## Checks
+- Close buttons stay reachable: `npm i --no-save playwright && npx playwright install webkit`, run the app on port 8011, then `node scripts/verify-close-button.js`.
+
 ## Notes
 - The new shell is now the primary app experience.
 - Backend APIs remain the source of truth for auth, analyze, progress, daily, and challenge data.

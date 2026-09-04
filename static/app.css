@@ -870,6 +870,10 @@ header {
   z-index: 99999;
   display: flex; align-items: center; justify-content: center; padding: 20px;
   padding-bottom: 80px;
+  /* Safety net. The modal is now sized to fit this box, so nothing should
+     overflow it -- but overflow here used to be silently unreachable: a fixed,
+     non-scrolling container has no way to bring it back. */
+  overflow-y: auto;
   opacity: 0; pointer-events: none; transition: opacity .3s;
 }
 .overlay.open { opacity: 1; pointer-events: all; }
@@ -878,14 +882,41 @@ header {
   --mc: var(--gold);
   background: var(--surface); border: 1px solid var(--border);
   border-radius: 18px; width: 100%; max-width: 700px;
-  max-height: 92vh; overflow-y: auto;
+  /* Percent, not vh. It resolves against .overlay's content box, which already
+     excludes the 20px/80px padding, so the modal can never be taller than the
+     space it is placed in. 92vh ignored that padding and overflowed by
+     (0.92H + 100 - H)px on any viewport under 1250px tall. */
+  max-height: 100%; overflow-y: auto;
   -webkit-overflow-scrolling: touch; overscroll-behavior: contain;
   transform: translateY(22px) scale(.98); transition: transform .3s;
   scrollbar-width: thin; scrollbar-color: var(--border) transparent;
 }
 .overlay.open .modal { transform: translateY(0) scale(1); }
 
-.modal-head { display: flex; justify-content: space-between; align-items: flex-start; padding: 26px 28px 0; }
+/* Sticky, because .modal is itself the scroll container: the head is a static
+   in-flow child of it, so reading a completed result (word breakdown, Compare
+   Voices, translation, Try Again, Challenge a Friend) scrolled the close button
+   out of the scrollport with no way back. The backdrop strip below the sheet
+   still dismissed, but nothing on screen said so.
+
+   `top: 0` resolves against .modal's scrollport, not the viewport -- no vh, so
+   the iOS URL bar collapsing mid-scroll cannot move it. This depends on
+   .modal { max-height: 100% } above: sticky pins the head to the top of .modal's
+   box, which is only useful once that box is guaranteed to start on screen.
+   With 94vh it pinned the head to a box whose own top sat ~40-121px above the
+   viewport, so the button stayed off screen at every scroll position.
+
+   The background must be an opaque literal. `var(--surface)` looks right but
+   index.html:59 redefines that token as rgba(255,255,255,0.025) and its <style>
+   loads after this file -- the band would hit-test fine and be see-through.
+   z-index clears .modal::before, which is z-index 1. */
+.modal-head {
+  display: flex; justify-content: space-between; align-items: flex-start;
+  padding: 26px 28px 14px;
+  position: sticky; top: 0; z-index: 2;
+  background: #0a0a0e;
+  box-shadow: 0 1px 0 rgba(200,169,110,0.12);
+}
 .modal-year  { font-size: 11px; color: var(--muted); margin-bottom: 4px; }
 .modal-title { font-family: 'Bebas Neue', cursive; font-size: 34px; letter-spacing: .1em; color: var(--mc); }
 
@@ -1248,15 +1279,28 @@ header {
   .stat-item { padding: 0 14px; }
 
   /* Modal — bottom sheet */
+  /* 94vh trapped iOS Safari users. With align-items:flex-end all overflow goes
+     off the TOP, taking the close button with it, and a fixed non-scrolling
+     container cannot scroll it back. Two causes, both closed by 100%:
+       - vh resolves against iOS's LARGE viewport (URL bar hidden) and never
+         changes, while position:fixed sizes to the CURRENT one. ~86px apart on
+         an iPhone 14, and it oscillates as the bar collapses and re-expands
+         mid-scroll -- the close button appeared during the gesture and left
+         again on release.
+       - 0.94H plus 80px of padding exceeds H on any viewport under 1333px, so
+         it overflowed by 24-40px on every phone regardless of the URL bar.
+     100% resolves against the padded content box, so both go away. */
   .overlay { align-items: flex-end; padding: 0; padding-bottom: 80px; }
-  .modal { border-radius: 20px 20px 0 0; max-height: 94vh; transform: translateY(40px); }
+  .modal { border-radius: 20px 20px 0 0; max-height: 100%; transform: translateY(40px); }
   .overlay.open .modal { transform: translateY(0); }
   .modal::before {
     content: ''; display: block; width: 36px; height: 4px;
     background: rgba(255,255,255,.13); border-radius: 100px;
     margin: 14px auto 2px; flex-shrink: 0;
   }
-  .modal-head { padding: 14px 20px 0; }
+  /* Repeats the bottom padding: the shorthand here would otherwise reset the
+     sticky band's padding-bottom to 0 and let content touch the title. */
+  .modal-head { padding: 14px 20px 14px; }
   .modal-title { font-size: 26px; }
   .video-wrap { margin: 12px 20px; }
   .target-quote { margin: 0 20px 14px; font-size: 15px; padding: 12px 14px; }
@@ -1320,19 +1364,35 @@ header {
   border: 1px solid var(--border);
   border-radius: 20px;
   width: 100%; max-width: 680px;
-  max-height: 90vh; overflow-y: auto;
+  /* Percent, not vh -- same reason as .modal above. On iOS, vh resolves
+     against the LARGE viewport (URL bar hidden) while .progress-overlay,
+     being position:fixed, sizes to the CURRENT one; 90vh therefore
+     overflowed its container by ~60px on an iPhone 14 and, being centred,
+     put half of that past each edge -- taking the sticky head, and the
+     close button in it, off the top of the screen. 100% resolves against
+     the overlay's content box, which already excludes its 24px padding. */
+  max-height: 100%; overflow-y: auto;
   transform: translateY(22px) scale(.98);
   transition: transform 0.3s;
   scrollbar-width: thin; scrollbar-color: var(--border) transparent;
 }
 .progress-overlay.open .progress-modal { transform: translateY(0) scale(1); }
 
+/* This band was already sticky but painted with var(--surface), which
+   index.html:59 redefines as rgba(255,255,255,0.025) -- and its <style> loads
+   after this file, so the band was effectively transparent and the history
+   list scrolled visibly through it. An opaque literal is required here for
+   the same reason it is on .modal-head and .clv-panel-head-row: a see-through
+   band still hit-tests as covered, so nothing catches it but the eye.
+
+   The grey border-bottom is replaced by, not stacked with, the gold hairline
+   the other two bands use -- one separator, shared across all three. */
 .progress-modal-head {
   display: flex; justify-content: space-between; align-items: center;
   padding: 28px 32px 24px;
-  border-bottom: 1px solid var(--border);
   position: sticky; top: 0;
-  background: var(--surface); z-index: 10;
+  background: #0a0a0e; z-index: 10;
+  box-shadow: 0 1px 0 rgba(200,169,110,0.12);
   border-radius: 20px 20px 0 0;
 }
 .progress-modal-title {
@@ -2149,7 +2209,11 @@ header {
 .clv-panel {
   position: fixed; bottom: 0;
   left: 50%; transform: translateX(-50%) translateY(100%);
-  width: min(900px, 96vw); max-height: 85vh;
+  /* Percent, not vh. This is position:fixed, so its containing block is the
+     initial containing block -- which on iOS tracks the URL bar, while vh does
+     not. 85% keeps the intended gap above the panel and follows the viewport
+     as the bar collapses, instead of standing 85% of the taller one. */
+  width: min(900px, 96vw); max-height: 85%;
   background: var(--surface); border-radius: 20px 20px 0 0;
   border: 1px solid var(--border); border-bottom: none;
   z-index: 1200;
@@ -2157,12 +2221,26 @@ header {
   display: flex; flex-direction: column;
 }
 .clv-panel.open { transform: translateX(-50%) translateY(0); }
-.clv-panel-inner { overflow-y: auto; padding: 28px 32px 36px; position: relative; }
+.clv-panel-inner { overflow-y: auto; padding: 0 32px 36px; position: relative; }
 
 /* Panel header */
+/* Sticky for the same reason as .modal-head: the close button sits inside
+   .clv-panel-inner, which is the scroller, so scrolling the clip list took it
+   off screen with no way back. `top: 0` is relative to that scrollport, not
+   the viewport, so the iOS URL bar cannot move it.
+
+   The negative inline margin lets the band bleed through the scroller's 32px
+   gutters, so content passes under a full-width bar rather than a floating
+   one. Background is an opaque literal, not var(--surface): index.html:59
+   redefines that token to rgba(255,255,255,0.025) and its <style> loads after
+   this file, which would leave the band see-through while still hit-testing
+   as covered. */
 .clv-panel-head-row {
   display: flex; align-items: flex-start; justify-content: space-between;
-  margin-bottom: 24px;
+  margin: 0 -32px 24px; padding: 28px 32px 16px;
+  position: sticky; top: 0; z-index: 2;
+  background: #0a0a0a;
+  box-shadow: 0 1px 0 rgba(200,169,110,0.12);
 }
 .clv-panel-head-left { display: flex; align-items: center; gap: 14px; }
 .clv-panel-num {
