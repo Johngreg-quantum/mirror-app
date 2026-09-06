@@ -1253,6 +1253,14 @@ onClick('rcAccept', acceptRecordingConsent);
 })();
 
 onClick('btnRecord', startRec);
+// Arms the AudioContext for the post-take celebration. Registered as a
+// SECOND handler after startRec, never folded into it: startRec carries an
+// ORDER IS LOAD-BEARING note requiring getUserMedia to be the first thing the
+// click does, and a separately-registered listener runs after it in the same
+// task without disturbing that. This tap is the only gesture available --
+// the sequence itself opens from the analyse response, which Safari will not
+// accept as user activation, so an unarmed context there stays silent.
+onClick('btnRecord', function () { RewardSound.init(); });
 onClick('btnStop', stopRec);
 onClick('btnPlay', togglePlayback);
 onClick('btnAnalyze', analyze);
@@ -1547,6 +1555,231 @@ function showScore(data) {
   }
 }
 
+// CELEBRATION — particles and sound
+// One canvas, one AudioContext, one GainNode. Both tear down with the overlay.
+
+// One query string, matching the one index.html already uses in four places.
+// Consolidated rather than inherited: there was no shared helper to import.
+function prefersReducedMotion() {
+  return !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+}
+
+// The celebration must never make noise into an open take. Structurally it
+// cannot -- analyze() needs audioBlob, which only exists after
+// mediaRecorder.onstop has stopped the tracks and nulled micStream -- but this
+// makes the guarantee enforced rather than incidental.
+function isMicOpen() {
+  return !!micStream || !!(mediaRecorder && mediaRecorder.state === 'recording');
+}
+
+// Particle burst. One canvas, no library: this app has no build step, so a
+// dependency means another <script> against a load budget that was just cut
+// from 9065ms to 4739ms, on a host with an ~8s cold start.
+//
+// Budget, deliberately tight -- the compositor here already carries blurred
+// bg-orbs and WebGL:
+//   one canvas, not 70 animated DOM nodes as before
+//   backing store capped at 2x, so 3x phones do not pay triple fill
+//   36 particles on coarse pointers, 60 otherwise
+//   the loop cancels itself when every particle dies or MAX_MS passes
+//   stop() is called on close and on every step change; no rAF outlives the
+//   overlay, and nothing is registered that could restart it
+const RewardBurst = {
+  raf: 0, parts: [], ctx: null, canvas: null, t0: 0,
+  MAX_MS: 1400,
+  COLORS: ['#c8a96e', '#f0ede6', '#ffffff'],
+
+  fire() {
+    if (prefersReducedMotion()) return;
+    const ov = document.getElementById('rewardSeq');
+    const cv = document.getElementById('rsBurst');
+    // The canvas lives inside the overlay, so drawing while it is shut would
+    // paint into something invisible.
+    if (!ov || !cv || !ov.classList.contains('open')) return;
+    this.stop();
+
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    const w = ov.clientWidth, h = ov.clientHeight;
+    if (!w || !h) return;
+    cv.width  = Math.round(w * dpr);
+    cv.height = Math.round(h * dpr);
+    this.canvas = cv;
+    this.ctx = cv.getContext('2d');
+    if (!this.ctx) return;
+    this.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+    // Burst from the step's icon, or the card if the step has none.
+    const icon = document.getElementById('rsIcon');
+    const src  = (icon && icon.getBoundingClientRect().height > 0)
+      ? icon : document.getElementById('rsCard');
+    if (!src) return;
+    const r = src.getBoundingClientRect(), o = ov.getBoundingClientRect();
+    const ox = r.left - o.left + r.width  / 2;
+    const oy = r.top  - o.top  + r.height / 2;
+
+    const n = (window.matchMedia && window.matchMedia('(pointer: coarse)').matches) ? 36 : 60;
+    this.parts = [];
+    for (let i = 0; i < n; i++) {
+      const ang = Math.random() * Math.PI * 2;
+      const spd = 120 + Math.random() * 260;
+      this.parts.push({
+        x: ox, y: oy,
+        vx: Math.cos(ang) * spd,
+        vy: Math.sin(ang) * spd - 120,   // biased upward, so it reads as a burst
+        size: 4 + Math.random() * 5,
+        rot: Math.random() * Math.PI,
+        vr: (Math.random() - 0.5) * 8,
+        color: this.COLORS[i % this.COLORS.length],
+        life: 900 + Math.random() * 400,
+      });
+    }
+
+    const self = this;
+    this.t0 = performance.now();
+    let last = this.t0;
+    const tick = function (now) {
+      const dt = Math.min((now - last) / 1000, 0.05);   // clamped: a backgrounded
+      last = now;                                        // tab must not teleport
+      const elapsed = now - self.t0;
+      const c = self.ctx;
+      c.clearRect(0, 0, w, h);
+      let alive = 0;
+      for (let i = 0; i < self.parts.length; i++) {
+        const p = self.parts[i];
+        p.vy += 900 * dt;
+        p.vx *= 0.985; p.vy *= 0.985;
+        p.x += p.vx * dt; p.y += p.vy * dt;
+        p.rot += p.vr * dt;
+        const t = elapsed / p.life;
+        if (t >= 1) continue;
+        alive++;
+        c.save();
+        c.globalAlpha = 1 - t * t;
+        c.translate(p.x, p.y);
+        c.rotate(p.rot);
+        c.fillStyle = p.color;
+        c.fillRect(-p.size / 2, -p.size / 2, p.size, p.size * 0.62);
+        c.restore();
+      }
+      if (alive > 0 && elapsed < self.MAX_MS) self.raf = requestAnimationFrame(tick);
+      else self.stop();
+    };
+    this.raf = requestAnimationFrame(tick);
+  },
+
+  stop() {
+    if (this.raf) { cancelAnimationFrame(this.raf); this.raf = 0; }
+    if (this.ctx && this.canvas) this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+    this.parts = [];
+  },
+};
+
+// Synthesised, so there is no audio file to fetch, cache-bust, or license.
+// Everything routes through one GainNode: the toggle is a single mute point,
+// and nothing can be louder than that node allows.
+const RewardSound = {
+  ctx: null, master: null, enabled: true,
+
+  // MUST be called from inside a user gesture. iOS starts the context
+  // suspended and only arms it once something has actually played during a
+  // gesture, which is why the silent one-sample buffer is here.
+  init() {
+    if (this.ctx) {
+      if (this.ctx.state === 'suspended') this.ctx.resume();
+      return;
+    }
+    const AC = window.AudioContext || window.webkitAudioContext;
+    if (!AC) return;
+    try {
+      this.ctx = new AC();
+      this.master = this.ctx.createGain();
+      this.master.gain.value = this.enabled ? 1 : 0;
+      this.master.connect(this.ctx.destination);
+      const buf = this.ctx.createBuffer(1, 1, 22050);
+      const src = this.ctx.createBufferSource();
+      src.buffer = buf; src.connect(this.master); src.start(0);
+      if (this.ctx.state === 'suspended') this.ctx.resume();
+    } catch (err) {
+      // No audio is a degraded celebration, never a broken take.
+      console.warn('[sound] unavailable', err);
+      this.ctx = null; this.master = null;
+    }
+  },
+
+  setEnabled(on) {
+    this.enabled = !!on;
+    if (this.master) this.master.gain.value = this.enabled ? 1 : 0;
+    try { localStorage.setItem('mirror_sound', this.enabled ? '1' : '0'); } catch (err) {}
+  },
+
+  // isMicOpen() is checked here rather than at each call site so no future
+  // sound can forget it.
+  ready() {
+    return !!(this.ctx && this.master && this.enabled &&
+              this.ctx.state === 'running' && !isMicOpen());
+  },
+
+  // One very short, very quiet click. Meant to sit just under notice.
+  tick() {
+    if (!this.ready()) return;
+    const t = this.ctx.currentTime;
+    const o = this.ctx.createOscillator(), g = this.ctx.createGain();
+    o.type = 'sine'; o.frequency.value = 1800;
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(0.03, t + 0.002);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + 0.008);
+    o.connect(g); g.connect(this.master);
+    o.start(t); o.stop(t + 0.02);
+  },
+
+  // Rising A major triad, triangle through a low-pass so it reads warm rather
+  // than like a game blip. Last note starts at 220ms and decays by 620ms.
+  finale() {
+    if (!this.ready()) return;
+    const t0 = this.ctx.currentTime;
+    const lp = this.ctx.createBiquadFilter();
+    lp.type = 'lowpass'; lp.frequency.value = 2600; lp.Q.value = 0.6;
+    lp.connect(this.master);
+    const NOTES = [440, 554.37, 659.25];
+    for (let i = 0; i < NOTES.length; i++) {
+      const at = t0 + i * 0.11;
+      const o = this.ctx.createOscillator(), g = this.ctx.createGain();
+      o.type = 'triangle'; o.frequency.value = NOTES[i];
+      g.gain.setValueAtTime(0.0001, at);
+      g.gain.exponentialRampToValueAtTime(0.13, at + 0.012);   // soft attack
+      g.gain.exponentialRampToValueAtTime(0.0001, at + 0.38);  // decay tail
+      o.connect(g); g.connect(lp);
+      o.start(at); o.stop(at + 0.4);
+    }
+  },
+};
+window.RewardBurst = RewardBurst;
+window.RewardSound = RewardSound;
+
+function renderSoundToggle() {
+  const btn = el('btnSound');
+  if (!btn) return;
+  const on = RewardSound.enabled;
+  btn.classList.toggle('off', !on);
+  btn.setAttribute('aria-pressed', on ? 'true' : 'false');
+  btn.setAttribute('aria-label', on ? 'Sound on' : 'Sound off');
+  btn.title = on ? 'Sound on' : 'Sound off';
+}
+
+(function initSoundToggle() {
+  let stored = null;
+  try { stored = localStorage.getItem('mirror_sound'); } catch (err) {}
+  RewardSound.enabled = stored !== '0';   // default on
+  renderSoundToggle();
+  onClick('btnSound', function () {
+    // This tap is a gesture too, so it is a free second place to arm the
+    // context -- someone who toggles before ever recording still gets sound.
+    RewardSound.init();
+    RewardSound.setEnabled(!RewardSound.enabled);
+    renderSoundToggle();
+  });
+})();
+
 // ══════════════════════════════════════════════
 // POST-TAKE REWARD SEQUENCE
 // ══════════════════════════════════════════════
@@ -1704,6 +1937,12 @@ const RewardSequence = {
         : '';
     }
 
+    // The finale earns the arpeggio; every other step gets the tick, so the
+    // chord is never doubled with a click. Both no-op when the mic is open or
+    // sound is off -- see RewardSound.ready().
+    if (s.finale) RewardSound.finale();
+    else          RewardSound.tick();
+
     if (typeof s.onShow === 'function') s.onShow();
   },
 
@@ -1720,6 +1959,8 @@ const RewardSequence = {
   close() {
     const ov = document.getElementById('rewardSeq');
     if (ov) ov.classList.remove('open');
+    // No rAF may outlive the overlay.
+    RewardBurst.stop();
     this.steps = [];
     this.index = 0;
   },
@@ -1742,22 +1983,17 @@ document.addEventListener('keydown', function(e){
   if (ov) ov.addEventListener('click', function(e){ if (e.target === ov) RewardSequence.close(); });
 })();
 
+// Kept under its original name so the sequence's three onShow references need
+// no change. What it does is now entirely different: the previous version
+// appended 70 animated divs to <body> in six colours, with no reduced-motion
+// path, at a z-index below the overlay that calls it -- so on the PB and finale
+// steps it drew behind a 94%-opaque backdrop and arrived as a faint ghost.
+//
+// Its full-screen "New Personal Best!" banner is gone too. It duplicated the
+// step's own label on the PB screen, and on the finale it was simply wrong:
+// that step is a level-up, and the banner claimed a personal best.
 function showPBBlast() {
-  const COLORS = ['#C9A84C', '#fff', '#06d6a0', '#ffd166', '#f4a261', '#67e8f9'];
-  const el = document.createElement('div');
-  el.className = 'pb-blast';
-  let html = `<div class="pb-blast-text">&#11088; New Personal Best!</div>`;
-  for (let i = 0; i < 70; i++) {
-    const color = COLORS[i % COLORS.length];
-    const left  = Math.random() * 100;
-    const delay = Math.random() * 0.6;
-    const dur   = 1.4 + Math.random() * 1.4;
-    const size  = 6 + Math.floor(Math.random() * 6);
-    html += `<div class="pb-confetti" style="left:${left}%;width:${size}px;height:${size}px;background:${color};animation-duration:${dur}s;animation-delay:${delay}s"></div>`;
-  }
-  el.innerHTML = html;
-  document.body.appendChild(el);
-  setTimeout(() => el.remove(), 3200);
+  RewardBurst.fire();
 }
 
 function animateNum(el, from, to, ms) {

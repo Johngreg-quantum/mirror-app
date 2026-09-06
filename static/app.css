@@ -2429,6 +2429,24 @@ header {
   font-size: 11px; padding: 6px 12px 6px 9px;
 }
 
+/* Sound toggle. Deliberately NOT hidden on mobile the way .app-nav-progress
+   is below: the celebration fires on phones, and someone in a quiet office
+   has to be able to kill it before the first sound rather than after. */
+.btn-sound {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 32px; height: 32px; flex-shrink: 0; padding: 0;
+  background: rgba(255,255,255,.04);
+  border: 1px solid var(--border); border-radius: 8px;
+  color: var(--muted); cursor: pointer;
+  transition: color .2s, border-color .2s;
+  -webkit-tap-highlight-color: transparent;
+}
+.btn-sound:hover { color: var(--gold); border-color: var(--gold); }
+.btn-sound .snd-off { display: none; }
+.btn-sound.off { color: rgba(240,237,230,.28); }
+.btn-sound.off .snd-on  { display: none; }
+.btn-sound.off .snd-off { display: block; }
+
 /* ═══════════════════════════════════════════════
    CINEMATIC FEATURED HERO
 ═══════════════════════════════════════════════ */
