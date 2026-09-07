@@ -1576,18 +1576,31 @@ function isMicOpen() {
 // dependency means another <script> against a load budget that was just cut
 // from 9065ms to 4739ms, on a host with an ~8s cold start.
 //
-// Budget, deliberately tight -- the compositor here already carries blurred
-// bg-orbs and WebGL:
+// Budget -- the compositor here already carries blurred bg-orbs and WebGL:
 //   one canvas, not 70 animated DOM nodes as before
 //   backing store capped at 2x, so 3x phones do not pay triple fill
-//   36 particles on coarse pointers, 60 otherwise
+//   54 particles on coarse pointers, 90 otherwise, across two waves
 //   the loop cancels itself when every particle dies or MAX_MS passes
 //   stop() is called on close and on every step change; no rAF outlives the
 //   overlay, and nothing is registered that could restart it
+//
+// The count rose from 60 to 90 deliberately. Per-frame cost here is dominated
+// by clearing the full canvas -- about a million pixels at 2x -- which is
+// constant whatever the count, while each particle is roughly five canvas ops.
+// So particles are the cheap axis and duration is the expensive one. Spreading
+// the old 60 across a much wider arc would only have made the burst thinner,
+// which is the opposite of the problem: the screen reads as empty because
+// nothing occupies the air, not because the card is short.
 const RewardBurst = {
   raf: 0, parts: [], ctx: null, canvas: null, t0: 0,
-  MAX_MS: 1400,
-  COLORS: ['#c8a96e', '#f0ede6', '#ffffff'],
+  MAX_MS: 2600,           // second wave is born at 250ms and lives to ~2450ms
+  GRAVITY: 420,           // tuned with the launch speeds for a ~2s fall
+  // Gold-led rather than an even three-way split. Cream and white are near
+  // identical against #080808, so white was a third of the palette doing no
+  // work -- it is gone, and the ratio is 3:2 gold to cream. Read from a fixed
+  // pattern rather than sampled at random, so the weighting is the same in
+  // every burst instead of only on average.
+  COLORS: ['#c8a96e', '#c8a96e', '#c8a96e', '#f0ede6', '#f0ede6'],
 
   fire() {
     if (prefersReducedMotion()) return;
@@ -1608,30 +1621,47 @@ const RewardBurst = {
     if (!this.ctx) return;
     this.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
-    // Burst from the step's icon, or the card if the step has none.
+    // Vertically anchored on the step's icon, but emitted along a wide arc
+    // rather than from that one point, so the burst occupies the width of the
+    // screen instead of a spot in the middle of it.
     const icon = document.getElementById('rsIcon');
     const src  = (icon && icon.getBoundingClientRect().height > 0)
       ? icon : document.getElementById('rsCard');
     if (!src) return;
     const r = src.getBoundingClientRect(), o = ov.getBoundingClientRect();
-    const ox = r.left - o.left + r.width  / 2;
-    const oy = r.top  - o.top  + r.height / 2;
+    const cx = w / 2;
+    const oy = r.top - o.top + r.height / 2;
+    const span = Math.min(w * 0.82, 420);
 
-    const n = (window.matchMedia && window.matchMedia('(pointer: coarse)').matches) ? 36 : 60;
+    const coarse = !!(window.matchMedia && window.matchMedia('(pointer: coarse)').matches);
+    const total  = coarse ? 54 : 90;
+    // Two waves. The second is smaller and 250ms behind, so the air stays
+    // occupied after the first has started to fall rather than emptying at once.
+    const WAVES = [
+      { n: Math.round(total * 2 / 3), delay: 0,   sizeMin: 4, sizeVar: 5 },
+      { n: total - Math.round(total * 2 / 3), delay: 250, sizeMin: 3, sizeVar: 4 },
+    ];
+
     this.parts = [];
-    for (let i = 0; i < n; i++) {
-      const ang = Math.random() * Math.PI * 2;
-      const spd = 120 + Math.random() * 260;
-      this.parts.push({
-        x: ox, y: oy,
-        vx: Math.cos(ang) * spd,
-        vy: Math.sin(ang) * spd - 120,   // biased upward, so it reads as a burst
-        size: 4 + Math.random() * 5,
-        rot: Math.random() * Math.PI,
-        vr: (Math.random() - 0.5) * 8,
-        color: this.COLORS[i % this.COLORS.length],
-        life: 900 + Math.random() * 400,
-      });
+    for (let wv = 0; wv < WAVES.length; wv++) {
+      const W = WAVES[wv];
+      for (let i = 0; i < W.n; i++) {
+        // u walks the arc left to right; the jitter stops it looking like a comb.
+        const u   = (i + Math.random()) / W.n;
+        const arc = Math.cos((u - 0.5) * Math.PI);   // 1 at the centre, 0 at the ends
+        this.parts.push({
+          x: cx + (u - 0.5) * span,
+          y: oy - arc * h * 0.06,                    // a shallow rise in the middle
+          vx: (u - 0.5) * 240 + (Math.random() - 0.5) * 90,   // outward from centre
+          vy: -(170 + Math.random() * 210) * (0.55 + arc * 0.45),
+          size: W.sizeMin + Math.random() * W.sizeVar,
+          rot: Math.random() * Math.PI,
+          vr: (Math.random() - 0.5) * 8,
+          color: this.COLORS[(i + wv) % this.COLORS.length],
+          life: 1700 + Math.random() * 500,
+          delay: W.delay,
+        });
+      }
     }
 
     const self = this;
@@ -1644,13 +1674,21 @@ const RewardBurst = {
       const c = self.ctx;
       c.clearRect(0, 0, w, h);
       let alive = 0;
+      // Horizontal drag only, and expressed per second rather than per frame:
+      // a fixed per-frame multiplier makes the trajectory depend on frame rate,
+      // so the same burst would travel differently at 30fps and 60fps.
+      const damp = Math.pow(0.45, dt);
       for (let i = 0; i < self.parts.length; i++) {
         const p = self.parts[i];
-        p.vy += 900 * dt;
-        p.vx *= 0.985; p.vy *= 0.985;
+        const age = elapsed - p.delay;
+        // The second wave is scheduled inside this loop rather than by a timer,
+        // so there is still exactly one rAF to cancel and one thing to tear down.
+        if (age < 0) { alive++; continue; }
+        p.vy += self.GRAVITY * dt;
+        p.vx *= damp;
         p.x += p.vx * dt; p.y += p.vy * dt;
         p.rot += p.vr * dt;
-        const t = elapsed / p.life;
+        const t = age / p.life;
         if (t >= 1) continue;
         alive++;
         c.save();
@@ -1806,6 +1844,27 @@ function renderSoundToggle() {
   });
 })();
 
+// Small counts read better as words in a sentence; anything larger stays a
+// numeral. Used only by the context lines below.
+const COUNT_WORDS = ['', 'One', 'Two', 'Three', 'Four', 'Five', 'Six'];
+function countWord(n) { return COUNT_WORDS[n] || String(n); }
+
+// The division table is already on the client (app-config.js), so the points
+// remaining to the next rank need no request.
+function nextDivision(points) {
+  const list = (window.MIRROR_FRONTEND_CONFIG && window.MIRROR_FRONTEND_CONFIG.DIVISIONS) || [];
+  for (let i = 0; i < list.length; i++) if (list[i].min > points) return list[i];
+  return null;   // already at the top
+}
+
+// LEVEL_MAP is scene_id -> level and is populated at load, so the number of
+// scenes a level unlock opens is also already here.
+function countScenesAtLevel(level) {
+  let n = 0;
+  for (const id in LEVEL_MAP) if (LEVEL_MAP[id] === level) n++;
+  return n;
+}
+
 // ══════════════════════════════════════════════
 // POST-TAKE REWARD SEQUENCE
 // ══════════════════════════════════════════════
@@ -1829,12 +1888,18 @@ const RewardSequence = {
 
     if (data.is_new_pb) {
       const prev = (typeof data.prev_best === 'number') ? Math.round(data.prev_best) : null;
+      const gain = (prev !== null) ? Math.round(data.sync_score) - prev : 0;
       steps.push({
         icon: '⭐', label: 'New personal best',
         value: Math.round(data.sync_score) + '<sup>%</sup>',
-        sub: prev !== null
-          ? ('Your previous best on this scene was <strong>' + prev + '%</strong>.')
-          : 'Your first score on this scene.',
+        // Leads with what moved. Both numbers are in the submit response, so
+        // this costs nothing. Rounding can flatten a real PB to a gain of 0
+        // (88.4 -> 88.6), hence the fallback.
+        sub: prev === null
+          ? 'Your first score on this scene.'
+          : (gain > 0
+              ? ('<strong>+' + gain + '</strong> on your previous best of ' + prev + '%.')
+              : 'Your best on this scene yet.'),
         onShow: showPBBlast,
       });
     }
@@ -1860,17 +1925,41 @@ const RewardSequence = {
       });
     }
 
+    // Both mission steps used to invert the hierarchy: the mission's name sat
+    // at display size while the reward and the count were the smallest, dimmest
+    // text on the card. The reward leads now, and the name drops to support.
     (data.missions_updated || []).forEach(function(m){
       const meta = MISSION_META[m.mission_id] || {};
       const goal = m.goal || 0;
+      const done = !!m.completed;
+      const tally = goal > 0 ? (m.new_progress + ' / ' + goal) : '';
+      const left  = goal > 0 ? Math.max(0, goal - m.new_progress) : 0;
+      // On a completed mission the XP is the reward. On one still running the
+      // count IS the reward -- it is the evidence you moved. A mission that
+      // completes without fresh XP (already awarded) falls back to the count,
+      // so the hero slot is never empty.
+      const hero = (done && m.xp_earned > 0)
+        ? ('+' + m.xp_earned + '<sup>XP</sup>')
+        : tally;
       steps.push({
         icon: meta.icon || '🎯',
-        label: m.completed ? 'Mission complete' : 'Mission progress',
+        label: done ? 'Mission complete' : 'Mission progress',
+        value: hero,
+        mission: true,                       // demotes .rs-title to support
         title: meta.title || m.mission_id,
         bar: goal > 0 ? Math.min(100, Math.round((m.new_progress / goal) * 100)) : null,
-        sub: goal > 0
-          ? (m.new_progress + ' / ' + goal + (m.xp_earned > 0 ? ' · <strong>+' + m.xp_earned + ' XP</strong>' : ''))
-          : (m.xp_earned > 0 ? '<strong>+' + m.xp_earned + ' XP</strong>' : ''),
+        // Space Mono. On a completed mission this is the count; on one in
+        // progress it answers "what do I get at the end", which the old screen
+        // never said. MISSION_META carries the full reward already.
+        tally: (done && m.xp_earned > 0)
+          ? tally
+          : (!done && meta.xp ? ('Reward · +' + meta.xp + ' XP') : ''),
+        // Only a mission still running has something to say here. A completed
+        // one would need its reset date, which lives in /api/missions and is
+        // not loaded unless the Missions tab happened to be opened.
+        sub: (!done && left > 0)
+          ? (countWord(left) + ' more and the mission is yours.')
+          : '',
       });
     });
 
@@ -1878,19 +1967,35 @@ const RewardSequence = {
     // this does not depend on when the post-score refresh happens to run.
     const from = data.prev_division, to = data.division;
     if (from && to && from.name !== to.name) {
+      // This step had no hero at all: the rank it awarded rendered at 19px in
+      // .rs-ranks, smaller than the mission names on the steps before it. The
+      // division name leads now. The from/to row is dropped rather than kept
+      // beneath, which would print the same word twice at two sizes.
+      const pts  = data.total_points || 0;
+      const next = nextDivision(pts);
       steps.push({
         icon: '🏆', label: 'New rank',
-        ranks: { from: from.name, to: to.name },
-        sub: 'You reached <strong>' + to.name + '</strong>.',
+        value: to.name,
+        sub: next
+          ? ('Up from ' + from.name + '. <strong>' + (next.min - pts).toLocaleString() +
+             '</strong> points to ' + next.name + '.')
+          : ('Up from ' + from.name + '. Nothing ranks above this.'),
       });
     }
 
     if (levelUp) {
+      // Through .rs-value like every other hero, not .rs-title -- which the
+      // finale rendered at 44px, smaller than an ordinary step's 68px.
+      const opened = countScenesAtLevel(levelUp);
       steps.push({
         finale: true,
         icon: '🎬', label: 'Level unlocked',
-        title: 'LEVEL ' + levelUp,
-        sub: 'New scenes are now available.',
+        value: 'LEVEL ' + levelUp,
+        sub: opened === 1
+          ? 'One new scene is open to you.'
+          : (opened > 1
+              ? (countWord(opened) + ' new scenes are open to you.')
+              : 'New scenes are now available.'),
         onShow: showPBBlast,
       });
     }
@@ -1920,7 +2025,10 @@ const RewardSequence = {
       if (!('hidden' in el)) el.style.display = show ? '' : 'none';
     };
     const card = document.getElementById('rsCard');
-    if (card) card.classList.toggle('rs-finale', !!s.finale);
+    if (card) {
+      card.classList.toggle('rs-finale', !!s.finale);
+      card.classList.toggle('rs-mission', !!s.mission);
+    }
     const halo = document.getElementById('rsHalo');
     if (halo) halo.hidden = !s.finale;
 
@@ -1928,6 +2036,7 @@ const RewardSequence = {
     set('rsLabel', s.label, !!s.label);
     set('rsValue', s.value, !!s.value);
     set('rsTitle', s.title, !!s.title);
+    set('rsTally', s.tally, !!s.tally);
     set('rsSub',   s.sub,   !!s.sub);
 
     const ranks = document.getElementById('rsRanks');

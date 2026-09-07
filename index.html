@@ -1466,8 +1466,27 @@
     .rs-sub { font-size: 13px; line-height: 1.55; color: rgba(255,255,255,0.55); }
     .rs-sub strong { color: #f0ede6; font-weight: 600; }
 
+    /* On a mission step the reward is the hero and the mission's name is
+       support, so .rs-title drops out of display size into the subtitle role.
+       Scoped to the card rather than applied to .rs-title directly, because the
+       finale uses the same element -- the same reason .rs-finale exists. */
+    .rs-card.rs-mission .rs-title {
+      font-family: 'DM Sans', sans-serif;
+      font-size: 14px; font-weight: 500; letter-spacing: 0.01em;
+      color: rgba(255,255,255,0.55); margin-bottom: 2px;
+    }
+
+    /* Figures, not prose. Mirror reserves Space Mono for numbers; the tally
+       used to sit in .rs-sub at DM Sans body weight, which is exactly why it
+       read as a sentence rather than a count. */
+    .rs-tally {
+      font-family: 'Space Mono', monospace; font-size: 12px;
+      letter-spacing: 0.16em; color: rgba(240,237,230,0.62);
+      margin-top: 6px;
+    }
+
     .rs-bar-track {
-      height: 6px; border-radius: 3px; margin: 18px auto 8px; max-width: 240px;
+      height: 9px; border-radius: 5px; margin: 18px auto 8px; max-width: 240px;
       background: rgba(255,255,255,0.09); overflow: hidden;
     }
     .rs-bar-fill {
@@ -1487,7 +1506,9 @@
 
     /* Level up is the finale and gets the weight the others do not. */
     .rs-card.rs-finale .rs-icon  { font-size: 66px; margin-bottom: 22px; }
-    .rs-card.rs-finale .rs-title { font-size: 44px; color: #c8a96e; }
+    /* Up from the standard 68px, never down. A level unlock is the largest
+       thing that can happen here and used to render 35% smaller than "+60". */
+    .rs-card.rs-finale .rs-value { font-size: 84px; }
     .rs-card.rs-finale .rs-sub   { font-size: 14px; }
     .rs-halo {
       position: absolute; inset: -45% -25%; z-index: -1; pointer-events: none;
@@ -1509,7 +1530,7 @@
 
     @media (max-width: 480px) {
       .rs-value { font-size: 58px; }
-      .rs-card.rs-finale .rs-title { font-size: 36px; }
+      .rs-card.rs-finale .rs-value { font-size: 68px; }
     }
     @media (prefers-reduced-motion: reduce) {
       .rs-overlay, .rs-card, .rs-bar-fill { transition: none; }
@@ -6184,6 +6205,7 @@
       <span class="rs-rank"      id="rsRankTo"></span>
     </div>
     <div class="rs-bar-track" id="rsBarTrack" hidden><div class="rs-bar-fill" id="rsBarFill"></div></div>
+    <div class="rs-tally" id="rsTally"></div>
     <div class="rs-sub" id="rsSub"></div>
     <button class="rs-continue" id="rsContinue" type="button">Continue</button>
     <div class="rs-dots" id="rsDots"></div>
