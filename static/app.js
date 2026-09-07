@@ -1732,10 +1732,104 @@ const RewardSound = {
     o.start(t); o.stop(t + 0.02);
   },
 
-  // Rising A major triad, triangle through a low-pass so it reads warm rather
-  // than like a game blip. Last note starts at 220ms and decays by 620ms.
+  // Shared by every variant, so a back-to-back test compares timbre and
+  // nothing else. The previous chime was dull by construction rather than by
+  // accident: a 12ms attack removes the transient that reads as a strike, and
+  // a 2600Hz low-pass sits BELOW the partials that read as a bell. Both are
+  // fixed here for all variants.
+  //
+  // The last note leaps an octave above the root instead of stepping to the
+  // third. The leap is what reads as arrival.
+  NOTES:   [440, 554.37, 880],      // A4, C#5, A5
+  SPACING: 0.07,                    // one gesture, not three notes
+  ATTACK:  0.0015,                  // the transient IS the reward
+  DECAY:   [0.24, 0.24, 0.34],      // ~480ms total
+
+  // High enough to shape rather than dull. Kept mainly to tame FM aliasing in
+  // variant B; at 9kHz it costs nothing perceptually.
+  _shaper() {
+    const lp = this.ctx.createBiquadFilter();
+    lp.type = 'lowpass'; lp.frequency.value = 9000; lp.Q.value = 0.7;
+    lp.connect(this.master);
+    return lp;
+  },
+
+  _voice(freq, at, peak, decay, dest) {
+    const o = this.ctx.createOscillator(), g = this.ctx.createGain();
+    o.type = 'sine'; o.frequency.value = freq;
+    g.gain.setValueAtTime(0.0001, at);
+    g.gain.exponentialRampToValueAtTime(peak, at + this.ATTACK);
+    g.gain.exponentialRampToValueAtTime(0.0001, at + decay);
+    o.connect(g); g.connect(dest);
+    o.start(at); o.stop(at + decay + 0.02);
+  },
+
+  // TEMPORARY -- remove after chime selection, keeping only the winner and
+  // renaming it back to finale(). The sequence only ever calls finale(), so
+  // nothing downstream knows this dispatch exists.
+  finaleVariant: 'a',
+
   finale() {
     if (!this.ready()) return;
+    if (this.finaleVariant === 'b')   return this._finaleB();
+    if (this.finaleVariant === 'c')   return this._finaleC();
+    if (this.finaleVariant === 'old') return this._finaleOld();
+    return this._finaleA();
+  },
+
+  // A -- additive bell. Fundamental plus octave plus a fifth above that. The
+  // upper partials are what read as sparkle; a lone sine reads as a test tone.
+  _finaleA(dest) {
+    const out = dest || this._shaper(), t0 = this.ctx.currentTime;
+    for (let i = 0; i < this.NOTES.length; i++) {
+      const f = this.NOTES[i], at = t0 + i * this.SPACING, d = this.DECAY[i];
+      this._voice(f,     at, 0.30, d,       out);
+      this._voice(f * 2, at, 0.15, d * 0.8, out);
+      this._voice(f * 3, at, 0.07, d * 0.6, out);
+    }
+    return { out: out, t0: t0 };
+  },
+
+  // B -- FM bell. The modulator sits at a deliberately NON-integer 3.5x:
+  // integer ratios sound like an organ, inharmonic ones like struck metal.
+  // Modulation depth decays faster than amplitude, so the note starts clangy
+  // and settles toward a pure tone -- the classic bell gesture.
+  _finaleB() {
+    const out = this._shaper(), t0 = this.ctx.currentTime;
+    for (let i = 0; i < this.NOTES.length; i++) {
+      const f = this.NOTES[i], at = t0 + i * this.SPACING, d = this.DECAY[i];
+      const car = this.ctx.createOscillator(), amp = this.ctx.createGain();
+      car.type = 'sine'; car.frequency.value = f;
+      const mod = this.ctx.createOscillator(), depth = this.ctx.createGain();
+      mod.type = 'sine'; mod.frequency.value = f * 3.5;
+      depth.gain.setValueAtTime(f * 6, at);
+      depth.gain.exponentialRampToValueAtTime(f * 0.2, at + 0.12);
+      mod.connect(depth); depth.connect(car.frequency);
+      amp.gain.setValueAtTime(0.0001, at);
+      amp.gain.exponentialRampToValueAtTime(0.30, at + this.ATTACK);
+      amp.gain.exponentialRampToValueAtTime(0.0001, at + d);
+      car.connect(amp); amp.connect(out);
+      mod.start(at); car.start(at);
+      mod.stop(at + d + 0.02); car.stop(at + d + 0.02);
+    }
+  },
+
+  // C -- A plus shimmer on the FINAL note only. Inharmonic Risset-bell ratios,
+  // arriving 10ms late so they land as a ping on top of the strike rather than
+  // thickening it. A against C isolates whether the shimmer earns its place.
+  _finaleC() {
+    const r = this._finaleA();
+    const last = this.NOTES[this.NOTES.length - 1];
+    const at = r.t0 + (this.NOTES.length - 1) * this.SPACING + 0.01;
+    const RATIOS = [2.76, 5.4, 8.9], PEAKS = [0.09, 0.06, 0.04];
+    for (let i = 0; i < RATIOS.length; i++) {
+      this._voice(last * RATIOS[i], at, PEAKS[i], 0.14, r.out);
+    }
+  },
+
+  // The chime as currently deployed, kept only as a reference point for the
+  // test: brighter is meaningless except against what you already heard.
+  _finaleOld() {
     const t0 = this.ctx.currentTime;
     const lp = this.ctx.createBiquadFilter();
     lp.type = 'lowpass'; lp.frequency.value = 2600; lp.Q.value = 0.6;
@@ -1746,8 +1840,8 @@ const RewardSound = {
       const o = this.ctx.createOscillator(), g = this.ctx.createGain();
       o.type = 'triangle'; o.frequency.value = NOTES[i];
       g.gain.setValueAtTime(0.0001, at);
-      g.gain.exponentialRampToValueAtTime(0.13, at + 0.012);   // soft attack
-      g.gain.exponentialRampToValueAtTime(0.0001, at + 0.38);  // decay tail
+      g.gain.exponentialRampToValueAtTime(0.13, at + 0.012);
+      g.gain.exponentialRampToValueAtTime(0.0001, at + 0.38);
       o.connect(g); g.connect(lp);
       o.start(at); o.stop(at + 0.4);
     }
@@ -1777,6 +1871,38 @@ function renderSoundToggle() {
     RewardSound.init();
     RewardSound.setEnabled(!RewardSound.enabled);
     renderSoundToggle();
+  });
+})();
+
+// TEMPORARY -- chime A/B test, gated behind ?chime=1 so it never reaches a
+// real user. Remove with the variants once one is chosen.
+//
+// Plays tick -> gap -> finale rather than the finale alone. In the real
+// sequence the tick lands on the step before, and a bright finale following a
+// dull tick can read as disconnected -- which only shows up when the two are
+// adjacent. The gap approximates that step change: the 180ms card swap in
+// RewardSequence.next() plus a moment of tap latency.
+(function initChimeLab() {
+  if (!/[?&]chime=1/.test(location.search)) return;
+  const bar = document.getElementById('chimeLab');
+  if (!bar) return;
+  bar.hidden = false;
+  bar.addEventListener('click', function (ev) {
+    const btn = ev.target.closest('[data-chime]');
+    if (!btn) return;
+    RewardSound.init();          // this tap is the gesture
+    const play = function () {
+      RewardSound.finaleVariant = btn.getAttribute('data-chime');
+      RewardSound.tick();
+      setTimeout(function () { RewardSound.finale(); }, 450);
+    };
+    // resume() is async on iOS; without this the first tap after a cold load
+    // would be silent and read as a broken variant.
+    if (RewardSound.ctx && RewardSound.ctx.state === 'suspended') {
+      RewardSound.ctx.resume().then(play);
+    } else {
+      play();
+    }
   });
 })();
 
