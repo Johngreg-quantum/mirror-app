@@ -1515,34 +1515,6 @@
       .rs-overlay, .rs-card, .rs-bar-fill { transition: none; }
     }
 
-    /* TEMPORARY -- chime A/B test bar (?chime=1). Remove with the variants.
-       z-index clears the reward overlay's 100001 so the bar stays usable while
-       the sequence is open. The [hidden] rule is required because an author
-       `display` beats the hidden attribute -- the same trap already documented
-       for .rs-overlay above. */
-    .chime-lab {
-      position: fixed; left: 50%; bottom: 18px; transform: translateX(-50%);
-      z-index: 100002; display: flex; align-items: center; gap: 8px;
-      padding: 10px 12px; border-radius: 12px;
-      background: rgba(10,10,14,0.94);
-      border: 1px solid rgba(200,169,110,0.35);
-      backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
-    }
-    .chime-lab[hidden] { display: none; }
-    .chime-lab-label {
-      font-family: 'Space Mono', monospace; font-size: 9px;
-      letter-spacing: 0.24em; color: rgba(200,169,110,0.7);
-    }
-    .chime-lab button {
-      min-width: 44px; min-height: 44px; padding: 0 12px;
-      background: rgba(255,255,255,0.05); color: #f0ede6;
-      border: 1px solid rgba(240,237,230,0.14); border-radius: 9px;
-      font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 600;
-      cursor: pointer; touch-action: manipulation;
-      -webkit-tap-highlight-color: transparent;
-    }
-    .chime-lab button:active { background: rgba(200,169,110,0.25); }
-
     /* First-run recording consent (privacy policy §6). Informational, not a
        warning — gold rather than the delete modal's red.
 
@@ -6216,16 +6188,6 @@
     <button class="rs-continue" id="rsContinue" type="button">Continue</button>
     <div class="rs-dots" id="rsDots"></div>
   </div>
-</div>
-
-<!-- TEMPORARY -- chime A/B test bar. Only appears with ?chime=1; remove along
-     with the finale variants once one is chosen. -->
-<div class="chime-lab" id="chimeLab" hidden>
-  <span class="chime-lab-label">CHIME</span>
-  <button type="button" data-chime="a">A</button>
-  <button type="button" data-chime="b">B</button>
-  <button type="button" data-chime="c">C</button>
-  <button type="button" data-chime="old">old</button>
 </div>
 
 <!-- First-run recording consent (privacy policy §6). Opened by startRec() when
