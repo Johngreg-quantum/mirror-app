@@ -1144,7 +1144,6 @@ function resetRec() {
   setOn('scorePanel', false);
   setOn('pbCompare', false);
   setDisplay('phonSection', 'none');
-  setOn('pbBanner', false);
   setOn('perfectBadge', false);
   const ptsPanel = el('ptsEarned');
   setOn('ptsEarned', false);
@@ -1531,23 +1530,18 @@ function showScore(data) {
   renderPhonemeBreakdown(data.expected, data.transcription);
   showPointsEarned(data);
 
-  // The card is step 1 of the sequence, and two of its children now have
-  // screens of their own — the PB banner (step 2) and the points block
-  // (step 3). Hide them here so the same fact is not announced twice, once on
-  // the overlay and again on the card behind it. They are restored when no
-  // sequence runs, which is what a plain take with nothing earned looks like.
+  // The card is step 1 of the sequence, and the points block has a screen of
+  // its own. Hide it here so the same fact is not announced twice, once on the
+  // overlay and again on the card behind it; it is restored when no sequence
+  // runs, which is what a plain take with nothing earned looks like.
+  //
+  // The PB banner used to be handled here too. It never actually appeared:
+  // build() pushes the PB step on exactly the condition that guarded the
+  // banner, so the branch could not fire. Both are gone.
   const seq = (typeof RewardSequence !== 'undefined')
     ? RewardSequence.build(data, null) : [];
-  const seqOwnsPb  = seq.some(function(s){ return s.label === 'New personal best'; });
   const seqOwnsXp  = seq.some(function(s){ return s.label === 'Points earned'; });
   setOn('ptsEarned', !seqOwnsXp);
-
-  if (data.is_new_pb) {
-    setOn('pbBanner', !seqOwnsPb);
-    // The confetti moves to the PB screen; firing it here would burst behind
-    // the overlay. showPBBlast is the step's onShow instead.
-    if (!seqOwnsPb) showPBBlast();
-  }
 
   if (challengeCtx) {
     showChallengeResult(pct, challengeCtx.score_to_beat);
@@ -1900,7 +1894,7 @@ const RewardSequence = {
           : (gain > 0
               ? ('<strong>+' + gain + '</strong> on your previous best of ' + prev + '%.')
               : 'Your best on this scene yet.'),
-        onShow: showPBBlast,
+        onShow: fireCelebration,
       });
     }
 
@@ -1967,10 +1961,10 @@ const RewardSequence = {
     // this does not depend on when the post-score refresh happens to run.
     const from = data.prev_division, to = data.division;
     if (from && to && from.name !== to.name) {
-      // This step had no hero at all: the rank it awarded rendered at 19px in
-      // .rs-ranks, smaller than the mission names on the steps before it. The
-      // division name leads now. The from/to row is dropped rather than kept
-      // beneath, which would print the same word twice at two sizes.
+      // This step had no hero at all: the rank it awarded rendered at 19px in a
+      // from/to row, smaller than the mission names on the steps before it. The
+      // division name leads now. That row is gone rather than kept beneath,
+      // which would print the same word twice at two sizes.
       const pts  = data.total_points || 0;
       const next = nextDivision(pts);
       steps.push({
@@ -1996,7 +1990,7 @@ const RewardSequence = {
           : (opened > 1
               ? (countWord(opened) + ' new scenes are open to you.')
               : 'New scenes are now available.'),
-        onShow: showPBBlast,
+        onShow: fireCelebration,
       });
     }
 
@@ -2038,15 +2032,6 @@ const RewardSequence = {
     set('rsTitle', s.title, !!s.title);
     set('rsTally', s.tally, !!s.tally);
     set('rsSub',   s.sub,   !!s.sub);
-
-    const ranks = document.getElementById('rsRanks');
-    if (ranks) {
-      ranks.hidden = !s.ranks;
-      if (s.ranks) {
-        document.getElementById('rsRankFrom').textContent = s.ranks.from;
-        document.getElementById('rsRankTo').textContent   = s.ranks.to;
-      }
-    }
 
     const track = document.getElementById('rsBarTrack');
     const fill  = document.getElementById('rsBarFill');
@@ -2118,16 +2103,14 @@ document.addEventListener('keydown', function(e){
   if (ov) ov.addEventListener('click', function(e){ if (e.target === ov) RewardSequence.close(); });
 })();
 
-// Kept under its original name so the sequence's three onShow references need
-// no change. What it does is now entirely different: the previous version
-// appended 70 animated divs to <body> in six colours, with no reduced-motion
-// path, at a z-index below the overlay that calls it -- so on the PB and finale
-// steps it drew behind a 94%-opaque backdrop and arrived as a faint ghost.
+// A thin wrapper so a step's onShow can be a bare function reference:
+// RewardBurst.fire passed directly would be called as s.onShow() and lose its
+// `this`.
 //
-// Its full-screen "New Personal Best!" banner is gone too. It duplicated the
-// step's own label on the PB screen, and on the finale it was simply wrong:
-// that step is a level-up, and the banner claimed a personal best.
-function showPBBlast() {
+// Named showPBBlast until now, which had stopped being true twice over -- it
+// no longer draws a personal-best banner, and it also runs on the level-up
+// finale, which is not a personal best.
+function fireCelebration() {
   RewardBurst.fire();
 }
 

@@ -1759,37 +1759,6 @@ header {
   padding: 3px 9px; border-radius: 100px;
 }
 
-/* PB banner inside score panel */
-.pb-banner {
-  display: none; margin-bottom: 14px; padding: 10px 16px;
-  background: rgba(201,168,76,.1); border: 1px solid rgba(201,168,76,.4);
-  border-radius: 10px; color: var(--gold);
-  font-family: 'Bebas Neue', cursive; font-size: 20px; letter-spacing: .08em;
-  text-align: center;
-}
-.pb-banner.on { display: block; animation: pb-in .45s cubic-bezier(.175,.885,.32,1.275); }
-@keyframes pb-in { 0%{transform:scale(.85);opacity:0} 100%{transform:scale(1);opacity:1} }
-
-/* Confetti blast overlay */
-.pb-blast { position: fixed; inset: 0; pointer-events: none; z-index: 10001; overflow: hidden; }
-.pb-blast-text {
-  position: absolute; top: 28%; left: 50%; transform: translateX(-50%);
-  font-family: 'Bebas Neue', cursive; font-size: 48px; letter-spacing: .12em; white-space: nowrap;
-  color: var(--gold); text-shadow: 0 0 60px rgba(201,168,76,.9), 0 2px 0 rgba(0,0,0,.5);
-  animation: pb-text-pop .7s cubic-bezier(.175,.885,.32,1.275) forwards;
-}
-@media (max-width:480px) { .pb-blast-text { font-size: 32px; } }
-@keyframes pb-text-pop {
-  0%   { opacity:0; transform:translateX(-50%) scale(.4); }
-  70%  { opacity:1; transform:translateX(-50%) scale(1.08); }
-  100% { opacity:1; transform:translateX(-50%) scale(1); }
-}
-.pb-confetti { position: absolute; width: 8px; height: 8px; border-radius: 2px; animation: pb-fall linear forwards; }
-@keyframes pb-fall {
-  0%   { opacity:1; transform:translateY(-10px) rotate(0deg); }
-  100% { opacity:0; transform:translateY(100vh) rotate(720deg); }
-}
-
 /* Personal Bests in Progress modal */
 .pb-section-label {
   font-size: 10px; letter-spacing: .18em; text-transform: uppercase;

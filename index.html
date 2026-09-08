@@ -1494,15 +1494,11 @@
       transition: width 0.7s cubic-bezier(.22,.9,.3,1);
     }
 
-    .rs-ranks { display: flex; align-items: center; justify-content: center; gap: 16px; margin-bottom: 14px; }
     /* An author `display` declaration beats the `hidden` attribute's UA rule,
-       so .rs-ranks stayed visible when hidden and leaked its arrow onto every
-       other step. Anything inside this overlay that toggles via `hidden` needs
-       this. */
+       so an element given one stays visible while hidden. Kept as a guard for
+       anything inside this overlay that toggles via `hidden`; the row that
+       originally needed it has since been removed. */
     .rs-overlay [hidden] { display: none !important; }
-    .rs-rank { font-family: 'Bebas Neue', sans-serif; font-size: 19px; letter-spacing: 0.08em; }
-    .rs-rank.from { color: rgba(255,255,255,0.32); }
-    .rs-arrow { color: rgba(200,169,110,0.6); font-size: 17px; }
 
     /* Level up is the finale and gets the weight the others do not. */
     .rs-card.rs-finale .rs-icon  { font-size: 66px; margin-bottom: 22px; }
@@ -5867,7 +5863,6 @@
         <div class="score-bar-track">
           <div class="score-bar-fill" id="scoreBar"></div>
         </div>
-        <div class="pb-banner" id="pbBanner">&#11088; New Personal Best!</div>
         <div class="perfect-badge" id="perfectBadge">&#11088; Perfect Score! You nailed every word.</div>
         <div class="pts-earned" id="ptsEarned">
           <div class="pts-earned-left">
@@ -6199,11 +6194,6 @@
     <div class="rs-label" id="rsLabel"></div>
     <div class="rs-value" id="rsValue"></div>
     <div class="rs-title" id="rsTitle"></div>
-    <div class="rs-ranks" id="rsRanks" hidden>
-      <span class="rs-rank from" id="rsRankFrom"></span>
-      <span class="rs-arrow">&rarr;</span>
-      <span class="rs-rank"      id="rsRankTo"></span>
-    </div>
     <div class="rs-bar-track" id="rsBarTrack" hidden><div class="rs-bar-fill" id="rsBarFill"></div></div>
     <div class="rs-tally" id="rsTally"></div>
     <div class="rs-sub" id="rsSub"></div>
