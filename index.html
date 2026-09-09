@@ -5460,9 +5460,12 @@
     <div class="price-card-edt pro">
       <div class="price-card-tier">Pro</div>
       <div class="price-card-amount">
-        <span class="pro-price" data-monthly="$4.99" data-yearly="$3.99">$3.99</span><span style="font-size:22px;color:rgba(255,255,255,0.5);">/mo</span>
+        <!-- Amount and cadence come from /api/billing/plans, which reads them
+             from Lemon Squeezy. This card used to state $4.99 for a variant that
+             charges $8.99. A price the store owns does not belong in markup. -->
+        <span class="pro-price" id="proPriceAmount">&mdash;</span><span style="font-size:22px;color:rgba(255,255,255,0.5);">/mo</span>
       </div>
-      <div class="pro-price-sub" data-yearly-text="billed yearly ($47.88/year)" data-monthly-text="">billed yearly ($47.88/year)</div>
+      <div class="pro-price-sub" id="proPriceSub"></div>
       <ul class="price-card-features">
         <li>All 47 scenes</li>
         <li>Spanish translations</li>
@@ -6404,8 +6407,12 @@
         <span>Advanced ranks</span>
         <span>Priority releases</span>
       </div>
-      <button class="pro-upgrade-btn" onclick="document.getElementById('pricingProBtn').click()">
-        Upgrade — $3.99/mo
+      <!-- Label is rendered from the active plan. It read "$3.99/mo" while
+           starting a $47.88 annual checkout: the pill that chooses the plan is
+           on the landing page, which is hidden once signed in, so yearly always
+           won and nothing said so. -->
+      <button class="pro-upgrade-btn" id="proUpgradeBtn" onclick="document.getElementById('pricingProBtn').click()">
+        <span id="proUpgradeLabel">Upgrade</span>
       </button>
     </div>
   </div>
@@ -7800,21 +7807,10 @@ function checkLevel2Unlock() {
     });
   });
 
-  // Pricing pill: swap Pro price between monthly and yearly
-  const pricingPill = document.getElementById('pricingPill');
-  if (pricingPill) {
-    pricingPill.addEventListener('pill:change', (e) => {
-      const mode = e.detail.value; // 'monthly' or 'yearly'
-      const priceEl = document.querySelector('.pro-price');
-      const subEl = document.querySelector('.pro-price-sub');
-      if (priceEl) {
-        priceEl.textContent = mode === 'yearly' ? priceEl.dataset.yearly : priceEl.dataset.monthly;
-      }
-      if (subEl) {
-        subEl.textContent = mode === 'yearly' ? subEl.dataset.yearlyText : subEl.dataset.monthlyText;
-      }
-    });
-  }
+  // The Pro price used to be swapped here from data- attributes on the markup.
+  // Both the amounts and the variant ids now come from /api/billing/plans, so
+  // BillingPlans in app.js listens for pill:change and re-renders. Nothing in
+  // this file knows what a plan costs.
 })();
 </script>
 

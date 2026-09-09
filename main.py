@@ -215,6 +215,12 @@ LS_API_KEY        = os.getenv("LEMONSQUEEZY_API_KEY", "")
 LS_SIGNING_SECRET = os.getenv("LEMONSQUEEZY_SIGNING_SECRET", "")
 LS_MONTHLY_ID     = os.getenv("LEMONSQUEEZY_MONTHLY_VARIANT_ID", "")
 LS_YEARLY_ID      = os.getenv("LEMONSQUEEZY_YEARLY_VARIANT_ID", "")
+LS_LEVEL1_ID      = os.getenv("LEMONSQUEEZY_LEVEL1_VARIANT_ID", "")
+# Lemon Squeezy keeps one store id across test and live, so the previous
+# hardcoded value stays the default and nothing breaks if this is unset.
+# It reads from the environment anyway, because it is the store's number to
+# own rather than this file's.
+LS_STORE_ID       = os.getenv("LEMONSQUEEZY_STORE_ID", "396208")
 
 
 def build_app_url(path: str) -> str:
@@ -1457,6 +1463,119 @@ async def delete_account(req: DeleteAccountRequest, user: dict = Depends(current
 
 # ─── Lemon Squeezy billing ───────────────────────────────────────────────────
 
+# ─── Plan catalogue ──────────────────────────────────────────────────────────
+# Variant ids used to be hardcoded in static/app.js. Test and live stores have
+# different ids, so swapping in a live key made every checkout fail with
+# "Invalid variant" and nothing in the code explained why: the ids were still
+# syntactically valid, just from the other store. They come from the
+# environment now, and the client asks for them, so going live is a config
+# change rather than a code change.
+#
+# A plan with no id configured is simply absent, which is how a deployment
+# without billing serves an empty catalogue instead of a broken one.
+def _configured_plans() -> list:
+    rows = (
+        ("monthly", LS_MONTHLY_ID, "Monthly"),
+        ("yearly",  LS_YEARLY_ID,  "Yearly"),
+        ("level1",  LS_LEVEL1_ID,  "Mirror Level 1"),
+    )
+    return [{"key": k, "variant_id": str(v), "label": lb} for k, v, lb in rows if v]
+
+
+def _allowed_variant_ids() -> set:
+    """The checkout allowlist, derived from the same registry the catalogue
+    serves. One source, so a new plan is an env var and nothing else."""
+    return {p["variant_id"] for p in _configured_plans()}
+
+
+# Prices belong to the store, not to this codebase, so they are read from the
+# API rather than restated here. Cached because the pricing card is on the
+# landing page: without this, every visitor would cost a round trip to Lemon
+# Squeezy on a host that already has an ~8s cold start.
+_LS_PRICE_CACHE = {"at": 0.0, "variants": {}}
+_LS_PRICE_TTL   = 600     # seconds
+
+
+async def _ls_variant_prices() -> dict:
+    """variant_id -> price attributes, or the last good copy if Lemon Squeezy
+    is unreachable.
+
+    Never raises. A failure here must not take out the pricing card or the
+    checkout button: ids come from the environment and are always available,
+    so the worst case is a missing price, not a broken purchase."""
+    now = time.time()
+    if _LS_PRICE_CACHE["variants"] and now - _LS_PRICE_CACHE["at"] < _LS_PRICE_TTL:
+        return _LS_PRICE_CACHE["variants"]
+    if not LS_API_KEY:
+        return _LS_PRICE_CACHE["variants"]
+
+    # One request for the whole store: products with their variants included.
+    url = ("https://api.lemonsqueezy.com/v1/products"
+           f"?filter[store_id]={LS_STORE_ID}&include=variants")
+    try:
+        async with httpx.AsyncClient() as client:
+            resp = await client.get(
+                url,
+                headers={
+                    "Authorization": f"Bearer {LS_API_KEY}",
+                    "Accept": "application/vnd.api+json",
+                },
+                timeout=10,
+            )
+        if resp.status_code != 200:
+            logger.warning("[billing] variant fetch got HTTP %s", resp.status_code)
+            return _LS_PRICE_CACHE["variants"]
+        body = resp.json()
+    except Exception as exc:
+        logger.warning("[billing] variant fetch failed: %s", exc)
+        return _LS_PRICE_CACHE["variants"]
+
+    variants = {}
+    for item in body.get("included", []):
+        if item.get("type") != "variants":
+            continue
+        a = item.get("attributes", {})
+        variants[str(item.get("id"))] = {
+            "name":            a.get("name"),
+            "price_cents":     a.get("price"),
+            "interval":        a.get("interval"),
+            "interval_count":  a.get("interval_count"),
+            "is_subscription": bool(a.get("is_subscription")),
+            "status":          a.get("status"),
+            "test_mode":       bool(a.get("test_mode")),
+        }
+    if variants:
+        _LS_PRICE_CACHE["variants"] = variants
+        _LS_PRICE_CACHE["at"] = now
+    return _LS_PRICE_CACHE["variants"]
+
+
+@app.get("/api/billing/plans")
+async def billing_plans():
+    """Plans the client may offer, with prices from the store.
+
+    Unauthenticated: the pricing card is on the public landing page.
+
+    `prices_live` tells the client whether the amounts are real. When it is
+    false the ids are still correct, so the button must stay usable and only
+    the amount degrades -- showing a stale hardcoded price is the failure this
+    endpoint exists to prevent."""
+    prices = await _ls_variant_prices()
+    out = []
+    for p in _configured_plans():
+        info = prices.get(p["variant_id"], {})
+        out.append({
+            "key":             p["key"],
+            "variant_id":      p["variant_id"],
+            "label":           p["label"],
+            "price_cents":     info.get("price_cents"),
+            "interval":        info.get("interval"),
+            "interval_count":  info.get("interval_count"),
+            "is_subscription": info.get("is_subscription"),
+        })
+    return {"plans": out, "prices_live": bool(prices)}
+
+
 @app.post("/api/billing/checkout")
 async def create_checkout(request: Request, user: dict = Depends(current_user)):
     """Create a Lemon Squeezy checkout session and return the checkout URL."""
@@ -1469,8 +1588,9 @@ async def create_checkout(request: Request, user: dict = Depends(current_user)):
     if not variant_id:
         raise HTTPException(status_code=400, detail="variant_id required")
 
-    # Only allow our known variant IDs
-    if str(variant_id) not in [LS_MONTHLY_ID, LS_YEARLY_ID]:
+    # Only allow configured variants. Derived from the same registry
+    # /api/billing/plans serves, so the two can never disagree.
+    if str(variant_id) not in _allowed_variant_ids():
         raise HTTPException(status_code=400, detail="Invalid variant")
 
     if not LS_API_KEY:
@@ -1493,7 +1613,7 @@ async def create_checkout(request: Request, user: dict = Depends(current_user)):
             },
             "relationships": {
                 "store": {
-                    "data": {"type": "stores", "id": "396208"}
+                    "data": {"type": "stores", "id": LS_STORE_ID}
                 },
                 "variant": {
                     "data": {"type": "variants", "id": str(variant_id)}

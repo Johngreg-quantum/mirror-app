@@ -637,17 +637,152 @@ function closeAuthModal() {
 onClick('authModalClose', closeAuthModal);
 bindBackdropDismiss('authModalOverlay', closeAuthModal);
 
+// ══════════════════════════════
+// BILLING PLANS
+// ══════════════════════════════
+// Variant ids and prices belong to the Lemon Squeezy store, so they are
+// fetched rather than restated here. /api/billing/plans reads ids from the
+// environment and prices from the store, which makes going live a config
+// change instead of a code change.
+//
+// Loaded lazily on first sight of a pricing surface: both the pricing card and
+// the in-app upgrade card are below the fold, so this costs nothing at page
+// load, which matters on a landing page that was just cut from 9065ms to
+// 4739ms.
+const BillingPlans = {
+  plans: null, pricesLive: false, promise: null,
+
+  load() {
+    if (this.promise) return this.promise;
+    const self = this;
+    this.promise = fetch(`${API}/api/billing/plans`)
+      .then(function (r) { return r.json(); })
+      .then(function (d) {
+        self.plans = Array.isArray(d.plans) ? d.plans : [];
+        self.pricesLive = !!d.prices_live;
+        self.render();
+        return self.plans;
+      })
+      .catch(function () {
+        self.plans = []; self.pricesLive = false; self.render(); return [];
+      });
+    return this.promise;
+  },
+
+  get(key) {
+    return (this.plans || []).filter(function (p) { return p.key === key; })[0] || null;
+  },
+
+  activeBilling() {
+    const pill = document.querySelector('#pricingPill .mc-pill.active');
+    return pill ? pill.dataset.billing : 'yearly';
+  },
+
+  money(cents) {
+    return (cents === null || cents === undefined) ? null : '$' + (cents / 100).toFixed(2);
+  },
+
+  // Lets the card keep its "/mo" presentation for a yearly plan without this
+  // file knowing what a year costs.
+  perMonthCents(p) {
+    if (!p || p.price_cents === null || p.price_cents === undefined) return null;
+    // A one-time plan has no months to divide by. Lemon Squeezy still returns
+    // an `interval` on those variants -- Mirror Level 1 comes back as
+    // interval:'year' with is_subscription:false -- so trusting interval alone
+    // would price a $1 purchase at $0.08.
+    if (!p.is_subscription) return p.price_cents;
+    const n = p.interval_count || 1;
+    const months = p.interval === 'year' ? 12 * n : (p.interval === 'month' ? n : 1);
+    return Math.round(p.price_cents / months);
+  },
+
+  render() {
+    const plan  = this.get(this.activeBilling());
+    const perMo = this.money(this.perMonthCents(plan));
+    const total = this.money(plan ? plan.price_cents : null);
+
+    const amountEl = document.getElementById('proPriceAmount');
+    if (amountEl) amountEl.textContent = perMo || '\u2014';
+
+    const subEl = document.getElementById('proPriceSub');
+    if (subEl) {
+      subEl.textContent = (plan && plan.is_subscription && plan.interval === 'year' && total)
+        ? ('billed yearly (' + total + '/year)')
+        : '';
+    }
+
+    // States the charge that will actually be made, not a per-month rate for a
+    // plan billed annually.
+    const upLabel = document.getElementById('proUpgradeLabel');
+    if (upLabel) {
+      upLabel.textContent = !plan || !total
+        ? 'Upgrade'
+        : (plan.is_subscription && plan.interval
+            ? ('Upgrade \u2014 ' + total + '/' + plan.interval)
+            : ('Upgrade \u2014 ' + total));
+    }
+
+    // No configured plans means billing is not set up. Better a disabled button
+    // than one that opens a checkout which cannot succeed.
+    const none = !this.plans || !this.plans.length;
+    ['pricingProBtn', 'proUpgradeBtn'].forEach(function (id) {
+      const b = document.getElementById(id);
+      if (!b) return;
+      b.disabled = none;
+      b.title = none ? 'Pricing is unavailable right now' : '';
+    });
+  },
+};
+window.BillingPlans = BillingPlans;
+
+(function initBillingPlans() {
+  const start = function () {
+    const pill = document.getElementById('pricingPill');
+    // Re-render on pill change: the pill picks which configured plan is shown.
+    if (pill) pill.addEventListener('pill:change', function () { BillingPlans.render(); });
+
+    const targets = ['pricingPill', 'proUpgradeCard']
+      .map(function (id) { return document.getElementById(id); })
+      .filter(Boolean);
+    if (!targets.length) return;
+    if (!('IntersectionObserver' in window)) { BillingPlans.load(); return; }
+    // rootMargin so the fetch starts before the card is actually on screen and
+    // the price is never seen resolving.
+    const io = new IntersectionObserver(function (entries) {
+      for (let i = 0; i < entries.length; i++) {
+        if (entries[i].isIntersecting) { io.disconnect(); BillingPlans.load(); return; }
+      }
+    }, { rootMargin: '400px' });
+    targets.forEach(function (t) { io.observe(t); });
+  };
+  // #proUpgradeCard sits further down the document than this script, so it
+  // does not exist yet at parse time.
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start);
+  else start();
+})();
+
 onClick('navLoginBtn',     () => openAuthModal('login'));
 onClick('navRegisterBtn',  () => openAuthModal('register'));
 onClick('heroStartBtn',    () => openAuthModal('register'));
 onClick('pricingFreeBtn',  () => openAuthModal('register'));
 onClick('pricingProBtn', async () => {
-  const pill = document.querySelector('#pricingPill .mc-pill.active');
-  const billing = pill ? pill.dataset.billing : 'yearly';
-  const variantId = billing === 'monthly' ? '1741149' : '1741098';
+  // The variant id is the store's, not this file's. It used to be hardcoded
+  // here, which meant a live-key swap failed every checkout with "Invalid
+  // variant" -- the ids stayed valid-looking, they just belonged to the test
+  // store. They come from /api/billing/plans now.
+  await BillingPlans.load();
+  const billing = BillingPlans.activeBilling();
+  const plan = BillingPlans.get(billing);
+  if (!plan) {
+    if (typeof showToast === 'function') showToast('Pricing is unavailable right now.', 3000);
+    return;
+  }
+  const variantId = plan.variant_id;
 
   if (!authToken) {
-    window._pendingProCheckout = variantId;
+    // Only read as a flag on the way back in -- enterAuthenticatedApp re-clicks
+    // this button rather than using the value, so the plan is resolved again.
+    window._pendingProCheckout = billing;
     openAuthModal('register');
     return;
   }
