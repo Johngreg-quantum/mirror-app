@@ -11,6 +11,14 @@ import logging
 import tempfile
 import traceback
 
+# Without this the root logger has no handler, and Python's last-resort
+# handler only emits WARNING and above -- so every logger.info() in this file
+# went nowhere, including the account-deletion, subscription and entitlement
+# records. Render captures stdout, so one line is the whole fix.
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s %(levelname)s %(name)s %(message)s",
+)
 logger = logging.getLogger(__name__)
 from collections import defaultdict, deque
 from datetime import datetime, timedelta, timezone, date
@@ -652,6 +660,82 @@ def _verify_users_columns(cur, sqlite: bool) -> None:
         )
 
 
+def _backfill_entitlements(conn, cur) -> None:
+    """Grandfather the users who existed before the gate, once.
+
+    ONE-TIME BY DESIGN. Running this on every boot would grant every new
+    signup all of Level 1 and silently erase the free tier that decision (c)
+    in the spec exists to create. The marker in app_meta is what makes that
+    impossible rather than merely unlikely.
+
+    Grandfathers each user to what they already had -- level 1..their current
+    level, computed with compute_user_level() so it cannot disagree with what
+    /api/progress has been telling them. Not derived from LEVELS alone.
+
+    Idempotent regardless: every write is an upsert, so a partial run is safe
+    to repeat."""
+    marker = "entitlements_backfill_at"
+    try:
+        cur.execute(f"SELECT value FROM app_meta WHERE key = {PH}", (marker,))
+        if cur.fetchone():
+            return
+    except Exception:
+        # app_meta is created immediately above; a failure here means something
+        # is wrong enough that guessing would be worse than not running.
+        logger.exception("[entitlements] cannot read backfill marker; skipping")
+        return
+
+    try:
+        cur.execute("SELECT id, is_pro, ls_subscription_id FROM users")
+        users = cur.fetchall()
+
+        cur.execute(
+            "SELECT user_id, scene_id, MAX(sync_score) FROM scores "
+            "WHERE user_id IS NOT NULL GROUP BY user_id, scene_id"
+        )
+        best_by_user: dict = {}
+        for uid, scene_id, score in cur.fetchall():
+            best_by_user.setdefault(int(uid), {})[scene_id] = float(score or 0)
+
+        levels_granted = 0
+        pro_granted = 0
+        for uid, is_pro_flag, sub_id in users:
+            uid = int(uid)
+            level = compute_user_level(best_by_user.get(uid, {}))
+            for n in range(1, level + 1):
+                grant_entitlement(cur, uid, "level", str(n), "manual", None)
+                levels_granted += 1
+            if is_pro_flag:
+                # The webhook was pointed at a route that did not exist until
+                # 2026-09-12, so it had never once run: no user can hold an
+                # ls_subscription_id, and any is_pro was set by hand. source_type
+                # stays 'manual' unless an id is genuinely present, so a later
+                # cancellation looking up by subscription id is not misled by a
+                # NULL. A real subscription webhook upserts over this row and
+                # corrects both fields.
+                grant_entitlement(
+                    cur, uid, "pro", "",
+                    "subscription" if sub_id else "manual",
+                    sub_id or None,
+                )
+                pro_granted += 1
+
+        cur.execute(
+            f"INSERT INTO app_meta (key, value) VALUES ({PH}, {PH})",
+            (marker, _now_iso()),
+        )
+        conn.commit()
+        logger.info(
+            "[entitlements] backfill complete: %s users, %s level rows, %s pro rows",
+            len(users), levels_granted, pro_granted,
+        )
+    except Exception:
+        conn.rollback()
+        # No marker is written, so the next boot retries rather than leaving
+        # users half-grandfathered with no record of it.
+        logger.exception("[entitlements] backfill failed; will retry on next boot")
+
+
 def init_db():
     conn = get_conn()
     cur  = conn.cursor()
@@ -852,6 +936,41 @@ def init_db():
                 daily_xp_date    TEXT DEFAULT ''
             )
         """)
+
+    # ── Entitlements (shared schema; only the id type differs) ───────────
+    id_col = "SERIAL PRIMARY KEY" if USE_PG else "INTEGER PRIMARY KEY AUTOINCREMENT"
+    cur.execute(f"""
+        CREATE TABLE IF NOT EXISTS entitlements (
+            id            {id_col},
+            user_id       INTEGER NOT NULL,
+            kind          TEXT NOT NULL,
+            ref           TEXT NOT NULL,
+            granted_at    TEXT NOT NULL,
+            expires_at    TEXT,
+            source_type   TEXT NOT NULL,
+            source_id     TEXT,
+            revoked_at    TEXT,
+            revoke_reason TEXT,
+            UNIQUE (user_id, kind, ref)
+        )
+    """)
+    cur.execute("CREATE INDEX IF NOT EXISTS idx_entitlements_user "
+                "ON entitlements (user_id)")
+    # Refunds are looked up by source, never by user -- see
+    # revoke_entitlements_by_source().
+    cur.execute("CREATE INDEX IF NOT EXISTS idx_entitlements_source "
+                "ON entitlements (source_type, source_id)")
+
+    # A tiny key/value table so one-time migrations can record that they ran.
+    cur.execute(f"""
+        CREATE TABLE IF NOT EXISTS app_meta (
+            key   TEXT PRIMARY KEY,
+            value TEXT
+        )
+    """)
+
+    conn.commit()
+    _backfill_entitlements(conn, cur)
 
     conn.commit()
     conn.close()
@@ -1463,6 +1582,119 @@ async def delete_account(req: DeleteAccountRequest, user: dict = Depends(current
 
 # ─── Lemon Squeezy billing ───────────────────────────────────────────────────
 
+# ─── Entitlements ────────────────────────────────────────────────────────────
+# One row per (user, kind, ref) holding CURRENT STATE, not a ledger. See
+# docs/entitlements-spec.md; the trade is accepted knowingly, and the Lemon
+# Squeezy dashboard remains the transaction record.
+#
+#   kind='pro'   ref=''          satisfies every scene
+#   kind='level' ref='1'         satisfies every scene in that level
+#
+# Active means: not revoked, and not expired. Cancellation sets expires_at so
+# access runs to the end of the paid period; a refund sets revoked_at, which is
+# immediate. Those are different facts and the table remembers which happened.
+
+# Decision (c) in the spec: new users get the first few scenes free, and the
+# ~50 users who predate the gate were grandfathered to all of Level 1 by the
+# one-time backfill. No special case in the check -- the difference is entirely
+# in who holds a level entitlement.
+FREE_SCENE_COUNT = 5
+
+
+def _free_scene_ids() -> list:
+    return list(LEVELS[0]["scenes"][:FREE_SCENE_COUNT]) if LEVELS else []
+
+
+def _scene_level(scene_id: str):
+    for lvl in LEVELS:
+        if scene_id in lvl["scenes"]:
+            return int(lvl["level"])
+    return None
+
+
+def _now_iso() -> str:
+    return datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+
+
+def grant_entitlement(cur, user_id: int, kind: str, ref: str,
+                      source_type: str, source_id, expires_at=None) -> None:
+    """Upsert on (user_id, kind, ref).
+
+    The unique constraint is what makes webhook retries safe: Lemon Squeezy
+    redelivers, and without it one purchase would grant repeatedly. Re-granting
+    also clears any previous revocation, which is what a genuine repurchase
+    after a refund should do."""
+    cur.execute(
+        f"INSERT INTO entitlements "
+        f"(user_id, kind, ref, granted_at, expires_at, source_type, source_id, "
+        f"revoked_at, revoke_reason) "
+        f"VALUES ({PH}, {PH}, {PH}, {PH}, {PH}, {PH}, {PH}, NULL, NULL) "
+        f"ON CONFLICT (user_id, kind, ref) DO UPDATE SET "
+        f"granted_at = EXCLUDED.granted_at, expires_at = EXCLUDED.expires_at, "
+        f"source_type = EXCLUDED.source_type, source_id = EXCLUDED.source_id, "
+        f"revoked_at = NULL, revoke_reason = NULL",
+        (user_id, kind, ref, _now_iso(), expires_at, source_type,
+         str(source_id) if source_id else None),
+    )
+
+
+def expire_entitlement(cur, user_id: int, kind: str, ref: str, expires_at) -> None:
+    """Cancellation: set the paid-through date. Never deletes -- the row is the
+    record that the user once held this."""
+    cur.execute(
+        f"UPDATE entitlements SET expires_at = {PH} "
+        f"WHERE user_id = {PH} AND kind = {PH} AND ref = {PH}",
+        (expires_at, user_id, kind, ref),
+    )
+
+
+def revoke_entitlements_by_source(cur, source_type: str, source_id: str,
+                                  reason: str = "refund") -> int:
+    """Revoke by SOURCE, never by user.
+
+    Revoking by user_id is the obvious wrong implementation and the one this
+    signature exists to prevent: a refunded $1 level purchase must not touch a
+    subscription the same user also holds. Returns the row count so the caller
+    can tell a real revocation from a no-op."""
+    cur.execute(
+        f"UPDATE entitlements SET revoked_at = {PH}, revoke_reason = {PH} "
+        f"WHERE source_type = {PH} AND source_id = {PH} AND revoked_at IS NULL",
+        (_now_iso(), reason, source_type, str(source_id)),
+    )
+    return cur.rowcount if cur.rowcount is not None else 0
+
+
+def load_entitlements(cur, user_id: int) -> set:
+    """Active entitlements as {'pro'} / {'level:1', ...}."""
+    cur.execute(
+        f"SELECT kind, ref, expires_at FROM entitlements "
+        f"WHERE user_id = {PH} AND revoked_at IS NULL",
+        (user_id,),
+    )
+    now = _now_iso()
+    out = set()
+    for kind, ref, expires_at in cur.fetchall():
+        if expires_at and str(expires_at) <= now:
+            continue
+        out.add(kind if kind == "pro" else f"{kind}:{ref}")
+    return out
+
+
+def can_access_scene(cur, user_id: int, scene_id: str) -> bool:
+    """Pro satisfies everything; a level entitlement satisfies its own level.
+
+    Defined but deliberately not wired to any endpoint yet. Enforcement is the
+    second deploy, so that the backfill can be verified in production while
+    nobody can be locked out by it."""
+    if scene_id in _free_scene_ids():
+        return True
+    held = load_entitlements(cur, user_id)
+    if "pro" in held:
+        return True
+    lvl = _scene_level(scene_id)
+    return lvl is not None and f"level:{lvl}" in held
+
+
 # ─── Plan catalogue ──────────────────────────────────────────────────────────
 # Variant ids used to be hardcoded in static/app.js. Test and live stores have
 # different ids, so swapping in a live key made every checkout fail with
@@ -1473,13 +1705,28 @@ async def delete_account(req: DeleteAccountRequest, user: dict = Depends(current
 #
 # A plan with no id configured is simply absent, which is how a deployment
 # without billing serves an empty catalogue instead of a broken one.
+# `grants` is the entitlement a purchase of that variant confers, as
+# (kind, ref). It lives beside the ids so adding Level 2 stays one env var
+# plus one row -- the webhook maps a purchased variant to a grant through
+# this table and nowhere else.
 def _configured_plans() -> list:
     rows = (
-        ("monthly", LS_MONTHLY_ID, "Monthly"),
-        ("yearly",  LS_YEARLY_ID,  "Yearly"),
-        ("level1",  LS_LEVEL1_ID,  "Mirror Level 1"),
+        ("monthly", LS_MONTHLY_ID, "Monthly",        ("pro",   "")),
+        ("yearly",  LS_YEARLY_ID,  "Yearly",         ("pro",   "")),
+        ("level1",  LS_LEVEL1_ID,  "Mirror Level 1", ("level", "1")),
     )
-    return [{"key": k, "variant_id": str(v), "label": lb} for k, v, lb in rows if v]
+    return [
+        {"key": k, "variant_id": str(v), "label": lb, "grants": g}
+        for k, v, lb, g in rows if v
+    ]
+
+
+def _grant_for_variant(variant_id: str):
+    """(kind, ref) for a purchased variant, or None if it is not ours."""
+    for p in _configured_plans():
+        if p["variant_id"] == str(variant_id):
+            return p["grants"]
+    return None
 
 
 def _allowed_variant_ids() -> set:
@@ -1573,6 +1820,8 @@ async def billing_plans():
             "interval_count":  info.get("interval_count"),
             "is_subscription": info.get("is_subscription"),
         })
+    # `grants` is deliberately not serialised: what a purchase confers is the
+    # server's business, and a client that believed it could be trusted.
     return {"plans": out, "prices_live": bool(prices)}
 
 
@@ -1767,7 +2016,49 @@ async def lemonsqueezy_webhook(request: Request):
     conn = get_conn()
     cur = conn.cursor()
     try:
-        if event in ("subscription_created", "subscription_updated", "subscription_resumed"):
+        # ── One-time purchases ───────────────────────────────────────────
+        # A one-time product emits order_created, not subscription_created,
+        # so before this branch existed a $1 purchase could succeed and the
+        # server would never hear about it.
+        if event == "order_created":
+            try:
+                item = payload["data"]["attributes"]["first_order_item"]
+                variant_id = str(item["variant_id"])
+            except (KeyError, TypeError):
+                variant_id = ""
+            order_id = str(payload.get("data", {}).get("id") or "") or None
+            grant = _grant_for_variant(variant_id) if variant_id else None
+            if not grant or not order_id:
+                # Not one of ours, or unidentifiable. 200 so Lemon Squeezy
+                # stops retrying; never guess a grant.
+                logger.warning(
+                    "[billing] order_created ignored: variant=%r order=%r",
+                    variant_id, order_id,
+                )
+                return {"ok": True}
+            kind, ref = grant
+            grant_entitlement(cur, user_id, kind, ref, "order", order_id)
+            conn.commit()
+            logger.info(
+                "[billing] granted %s:%s to user_id=%s from order %s",
+                kind, ref, user_id, order_id,
+            )
+
+        elif event == "order_refunded":
+            # Revoked BY SOURCE. Revoking by user_id would take a
+            # subscription away because a $1 level purchase was refunded.
+            order_id = str(payload.get("data", {}).get("id") or "") or None
+            if not order_id:
+                return {"ok": True}
+            n = revoke_entitlements_by_source(cur, "order", order_id, "refund")
+            conn.commit()
+            # A refund for an order we never granted is a no-op, not an
+            # error: a 5xx here would make Lemon Squeezy retry forever.
+            logger.info(
+                "[billing] order_refunded %s revoked %s entitlement(s)", order_id, n,
+            )
+
+        elif event in ("subscription_created", "subscription_updated", "subscription_resumed"):
             # Check subscription status in payload
             try:
                 status = payload["data"]["attributes"]["status"]
@@ -1794,6 +2085,15 @@ async def lemonsqueezy_webhook(request: Request):
                 f"WHERE id = {PH}",
                 (is_active, sub_id, portal, user_id)
             )
+            # is_pro keeps being written alongside the entitlement for one
+            # release, so the enforcement deploy can be reverted without
+            # anyone losing access.
+            if is_active:
+                grant_entitlement(cur, user_id, "pro", "", "subscription", sub_id)
+            else:
+                # Status went to something inactive without a cancellation
+                # event; expire now rather than leaving access open.
+                expire_entitlement(cur, user_id, "pro", "", _now_iso())
             conn.commit()
 
         elif event in ("subscription_cancelled", "subscription_expired"):
@@ -1805,16 +2105,53 @@ async def lemonsqueezy_webhook(request: Request):
                 f"ls_customer_portal_url = NULL WHERE id = {PH}",
                 (False, user_id)
             )
+            # Updated, not deleted: a lapse and a refund are different facts
+            # and the row is what remembers which happened. `ends_at` is the
+            # paid-through date when Lemon Squeezy supplies one, so access
+            # runs to the end of the period the user paid for.
+            try:
+                ends_at = payload["data"]["attributes"].get("ends_at")
+            except (KeyError, TypeError):
+                ends_at = None
+            expire_entitlement(cur, user_id, "pro", "", ends_at or _now_iso())
             conn.commit()
 
         elif event == "subscription_payment_failed":
-            # Don't immediately revoke — just log for now
-            pass
+            # Deliberately does NOT revoke, and that is the correct
+            # behaviour rather than a shortcut: Lemon Squeezy runs its own
+            # dunning retries, and pulling access on the first failed charge
+            # punishes someone whose card merely expired. If the renewal
+            # never succeeds, the subscription expires and
+            # subscription_expired fires, which is handled above --
+            # expires_at covers the window in between.
+            #
+            # The gap was never the behaviour; it was that nobody would ever
+            # know it happened. That is what this line is for.
+            failed_sub = str(payload.get("data", {}).get("id") or "") or "?"
+            try:
+                failed_status = payload["data"]["attributes"].get("status")
+            except (KeyError, TypeError):
+                failed_status = None
+            logger.warning(
+                "[billing] subscription_payment_failed user_id=%s "
+                "subscription=%s status=%s -- not revoking; Lemon Squeezy "
+                "retries, and subscription_expired handles terminal failure",
+                user_id, failed_sub, failed_status,
+            )
 
     except Exception:
         conn.rollback()
-    finally:
+        # Previously this swallowed the error and returned 200, so Lemon
+        # Squeezy never retried and a paid order could be silently never
+        # granted. Harmless while nothing was gated; not harmless now.
+        logger.exception("[billing] webhook %s failed for user_id=%s", event, user_id)
         conn.close()
+        raise HTTPException(status_code=500, detail="Webhook processing failed")
+    finally:
+        try:
+            conn.close()
+        except Exception:
+            pass
 
     return {"ok": True}
 
@@ -1831,6 +2168,25 @@ async def get_scenes():
 @app.get("/api/scene-config")
 async def get_scene_config():
     return _PUBLIC_SCENE_CONFIG
+
+
+def compute_user_level(best: dict) -> int:
+    """Walk levels in order; each requires a qualifying score on the previous
+    level's scenes. Break as soon as a threshold is not met, so levels cannot
+    be skipped.
+
+    Extracted from /api/progress so the entitlement backfill cannot drift from
+    it. A backfill that computed levels even slightly differently would grant
+    the wrong thing to every existing user at once, and silently."""
+    current = 1
+    for lvl in LEVELS[1:]:
+        prev_scenes  = next(l["scenes"] for l in LEVELS if l["level"] == lvl["level"] - 1)
+        best_on_prev = max((best.get(s, 0.0) for s in prev_scenes), default=0.0)
+        if best_on_prev >= lvl["unlock_score"]:
+            current = lvl["level"]
+        else:
+            break
+    return current
 
 
 @app.get("/api/progress")
@@ -1852,17 +2208,7 @@ async def get_progress(user: dict = Depends(current_user)):
     quiz_passed = bool(quiz_row and quiz_row[0] > 0)
     conn.close()
 
-    # Walk levels in order; each requires a qualifying score on the previous
-    # level's scenes.  Break as soon as a threshold isn't met so levels can't
-    # be skipped.
-    current_level = 1
-    for lvl in LEVELS[1:]:
-        prev_scenes  = next(l["scenes"] for l in LEVELS if l["level"] == lvl["level"] - 1)
-        best_on_prev = max((best.get(s, 0.0) for s in prev_scenes), default=0.0)
-        if best_on_prev >= lvl["unlock_score"]:
-            current_level = lvl["level"]
-        else:
-            break
+    current_level = compute_user_level(best)
 
     unlocked = [s for lvl in LEVELS if lvl["level"] <= current_level for s in lvl["scenes"]]
 
