@@ -332,7 +332,36 @@ All five settled 2026-09-12.
 | 4 | §7 — refund event is `order_refunded`. |
 | 5 | §9 — offer ordering agreed as written. |
 
-## 12. Build status
+## 12. Standing fact: logging was never observable
+
+**Do not remove the `logging.basicConfig(...)` call near the top of `main.py`.**
+It looks like a stray line and it is not.
+
+`main.py` was written with `logger = logging.getLogger(__name__)` and no
+handler configured anywhere. With no handler on the root logger, Python falls
+back to `logging.lastResort`, which emits **WARNING and above only**. Every
+`logger.info()` in the file was therefore discarded, silently, for the entire
+life of the app:
+
+- `[account] deleted user_id=… rows=…`
+- `[account] cancelled subscription for user_id=…`
+- `[billing] subscription … already absent at Lemon Squeezy`
+- `[billing] granted …` (new)
+- `[entitlements] backfill complete: …` (new)
+
+None of it ever reached Render. The consequence is not that a few log lines were
+missing — it is that **none of the app's history was ever observable**. Account
+deletions and subscription changes left no trace anywhere, so there was no way
+to answer "what happened to this user" after the fact.
+
+That also means the absence of these lines in older Render logs proves nothing
+about whether those events occurred.
+
+`WARNING` and above did get through, via `lastResort`. That is why the earlier
+audit's security warning about a missing signing secret would have appeared
+while the routine records did not, and why the discrepancy went unnoticed.
+
+## 13. Build status
 
 **Deploy 1 — built, awaiting review.** Entitlements table, `app_meta`, the
 one-time backfill, `order_created`, `order_refunded`, entitlement writes on the
