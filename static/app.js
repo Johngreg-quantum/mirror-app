@@ -322,7 +322,15 @@ function applySceneConfig(config) {
   });
   FREE_SCENE_IDS = Array.isArray(config && config.free_scene_ids)
     ? config.free_scene_ids.slice() : [];
-  DEFAULT_UNLOCKED_SCENES = CLV_LEVELS.length ? CLV_LEVELS[0].scenes.slice() : [];
+  // What to show as unlocked before /api/progress answers. This was all of
+  // level 1, which is what the server grants only to the grandfathered users;
+  // for a new free user it promised 20 scenes where the gate allows 5, and
+  // every one of the other 15 failed on tap. The free set is the honest
+  // default -- signed-in users with more get it from /api/progress a moment
+  // later, which widens the list rather than narrowing it.
+  DEFAULT_UNLOCKED_SCENES = FREE_SCENE_IDS.length
+    ? FREE_SCENE_IDS.slice()
+    : (CLV_LEVELS.length ? CLV_LEVELS[0].scenes.slice() : []);
   if (!userProgress.unlocked_scenes || !userProgress.unlocked_scenes.length) {
     userProgress.unlocked_scenes = DEFAULT_UNLOCKED_SCENES.slice();
   }
@@ -1090,8 +1098,17 @@ function renderCards() {
 }
 
 function makeCard(id, s) {
-  const locked  = !userProgress.unlocked_scenes.includes(id);
   const isDaily = dailyChallenge && dailyChallenge.scene_id === id;
+  // Owned vs reached are different locks and need different calls to action:
+  // "score higher" is achievable, "Level 2 Required" on a scene the user does
+  // not own is a dead end that never explains itself. accessible_scenes is
+  // absent on an older cached response, and then this degrades to the previous
+  // behaviour rather than claiming everything is unowned.
+  const owned   = !Array.isArray(userProgress.accessible_scenes)
+    || userProgress.accessible_scenes.includes(id);
+  // The daily scene is playable whatever the user owns -- can_play_scene() lets
+  // it through server-side, so showing it locked would contradict the server.
+  const locked  = !userProgress.unlocked_scenes.includes(id) && !isDaily;
   const color   = locked ? 'var(--muted)' : getSceneColor(id);
   const pb      = !locked && userProgress.best_scores[id];
   const el      = document.createElement('div');
@@ -1105,7 +1122,7 @@ function makeCard(id, s) {
         <rect x="3" y="11" width="18" height="11" rx="2"/>
         <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
       </svg>
-      <span>Level ${LEVEL_MAP[id]} Required</span>
+      <span>${owned ? `Level ${LEVEL_MAP[id]} Required` : 'Upgrade to unlock'}</span>
     </div>` : ''}
     <div class="card-top" ${isDaily ? 'style="margin-top:18px"' : ''}>
       <span class="movie-year">${s.year}</span>
@@ -1661,6 +1678,14 @@ async function analyze() {
 
   const recordingEnd = Date.now();
   form.append('duration_seconds', Math.round((recordingEnd - recordingStart) / 1000));
+
+  // Sent so a scene reached by following a challenge link stays playable when
+  // it falls outside the sender's free five -- which it usually will. The
+  // server looks the challenge up and only widens access to the one scene that
+  // row names, so this cannot be used to open anything else.
+  if (activeChallenge && activeChallenge.challenge_id) {
+    form.append('challenge_id', activeChallenge.challenge_id);
+  }
 
   try {
     const res = await fetch(`${API}/api/submit`, {
@@ -3288,7 +3313,11 @@ const WordsController = {
   async loadScene(sceneId) {
     if (this.loading) return;
     this.loading = true;
-    const url = `${API}/api/vocab/${sceneId}`;
+    // Same challenge widening as /api/submit: a scene someone is allowed to
+    // play through a challenge link is a scene they are allowed to study.
+    const cq = (activeChallenge && activeChallenge.challenge_id)
+      ? `?challenge_id=${encodeURIComponent(activeChallenge.challenge_id)}` : '';
+    const url = `${API}/api/vocab/${sceneId}${cq}`;
     let status = null;
     let bodyText = null;
     try {

@@ -1683,9 +1683,9 @@ def load_entitlements(cur, user_id: int) -> set:
 def can_access_scene(cur, user_id: int, scene_id: str) -> bool:
     """Pro satisfies everything; a level entitlement satisfies its own level.
 
-    Defined but deliberately not wired to any endpoint yet. Enforcement is the
-    second deploy, so that the backfill can be verified in production while
-    nobody can be locked out by it."""
+    Entitlement only. The acquisition holes live in can_play_scene() so that
+    this stays the plain question "does this user own this scene", which is
+    what /api/progress needs when it decides what to show as unlocked."""
     if scene_id in _free_scene_ids():
         return True
     held = load_entitlements(cur, user_id)
@@ -1693,6 +1693,76 @@ def can_access_scene(cur, user_id: int, scene_id: str) -> bool:
         return True
     lvl = _scene_level(scene_id)
     return lvl is not None and f"level:{lvl}" in held
+
+
+def accessible_scene_ids(cur, user_id: int) -> list:
+    """Every scene the user owns, in scene_config order.
+
+    Exists so /api/progress can intersect its level-progression list against
+    entitlements without asking can_access_scene() 47 times, each of which
+    would re-read the entitlements table."""
+    held = load_entitlements(cur, user_id)
+    free = set(_free_scene_ids())
+    pro  = "pro" in held
+    out  = []
+    for lvl in LEVELS:
+        owns_level = pro or f"level:{int(lvl['level'])}" in held
+        for sid in lvl["scenes"]:
+            if owns_level or sid in free:
+                out.append(sid)
+    return out
+
+
+def _challenge_scene_id(cur, challenge_id: str):
+    """The scene a challenge points at, or None. Looked up rather than trusted:
+    the client sends the challenge id, so the pairing of challenge to scene has
+    to come from the table or the hole below would open every scene to anyone
+    who passes a challenge id along with an arbitrary scene."""
+    if not challenge_id or not re.match(r"^[a-f0-9]{16}$", challenge_id):
+        return None
+    cur.execute(
+        f"SELECT scene_id FROM challenges WHERE challenge_id = {PH}",
+        (challenge_id,),
+    )
+    row = cur.fetchone()
+    return row[0] if row else None
+
+
+def can_play_scene(cur, user_id: int, scene_id: str, challenge_id: str = "") -> bool:
+    """Entitlement, OR one of two deliberate holes.
+
+    The daily challenge and shared challenge links are the acquisition hook:
+    both are how people arrive who have never paid, and both point at whatever
+    scene they point at, so they will routinely land outside a free user's five.
+    Refusing there would make the hook a dead end -- someone follows a friend's
+    link, records a take, and is told no.
+
+    So they are open on purpose, and said so here rather than being left to
+    emerge from whatever the gate happened not to cover:
+
+      daily      today's scene only, computed server-side from the UTC date.
+                 Not client-supplied, so it cannot be pointed at another scene.
+      challenge  the scene named by an existing challenge row, looked up, not
+                 taken from the request.
+
+    Both are one scene at a time and neither grants anything: nothing is
+    written, and the next request is gated again. A free user who wants a
+    sixth scene of their own choosing still has to buy one."""
+    if can_access_scene(cur, user_id, scene_id):
+        return True
+    if scene_id == get_daily_scene_id():
+        return True
+    # bool(), not `challenge_id and ...`: that returns the empty string when no
+    # challenge was sent, which is falsy and so enforces correctly, but makes a
+    # function annotated -> bool return "" and quietly breaks any caller that
+    # compares against False. A test asserted on the type and caught it.
+    return bool(challenge_id) and _challenge_scene_id(cur, challenge_id) == scene_id
+
+
+_LOCKED_DETAIL = (
+    "This scene is not included in your plan. Upgrade to Mirror Pro, or buy "
+    "the level, to unlock it."
+)
 
 
 # ─── Plan catalogue ──────────────────────────────────────────────────────────
@@ -2215,11 +2285,26 @@ async def get_progress(user: dict = Depends(current_user)):
     )
     quiz_row = cur.fetchone()
     quiz_passed = bool(quiz_row and quiz_row[0] > 0)
+    held       = sorted(load_entitlements(cur, user["id"]))
+    accessible = accessible_scene_ids(cur, user["id"])
     conn.close()
 
     current_level = compute_user_level(best)
 
-    unlocked = [s for lvl in LEVELS if lvl["level"] <= current_level for s in lvl["scenes"]]
+    # Two independent conditions, and a scene needs both: reaching its level by
+    # score, and owning it. They were not both represented here, and that was a
+    # real contradiction rather than a tidiness point -- progression alone puts
+    # all 40 scenes of levels 1 and 2 in this list as soon as a free user scores
+    # 60% on one of their five free scenes, and the server would then refuse 35
+    # of them. The UI would have shown 40 unlocked scenes, every one of which
+    # failed on tap.
+    #
+    # Intersected rather than replaced: owning a level does not skip its score
+    # threshold, so buying ahead does not unlock scenes the user has not reached.
+    # (Level 1's threshold is 0, so the $1 purchase is immediately usable.)
+    accessible_set = set(accessible)
+    unlocked = [s for lvl in LEVELS if lvl["level"] <= current_level
+                for s in lvl["scenes"] if s in accessible_set]
 
     # Progress info for the bar displayed below the level badge
     next_lvl_def = next((l for l in LEVELS if l["level"] == current_level + 1), None)
@@ -2239,6 +2324,14 @@ async def get_progress(user: dict = Depends(current_user)):
         "unlocked_scenes": unlocked,
         "next_level":      next_level,
         "quiz_passed":     quiz_passed,
+        # For the cosmetic lock. `unlocked_scenes` alone cannot say WHY a scene
+        # is locked, and the two reasons need different calls to action: score
+        # higher, or buy. `accessible_scenes` is what is owned regardless of
+        # level, so a scene absent from it is a sell and a scene in it but not
+        # in unlocked_scenes is a "keep practising".
+        "entitlements":      held,
+        "accessible_scenes": accessible,
+        "free_scene_ids":    _free_scene_ids(),
     }
 
 
@@ -2308,6 +2401,9 @@ async def submit_recording(
     scene_id: str = Form(...),
     audio: UploadFile = File(...),
     duration_seconds: float = Form(0.0),
+    # Optional, and only ever widens access to the one scene that challenge
+    # names -- the pairing is read from the challenges table, never trusted.
+    challenge_id: str = Form(""),
     creds: HTTPAuthorizationCredentials = Depends(bearer),
 ):
     # raises 401 if the token is missing / invalid, or if the account was deleted
@@ -2315,6 +2411,27 @@ async def submit_recording(
 
     if scene_id not in SCENES:
         raise HTTPException(400, "Invalid scene_id")
+
+    # The gate. This is the endpoint that matters: scoring a take is the product
+    # action, and both shells must come through here to get one, so there is no
+    # route around it. The HTML routes cannot carry this check -- /scene/{id},
+    # /app/scene/{id} and /legacy serve identical bytes for every scene and are
+    # unauthenticated, because the token lives in localStorage and is not sent
+    # with a document request. The frontend lock is cosmetic by construction.
+    #
+    # Checked before the rate limit so a refused scene does not spend the user's
+    # submission budget, and before the audio is read so it does not spend an
+    # upload or a Whisper call either.
+    conn_gate = get_conn()
+    try:
+        if not can_play_scene(conn_gate.cursor(), user["id"], scene_id, challenge_id):
+            logger.info(
+                "[gate] refused user_id=%s scene_id=%r challenge_id=%r",
+                user["id"], scene_id, challenge_id or None,
+            )
+            raise HTTPException(403, _LOCKED_DETAIL)
+    finally:
+        conn_gate.close()
 
     # Per-user submission rate limit (uses DB so it survives restarts)
     conn_rl = get_conn()
@@ -3019,14 +3136,23 @@ async def get_vocab_mastery(scene_id: str, user: dict = Depends(current_user)):
 
 
 @app.get("/api/vocab/{scene_id}")
-async def get_vocab(scene_id: str, user: dict = Depends(current_user)):
+async def get_vocab(scene_id: str, challenge_id: str = "",
+                    user: dict = Depends(current_user)):
     """Return 8 vocabulary items for a scene. Uses word_vocab as a cache;
-    on miss, asks Claude for the list and persists it."""
+    on miss, asks Claude for the list and persists it.
+
+    Gated on the same terms as /api/submit, including the daily and challenge
+    holes: a scene someone is allowed to play is a scene they are allowed to
+    study. A cache miss here also spends an Anthropic call, so an ungated
+    version would let anyone mint them for all 47 scenes."""
     if scene_id not in SCENES:
         raise HTTPException(404, "Scene not found")
 
     conn = get_conn()
     cur  = conn.cursor()
+    if not can_play_scene(cur, user["id"], scene_id, challenge_id):
+        conn.close()
+        raise HTTPException(403, _LOCKED_DETAIL)
     cur.execute(
         f"SELECT word_en, word_es, phonetic, example, word_type "
         f"FROM word_vocab WHERE scene_id = {PH} ORDER BY id ASC",

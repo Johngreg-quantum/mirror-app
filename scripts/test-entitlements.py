@@ -74,6 +74,54 @@ def post_event(event, payload, sign=True):
         return e.code, e.read().decode("utf-8", "replace")
 
 
+def _send(req):
+    try:
+        with urllib.request.urlopen(req, timeout=30) as r:
+            return r.status, r.read().decode("utf-8", "replace")
+    except urllib.error.HTTPError as e:
+        return e.code, e.read().decode("utf-8", "replace")
+
+
+def post_json(path, payload, token=""):
+    req = urllib.request.Request(
+        BASE + path, data=json.dumps(payload).encode("utf-8"),
+        headers={"Content-Type": "application/json"})
+    if token:
+        req.add_header("Authorization", "Bearer " + token)
+    return _send(req)
+
+
+def get_json(path, token=""):
+    req = urllib.request.Request(BASE + path)
+    if token:
+        req.add_header("Authorization", "Bearer " + token)
+    return _send(req)
+
+
+def post_multipart(path, token, scene_id, challenge_id=""):
+    """A minimal /api/submit body. The audio is one junk byte on purpose: the
+    gate is checked before the upload is read, so a 403 needs no real recording
+    and no Whisper call. A scene that passes the gate fails further down, which
+    is what distinguishes "refused" from "allowed" here."""
+    b = "----mirrortest"
+    parts = [("scene_id", scene_id), ("duration_seconds", "1")]
+    if challenge_id:
+        parts.append(("challenge_id", challenge_id))
+    body = b""
+    for k, v in parts:
+        body += ("--%s\r\nContent-Disposition: form-data; name=\"%s\"\r\n\r\n%s\r\n"
+                 % (b, k, v)).encode()
+    body += ("--%s\r\nContent-Disposition: form-data; name=\"audio\"; "
+             "filename=\"r.webm\"\r\nContent-Type: audio/webm\r\n\r\n" % b).encode()
+    body += b"\x00\r\n"
+    body += ("--%s--\r\n" % b).encode()
+    req = urllib.request.Request(
+        BASE + path, data=body,
+        headers={"Content-Type": "multipart/form-data; boundary=" + b,
+                 "Authorization": "Bearer " + token})
+    return _send(req)
+
+
 def rows(user_id):
     con = sqlite3.connect(DB)
     try:
@@ -249,9 +297,149 @@ def main():
         check("pro still satisfies everything after a level refund",
               app.can_access_scene(cur, both, paid_lvl1[0]) is True
               and (not lvl2 or app.can_access_scene(cur, both, lvl2[0]) is True))
+
+        # ── The two deliberate holes ─────────────────────────────────────────
+        print("\nacquisition holes")
+        daily = app.get_daily_scene_id()
+        hole_user = make_user("holes")
+        check("the daily scene is playable without owning it",
+              app.can_play_scene(cur, hole_user, daily) is True, "daily=%s" % daily)
+        check("the daily scene is still NOT owned (nothing was granted)",
+              app.can_access_scene(cur, hole_user, daily) is (daily in free),
+              "daily=%s free=%s" % (daily, daily in free))
+
+        # A paid scene that is not today's daily, so the hole cannot be the
+        # reason it passes or fails.
+        target = next((s for s in paid_lvl1 if s != daily), None)
+        if target:
+            check("a paid scene is refused with no challenge",
+                  app.can_play_scene(cur, hole_user, target) is False, target)
+
+            con.execute(
+                "INSERT OR REPLACE INTO challenges "
+                "(challenge_id, challenger_username, challenger_user_id, scene_id, score_to_beat) "
+                "VALUES (?, ?, ?, ?, ?)",
+                ("a" * 16, "enttest_holes", hole_user, target, 50.0))
+            con.commit()
+            check("a challenge opens the scene it names",
+                  app.can_play_scene(cur, hole_user, target, "a" * 16) is True, target)
+
+            # The hole must be scoped to the challenge's own scene. Trusting the
+            # request's scene_id alongside any valid challenge id would open all
+            # 47 scenes to anyone who has ever been sent a single link.
+            other = next((s for s in (lvl2 or paid_lvl1)
+                          if s not in (target, daily) and s not in free), None)
+            if other:
+                check("A CHALLENGE DOES NOT OPEN ANY OTHER SCENE",
+                      app.can_play_scene(cur, hole_user, other, "a" * 16) is False, other)
+            check("a malformed challenge id opens nothing",
+                  app.can_play_scene(cur, hole_user, target, "../../etc") is False)
+            check("an unknown challenge id opens nothing",
+                  app.can_play_scene(cur, hole_user, target, "f" * 16) is False)
+
+        # ── accessible_scene_ids, which /api/progress intersects against ─────
+        print("\naccessible_scene_ids")
+        check("with nothing held it is exactly the free set",
+              app.accessible_scene_ids(cur, hole_user) == free,
+              str(app.accessible_scene_ids(cur, hole_user)))
+
+        owner = make_user("owner")
+        post_event("order_created", order_payload(owner, "ORD-11", LEVEL1_VARIANT))
+        check("level:1 makes all of Level 1 accessible",
+              app.accessible_scene_ids(cur, owner) == list(lvl1),
+              "%d ids" % len(app.accessible_scene_ids(cur, owner)))
+
+        prouser = make_user("proaccess")
+        post_event("subscription_created", sub_payload(prouser, "SUB-11"))
+        all_ids = [s for l in app.LEVELS for s in l["scenes"]]
+        check("pro makes every scene accessible",
+              app.accessible_scene_ids(cur, prouser) == all_ids,
+              "%d of %d" % (len(app.accessible_scene_ids(cur, prouser)), len(all_ids)))
         con.close()
     except Exception as exc:
         check("in-process access check ran", False, repr(exc))
+
+    # ── ENFORCEMENT OVER HTTP ────────────────────────────────────────────────
+    # The point of Deploy 2. A table nothing reads is worse than useless, so
+    # these go through the real endpoints with a real token rather than calling
+    # the helper again.
+    print("\nenforcement (HTTP)")
+    try:
+        import main as app2
+        con = sqlite3.connect(DB)
+        free2 = app2._free_scene_ids()
+        lvl1_2 = app2.LEVELS[0]["scenes"]
+        daily2 = app2.get_daily_scene_id()
+        paid = next(s for s in lvl1_2 if s not in free2 and s != daily2)
+        con.close()
+
+        uname = "enttest_http"
+        con = sqlite3.connect(DB)
+        con.execute("DELETE FROM users WHERE username = ?", (uname,))
+        con.commit()
+        con.close()
+
+        code, body = post_json("/api/auth/register",
+                               {"username": uname,
+                                "email": "enttest_http@example.com",
+                                "password": "testpass123"})
+        token = (json.loads(body).get("token") or json.loads(body).get("access_token")
+                 or "") if code == 200 else ""
+        check("test user registered", code == 200 and bool(token),
+              "HTTP %s" % code)
+
+        if token:
+            # 403 lands before the audio is read, so no real recording and no
+            # Whisper call is needed to prove the gate.
+            code, body = post_multipart("/api/submit", token, paid)
+            check("POST /api/submit REFUSES a scene the user does not own",
+                  code == 403, "HTTP %s %s" % (code, body[:90]))
+
+            code, body = post_multipart("/api/submit", token, free2[0])
+            check("a free scene gets past the gate (fails later, not 403)",
+                  code != 403, "HTTP %s" % code)
+
+            code, body = post_multipart("/api/submit", token, daily2)
+            check("the daily scene gets past the gate", code != 403,
+                  "HTTP %s scene=%s" % (code, daily2))
+
+            code, body = get_json("/api/vocab/" + paid, token)
+            check("GET /api/vocab refuses an unowned scene", code == 403,
+                  "HTTP %s" % code)
+
+            code, body = get_json("/api/progress", token)
+            prog = json.loads(body) if code == 200 else {}
+            check("/api/progress unlocked_scenes is the free set, not all of Level 1",
+                  prog.get("unlocked_scenes") == free2,
+                  "got %s" % (prog.get("unlocked_scenes"),))
+            check("/api/progress surfaces entitlements for the cosmetic lock",
+                  "entitlements" in prog and "accessible_scenes" in prog,
+                  str(sorted(prog.keys())))
+            check("NO SCENE IS PROMISED THAT THE SERVER WOULD REFUSE",
+                  set(prog.get("unlocked_scenes") or [])
+                  <= set(prog.get("accessible_scenes") or []),
+                  "unlocked-minus-accessible=%s" % sorted(
+                      set(prog.get("unlocked_scenes") or [])
+                      - set(prog.get("accessible_scenes") or [])))
+
+            # The one that must not regress: the ~50 users who predate the gate
+            # hold level:1 from the backfill, and enforcement must not take
+            # Level 1 away from them. Granting it to this user reproduces their
+            # exact row shape.
+            con = sqlite3.connect(DB)
+            uid_http = con.execute("SELECT id FROM users WHERE username = ?",
+                                   (uname,)).fetchone()[0]
+            con.close()
+            post_event("order_created", order_payload(uid_http, "ORD-GF", LEVEL1_VARIANT))
+            code, body = get_json("/api/progress", token)
+            prog2 = json.loads(body) if code == 200 else {}
+            check("A GRANDFATHERED LEVEL 1 HOLDER KEEPS ALL 20 SCENES",
+                  prog2.get("unlocked_scenes") == list(lvl1_2),
+                  "%d scenes" % len(prog2.get("unlocked_scenes") or []))
+            code, _ = post_multipart("/api/submit", token, paid)
+            check("and can submit a paid Level 1 scene", code != 403, "HTTP %s" % code)
+    except Exception as exc:
+        check("HTTP enforcement check ran", False, repr(exc))
 
     # ── Summary ──────────────────────────────────────────────────────────────
     failed = [n for n, ok, _ in results if not ok]
