@@ -2127,6 +2127,12 @@
       padding: 2px 6px;
       border-radius: 4px;
     }
+    /* The badge ships empty and hidden: the saving is computed from the two
+       real prices (see BillingPlans.discountPct), so there is no number here to
+       go stale. It read "−20%" against prices that make it 56%. Explicit
+       because this rule sets no `display` of its own and the attribute alone
+       would be relying on the UA sheet. */
+    .mc-pill .mc-pill-badge[hidden] { display: none; }
 
     .mc-pill-wrap {
       display: flex;
@@ -2281,6 +2287,37 @@
       line-height: 1;
       letter-spacing: 0.02em;
     }
+
+    /* Loading placeholder for the Pro amount.
+
+       The card used to ship a literal em dash here, which is also what a
+       missing price degrades to -- so "still loading" and "Lemon Squeezy did
+       not answer" rendered identically, and both looked like a finished price
+       of "—". A shimmer cannot be mistaken for a price, so the two states are
+       now distinguishable and only the real failure shows an em dash.
+       Dimensions are fixed so resolving the price does not reflow the card. */
+    .price-skeleton {
+      display: inline-block;
+      width: 104px; height: 46px;
+      vertical-align: baseline;
+      border-radius: 8px;
+      background: linear-gradient(90deg,
+        rgba(200,169,110,0.07) 0%,
+        rgba(200,169,110,0.16) 50%,
+        rgba(200,169,110,0.07) 100%);
+      background-size: 220% 100%;
+      animation: priceShimmer 1.4s ease-in-out infinite;
+    }
+    @keyframes priceShimmer {
+      0%   { background-position: 120% 50%; }
+      100% { background-position: -120% 50%; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .price-skeleton { animation: none; }
+    }
+    /* Hidden while loading and when no price resolved: "/mo" beside a shimmer
+       is noise, and beside an em dash it asserts a cadence we do not know. */
+    .pro-price-cadence[hidden] { display: none; }
 
     /* ===== PHASE 3: EDITORIAL TYPOGRAPHY TOKENS ===== */
     :root {
@@ -5408,8 +5445,12 @@
         <div class="level-card-num">Act i.</div>
         <h3 class="level-card-title">Beginner</h3>
         <p class="level-card-desc">Short, clear lines. Build confidence on camera.</p>
+        <!-- These three counts, and the two on the pricing cards, are written
+             by renderSceneCounts() from /api/scene-config. They were hardcoded,
+             and this one said "Unlocked" -- true for the users who predate the
+             free tier, false for every new signup, who gets 5 of these 20. -->
         <div class="level-card-meta">
-          <span id="clvPbAvg1Meta">20 Scenes · Unlocked</span>
+          <span id="clvPbAvg1Meta">20 Scenes</span>
         </div>
       </div>
       <div class="level-card-edt locked" onclick="openLevelPanel(2)">
@@ -5417,7 +5458,7 @@
         <h3 class="level-card-title">Intermediate</h3>
         <p class="level-card-desc">Rhythm and emotion start to matter.</p>
         <div class="level-card-meta" id="clvLock2Meta">
-          <span>20 Scenes · Score 60% to unlock</span>
+          <span id="clvLock2MetaText">20 Scenes · Score 60% to unlock</span>
         </div>
       </div>
       <div class="level-card-edt locked" onclick="openLevelPanel(3)">
@@ -5425,7 +5466,7 @@
         <h3 class="level-card-title">Advanced</h3>
         <p class="level-card-desc">Accent precision and raw delivery.</p>
         <div class="level-card-meta" id="clvLock3Meta">
-          <span>7 Scenes · Score 70% to unlock</span>
+          <span id="clvLock3MetaText">7 Scenes · Score 70% to unlock</span>
         </div>
       </div>
     </div>
@@ -5441,7 +5482,10 @@
     <button class="mc-pill" data-billing="monthly">Monthly</button>
     <button class="mc-pill active" data-billing="yearly">
       Yearly
-      <span class="mc-pill-badge">−20%</span>
+      <!-- Filled from the real monthly and yearly prices, and left hidden if
+           either is missing. Hardcoding it produced "−20%" for a saving that
+           is actually 56%. -->
+      <span class="mc-pill-badge" id="pricingYearlyBadge" hidden></span>
     </button>
   </div>
 
@@ -5451,7 +5495,10 @@
       <div class="price-card-amount">$0<span>/mo</span></div>
       <div class="price-card-sub">forever</div>
       <ul class="price-card-features">
-        <li>5 Beginner scenes</li>
+        <!-- Count from /api/scene-config's free_scene_ids -- the same set the
+             server's gate lets through, so the card cannot promise more than
+             can_access_scene() allows. -->
+        <li id="pricingFreeCount">5 Beginner scenes</li>
         <li>Daily practice</li>
         <li>Vocabulary tracking</li>
       </ul>
@@ -5463,11 +5510,11 @@
         <!-- Amount and cadence come from /api/billing/plans, which reads them
              from Lemon Squeezy. This card used to state $4.99 for a variant that
              charges $8.99. A price the store owns does not belong in markup. -->
-        <span class="pro-price" id="proPriceAmount">&mdash;</span><span style="font-size:22px;color:rgba(255,255,255,0.5);">/mo</span>
+        <span class="pro-price" id="proPriceAmount" aria-busy="true"><span class="price-skeleton" aria-hidden="true"></span></span><span class="pro-price-cadence" id="proPriceCadence" style="font-size:22px;color:rgba(255,255,255,0.5);" hidden>/mo</span>
       </div>
       <div class="pro-price-sub" id="proPriceSub"></div>
       <ul class="price-card-features">
-        <li>All 47 scenes</li>
+        <li id="pricingProCount">All 47 scenes</li>
         <li>Spanish translations</li>
         <li>Advanced ranks &amp; missions</li>
         <li>Priority new releases</li>
@@ -6401,7 +6448,7 @@
   <div class="pro-upgrade-card pro-locked" id="proUpgradeCard">
     <div class="pro-upgrade-inner">
       <div class="pro-upgrade-eyebrow">Mirror Pro</div>
-      <div class="pro-upgrade-title">Unlock all <em>47 scenes</em></div>
+      <div class="pro-upgrade-title">Unlock all <em id="proUpgradeCount">47 scenes</em></div>
       <div class="pro-upgrade-features">
         <span>Spanish translations</span>
         <span>Advanced ranks</span>

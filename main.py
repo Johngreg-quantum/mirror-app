@@ -2167,7 +2167,16 @@ async def get_scenes():
 
 @app.get("/api/scene-config")
 async def get_scene_config():
-    return _PUBLIC_SCENE_CONFIG
+    """Scene metadata, plus which scenes are free.
+
+    `free_scene_ids` is served as ids rather than a count so the client never
+    has to reproduce the rule "the first N of level 1" -- it renders exactly
+    the set can_access_scene() lets through, and the free tier changes by
+    editing FREE_SCENE_COUNT in one place. The landing page's scene counts are
+    derived from this response for the same reason: they were six hardcoded
+    numbers, and "20 Scenes / Unlocked" was true only for the users who
+    predate the free tier."""
+    return {**_PUBLIC_SCENE_CONFIG, "free_scene_ids": _free_scene_ids()}
 
 
 def compute_user_level(best: dict) -> int:

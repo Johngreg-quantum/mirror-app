@@ -149,6 +149,10 @@ const {
 let LEVEL_MAP = {};
 let CLV_LEVELS = [];
 let DEFAULT_UNLOCKED_SCENES = [];
+// The scenes a user with no entitlements may play, straight from
+// /api/scene-config. Served as ids rather than a count so this file never
+// reproduces the server's "first N of level 1" rule.
+let FREE_SCENE_IDS = [];
 
 const APP_BASE = (window.MIRROR_APP_BASE || '').replace(/\/$/, '');
 const API = APP_BASE;
@@ -316,10 +320,54 @@ function applySceneConfig(config) {
       scenes: sceneIds,
     };
   });
+  FREE_SCENE_IDS = Array.isArray(config && config.free_scene_ids)
+    ? config.free_scene_ids.slice() : [];
   DEFAULT_UNLOCKED_SCENES = CLV_LEVELS.length ? CLV_LEVELS[0].scenes.slice() : [];
   if (!userProgress.unlocked_scenes || !userProgress.unlocked_scenes.length) {
     userProgress.unlocked_scenes = DEFAULT_UNLOCKED_SCENES.slice();
   }
+  renderSceneCounts();
+}
+
+// The landing page carried six hardcoded scene counts. They happened to match
+// scene_config.json, but nothing kept them matching, and the Beginner card read
+// "20 Scenes · Unlocked" -- true for the users who predate the free tier and
+// false for every new signup, who gets FREE_SCENE_IDS.length of those 20.
+//
+// Runs on both shells. index.html has the pricing and levels sections; the new
+// shell has neither, so every lookup here is allowed to miss.
+function renderSceneCounts() {
+  if (!CLV_LEVELS.length) return;   // config not in yet; markup keeps its default
+  // The config fetch can resolve before the sections below this script exist,
+  // in which case every lookup would miss silently and the hardcoded defaults
+  // would ship to the visitor -- the exact failure this replaces.
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', renderSceneCounts, { once: true });
+    return;
+  }
+  const set = function (id, text) {
+    const el = document.getElementById(id);
+    if (el) el.textContent = text;
+  };
+  const scenesWord = function (n) { return n + (n === 1 ? ' Scene' : ' Scenes'); };
+  const total = CLV_LEVELS.reduce(function (n, lv) { return n + lv.scenes.length; }, 0);
+  const free  = FREE_SCENE_IDS.length;
+
+  const l1 = CLV_LEVELS[0];
+  if (l1) {
+    // Says what a visitor actually gets. "Unlocked" was the misleading word.
+    set('clvPbAvg1Meta', free
+      ? scenesWord(l1.scenes.length) + ' · ' + free + ' free to start'
+      : scenesWord(l1.scenes.length));
+  }
+  CLV_LEVELS.slice(1).forEach(function (lv) {
+    set('clvLock' + lv.level + 'MetaText',
+        scenesWord(lv.scenes.length) + ' · Score ' + lv.unlock + '% to unlock');
+  });
+
+  if (free) set('pricingFreeCount', free + ' Beginner scenes');
+  set('pricingProCount',  'All ' + total + ' scenes');
+  set('proUpgradeCount',  total + ' scenes');
 }
 
 let sceneConfigPromise = null;
@@ -696,19 +744,72 @@ const BillingPlans = {
     return Math.round(p.price_cents / months);
   },
 
+  // The yearly saving against paying monthly for a year, from the two real
+  // prices. Hardcoded markup claimed 20%; these prices make it 56%, and any
+  // typed number goes stale the next time pricing moves. Null unless both
+  // subscription prices are known, so a partial catalogue hides the badge
+  // rather than advertising a saving computed from one price.
+  discountPct() {
+    const m = this.get('monthly'), y = this.get('yearly');
+    if (!m || !y || !m.is_subscription || !y.is_subscription) return null;
+    const monthlyYear = this.perMonthCents(m) * 12;
+    if (!monthlyYear || y.price_cents === null || y.price_cents === undefined) return null;
+    const pct = Math.round((1 - y.price_cents / monthlyYear) * 100);
+    return pct > 0 ? pct : null;
+  },
+
   render() {
     const plan  = this.get(this.activeBilling());
     const perMo = this.money(this.perMonthCents(plan));
     const total = this.money(plan ? plan.price_cents : null);
+    // Distinguishes "not answered yet" from "answered, no price". Both used to
+    // render the same em dash, so a still-loading card was indistinguishable
+    // from a broken one -- and an em dash in a 60px price slot reads as final.
+    const loading = !this.plans;
 
     const amountEl = document.getElementById('proPriceAmount');
-    if (amountEl) amountEl.textContent = perMo || '\u2014';
+    if (amountEl) {
+      if (loading) {
+        amountEl.setAttribute('aria-busy', 'true');
+        if (!amountEl.querySelector('.price-skeleton')) {
+          amountEl.textContent = '';
+          const sk = document.createElement('span');
+          sk.className = 'price-skeleton';
+          sk.setAttribute('aria-hidden', 'true');
+          amountEl.appendChild(sk);
+        }
+      } else {
+        amountEl.removeAttribute('aria-busy');
+        amountEl.textContent = perMo || '\u2014';
+      }
+    }
+
+    // "/mo" is an assertion about cadence, so it is shown only once a
+    // per-month figure actually exists to attach it to.
+    const cadenceEl = document.getElementById('proPriceCadence');
+    if (cadenceEl) cadenceEl.hidden = loading || !perMo;
 
     const subEl = document.getElementById('proPriceSub');
     if (subEl) {
-      subEl.textContent = (plan && plan.is_subscription && plan.interval === 'year' && total)
-        ? ('billed yearly (' + total + '/year)')
-        : '';
+      if (loading) {
+        subEl.textContent = '';
+      } else if (plan && plan.is_subscription && plan.interval === 'year' && total) {
+        subEl.textContent = 'billed yearly (' + total + '/year)';
+      } else if (!perMo) {
+        // The button stays usable: the variant ids are correct even when the
+        // price lookup fails, so checkout still works and Lemon Squeezy shows
+        // the real amount. Saying so beats an unexplained em dash.
+        subEl.textContent = 'Live pricing shown at checkout';
+      } else {
+        subEl.textContent = '';
+      }
+    }
+
+    const badgeEl = document.getElementById('pricingYearlyBadge');
+    if (badgeEl) {
+      const pct = loading ? null : this.discountPct();
+      badgeEl.textContent = pct === null ? '' : ('\u2212' + pct + '%');
+      badgeEl.hidden = pct === null;
     }
 
     // States the charge that will actually be made, not a per-month rate for a
@@ -723,8 +824,11 @@ const BillingPlans = {
     }
 
     // No configured plans means billing is not set up. Better a disabled button
-    // than one that opens a checkout which cannot succeed.
-    const none = !this.plans || !this.plans.length;
+    // than one that opens a checkout which cannot succeed. Only once the
+    // catalogue has actually resolved, though -- disabling it while the fetch
+    // is still in flight would tell visitors billing is unavailable during the
+    // window it is merely unanswered.
+    const none = !loading && !this.plans.length;
     ['pricingProBtn', 'proUpgradeBtn'].forEach(function (id) {
       const b = document.getElementById(id);
       if (!b) return;
