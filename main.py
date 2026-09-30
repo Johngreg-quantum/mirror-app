@@ -90,6 +90,7 @@ _INDEX_HTML_PATH = os.path.join(_APP_DIR, "index.html")
 _NEW_SHELL_INDEX_HTML_PATH = os.path.join(_STATIC_DIR, "new-shell", "index.html")
 _SCENE_CONFIG_PATH = os.path.join(_APP_DIR, "scene_config.json")
 _PRIVACY_MD_PATH = os.path.join(_APP_DIR, "docs", "privacy-policy.md")
+_TERMS_MD_PATH   = os.path.join(_APP_DIR, "docs", "terms-of-service.md")
 
 
 class _RevalidatingStaticFiles(StaticFiles):
@@ -1344,6 +1345,19 @@ async def privacy_policy(request: Request):
         etag, body, last_modified = _md_page(_PRIVACY_MD_PATH, "Privacy Policy — MIRROR")
     except (FileNotFoundError, OSError):
         return HTMLResponse("<h1>Privacy policy not found</h1>", status_code=404)
+    return _revalidating_html(request, etag, body, last_modified)
+
+
+@app.get("/terms", response_class=HTMLResponse)
+async def terms_of_service(request: Request):
+    """Public terms of service. Same shape as /privacy: rendered from markdown
+    at request time and cached on the file's (mtime, size), so correcting a
+    clause is an edit to docs/terms-of-service.md and a deploy, with no
+    template to keep in step."""
+    try:
+        etag, body, last_modified = _md_page(_TERMS_MD_PATH, "Terms of Service — MIRROR")
+    except (FileNotFoundError, OSError):
+        return HTMLResponse("<h1>Terms of service not found</h1>", status_code=404)
     return _revalidating_html(request, etag, body, last_modified)
 
 
