@@ -91,6 +91,7 @@ _NEW_SHELL_INDEX_HTML_PATH = os.path.join(_STATIC_DIR, "new-shell", "index.html"
 _SCENE_CONFIG_PATH = os.path.join(_APP_DIR, "scene_config.json")
 _PRIVACY_MD_PATH = os.path.join(_APP_DIR, "docs", "privacy-policy.md")
 _TERMS_MD_PATH   = os.path.join(_APP_DIR, "docs", "terms-of-service.md")
+_REFUNDS_MD_PATH = os.path.join(_APP_DIR, "docs", "refund-policy.md")
 
 
 class _RevalidatingStaticFiles(StaticFiles):
@@ -1345,6 +1346,20 @@ async def privacy_policy(request: Request):
         etag, body, last_modified = _md_page(_PRIVACY_MD_PATH, "Privacy Policy — MIRROR")
     except (FileNotFoundError, OSError):
         return HTMLResponse("<h1>Privacy policy not found</h1>", status_code=404)
+    return _revalidating_html(request, etag, body, last_modified)
+
+
+@app.get("/refunds", response_class=HTMLResponse)
+async def refund_policy(request: Request):
+    """Public refund policy. Its own page rather than a section of /terms: it
+    has to be linked next to the checkout button, and a short standalone page is
+    a better thing to put there than a deep link into the middle of a long
+    document. /terms references it instead of restating it, so the two cannot
+    drift apart."""
+    try:
+        etag, body, last_modified = _md_page(_REFUNDS_MD_PATH, "Refund Policy — MIRROR")
+    except (FileNotFoundError, OSError):
+        return HTMLResponse("<h1>Refund policy not found</h1>", status_code=404)
     return _revalidating_html(request, etag, body, last_modified)
 
 

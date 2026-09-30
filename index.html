@@ -673,6 +673,19 @@
     .footer-logo { font-family: 'Bebas Neue', sans-serif; font-size: 16px; letter-spacing: 0.2em; color: rgba(240,237,230,0.18); }
     .footer-logo em { font-style: normal; }
     .footer-copy { font-size: 11px; color: rgba(240,237,230,0.18); }
+    /* Legal links. Same muted weight as the copyright -- present and findable
+       rather than shouted, which is what a footer is for. The whole row wraps
+       on a narrow screen instead of squeezing the three links together. */
+    .footer-legal { display: flex; gap: 14px; flex-wrap: wrap; }
+    .footer-legal a {
+      font-size: 11px; color: rgba(240,237,230,0.3);
+      text-decoration: none; transition: color 0.2s;
+    }
+    .footer-legal a:hover { color: rgba(200,169,110,0.8); }
+    @media (max-width: 560px) {
+      .footer-inner { flex-direction: column; gap: 12px; text-align: center; }
+      .footer-legal { justify-content: center; }
+    }
 
     /* — BOTTOM NAV — */
     .bottom-nav {
@@ -2318,6 +2331,65 @@
     /* Hidden while loading and when no price resolved: "/mo" beside a shimmer
        is noise, and beside an em dash it asserts a cadence we do not know. */
     .pro-price-cadence[hidden] { display: none; }
+
+    /* Legal copy at the point of purchase. Deliberately legible rather than
+       fine print: auto-renewal and the refund window are what a buyer needs
+       before paying, and burying them is how a chargeback starts. */
+    .checkout-legal {
+      margin: 10px 0 0;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 10.5px; line-height: 1.5;
+      color: rgba(240,237,230,0.4);
+      text-align: center;
+    }
+    .checkout-legal a { color: rgba(200,169,110,0.75); text-decoration: none; }
+    .checkout-legal a:hover { text-decoration: underline; }
+    .pricing-legal {
+      max-width: 520px; margin: 26px auto 0;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 11px; line-height: 1.6;
+      color: rgba(240,237,230,0.32);
+      text-align: center;
+    }
+    .pricing-legal a { color: rgba(200,169,110,0.7); text-decoration: none; }
+    .pricing-legal a:hover { text-decoration: underline; }
+
+    /* The landing's own footer. Not in #authScreen, which is display:none here
+       and took .site-footer's links with it. */
+    .ml-landing-footer {
+      border-top: 0.5px solid rgba(200,169,110,0.08);
+      background: rgba(4,4,8,0.6);
+      padding: 26px 44px;
+      position: relative; z-index: 5;
+    }
+    .ml-landing-footer-inner {
+      max-width: 1200px; margin: 0 auto;
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 18px; flex-wrap: wrap;
+    }
+    .ml-landing-footer-logo {
+      font-family: 'Bebas Neue', sans-serif; font-size: 16px;
+      letter-spacing: 0.2em; color: rgba(240,237,230,0.22);
+    }
+    .ml-landing-footer-logo em { font-style: normal; }
+    .ml-landing-footer-legal { display: flex; gap: 20px; flex-wrap: wrap; }
+    .ml-landing-footer-legal a {
+      font-family: 'DM Sans', sans-serif; font-size: 11.5px;
+      color: rgba(240,237,230,0.42); text-decoration: none;
+      letter-spacing: 0.02em; transition: color 0.2s;
+    }
+    .ml-landing-footer-legal a:hover { color: rgba(200,169,110,0.9); }
+    .ml-landing-footer-copy {
+      font-family: 'DM Sans', sans-serif; font-size: 11px;
+      color: rgba(240,237,230,0.2);
+    }
+    @media (max-width: 720px) {
+      .ml-landing-footer { padding: 24px 20px; }
+      .ml-landing-footer-inner {
+        flex-direction: column; text-align: center; gap: 14px;
+      }
+      .ml-landing-footer-legal { justify-content: center; gap: 16px; }
+    }
 
     /* ===== PHASE 3: EDITORIAL TYPOGRAPHY TOKENS ===== */
     :root {
@@ -5520,9 +5592,41 @@
         <li>Priority new releases</li>
       </ul>
       <button class="price-card-cta" id="pricingProBtn">Go pro</button>
+      <!-- Next to the checkout button, not only in the footer. Auto-renewal and
+           the refund window are the two things a buyer should be able to read
+           without hunting, and this is the moment they are deciding. -->
+      <p class="checkout-legal">
+        Renews automatically. Cancel anytime.
+        <a href="/refunds">14-day refund</a> ·
+        <a href="/terms">Terms</a>
+      </p>
     </div>
   </div>
+  <p class="pricing-legal">
+    Payments handled by Lemon Squeezy as merchant of record. By subscribing you
+    agree to our <a href="/terms">Terms of Service</a> and
+    <a href="/refunds">Refund Policy</a>.
+  </p>
 </section>
+
+<!-- ── LANDING FOOTER ──
+     The landing had no footer. .site-footer exists further down but lives
+     inside #authScreen, which is display:none on this page, so its links were
+     unreachable; the only legal link a visitor could actually see was the
+     hero's decorative corner "PRIVACY". A page selling subscriptions needs the
+     three documents reachable from the bottom of it, so this is a real footer
+     in the visible landing rather than more links added to hero chrome. -->
+<footer class="ml-landing-footer">
+  <div class="ml-landing-footer-inner">
+    <span class="ml-landing-footer-logo">MIR<em>RO</em>R</span>
+    <nav class="ml-landing-footer-legal" aria-label="Legal">
+      <a href="/terms">Terms of Service</a>
+      <a href="/refunds">Refund Policy</a>
+      <a href="/privacy">Privacy Policy</a>
+    </nav>
+    <span class="ml-landing-footer-copy">&copy; 2026 MIRROR</span>
+  </div>
+</footer>
 
 <!-- ═══════════════════════════ END MIRROR LANDING ═══════════════════════════ -->
 
@@ -5657,6 +5761,11 @@
   <footer class="site-footer">
     <div class="footer-inner">
       <span class="footer-logo">MIR<em>RO</em>R</span>
+      <nav class="footer-legal" aria-label="Legal">
+        <a href="/terms">Terms</a>
+        <a href="/refunds">Refunds</a>
+        <a href="/privacy">Privacy</a>
+      </nav>
       <span class="footer-copy">&copy; 2026 MIRROR. All rights reserved.</span>
     </div>
   </footer>
@@ -6461,6 +6570,14 @@
       <button class="pro-upgrade-btn" id="proUpgradeBtn" onclick="document.getElementById('pricingProBtn').click()">
         <span id="proUpgradeLabel">Upgrade</span>
       </button>
+      <!-- The other checkout entry point. Signed-in users never see the pricing
+           section, so the disclosure has to be here too or half the buyers get
+           it and half do not. -->
+      <p class="checkout-legal">
+        Renews automatically. Cancel anytime.
+        <a href="/refunds" target="_blank" rel="noopener">14-day refund</a> ·
+        <a href="/terms" target="_blank" rel="noopener">Terms</a>
+      </p>
     </div>
   </div>
 
