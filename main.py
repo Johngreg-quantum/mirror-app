@@ -984,6 +984,16 @@ async def startup():
     Errors here appear in the Render log with a full traceback instead of
     killing the process silently during module load."""
     init_db()
+    # Stated on every boot because the flag is invisible from outside: with it
+    # off the app behaves exactly as it did before the gate existed, so there is
+    # nothing to notice if it was set wrong. This line is the only place the
+    # answer appears, and logger.info only reaches Render at all because of the
+    # basicConfig added in bd0cfef.
+    logger.info(
+        "[gate] ENFORCE_ENTITLEMENTS=%s (%s)",
+        ENFORCE_ENTITLEMENTS,
+        "scenes are gated" if ENFORCE_ENTITLEMENTS else "no scene will be refused",
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -1629,6 +1639,31 @@ async def delete_account(req: DeleteAccountRequest, user: dict = Depends(current
 # in who holds a level entitlement.
 FREE_SCENE_COUNT = 5
 
+# ─── The enforcement switch ──────────────────────────────────────────────────
+# OFF by default, and it stays off until the Lemon Squeezy store is activated
+# for live payments.
+#
+# The reason is not caution in general, it is one specific ordering problem: the
+# store is still in test mode, so nobody can actually pay. Enforcing before that
+# changes would put every new signup behind a paywall with no working way
+# through it -- the gate would be doing exactly what it is for, and the result
+# would be a product that cannot be bought and cannot be used past five scenes.
+#
+# So the two halves ship separately. The code lands now and can be verified in
+# production with the flag off; the flag goes on after a real $1 purchase has
+# succeeded end to end. That makes go-live an env change rather than a deploy,
+# and makes rollback one too -- which matters more here than usual, because the
+# failure mode is silent: a wrongly-locked user does not file a bug, they leave.
+#
+# Off is not "gate disabled and everything else still moved". It is the
+# behaviour that shipped before any of this existed: no scene refused,
+# unlocked_scenes computed from score progression alone, and no lock anywhere
+# that offers to sell something. Every branch this flag guards is named in the
+# commit that introduced it.
+ENFORCE_ENTITLEMENTS = os.getenv("ENFORCE_ENTITLEMENTS", "").strip().lower() in (
+    "1", "true", "yes", "on",
+)
+
 
 def _free_scene_ids() -> list:
     return list(LEVELS[0]["scenes"][:FREE_SCENE_COUNT]) if LEVELS else []
@@ -1777,6 +1812,12 @@ def can_play_scene(cur, user_id: int, scene_id: str, challenge_id: str = "") -> 
     Both are one scene at a time and neither grants anything: nothing is
     written, and the next request is gated again. A free user who wants a
     sixth scene of their own choosing still has to buy one."""
+    # The switch. Before the store can take a payment, refusing a scene offers
+    # the user nothing to do about it, so nothing is refused. Deliberately the
+    # first line: no entitlement is read and no row is consulted, so the flag
+    # cannot half-apply.
+    if not ENFORCE_ENTITLEMENTS:
+        return True
     if can_access_scene(cur, user_id, scene_id):
         return True
     if scene_id == get_daily_scene_id():
@@ -2274,8 +2315,17 @@ async def get_scene_config():
     editing FREE_SCENE_COUNT in one place. The landing page's scene counts are
     derived from this response for the same reason: they were six hardcoded
     numbers, and "20 Scenes / Unlocked" was true only for the users who
-    predate the free tier."""
-    return {**_PUBLIC_SCENE_CONFIG, "free_scene_ids": _free_scene_ids()}
+    predate the free tier.
+
+    `enforce_entitlements` rides along because the landing page is public and
+    has no /api/progress to read: the Beginner card's "5 free to start" is a
+    claim about a restriction that does not exist yet while the flag is off,
+    and it has to know that before it can avoid making it."""
+    return {
+        **_PUBLIC_SCENE_CONFIG,
+        "free_scene_ids": _free_scene_ids(),
+        "enforce_entitlements": ENFORCE_ENTITLEMENTS,
+    }
 
 
 def compute_user_level(best: dict) -> int:
@@ -2331,9 +2381,18 @@ async def get_progress(user: dict = Depends(current_user)):
     # Intersected rather than replaced: owning a level does not skip its score
     # threshold, so buying ahead does not unlock scenes the user has not reached.
     # (Level 1's threshold is 0, so the $1 purchase is immediately usable.)
-    accessible_set = set(accessible)
-    unlocked = [s for lvl in LEVELS if lvl["level"] <= current_level
-                for s in lvl["scenes"] if s in accessible_set]
+    #
+    # With ENFORCE_ENTITLEMENTS off this is the plain score-based list it always
+    # was. Intersecting anyway would show locks the server does not enforce,
+    # which is the worse half of both states: a user told they cannot reach a
+    # scene that /api/submit would in fact accept.
+    if ENFORCE_ENTITLEMENTS:
+        accessible_set = set(accessible)
+        unlocked = [s for lvl in LEVELS if lvl["level"] <= current_level
+                    for s in lvl["scenes"] if s in accessible_set]
+    else:
+        unlocked = [s for lvl in LEVELS if lvl["level"] <= current_level
+                    for s in lvl["scenes"]]
 
     # Progress info for the bar displayed below the level badge
     next_lvl_def = next((l for l in LEVELS if l["level"] == current_level + 1), None)
@@ -2358,9 +2417,16 @@ async def get_progress(user: dict = Depends(current_user)):
         # higher, or buy. `accessible_scenes` is what is owned regardless of
         # level, so a scene absent from it is a sell and a scene in it but not
         # in unlocked_scenes is a "keep practising".
-        "entitlements":      held,
-        "accessible_scenes": accessible,
-        "free_scene_ids":    _free_scene_ids(),
+        #
+        # Omitted entirely while enforcement is off, rather than sent and
+        # ignored. The client already treats an absent list as "everything is
+        # owned" -- that was the compatibility path for an older cached
+        # response -- so the "Upgrade to unlock" label switches itself off with
+        # no second flag on that side to keep in step.
+        "entitlements":         held,
+        "free_scene_ids":       _free_scene_ids(),
+        "enforce_entitlements": ENFORCE_ENTITLEMENTS,
+        **({"accessible_scenes": accessible} if ENFORCE_ENTITLEMENTS else {}),
     }
 
 

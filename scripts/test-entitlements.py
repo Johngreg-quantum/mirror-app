@@ -1,6 +1,6 @@
 """End-to-end tests for entitlement grants and revocations.
 
-    python scripts/test-entitlements.py [baseUrl] [sqlitePath]
+    python scripts/test-entitlements.py [baseUrl] [sqlitePath] [unenforcedBaseUrl]
 
 Defaults: http://127.0.0.1:8077  and  ./mirror.db
 
@@ -11,6 +11,16 @@ SQL together rather than testing helpers in isolation.
 Requires LEMONSQUEEZY_SIGNING_SECRET to match the server's, and the target
 server to be running against the given SQLite file. Refuses to run against
 PostgreSQL -- it writes and deletes test rows.
+
+`baseUrl` must have ENFORCE_ENTITLEMENTS on, and the run aborts if it does not
+rather than reporting a passing gate that is simply switched off.
+
+`unenforcedBaseUrl` is optional and points at a SECOND server on the same
+database with the flag OFF. Given one, this also asserts that a free user can
+submit a paid scene there. That case is the whole reason the flag exists: the
+store cannot take a payment yet, so a gate in production today would be a
+paywall with no way through it. Testing only the enforcing build would leave
+the state that actually ships untested.
 
 The refund cases were written before the refund implementation, per
 docs/entitlements-spec.md §7, because revoking by user_id instead of by source
@@ -27,9 +37,19 @@ import urllib.request
 
 BASE = (sys.argv[1] if len(sys.argv) > 1 else "http://127.0.0.1:8077").rstrip("/")
 DB = sys.argv[2] if len(sys.argv) > 2 else "mirror.db"
+UNENFORCED_BASE = (sys.argv[3].rstrip("/") if len(sys.argv) > 3 else "")
 
 LEVEL1_VARIANT = os.getenv("LEMONSQUEEZY_LEVEL1_VARIANT_ID", "2109931")
 UNKNOWN_VARIANT = "999999999"
+
+# The in-process sections import main and call can_play_scene() directly, so
+# they exercise whichever branch the flag selects AT IMPORT TIME in *this*
+# process -- which is not the same process as the server under test. Set before
+# the import so those cases always test the enforcing path, independently of
+# how this script was invoked. The HTTP sections are unaffected: they talk to
+# real servers, whose own environment decides their behaviour, and the
+# unenforced peer is asserted to report the flag off before it is used.
+os.environ["ENFORCE_ENTITLEMENTS"] = "true"
 
 results = []
 
@@ -91,14 +111,14 @@ def post_json(path, payload, token=""):
     return _send(req)
 
 
-def get_json(path, token=""):
-    req = urllib.request.Request(BASE + path)
+def get_json(path, token="", base=None):
+    req = urllib.request.Request((base or BASE) + path)
     if token:
         req.add_header("Authorization", "Bearer " + token)
     return _send(req)
 
 
-def post_multipart(path, token, scene_id, challenge_id=""):
+def post_multipart(path, token, scene_id, challenge_id="", base=None):
     """A minimal /api/submit body. The audio is one junk byte on purpose: the
     gate is checked before the upload is read, so a 403 needs no real recording
     and no Whisper call. A scene that passes the gate fails further down, which
@@ -116,7 +136,7 @@ def post_multipart(path, token, scene_id, challenge_id=""):
     body += b"\x00\r\n"
     body += ("--%s--\r\n" % b).encode()
     req = urllib.request.Request(
-        BASE + path, data=body,
+        (base or BASE) + path, data=body,
         headers={"Content-Type": "multipart/form-data; boundary=" + b,
                  "Authorization": "Bearer " + token})
     return _send(req)
@@ -175,7 +195,22 @@ def main():
         print("SQLite file not found: %s" % DB)
         sys.exit(2)
 
-    print("target %s   db %s   level1 variant %s\n" % (BASE, DB, LEVEL1_VARIANT))
+    print("target %s   db %s   level1 variant %s" % (BASE, DB, LEVEL1_VARIANT))
+
+    # Every gate assertion below would also pass against a build where the flag
+    # is simply off and nothing is refused for a different reason. Checking
+    # first means a green run cannot mean "enforcement works" when it actually
+    # means "enforcement never ran".
+    code, body = get_json("/api/scene-config")
+    if code != 200:
+        print("cannot read /api/scene-config from %s (HTTP %s)" % (BASE, code))
+        sys.exit(2)
+    if not json.loads(body).get("enforce_entitlements"):
+        print("%s has ENFORCE_ENTITLEMENTS off. The gate cases need it on;\n"
+              "start the server with ENFORCE_ENTITLEMENTS=true." % BASE)
+        sys.exit(2)
+    print("enforcement: ON" + ("   unenforced peer: %s" % UNENFORCED_BASE
+                               if UNENFORCED_BASE else "") + "\n")
 
     # ── Signature ────────────────────────────────────────────────────────────
     print("signature")
@@ -440,6 +475,78 @@ def main():
             check("and can submit a paid Level 1 scene", code != 403, "HTTP %s" % code)
     except Exception as exc:
         check("HTTP enforcement check ran", False, repr(exc))
+
+    # ── THE FLAG OFF — the state that actually ships today ───────────────────
+    # Same database, same code, same user. The only difference is
+    # ENFORCE_ENTITLEMENTS, so a failure here is the flag and nothing else.
+    if UNENFORCED_BASE:
+        print("\nENFORCE_ENTITLEMENTS off")
+        try:
+            uname2 = "enttest_off"
+            con = sqlite3.connect(DB)
+            con.execute("DELETE FROM users WHERE username = ?", (uname2,))
+            con.commit()
+            con.close()
+
+            import main as app3
+            free3 = app3._free_scene_ids()
+            lvl1_3 = app3.LEVELS[0]["scenes"]
+            daily3 = app3.get_daily_scene_id()
+            # Scene 6: the first Level 1 scene outside the free tier, and not
+            # today's daily, so neither the free set nor the daily hole can be
+            # the reason it succeeds.
+            scene6 = next(s for s in lvl1_3 if s not in free3 and s != daily3)
+
+            code, body = post_json("/api/auth/register",
+                                   {"username": uname2,
+                                    "email": "enttest_off@example.com",
+                                    "password": "testpass123"},
+                                   )
+            tok2 = json.loads(body).get("access_token", "") if code == 200 else ""
+            check("unenforced: test user registered", code == 200 and bool(tok2),
+                  "HTTP %s" % code)
+
+            if tok2:
+                code, body = get_json("/api/scene-config", base=UNENFORCED_BASE)
+                cfg = json.loads(body) if code == 200 else {}
+                check("unenforced: /api/scene-config reports the flag off",
+                      cfg.get("enforce_entitlements") is False,
+                      repr(cfg.get("enforce_entitlements")))
+
+                code, body = post_multipart("/api/submit", tok2, scene6,
+                                            base=UNENFORCED_BASE)
+                check("A FREE USER CAN SUBMIT SCENE 6 WITH THE FLAG OFF",
+                      code != 403, "HTTP %s scene=%s" % (code, scene6))
+
+                code, body = get_json("/api/vocab/" + scene6, tok2,
+                                      base=UNENFORCED_BASE)
+                check("unenforced: /api/vocab is not gated either", code != 403,
+                      "HTTP %s" % code)
+
+                code, body = get_json("/api/progress", tok2, base=UNENFORCED_BASE)
+                prog3 = json.loads(body) if code == 200 else {}
+                check("unenforced: unlocked_scenes is score-based (all of Level 1)",
+                      prog3.get("unlocked_scenes") == list(lvl1_3),
+                      "%d scenes" % len(prog3.get("unlocked_scenes") or []))
+                # Absent, not empty: the client reads an absent list as "owned",
+                # which is what switches the "Upgrade to unlock" label off.
+                check("unenforced: accessible_scenes is OMITTED, so no sell-lock",
+                      "accessible_scenes" not in prog3,
+                      str(sorted(prog3.keys())))
+
+                con = sqlite3.connect(DB)
+                r = con.execute("SELECT id FROM users WHERE username = ?",
+                                (uname2,)).fetchone()
+                if r:
+                    con.execute("DELETE FROM scores WHERE user_id = ?", (r[0],))
+                    con.execute("DELETE FROM entitlements WHERE user_id = ?", (r[0],))
+                    con.execute("DELETE FROM users WHERE id = ?", (r[0],))
+                    con.commit()
+                con.close()
+        except Exception as exc:
+            check("unenforced check ran", False, repr(exc))
+    else:
+        print("\nENFORCE_ENTITLEMENTS off: skipped (no unenforcedBaseUrl given)")
 
     # ── Summary ──────────────────────────────────────────────────────────────
     failed = [n for n, ok, _ in results if not ok]

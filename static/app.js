@@ -153,6 +153,11 @@ let DEFAULT_UNLOCKED_SCENES = [];
 // /api/scene-config. Served as ids rather than a count so this file never
 // reproduces the server's "first N of level 1" rule.
 let FREE_SCENE_IDS = [];
+// Mirrors ENFORCE_ENTITLEMENTS on the server. While it is false nothing is
+// refused, so this file must not show a restriction or advertise one -- a lock
+// the server does not enforce is worse than no lock, because it turns people
+// away from scenes they could have played.
+let ENTITLEMENTS_ENFORCED = false;
 
 const APP_BASE = (window.MIRROR_APP_BASE || '').replace(/\/$/, '');
 const API = APP_BASE;
@@ -322,13 +327,18 @@ function applySceneConfig(config) {
   });
   FREE_SCENE_IDS = Array.isArray(config && config.free_scene_ids)
     ? config.free_scene_ids.slice() : [];
+  ENTITLEMENTS_ENFORCED = !!(config && config.enforce_entitlements);
   // What to show as unlocked before /api/progress answers. This was all of
   // level 1, which is what the server grants only to the grandfathered users;
   // for a new free user it promised 20 scenes where the gate allows 5, and
   // every one of the other 15 failed on tap. The free set is the honest
   // default -- signed-in users with more get it from /api/progress a moment
   // later, which widens the list rather than narrowing it.
-  DEFAULT_UNLOCKED_SCENES = FREE_SCENE_IDS.length
+  //
+  // Only once enforcement is on, though. Narrowing this while the server
+  // refuses nothing would hide fifteen playable scenes behind a lock that does
+  // not exist.
+  DEFAULT_UNLOCKED_SCENES = (ENTITLEMENTS_ENFORCED && FREE_SCENE_IDS.length)
     ? FREE_SCENE_IDS.slice()
     : (CLV_LEVELS.length ? CLV_LEVELS[0].scenes.slice() : []);
   if (!userProgress.unlocked_scenes || !userProgress.unlocked_scenes.length) {
@@ -364,7 +374,13 @@ function renderSceneCounts() {
   const l1 = CLV_LEVELS[0];
   if (l1) {
     // Says what a visitor actually gets. "Unlocked" was the misleading word.
-    set('clvPbAvg1Meta', free
+    //
+    // "N free to start" describes a restriction, so it is only true once the
+    // restriction exists. While enforcement is off every Level 1 scene really
+    // is free, and promising five of twenty would undersell the product and
+    // mislead the visitor in the same breath. Falls back to the bare count
+    // rather than to "Unlocked", which was wrong in the other direction.
+    set('clvPbAvg1Meta', (ENTITLEMENTS_ENFORCED && free)
       ? scenesWord(l1.scenes.length) + ' · ' + free + ' free to start'
       : scenesWord(l1.scenes.length));
   }
@@ -1108,7 +1124,11 @@ function makeCard(id, s) {
     || userProgress.accessible_scenes.includes(id);
   // The daily scene is playable whatever the user owns -- can_play_scene() lets
   // it through server-side, so showing it locked would contradict the server.
-  const locked  = !userProgress.unlocked_scenes.includes(id) && !isDaily;
+  // Only relevant once enforcement is on: before that the daily is subject to
+  // the same score progression as everything else, and unlocking it here would
+  // be a behaviour change the flag is supposed to be holding back.
+  const locked  = !userProgress.unlocked_scenes.includes(id)
+    && !(ENTITLEMENTS_ENFORCED && isDaily);
   const color   = locked ? 'var(--muted)' : getSceneColor(id);
   const pb      = !locked && userProgress.best_scores[id];
   const el      = document.createElement('div');

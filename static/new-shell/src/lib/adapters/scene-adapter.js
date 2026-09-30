@@ -40,6 +40,9 @@ export function adaptSceneConfig(rawConfig, { progress = null, daily = null } = 
   const levelMap = buildLevelMap(rawConfig?.levels || []);
   const unlocked = new Set(progress?.unlocked_scenes || []);
   const hasProgress = !!progress;
+  // Mirrors ENFORCE_ENTITLEMENTS. While it is false the server refuses nothing,
+  // so no lock here may differ from plain score progression.
+  const enforcing = !!rawConfig?.enforce_entitlements;
 
   const scenes = Object.entries(rawConfig?.scenes || {}).map(([id, scene]) => {
     const level = levelMap[id] || 1;
@@ -60,8 +63,12 @@ export function adaptSceneConfig(rawConfig, { progress = null, daily = null } = 
       personalBest: personalBest ? Math.round(personalBest) : null,
       // The daily scene is never locked: can_play_scene() lets it through
       // whatever the user owns, so locking it here would contradict the server
-      // and disable analyze on a scene the API would have accepted.
-      locked: hasProgress ? (!unlocked.has(id) && daily?.scene_id !== id) : false,
+      // and disable analyze on a scene the API would have accepted. Only once
+      // enforcement is on -- before that the daily follows ordinary score
+      // progression, as it always has.
+      locked: hasProgress
+        ? (!unlocked.has(id) && !(enforcing && daily?.scene_id === id))
+        : false,
       isDaily: daily?.scene_id === id,
       tags: [scene.actor, scene.difficulty].filter(Boolean),
       imageUrl: scene?.ui?.poster_image || posterFallback(level),

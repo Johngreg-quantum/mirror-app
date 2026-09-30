@@ -446,8 +446,10 @@ function renderSceneDetailSurface({
     // does not own it -- the server's challenge exception allows exactly that
     // scene. Leaving the cosmetic lock in force here would disable analyze on a
     // submission /api/submit would have accepted, which is the acquisition dead
-    // end the exception exists to avoid.
-    sceneLocked: currentViewModel.scene.locked && !hasChallengeContext,
+    // end the exception exists to avoid. Gated on enforcement so that with the
+    // flag off this is exactly the expression it replaced.
+    sceneLocked: currentViewModel.scene.locked
+      && !(Boolean(currentViewModel.rawSceneConfig?.enforce_entitlements) && hasChallengeContext),
     onAuthFailure: () => actions?.session?.refreshSession?.({ force: true }),
   });
   const postScoreRefreshStore = createPostScoreRefreshStore({
