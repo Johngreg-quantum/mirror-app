@@ -71,7 +71,7 @@ function validateAnalyzeRequest({ sceneId, audioBlob }) {
   }
 }
 
-export async function submitLegacyAnalyze({ sceneId, audioBlob, signal } = {}) {
+export async function submitLegacyAnalyze({ sceneId, audioBlob, challengeId = '', signal } = {}) {
   validateAnalyzeRequest({ sceneId, audioBlob });
 
   const token = getReadOnlyAuthToken();
@@ -96,6 +96,16 @@ export async function submitLegacyAnalyze({ sceneId, audioBlob, signal } = {}) {
   const formData = new FormData();
   formData.append('scene_id', sceneId);
   formData.append('audio', audioBlob, `recording.${extension}`);
+
+  // The entitlement gate refuses a scene the user does not own, and challenge
+  // links are one of the two deliberate exceptions (see can_play_scene in
+  // main.py). Without this a shared link pointing at a scene outside the
+  // recipient's free five gets a 403 on submit -- the dead end the hole exists
+  // to prevent. The server reads the scene from the challenge row, so sending
+  // the id cannot widen access to anything else.
+  if (challengeId) {
+    formData.append('challenge_id', challengeId);
+  }
 
   let response;
 

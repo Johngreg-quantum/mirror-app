@@ -58,7 +58,10 @@ export function adaptSceneConfig(rawConfig, { progress = null, daily = null } = 
       runtime: formatRuntime(scene),
       targetScore: level > 1 ? 70 : 60,
       personalBest: personalBest ? Math.round(personalBest) : null,
-      locked: hasProgress ? !unlocked.has(id) : false,
+      // The daily scene is never locked: can_play_scene() lets it through
+      // whatever the user owns, so locking it here would contradict the server
+      // and disable analyze on a scene the API would have accepted.
+      locked: hasProgress ? (!unlocked.has(id) && daily?.scene_id !== id) : false,
       isDaily: daily?.scene_id === id,
       tags: [scene.actor, scene.difficulty].filter(Boolean),
       imageUrl: scene?.ui?.poster_image || posterFallback(level),

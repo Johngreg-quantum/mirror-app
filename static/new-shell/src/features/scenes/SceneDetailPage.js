@@ -440,8 +440,14 @@ function renderSceneDetailSurface({
   const analyzeStore = createAnalyzeStore({
     runtime,
     sceneId: currentViewModel.scene.id,
+    challengeId,
     sessionStatus: session?.status,
-    sceneLocked: currentViewModel.scene.locked,
+    // A scene entered from a challenge link is playable even when the visitor
+    // does not own it -- the server's challenge exception allows exactly that
+    // scene. Leaving the cosmetic lock in force here would disable analyze on a
+    // submission /api/submit would have accepted, which is the acquisition dead
+    // end the exception exists to avoid.
+    sceneLocked: currentViewModel.scene.locked && !hasChallengeContext,
     onAuthFailure: () => actions?.session?.refreshSession?.({ force: true }),
   });
   const postScoreRefreshStore = createPostScoreRefreshStore({

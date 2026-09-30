@@ -72,6 +72,10 @@ function deriveAvailability({ runtimeSnapshot, sessionStatus, sceneLocked }) {
 export function createAnalyzeStore({
   runtime,
   sceneId,
+  // Present only when this scene was entered from a challenge link. Passed
+  // through to /api/submit so the entitlement gate's challenge exception
+  // applies on this shell too.
+  challengeId = '',
   sessionStatus = 'unknown',
   sceneLocked = false,
   onAuthFailure = null,
@@ -181,6 +185,7 @@ export function createAnalyzeStore({
       const result = await submitLegacyAnalyze({
         sceneId,
         audioBlob: submissionBlob,
+        challengeId,
         signal: activeAbortController.signal,
       });
 
