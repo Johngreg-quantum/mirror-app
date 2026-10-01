@@ -5,7 +5,8 @@
  *   node scripts/verify-close-button.js [baseUrl] [surface] [--ios-vh]
  *
  *   baseUrl   default http://127.0.0.1:8011   (uvicorn main:app --port 8011)
- *   surface   scene | progress | levels | all  (default all)
+ *   surface   scene | progress | levels | auth | quiz | consent | reward |
+ *             deleteAccount | all   (default all)
  *   --ios-vh  model iOS viewport-unit semantics (see below)
  *
  * Exit code 0 = pass, 1 = fail, 2 = inconclusive (content never overflowed, so
@@ -40,6 +41,13 @@ const BASE    = args[0] || 'http://127.0.0.1:8011';
 const WHICH   = args[1] || 'all';
 const SMALL   = 659, LARGE = 745;   // iPhone 14: URL bar showing / collapsed
 
+// `iosMax` is how this surface's max-height RESOLVES ON REAL iOS, as a function
+// of the large viewport, and is applied only under --ios-vh. A fraction for a
+// plain `Nvh` cap; `L - 48` for a `calc(100vh - 48px)` one. Null where the CSS
+// sets no cap at all -- which is its own defect, not an absence of one: a box
+// with neither max-height nor overflow-y cannot be scrolled back into view once
+// it overflows, so there is nothing for the flag to model and nothing to save
+// the control either.
 const SURFACES = {
   scene: {
     label: 'scene modal (completed result)',
@@ -47,7 +55,7 @@ const SURFACES = {
     scroller: '#modal',         // the element that scrolls
     animated: '#modal',         // the element with the entry transition
     close: '#btnClose',
-    legacyVh: 0.94,             // pre-fix mobile max-height
+    iosMax: L => L * 0.94,      // pre-fix mobile max-height
     css: '#scorePanel,#phonSection,#pbCompare,#transReveal,#btnTryAgain,#btnChallenge' +
          '{display:block !important;opacity:1 !important;}',
     open: () => {
@@ -69,7 +77,7 @@ const SURFACES = {
     scroller: '.progress-modal',
     animated: '.progress-modal',
     close: '#btnProgressClose',
-    legacyVh: 0.90,
+    iosMax: L => L * 0.90,
     open: () => {
       document.getElementById('progressOverlay').classList.add('open');
       document.body.style.position = 'fixed'; document.body.style.width = '100%';
@@ -84,7 +92,7 @@ const SURFACES = {
     scroller: '.clv-panel-inner',
     animated: '.clv-panel',     // NOT the scroller: the slide is on the parent
     close: '.clv-panel-close',
-    legacyVh: 0.85,
+    iosMax: L => L * 0.85,
     open: () => {
       document.getElementById('clvPanel').classList.add('open');
       // The backdrop is what makes the panel read as opaque; opening the panel
@@ -96,6 +104,157 @@ const SURFACES = {
         .fill('<div style="padding:18px;margin-bottom:10px;border:1px solid rgba(255,255,255,.08);border-radius:12px">Scene</div>').join('');
     },
   },
+
+  // ── The surfaces below were never covered ────────────────────────────────
+  // Every one of them can be the only thing on screen, and every one of them
+  // has exactly one control that gets you out of it. Where that control is not
+  // a "×" it is still the dismissal: the consent notice offers only "Got it",
+  // the reward sequence only "Continue", the delete modal only "Keep my
+  // account". Losing those traps the user just as completely.
+
+  auth: {
+    label: 'auth modal (register tab)',
+    box: '.auth-modal-box',
+    // Nothing scrolls: .auth-modal-box sets neither max-height nor overflow-y.
+    // Named anyway so the harness reports scrollMax 0 rather than skipping.
+    scroller: '.auth-modal-box',
+    animated: '.auth-modal-box',
+    close: '#authModalClose',
+    iosMax: null,
+    open: () => {
+      // The app's own opener, not a hand-added class: it also switches tab and
+      // locks body scroll, and testing a state the app cannot produce is worse
+      // than not testing. Register is the taller of the two tabs.
+      if (typeof openAuthModal === 'function') openAuthModal('register');
+      else document.getElementById('authModalOverlay').classList.add('open');
+    },
+  },
+
+  quiz: {
+    label: 'Level 1 quiz',
+    box: '#quizOverlay',
+    // The OVERLAY is the scroller here, and #quizCloseBtn is a plain in-flow
+    // child of the header inside it -- the same shape as the scene modal before
+    // 89411ee.
+    scroller: '#quizOverlay',
+    animated: '#quizInner',
+    close: '#quizCloseBtn',
+    iosMax: null,
+    // The TALLEST real state of a question, not a minimal one. The first
+    // version of this fixture injected a bare prompt and four options, which
+    // overflowed by only 70px -- enough to catch the bug but a serious
+    // understatement of it. QuizController shows the poster, the combo badge,
+    // the graded feedback block and the next button all at once once an answer
+    // has been picked, and it renders ten of these in sequence, so the state
+    // below is what a real run actually puts on screen.
+    //
+    // Everything here uses the controller's own ids and its own .quiz-opt
+    // class, so the heights are production heights rather than the fixture's
+    // own invention.
+    open: () => {
+      document.getElementById('quizOverlay').classList.add('open');
+      document.body.style.position = 'fixed'; document.body.style.width = '100%';
+      const show = (id, disp) => { const e = document.getElementById(id); if (e) e.style.display = disp; };
+      const set  = (id, v)    => { const e = document.getElementById(id); if (e) e.textContent = v; };
+
+      // Poster: 160px, shown by the controller whenever the scene has one.
+      const wrap = document.getElementById('quizPosterWrap');
+      if (wrap) wrap.style.background = '#222';
+      set('quizPosterMovie', 'THE DARK KNIGHT');
+
+      // Mid-quiz, with a streak running.
+      set('quizQuestionNum', 'PREGUNTA 7 / 10');
+      set('quizQuestionType', 'Traducción');
+      set('quizQuestionText',
+          '¿Cuál es la mejor traducción de "Why so serious?" tal y como la dice ' +
+          'el personaje en esta escena?');
+      show('quizComboBadge', 'block');
+      set('quizComboNum', '4');
+
+      const opts = document.getElementById('quizOptions');
+      if (opts) opts.innerHTML = [
+        '¿Por qué tan serio?',
+        '¿Por qué estás tan serio, amigo mío?',
+        '¿Por qué tan triste?',
+        '¿Por qué llegas tan tarde esta noche?',
+      ].map(t => '<button class="quiz-opt" data-val="' + t + '">' + t + '</button>').join('');
+
+      // Answered: feedback and the next button are both visible, which is the
+      // point at which the question is at its tallest.
+      const fb = document.getElementById('quizFeedback');
+      if (fb) {
+        fb.style.display = 'block';
+        fb.style.background = 'rgba(80,200,120,0.1)';
+        fb.style.border = '1px solid rgba(80,200,120,0.3)';
+        fb.textContent = '¡Correcto! "Serious" aquí es "serio" — el Joker está ' +
+                         'burlándose de la gravedad del momento.';
+      }
+      show('quizNextBtn', 'block');
+    },
+  },
+
+  consent: {
+    label: 'first-run recording consent',
+    box: '.rc-box',
+    scroller: '.rc-box',
+    animated: '.rc-box',
+    // No × exists. #rcAccept is the only way out, so it is the control under
+    // test. This is also the surface the commit message for 89411ee cites as
+    // having shipped broken past an is_visible() check.
+    close: '#rcAccept',
+    // max-height: calc(100vh - 48px). On iOS that resolves against the LARGE
+    // viewport while the fixed .rc-overlay sizes to the CURRENT one.
+    iosMax: L => L - 48,
+    open: () => {
+      document.getElementById('recConsentOverlay').classList.add('open');
+      document.body.style.position = 'fixed'; document.body.style.width = '100%';
+    },
+  },
+
+  reward: {
+    label: 'post-take reward sequence',
+    box: '.rs-card',
+    // Like the auth modal: no max-height, no overflow-y, nothing to scroll.
+    scroller: '.rs-card',
+    animated: '.rs-card',
+    close: '#rsContinue',
+    iosMax: null,
+    open: () => {
+      document.getElementById('rewardSeq').classList.add('open');
+      document.body.style.position = 'fixed'; document.body.style.width = '100%';
+      // A real step: the level-up finale, which is the tallest of them.
+      const set = (id, v) => { const e = document.getElementById(id); if (e) e.textContent = v; };
+      set('rsIcon', '🏆'); set('rsLabel', 'LEVEL UP');
+      set('rsValue', '+240'); set('rsTitle', 'Intermediate unlocked');
+      set('rsSub', 'Longer phrases, rhythm, and emotion start to matter.');
+      set('rsTally', 'Scene 96%  ·  Daily bonus 2x  ·  Streak 4 days');
+      const halo = document.getElementById('rsHalo'); if (halo) halo.hidden = false;
+      const track = document.getElementById('rsBarTrack'); if (track) track.hidden = false;
+      const dots = document.getElementById('rsDots');
+      if (dots) dots.innerHTML = Array(4).fill('<span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,.3);margin:0 3px"></span>').join('');
+    },
+  },
+
+  deleteAccount: {
+    label: 'delete account modal (subscriber)',
+    box: '.da-box',
+    scroller: '.da-box',
+    animated: '.da-box',
+    // "Keep my account" is the way out. It sits at the very bottom of the box,
+    // after the list, both warnings and two form fields.
+    close: '#daCancel',
+    iosMax: L => L - 48,      // max-height: calc(100vh - 48px), as .rc-box
+    open: () => {
+      document.getElementById('deleteAccountOverlay').classList.add('open');
+      document.body.style.position = 'fixed'; document.body.style.width = '100%';
+      const exp = document.getElementById('daExpected');
+      if (exp) exp.textContent = 'johngreg';
+      // The subscriber variant, revealed by openDeleteModal() when is_pro. It
+      // is the tallest real state of this modal, so it is the one to measure.
+      const pro = document.getElementById('daProWarn');
+      if (pro) pro.hidden = false;
+    },
+  },
 };
 
 async function boot(page, surface) {
@@ -103,9 +262,9 @@ async function boot(page, surface) {
   await page.evaluate(() => document.fonts.ready);
   await page.waitForTimeout(2000);
   if (surface.css) await page.addStyleTag({ content: surface.css });
-  if (IOS_VH) {
+  if (IOS_VH && surface.iosMax) {
     await page.addStyleTag({ content:
-      surface.box + ' { max-height: ' + (LARGE * surface.legacyVh).toFixed(2) + 'px !important; }' });
+      surface.box + ' { max-height: ' + surface.iosMax(LARGE).toFixed(2) + 'px !important; }' });
   }
   await page.evaluate(surface.open);
   await page.evaluate(() => document.fonts.ready);
@@ -178,8 +337,17 @@ async function runSurface(name) {
   const slug = BASE.replace(/^https?:\/\//, '').replace(/[^a-z0-9]+/gi, '-');
   await page.screenshot({ path: 'verify-' + name + '--' + slug + (IOS_VH ? '--iosvh' : '') + '.png' });
   await browser.close();
+  // A failure is a failure whether or not anything scrolled. This used to check
+  // everScrolled first, which reported "inconclusive" for a control that was
+  // measurably not hittable -- and the two surfaces added here that scroll
+  // nothing at all (.auth-modal-box, .rs-card) are exactly the case it would
+  // have hidden: they have neither max-height nor overflow-y, so overflowing is
+  // permanent rather than scrollable, which is the worse defect and not a
+  // weaker one. Inconclusive now means only: everything passed, but the risky
+  // condition was never reached.
+  if (!allPass) return 'fail';
   if (!everScrolled) { console.log('  INCONCLUSIVE - content never overflowed.'); return 'inconclusive'; }
-  return allPass ? 'pass' : 'fail';
+  return 'pass';
 }
 
 (async () => {

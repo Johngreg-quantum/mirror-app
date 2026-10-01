@@ -744,9 +744,43 @@
     body.app-mode #heroFeatured { display: block; }
     body.app-mode #scenesGrid { display: none !important; }
 
-    .quiz-overlay { display:none; position:fixed; inset:0; z-index:99999; background:rgba(4,4,8,0.97); overflow-y:auto; padding:24px 20px 40px; box-sizing:border-box; }
+    /* No padding-top, deliberately. This element is the scrollport, and a
+       scrollport's top padding is inside the scrollable area -- content slides
+       up through it. With 24px here the sticky header below pinned at y=24 and
+       the poster scrolled visibly in the strip above it, measured at every
+       sample point across the width. The 24px now lives on #quizInner, above
+       the header and in flow, so it scrolls away and nothing can pass over the
+       band. Moving it rather than using a negative sticky top keeps the two
+       values from having to agree. */
+    .quiz-overlay { display:none; position:fixed; inset:0; z-index:99999; background:rgba(4,4,8,0.97); overflow-y:auto; padding:0 20px 40px; box-sizing:border-box; }
     .quiz-overlay.open { display:block; }
     .quiz-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:24px; }
+
+    /* Sticky, for the reason .modal-head is: .quiz-overlay is itself the
+       overflow-y:auto scroller, and #quizCloseBtn was a plain in-flow child of
+       the header inside it. Scrolling a question took the only way out with it
+       -- measured at -27px and elementFromPoint returning null at the bottom of
+       a single question, and a real ten-question quiz scrolls a great deal
+       further than that.
+
+       top:0 resolves against .quiz-overlay's scrollport, so no vh is involved
+       and the iOS URL bar collapsing cannot move it.
+
+       The background must be an opaque literal. var(--surface) is the trap:
+       index.html redefines that token as rgba(255,255,255,0.025) and this
+       <style> loads after app.css, so the band would hit-test correctly while
+       being see-through, with questions scrolling visibly through it. #040408
+       is the overlay's own colour at full opacity. z-index clears the poster
+       wrap and the combo badge below.
+
+       This is the same defect 89411ee fixed on three other surfaces; the quiz
+       was missed because it was not in verify-close-button.js's surface list,
+       which it now is. */
+    .quiz-head {
+      position: sticky; top: 0; z-index: 5;
+      background: #040408;
+      box-shadow: 0 1px 0 rgba(200,169,110,0.12);
+    }
     .quiz-close { background:none; border:0.5px solid rgba(255,255,255,0.1); border-radius:8px; padding:6px 14px; font-family:'DM Sans',sans-serif; font-size:12px; color:rgba(240,237,230,0.4); cursor:pointer; }
     .quiz-close:hover { color:#fff; border-color:rgba(255,255,255,0.3); }
     .quiz-progress-bar { height:3px; background:rgba(255,255,255,0.06); border-radius:3px; margin-bottom:28px; }
@@ -6413,10 +6447,17 @@
      The document stays lang="en"; only the Spanish parts are marked, so a
      screen reader switches voice here and back again on the way out. -->
 <div class="quiz-overlay" id="quizOverlay" lang="es">
-<div id="quizInner" style="max-width:480px; margin:0 auto; padding:0 0 2rem;">
+<!-- padding-top 24px was .quiz-overlay's; it is here so it sits above the
+     sticky header in flow rather than inside the scrollport. See the
+     .quiz-overlay rule. -->
+<div id="quizInner" style="max-width:480px; margin:0 auto; padding:24px 0 2rem;">
 
-  <!-- Header -->
-  <div style="display:flex; justify-content:space-between; align-items:center; padding:1.2rem 1.5rem 0.8rem;">
+  <!-- Header. .quiz-head pins it; the inline styles are its existing layout and
+       are left alone. (Note: the .quiz-header rule above is dead CSS -- this
+       markup has always used inline styles and nothing references that class.
+       Left as found rather than folded in, since its margin-bottom:24px would
+       change this header's spacing.) -->
+  <div class="quiz-head" style="display:flex; justify-content:space-between; align-items:center; padding:1.2rem 1.5rem 0.8rem;">
     <div id="quizHeaderTitle" style="font-family:'Bebas Neue',sans-serif; font-size:1.4rem; letter-spacing:0.1em; color:#c8a96e;">LEVEL 1 QUIZ</div>
     <button id="quizCloseBtn" style="background:none; border:0.5px solid rgba(255,255,255,0.15); border-radius:8px; color:rgba(255,255,255,0.4); padding:0.4rem 0.8rem; cursor:pointer; font-size:0.75rem; font-family:'DM Sans',sans-serif;">✕ EXIT</button>
   </div>
