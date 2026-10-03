@@ -202,8 +202,10 @@ const SURFACES = {
     // test. This is also the surface the commit message for 89411ee cites as
     // having shipped broken past an is_visible() check.
     close: '#rcAccept',
-    // max-height: calc(100vh - 48px). On iOS that resolves against the LARGE
-    // viewport while the fixed .rc-overlay sizes to the CURRENT one.
+    // The pre-fix cap: max-height: calc(100vh - 48px), which on iOS resolves
+    // against the LARGE viewport while the fixed .rc-overlay sizes to the
+    // CURRENT one. Kept so --ios-vh can still reproduce the old geometry; the
+    // current CSS is max-height: 100%, which needs no modelling.
     iosMax: L => L - 48,
     open: () => {
       document.getElementById('recConsentOverlay').classList.add('open');
@@ -243,7 +245,7 @@ const SURFACES = {
     // "Keep my account" is the way out. It sits at the very bottom of the box,
     // after the list, both warnings and two form fields.
     close: '#daCancel',
-    iosMax: L => L - 48,      // max-height: calc(100vh - 48px), as .rc-box
+    iosMax: L => L - 48,      // pre-fix cap, as .rc-box; now max-height: 100%
     open: () => {
       document.getElementById('deleteAccountOverlay').classList.add('open');
       document.body.style.position = 'fixed'; document.body.style.width = '100%';
