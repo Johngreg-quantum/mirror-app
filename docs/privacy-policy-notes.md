@@ -90,13 +90,17 @@ account** control in the Profile panel. The §4 open-item blockquote is gone and
   cascades. `_USER_DATA_TABLES` in `main.py` is the authoritative list. **Any
   new table holding user data must be added there** or that data survives
   deletion and the policy becomes untrue.
-- **Two tables key on username, not user_id** (`user_missions`, `user_streak`).
-  Deleting a user frees the username for re-registration, so those rows must go
-  in the same transaction or the next person to claim the name inherits them.
-  This is why §4 tells users the username becomes available again.
+- **Every table now keys on user_id.** `user_missions` and `user_streak` used to
+  key on username alone, which made erasing them depend on this list naming the
+  username column — get that wrong and the next person to claim a freed name
+  inherits the rows. Both were re-keyed; they are still listed under *both*
+  columns, because rows written before the user_id column existed can have it
+  NULL. Keep it that way, and key any new table on user_id from the start. This
+  is also why §4 can tell users a new account using their old name inherits
+  nothing.
 - **Tokens are stateless.** `require_live_user()` checks the user row still
-  exists on every authed request; without it a stale token re-creates the
-  username-keyed rows via `seed_user_missions()`.
+  exists on every authed request; without it a stale token re-creates rows for
+  a deleted account via `seed_user_missions()`.
 - **Subscriptions are cancelled as part of deletion, and the ordering is the
   whole safety property.** `DELETE /api/account` runs in three phases:
   authenticate, cancel, erase. The cancel happens **outside and before** the

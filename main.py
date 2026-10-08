@@ -524,14 +524,19 @@ MISSION_XP = {
 }
 
 
-def seed_user_missions(username: str, db) -> None:
+def seed_user_missions(user_id: int, username: str, db) -> None:
     """Insert any default missions the user is missing or whose previous instance
-    has expired. `db` is a database cursor (matches the pattern of other helpers)."""
+    has expired. `db` is a database cursor (matches the pattern of other helpers).
+
+    Addressed by user_id, not username. The username is still written on insert
+    because the column is NOT NULL and it is what the Missions panel's older rows
+    are found by, but nothing is ever *read* by it -- so a re-registered name
+    inherits no mission progress."""
     now_str = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S")
     db.execute(
         f"SELECT mission_id FROM user_missions "
-        f"WHERE username = {PH} AND expires_at > {PH}",
-        (username, now_str),
+        f"WHERE user_id = {PH} AND expires_at > {PH}",
+        (user_id, now_str),
     )
     active_ids = {r[0] for r in db.fetchall()}
 
@@ -540,15 +545,15 @@ def seed_user_missions(username: str, db) -> None:
             continue
         expires = _midnight_tonight_utc_str() if cadence == "daily" else _next_sunday_midnight_utc_str()
         db.execute(
-            f"INSERT INTO user_missions (username, mission_id, progress, goal, expires_at) "
-            f"VALUES ({PH}, {PH}, 0, {PH}, {PH})",
-            (username, mission_id, goal, expires),
+            f"INSERT INTO user_missions (user_id, username, mission_id, progress, goal, expires_at) "
+            f"VALUES ({PH}, {PH}, {PH}, 0, {PH}, {PH})",
+            (user_id, username, mission_id, goal, expires),
         )
 
 
-async def update_missions(username: str, scene_id: str, score: float,
+async def update_missions(user_id: int, username: str, scene_id: str, score: float,
                           duration_seconds: float, take_number: int, db,
-                          user_id: int = None, local_day: str = None):
+                          local_day: str = None):
     """Advance any active user_missions matching this submission. Returns
     [{mission_id, new_progress, completed, xp_earned}]. Also rolls the XP
     counters in user_streak.
@@ -567,8 +572,8 @@ async def update_missions(username: str, scene_id: str, score: float,
 
     db.execute(
         f"SELECT id, mission_id, progress, goal, completed, xp_awarded "
-        f"FROM user_missions WHERE username = {PH} AND expires_at > {PH}",
-        (username, now_str),
+        f"FROM user_missions WHERE user_id = {PH} AND expires_at > {PH}",
+        (user_id, now_str),
     )
     rows = db.fetchall()
 
@@ -629,21 +634,18 @@ async def update_missions(username: str, scene_id: str, score: float,
 
     total_xp_earned = sum(m["xp_earned"] for m in matched)
 
-    # XP counters. Read by user_id where we have one, so a re-registered
-    # username cannot pick up the previous holder's XP; the username is still
-    # written on insert because it is the table's primary key.
-    if user_id is not None:
-        db.execute(
-            f"SELECT total_xp, daily_xp, daily_xp_date FROM user_streak "
-            f"WHERE user_id = {PH}",
-            (user_id,),
-        )
-    else:
-        db.execute(
-            f"SELECT total_xp, daily_xp, daily_xp_date FROM user_streak "
-            f"WHERE username = {PH}",
-            (username,),
-        )
+    # XP counters, read by user_id so a re-registered username cannot pick up
+    # the previous holder's XP. The username is still written on insert because
+    # it is the table's primary key.
+    #
+    # The username fallback this used to carry is gone: user_id is now a required
+    # argument, so there is no path through here without one, and a fallback that
+    # cannot run is just a second answer to the question of who owns a row.
+    db.execute(
+        f"SELECT total_xp, daily_xp, daily_xp_date FROM user_streak "
+        f"WHERE user_id = {PH}",
+        (user_id,),
+    )
     srow = db.fetchone()
     if srow is None:
         total_xp, daily_xp, daily_xp_date = 0, 0, ""
@@ -665,18 +667,11 @@ async def update_missions(username: str, scene_id: str, score: float,
 
     # current_streak / longest_streak / last_active_date are deliberately not
     # written: retired, see the table definition.
-    if user_id is not None:
-        db.execute(
-            f"UPDATE user_streak SET total_xp = {PH}, daily_xp = {PH}, "
-            f"daily_xp_date = {PH} WHERE user_id = {PH}",
-            (total_xp, daily_xp, daily_xp_date, user_id),
-        )
-    else:
-        db.execute(
-            f"UPDATE user_streak SET total_xp = {PH}, daily_xp = {PH}, "
-            f"daily_xp_date = {PH} WHERE username = {PH}",
-            (total_xp, daily_xp, daily_xp_date, username),
-        )
+    db.execute(
+        f"UPDATE user_streak SET total_xp = {PH}, daily_xp = {PH}, "
+        f"daily_xp_date = {PH} WHERE user_id = {PH}",
+        (total_xp, daily_xp, daily_xp_date, user_id),
+    )
 
     return matched
 
@@ -778,6 +773,43 @@ def _link_user_streak_to_user_id(conn, cur) -> None:
     except Exception:
         conn.rollback()
         logger.exception("[streak] could not link user_streak rows to user_id")
+
+
+def _link_user_missions_to_user_id(conn, cur) -> None:
+    """Point each mission row at a user id instead of only a username.
+
+    Same leak, same shape as the XP rows above: mission progress was addressed by
+    name, and names are freed for re-registration. Erasure does delete these rows
+    by username, so the inheritance was not reachable in practice -- but that is
+    a property of the deletion list happening to name this table, not of the
+    data. Re-keying makes it a property of the data: a mission row belongs to a
+    user id, and a new account cannot read it however it is named.
+
+    MISATTRIBUTION WINDOW, STATED RATHER THAN HIDDEN
+
+    This backfill matches on username, which is the only link the old rows have.
+    If a name had been freed and re-registered while the previous holder's rows
+    survived, the rows would be linked to the wrong account by this very
+    statement. That requires an erasure that missed this table, and missions
+    expire within a week so nothing older can still be read -- but the honest
+    description is "the one thing the old key can tell us", not "safe".
+
+    Rows whose username matches no user keep user_id NULL. They are already
+    orphaned, they can never satisfy a read, and the erasure list still names
+    `username` so they are cleaned up if that name is deleted again."""
+    try:
+        cur.execute(
+            "UPDATE user_missions SET user_id = ("
+            "  SELECT u.id FROM users u WHERE u.username = user_missions.username"
+            ") WHERE user_id IS NULL"
+        )
+        n = cur.rowcount if cur.rowcount is not None and cur.rowcount >= 0 else 0
+        conn.commit()
+        if n:
+            logger.info("[missions] linked %s user_missions row(s) to a user_id", n)
+    except Exception:
+        conn.rollback()
+        logger.exception("[missions] could not link user_missions rows to user_id")
 
 
 def _enforce_streak_invariants(conn, cur) -> None:
@@ -1053,6 +1085,7 @@ def init_db():
         cur.execute("""
             CREATE TABLE IF NOT EXISTS user_missions (
                 id          SERIAL PRIMARY KEY,
+                user_id     INTEGER,
                 username    TEXT NOT NULL,
                 mission_id  TEXT NOT NULL,
                 progress    INTEGER DEFAULT 0,
@@ -1085,6 +1118,7 @@ def init_db():
         cur.execute("""
             CREATE TABLE IF NOT EXISTS user_missions (
                 id          INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id     INTEGER,
                 username    TEXT NOT NULL,
                 mission_id  TEXT NOT NULL,
                 progress    INTEGER DEFAULT 0,
@@ -1146,21 +1180,28 @@ def init_db():
         )
     """)
 
-    # user_streak.user_id on databases that predate it. Separate from the
-    # CREATE TABLE above, which only runs for a database that does not have the
-    # table at all.
-    if USE_PG:
-        cur.execute("ALTER TABLE user_streak ADD COLUMN IF NOT EXISTS user_id INTEGER")
-    else:
-        try:
-            cur.execute("ALTER TABLE user_streak ADD COLUMN user_id INTEGER")
-        except sqlite3.OperationalError as exc:
-            if "duplicate column name" not in str(exc).lower():
-                raise
+    # user_streak.user_id and user_missions.user_id on databases that predate
+    # them. Separate from the CREATE TABLEs above, which only run for a database
+    # that does not have the table at all.
+    for table in ("user_streak", "user_missions"):
+        if USE_PG:
+            cur.execute(f"ALTER TABLE {table} ADD COLUMN IF NOT EXISTS user_id INTEGER")
+        else:
+            try:
+                cur.execute(f"ALTER TABLE {table} ADD COLUMN user_id INTEGER")
+            except sqlite3.OperationalError as exc:
+                if "duplicate column name" not in str(exc).lower():
+                    raise
+
+    # Every mission read is now by user_id, and there is one on each submit as
+    # well as each Missions tab open.
+    cur.execute("CREATE INDEX IF NOT EXISTS idx_user_missions_user "
+                "ON user_missions (user_id)")
 
     conn.commit()
     _backfill_entitlements(conn, cur)
     _link_user_streak_to_user_id(conn, cur)
+    _link_user_missions_to_user_id(conn, cur)
     _enforce_streak_invariants(conn, cur)
 
     conn.commit()
@@ -1235,10 +1276,11 @@ def require_live_user(user: dict) -> dict:
     row does not invalidate tokens already issued to them. Without this check a
     stale token can still reach the write endpoints and *re-create* the rows the
     deletion just removed — `/api/submit` and `/api/missions` both call
-    seed_user_missions(), which INSERTs into the username-keyed user_missions /
-    user_streak tables. Because usernames are freed for re-registration on
-    delete, those resurrected rows would then be inherited by whoever next
-    claims the name. One indexed primary-key lookup closes that off.
+    seed_user_missions(), which INSERTs into user_missions, and submit also
+    INSERTs into user_streak. Those tables are keyed on user_id now, so the
+    resurrected rows would belong to the deleted id rather than to whoever next
+    claims the name — litter instead of a leak, but still rows for an account
+    that no longer exists. One indexed primary-key lookup closes that off.
     """
     conn = get_conn()
     try:
@@ -1767,21 +1809,21 @@ async def accept_recording_consent(user: dict = Depends(current_user)):
 # Every table that stores something about a user, as
 # (table, column, which key to bind). There are no foreign keys anywhere in this
 # schema and therefore no ON DELETE CASCADE, so erasure has to name each table
-# explicitly. Note the split: most tables key on user_id, but user_missions and
-# user_streak key on *username only*. Since deleting a user frees their username
-# for re-registration, missing those two would hand the next person to claim the
-# name the deleted user's streak, XP and mission progress.
-# challenges appears twice on purpose: current code fills both challenger_user_id
-# and challenger_username, but older rows may carry only the name.
+# explicitly. Every table now keys on user_id; user_missions and user_streak
+# once keyed on *username only*, which meant erasing them depended on this list
+# naming the username column rather than on the data knowing its owner.
+# Several tables appear twice on purpose, under both keys. user_id is the real
+# one, but rows written before that column existed can still have it NULL -- if
+# the username had already been freed there was nothing to link them to -- and
+# erasure has to clear those too. The same is true of challenges, where current
+# code fills challenger_user_id but older rows carry only the name.
 _USER_DATA_TABLES = [
     ("word_mastery",  "user_id",             "id"),
     ("scores",        "user_id",             "id"),
     ("challenges",    "challenger_user_id",  "id"),
     ("challenges",    "challenger_username", "username"),
+    ("user_missions", "user_id",             "id"),
     ("user_missions", "username",            "username"),
-    # Both keys. user_id is the real one now, but rows written before the
-    # user_id column existed can still have it NULL if the username had already
-    # been freed by then, and erasure has to clear those too.
     ("user_streak",   "user_id",             "id"),
     ("user_streak",   "username",            "username"),
 ]
@@ -2938,16 +2980,16 @@ async def submit_recording(
     # Advance any active missions and roll user_streak XP/streak counters.
     # take_number is 1-based: this submission's position in the user's history
     # for this scene (1 = first attempt).
-    seed_user_missions(user["username"], cur)
+    seed_user_missions(user["id"], user["username"], cur)
     take_number = int(attempt_count) + 1
     missions_updated = await update_missions(
+        user_id=user["id"],
         username=user["username"],
         scene_id=scene_id,
         score=score,
         duration_seconds=duration_seconds,
         take_number=take_number,
         db=cur,
-        user_id=user["id"],
         local_day=today_str,
     )
     total_xp_earned = sum(m["xp_earned"] for m in missions_updated)
@@ -3212,14 +3254,14 @@ async def get_missions(user: dict = Depends(current_user)):
     conn = get_conn()
     cur  = conn.cursor()
 
-    seed_user_missions(user["username"], cur)
+    seed_user_missions(user["id"], user["username"], cur)
 
     now_str = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S")
     cur.execute(
         f"SELECT mission_id, progress, goal, completed, xp_awarded, expires_at "
-        f"FROM user_missions WHERE username = {PH} AND expires_at > {PH} "
+        f"FROM user_missions WHERE user_id = {PH} AND expires_at > {PH} "
         f"ORDER BY id ASC",
-        (user["username"], now_str),
+        (user["id"], now_str),
     )
     missions = [
         {

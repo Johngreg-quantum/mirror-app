@@ -20,7 +20,12 @@ The three cases that motivated the change:
   2. A user who skips a local day LOSES it. The fix must not become "never
      resets", which is exactly what the counter being retired here did.
   3. A re-registered username inherits NO streak.
+  4. A re-registered username inherits NO mission progress -- tested with the
+     orphaned rows deliberately left in place, because the property being
+     checked is that the KEY protects the new account, not that erasure
+     happened to remember this table.
 """
+import asyncio
 import os
 import sqlite3
 import sys
@@ -230,6 +235,115 @@ def main():
     con.close()
     check("...and NO XP is inherited either", int(xp or 0) == 0, "total_xp=%s" % xp)
 
+    # ── 4. MISSION PROGRESS DOES NOT TRANSFER WITH THE NAME ───────────────────
+    print("\n4. Re-registered username, mission progress")
+    now_str = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S")
+    uid_c, name_c = make_user("missions")
+
+    con = sqlite3.connect(DB)
+    cur = con.cursor()
+    app.seed_user_missions(uid_c, name_c, cur)
+    con.commit()
+    seeded = con.execute(
+        "SELECT COUNT(*) FROM user_missions WHERE user_id = ?", (uid_c,)).fetchone()[0]
+    check("seeding writes one row per default mission, keyed on user_id",
+          seeded == len(app.DEFAULT_MISSIONS),
+          "%s rows for %s missions" % (seeded, len(app.DEFAULT_MISSIONS)))
+
+    # Give the first holder progress worth stealing: a completed daily with its
+    # XP already banked.
+    con.execute(
+        "UPDATE user_missions SET progress = 3, completed = 1, xp_awarded = 1 "
+        "WHERE user_id = ? AND mission_id = 'daily'", (uid_c,))
+    con.commit()
+    first = con.execute(
+        "SELECT progress, completed FROM user_missions "
+        "WHERE user_id = ? AND mission_id = 'daily'", (uid_c,)).fetchone()
+    check("the first holder has mission progress to inherit",
+          first[0] == 3 and bool(first[1]), "progress=%s completed=%s" % first)
+
+    # Delete ONLY the users row, leaving every mission row behind -- i.e. assume
+    # the erasure list forgot this table. Erasing correctly would prove nothing
+    # about the key, which is the thing under test.
+    con.execute("DELETE FROM users WHERE id = ?", (uid_c,))
+    con.commit()
+    con.close()
+
+    uid_d, _ = make_user("missions", username=name_c)
+    check("the re-registered account gets a NEW user id", uid_d != uid_c,
+          "old=%s new=%s" % (uid_c, uid_d))
+
+    con = sqlite3.connect(DB)
+    cur = con.cursor()
+    app.seed_user_missions(uid_d, name_c, cur)
+    con.commit()
+    # Read exactly as /api/missions reads.
+    mine = con.execute(
+        "SELECT mission_id, progress, completed FROM user_missions "
+        "WHERE user_id = ? AND expires_at > ? ORDER BY id ASC", (uid_d, now_str)).fetchall()
+    orphans = con.execute(
+        "SELECT COUNT(*) FROM user_missions WHERE user_id = ?", (uid_c,)).fetchone()[0]
+    con.close()
+
+    check("SAME USERNAME, NEW ACCOUNT: every mission starts at 0",
+          len(mine) == len(app.DEFAULT_MISSIONS) and all(int(r[1] or 0) == 0 for r in mine),
+          "progress=%s" % [int(r[1] or 0) for r in mine])
+    check("...nothing arrives pre-completed",
+          not any(bool(r[2]) for r in mine))
+    check("...and the orphaned rows are STILL THERE, so this did not pass by "
+          "deletion", orphans == len(app.DEFAULT_MISSIONS), "orphans=%s" % orphans)
+
+    # The write path, with its new signature: advancing the new account's
+    # missions must not reach the orphans sitting under the same username.
+    con = sqlite3.connect(DB)
+    cur = con.cursor()
+    advanced = asyncio.run(app.update_missions(
+        user_id=uid_d,
+        username=name_c,
+        scene_id=app.get_daily_scene_id(),
+        score=90.0,
+        duration_seconds=60.0,
+        take_number=1,
+        db=cur,
+        local_day="2026-10-08",
+    ))
+    con.commit()
+    mine_daily = con.execute(
+        "SELECT progress FROM user_missions WHERE user_id = ? AND mission_id = 'daily'",
+        (uid_d,)).fetchone()[0]
+    theirs_daily = con.execute(
+        "SELECT progress FROM user_missions WHERE user_id = ? AND mission_id = 'daily'",
+        (uid_c,)).fetchone()[0]
+    xp_rows = con.execute(
+        "SELECT user_id, daily_xp_date FROM user_streak WHERE username = ?",
+        (name_c,)).fetchall()
+    con.close()
+    check("a take advances the NEW account's daily mission",
+          mine_daily == 1 and any(m["mission_id"] == "daily" for m in advanced),
+          "progress=%s advanced=%s" % (mine_daily, [m["mission_id"] for m in advanced]))
+    check("...and leaves the orphan's progress untouched at 3", theirs_daily == 3,
+          "progress=%s" % theirs_daily)
+    check("...and the XP row it creates belongs to the new user id",
+          len(xp_rows) == 1 and xp_rows[0][0] == uid_d, "%s" % (xp_rows,))
+    check("the XP day comes from the user's local day, not the server's",
+          xp_rows[0][1] == "2026-10-08", "daily_xp_date=%s" % xp_rows[0][1])
+
+    # The deploy must not reset in-flight missions for existing users: rows
+    # written before the user_id column arrive NULL and get linked by username.
+    uid_e, name_e = make_user("legacy")
+    con = sqlite3.connect(DB)
+    con.execute(
+        "INSERT INTO user_missions (username, mission_id, progress, goal, expires_at) "
+        "VALUES (?, 'daily', 2, 3, ?)",
+        (name_e, "2099-01-01 00:00:00"))
+    con.commit()
+    app._link_user_missions_to_user_id(con, con.cursor())
+    linked = con.execute(
+        "SELECT user_id, progress FROM user_missions WHERE username = ?", (name_e,)).fetchone()
+    con.close()
+    check("a pre-migration row keeps its progress and gains the right user_id",
+          linked[0] == uid_e and linked[1] == 2, "user_id=%s progress=%s" % linked)
+
     # ── The retired counter is not written any more ───────────────────────────
     print("\nretired counter")
     src = open(os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
@@ -238,6 +352,8 @@ def main():
           "SET current_streak" not in src)
     check("nothing SELECTs current_streak from user_streak",
           "SELECT current_streak" not in src)
+    check("no mission row is ever looked up by username",
+          "FROM user_missions WHERE username" not in src)
     check("the dead get_today_daily_scene() is gone",
           not hasattr(app, "get_today_daily_scene"))
     check("the daily scene pick is still UTC-based and user-independent",
@@ -260,6 +376,7 @@ def main():
     # Clean up
     con = sqlite3.connect(DB)
     con.execute("DELETE FROM user_streak WHERE username LIKE 'strtest_%'")
+    con.execute("DELETE FROM user_missions WHERE username LIKE 'strtest_%'")
     con.execute("DELETE FROM users WHERE username LIKE 'strtest_%'")
     con.commit()
     con.close()
