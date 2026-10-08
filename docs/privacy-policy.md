@@ -1,6 +1,6 @@
 # MIRROR — Privacy Policy
 
-**Effective date:** August 23, 2026
+**Effective date:** October 8, 2026
 **Data controller:** John Greg (sole trader), 14610 Bull Run Road, Miami Lakes,
 FL 33014, USA, contact contact@mirrorspeak.app.
 
@@ -21,7 +21,16 @@ how long we keep it, who processes it on our behalf, and your rights.
 | **Voice recordings** | The audio you record when practising a scene | Your device microphone, with your permission |
 | **Transcripts** | The text transcription of each recording | Generated from your audio (see §4) |
 | **Practice & progress data** | Per-attempt scores, best scores, points, division/rank, daily streak, level progress, chosen avatar scene | Generated as you use the app |
+| **Timezone** | The name of your timezone (for example `America/New_York`) — not your location, not your coordinates, and not your IP-derived city | Read from your browser's own clock settings |
 | **Technical** | IP address (used transiently for rate-limiting), basic request logs | Automatically, when you use the service |
+
+**About the timezone.** Your day streak counts *your* calendar days, so we need
+to know when your day ends. Your browser already knows its timezone and we ask
+it for that name — we do not look up your location and we do not derive it from
+your IP address. It tells us roughly which part of the world you are in and
+nothing more precise than that. If your browser does not tell us, we assume US
+Eastern time. It is stored on your account, used only to work out which day a
+practice session belongs to, and deleted with your account.
 
 We do **not** collect payment card details directly — subscriptions are handled
 by our payment processor (see §5).
