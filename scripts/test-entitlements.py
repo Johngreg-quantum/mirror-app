@@ -335,13 +335,17 @@ def main():
 
         # ── The two deliberate holes ─────────────────────────────────────────
         print("\nacquisition holes")
-        daily = app.get_daily_scene_id()
+        # The daily is three lines now, and all three are in the hole.
+        daily_ids = app.get_daily_scene_ids()
+        daily = daily_ids[0]
         hole_user = make_user("holes")
-        check("the daily scene is playable without owning it",
-              app.can_play_scene(cur, hole_user, daily) is True, "daily=%s" % daily)
-        check("the daily scene is still NOT owned (nothing was granted)",
-              app.can_access_scene(cur, hole_user, daily) is (daily in free),
-              "daily=%s free=%s" % (daily, daily in free))
+        for i, sid in enumerate(daily_ids):
+            check("daily line %d is playable without owning it" % (i + 1),
+                  app.can_play_scene(cur, hole_user, sid) is True, "scene=%s" % sid)
+        check("the daily lines are still NOT owned (nothing was granted)",
+              all(app.can_access_scene(cur, hole_user, sid) is (sid in free)
+                  for sid in daily_ids),
+              "daily=%s free=%s" % (daily_ids, [s in free for s in daily_ids]))
 
         # A paid scene that is not today's daily, so the hole cannot be the
         # reason it passes or fails.
@@ -404,8 +408,8 @@ def main():
         con = sqlite3.connect(DB)
         free2 = app2._free_scene_ids()
         lvl1_2 = app2.LEVELS[0]["scenes"]
-        daily2 = app2.get_daily_scene_id()
-        paid = next(s for s in lvl1_2 if s not in free2 and s != daily2)
+        daily2 = app2.get_daily_scene_ids()
+        paid = next(s for s in lvl1_2 if s not in free2 and s not in daily2)
         con.close()
 
         uname = "enttest_http"
@@ -491,11 +495,11 @@ def main():
             import main as app3
             free3 = app3._free_scene_ids()
             lvl1_3 = app3.LEVELS[0]["scenes"]
-            daily3 = app3.get_daily_scene_id()
+            daily3 = app3.get_daily_scene_ids()
             # Scene 6: the first Level 1 scene outside the free tier, and not
-            # today's daily, so neither the free set nor the daily hole can be
-            # the reason it succeeds.
-            scene6 = next(s for s in lvl1_3 if s not in free3 and s != daily3)
+            # one of today's three daily lines, so neither the free set nor the
+            # daily hole can be the reason it succeeds.
+            scene6 = next(s for s in lvl1_3 if s not in free3 and s not in daily3)
 
             code, body = post_json("/api/auth/register",
                                    {"username": uname2,

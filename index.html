@@ -5919,7 +5919,10 @@
     <div class="hero-chips">
       <div class="hero-chip hero-chip--daily" id="heroDailyChip">
         <span class="hero-chip-icon">&#9733;</span>
-        <span>Daily Challenge</span>
+        <span id="dcLabel">Daily Take</span>
+        <!-- One dot per line, filled as they are recorded. Populated by
+             renderDailyProgressDisplay(); empty until /api/daily answers. -->
+        <span class="hero-chip-dots" id="dcLineDots"></span>
         <span class="hero-chip-timer" id="dcCountdown">00:00:00</span>
       </div>
       <div class="hero-chip hero-chip--streak" id="heroStreakChip">

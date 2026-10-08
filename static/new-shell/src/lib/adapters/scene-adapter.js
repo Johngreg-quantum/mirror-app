@@ -36,10 +36,22 @@ function posterFallback(level) {
   return '/static/advanced-card.webp';
 }
 
+// The Daily Take is three scenes. Testing `daily.scene_id` alone would mark two
+// of them locked and not-daily while can_play_scene() accepts all three — the
+// client refusing what the API allows.
+function dailySceneIdSet(daily) {
+  if (Array.isArray(daily?.scene_ids) && daily.scene_ids.length) {
+    return new Set(daily.scene_ids);
+  }
+
+  return new Set(daily?.scene_id ? [daily.scene_id] : []);
+}
+
 export function adaptSceneConfig(rawConfig, { progress = null, daily = null } = {}) {
   const levelMap = buildLevelMap(rawConfig?.levels || []);
   const unlocked = new Set(progress?.unlocked_scenes || []);
   const hasProgress = !!progress;
+  const dailyIds = dailySceneIdSet(daily);
   // Mirrors ENFORCE_ENTITLEMENTS. While it is false the server refuses nothing,
   // so no lock here may differ from plain score progression.
   const enforcing = !!rawConfig?.enforce_entitlements;
@@ -61,15 +73,15 @@ export function adaptSceneConfig(rawConfig, { progress = null, daily = null } = 
       runtime: formatRuntime(scene),
       targetScore: level > 1 ? 70 : 60,
       personalBest: personalBest ? Math.round(personalBest) : null,
-      // The daily scene is never locked: can_play_scene() lets it through
-      // whatever the user owns, so locking it here would contradict the server
+      // No daily line is ever locked: can_play_scene() lets all three through
+      // whatever the user owns, so locking one here would contradict the server
       // and disable analyze on a scene the API would have accepted. Only once
       // enforcement is on -- before that the daily follows ordinary score
       // progression, as it always has.
       locked: hasProgress
-        ? (!unlocked.has(id) && !(enforcing && daily?.scene_id === id))
+        ? (!unlocked.has(id) && !(enforcing && dailyIds.has(id)))
         : false,
-      isDaily: daily?.scene_id === id,
+      isDaily: dailyIds.has(id),
       tags: [scene.actor, scene.difficulty].filter(Boolean),
       imageUrl: scene?.ui?.poster_image || posterFallback(level),
       source: scene,

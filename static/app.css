@@ -2633,6 +2633,18 @@ header {
   color: #fb923c;
 }
 
+/* Daily Take: three lines, so the chip has to say how many are left. Dots
+   rather than "1/3" because the whole point of three short lines is that the
+   remaining work looks small. */
+.hero-chip-dots { display: inline-flex; gap: 5px; align-items: center; }
+.hero-chip-dot {
+  width: 7px; height: 7px; border-radius: 50%;
+  border: 1px solid rgba(201,168,76,.45);
+  background: transparent;
+}
+.hero-chip-dot.done { background: var(--gold); border-color: var(--gold); }
+.hero-chip-dot.next { box-shadow: 0 0 0 3px rgba(201,168,76,.15); }
+
 /* ═══════════════════════════════════════════════
    POSTER CAROUSEL
 ═══════════════════════════════════════════════ */

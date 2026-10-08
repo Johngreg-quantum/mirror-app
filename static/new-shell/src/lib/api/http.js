@@ -129,8 +129,21 @@ function createResponseError(response, { attempts = 1 } = {}) {
   throw error;
 }
 
-export async function getJson(path, { auth = false } = {}) {
+// `auth: true` requires a token and fails fast without one. `authOptional: true`
+// sends it when there is one and makes an anonymous request otherwise — for
+// endpoints that answer everyone but answer a signed-in caller with more, like
+// /api/daily, which returns the day's lines publicly and that caller's progress
+// through them on top.
+export async function getJson(path, { auth = false, authOptional = false } = {}) {
   const headers = {};
+
+  if (!auth && authOptional) {
+    const optionalToken = getReadOnlyAuthToken();
+
+    if (optionalToken) {
+      headers.Authorization = `Bearer ${optionalToken}`;
+    }
+  }
 
   if (auth) {
     const token = getReadOnlyAuthToken();

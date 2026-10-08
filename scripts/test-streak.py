@@ -300,12 +300,13 @@ def main():
     advanced = asyncio.run(app.update_missions(
         user_id=uid_d,
         username=name_c,
-        scene_id=app.get_daily_scene_id(),
+        scene_id=app.get_daily_scene_ids()[0],
         score=90.0,
         duration_seconds=60.0,
         take_number=1,
         db=cur,
         local_day="2026-10-08",
+        daily_line_completed=True,
     ))
     con.commit()
     mine_daily = con.execute(
@@ -356,8 +357,8 @@ def main():
           "FROM user_missions WHERE username" not in src)
     check("the dead get_today_daily_scene() is gone",
           not hasattr(app, "get_today_daily_scene"))
-    check("the daily scene pick is still UTC-based and user-independent",
-          app.get_daily_scene_id() == app.get_daily_scene_id())
+    check("the daily line pick is still UTC-based and user-independent",
+          app.get_daily_scene_ids() == app.get_daily_scene_ids())
 
     # ── Points floor ─────────────────────────────────────────────────────────
     print("\npoints floor")

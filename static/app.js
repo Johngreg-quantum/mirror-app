@@ -118,8 +118,10 @@ const {
   renderAuthTabDisplay,
 } = AUTH_MODAL_DOMAIN;
 const {
+  dailyLines,
   renderDailyCardDisplay,
   renderDailyCompleteDisplay,
+  renderDailyProgressDisplay,
   renderStreakCardDisplay,
 } = DAILY_CHALLENGE_DOMAIN;
 const {
@@ -1138,7 +1140,12 @@ function renderCards() {
 }
 
 function makeCard(id, s) {
-  const isDaily = dailyChallenge && dailyChallenge.scene_id === id;
+  // Membership, not equality: the Daily Take is three scenes, and testing only
+  // the first would show two of them locked while the server accepts all three.
+  const dailySet = dailyChallenge ? dailyLines(dailyChallenge) : null;
+  const isDaily  = !!(dailySet && dailySet.ids.includes(id));
+  const dailyLineNo = isDaily ? dailySet.ids.indexOf(id) + 1 : 0;
+  const dailyLineDone = isDaily && dailySet.done.includes(id);
   // Owned vs reached are different locks and need different calls to action:
   // "score higher" is achievable, "Level 2 Required" on a scene the user does
   // not own is a dead end that never explains itself. accessible_scenes is
@@ -1159,7 +1166,7 @@ function makeCard(id, s) {
   el.className  = 'scene-card' + (locked ? ' locked' : '') + (isDaily ? ' daily' : '');
   el.style.setProperty('--c', color);
   el.innerHTML = `
-    ${isDaily ? '<div class="daily-card-badge">&#9733; Daily Challenge &nbsp;&bull;&nbsp; 2&times; pts</div>' : ''}
+    ${isDaily ? `<div class="daily-card-badge">&#9733; Daily Take &nbsp;&bull;&nbsp; Line ${dailyLineNo} of ${dailySet.total}${dailyLineDone ? ' &nbsp;&bull;&nbsp; &#10004; done' : ''}</div>` : ''}
     ${locked ? `
     <div class="lock-overlay">
       <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
@@ -1222,7 +1229,13 @@ async function loadProgress() {
 // daily/streak rendering is delegated to the daily challenge domain.
 async function loadDaily() {
   try {
-    const r = await fetch(`${API}/api/daily`);
+    // Sent with the token when we have one: /api/daily then also answers which
+    // of the three lines are already done and which is next. Anonymous callers
+    // get the public half and the card still renders -- the daily is the one
+    // surface that has to work before signup.
+    const r = await fetch(`${API}/api/daily`, {
+      headers: authToken ? { Authorization: `Bearer ${authToken}` } : {},
+    });
     if (!r.ok) return;
     dailyChallenge = await r.json();
     renderDailyCard(dailyChallenge);
@@ -1243,6 +1256,21 @@ function renderDailyCard(daily) {
     },
     scenes: scenes,
   });
+  renderDailyProgressDisplay({
+    daily: daily,
+    createElement: (tag) => document.createElement(tag),
+    refs: {
+      dotsEl: el('dcLineDots'),
+      labelEl: el('dcLabel'),
+    },
+  });
+}
+
+// The line any "practise the daily" control should open. Prefers the server's
+// answer, falls back to the first line for an anonymous visitor.
+function nextDailySceneId() {
+  if (!dailyChallenge) return '';
+  return dailyLines(dailyChallenge).nextId;
 }
 
 // ══════════════════════════════════════════════
@@ -1354,7 +1382,7 @@ function openModal(id, s) {
   renderSceneModalDisplay({
     color: color,
     hasVideo: !!playback.ytRaw,
-    isDaily: !!(dailyChallenge && id === dailyChallenge.scene_id),
+    isDaily: !!(dailyChallenge && dailyLines(dailyChallenge).ids.includes(id)),
     refs: {
       analyzeBtn: el('btnAnalyze'),
       badgeEl: el('dailyModalBadge'),
@@ -2216,14 +2244,53 @@ const RewardSequence = {
         // on its own; turning up is what paid, and claiming otherwise next to a
         // low score reads as the app not having noticed.
         sub: (data.daily_floor_applied && data.daily_floor_applied >= xp)
-          ? 'For completing today’s daily. Score 70% or better to earn more.'
+          ? 'For finishing today’s Daily Take. Score 70% or better to earn more.'
           : 'You now have <strong>' + (data.total_points || 0).toLocaleString() + '</strong> points.',
       });
     }
 
-    // The streak only moves when this take completed today's daily for the
-    // first time — the same condition the server uses to increment it.
-    if (data.is_daily && !data.daily_already_done && data.streak > 0) {
+    // ── The Daily Take ─────────────────────────────────────────────────────
+    // Lines 1 and 2 get a progress step, not a celebration: something happened,
+    // but the daily is not done and saying so three times would spend the
+    // moment that belongs to finishing. The aggregate screen appears once, on
+    // the take that completes the set.
+    const daily = data.daily;
+    if (daily && !daily.completed_now && !daily.already_done && daily.line_total > 1) {
+      const left = Math.max(0, daily.line_total - daily.lines_done);
+      steps.push({
+        icon: '🎯', label: 'Daily Take',
+        value: daily.lines_done + ' / ' + daily.line_total,
+        sub: left > 0
+          ? ('<strong>' + countWord(left) + '</strong> more short ' +
+             (left === 1 ? 'line' : 'lines') + ' to finish today’s set.')
+          : '',
+      });
+    }
+
+    if (daily && daily.completed_now) {
+      const scores = (daily.lines || [])
+        .map(l => (typeof l.score === 'number' ? Math.round(l.score) : null))
+        .filter(v => v !== null);
+      const comboLabel = daily.combo === 'all_strong'
+        ? 'All three above 85%'
+        : (daily.combo === 'all_proficient' ? 'All three above 70%' : '');
+      steps.push({
+        icon: '🎬', label: 'Daily Take complete',
+        value: '+' + (daily.award || 0),
+        // The three line scores are the aggregate: the point of showing them
+        // together is that the set was the unit of work, not any one take.
+        tally: scores.length ? scores.join('%  ·  ') + '%' : '',
+        sub: (comboLabel ? '<strong>' + comboLabel + '.</strong> ' : '') +
+             (daily.floor_applied && daily.floor_applied >= (daily.award || 0)
+               ? 'Showing up counts. Score 70% or better on all three to earn more.'
+               : 'Averaged <strong>' + (daily.avg_score || 0) + '%</strong> across the set.'),
+        onShow: fireCelebration,
+      });
+    }
+
+    // The streak only moves when this take finished the whole set for the first
+    // time in the user's day — the same condition the server increments on.
+    if (daily && daily.completed_now && data.streak > 0) {
       steps.push({
         icon: '🔥', label: 'Day streak',
         value: String(data.streak),
@@ -2744,8 +2811,9 @@ function renderPersonalBests(history) {
 // Same domain as recording/playback; kept separate in-file because it depends on score visibility.
 onClick('dcOpenBtn', () => {
   if (!dailyChallenge) return;
-  const s = dailyChallenge.scene || scenes[dailyChallenge.scene_id];
-  if (s) openModal(dailyChallenge.scene_id, s);
+  const sid = nextDailySceneId();
+  const s = scenes[sid] || dailyChallenge.scene;
+  if (s) openModal(sid, s);
 });
 
 onClick('btnHearActor', hearActor);
@@ -3044,8 +3112,13 @@ renderLevelBar = function () { _origRenderLevelBar(); updateLevelCardStats(); };
 // same daily challenge data without owning challenge creation or scoring.
 function renderHeroFeatured() {
   if (!dailyChallenge) return;
-  const sid = dailyChallenge.scene_id;
-  const s = dailyChallenge.scene || scenes[sid];
+  // The hero shows the line you would record next, so arriving half way through
+  // the set does not put line 1 back in front of you.
+  const lines = dailyLines(dailyChallenge);
+  const sid = lines.nextId;
+  const s = (dailyChallenge.scenes && dailyChallenge.scenes[lines.nextIndex])
+    || scenes[sid]
+    || dailyChallenge.scene;
   if (!s) return;
 
   const heroImg = getSceneBackdrop(sid);
@@ -3065,14 +3138,15 @@ function renderHeroFeatured() {
   if (quoteEl) quoteEl.textContent = s.quote || '';
 }
 
-// Hero play button → open recording modal for daily scene
+// Hero play button → open the next undone line of the Daily Take
 (function() {
   const playBtn = document.getElementById('heroPlayBtn');
   if (playBtn) {
     playBtn.addEventListener('click', () => {
       if (!dailyChallenge) return;
-      const s = dailyChallenge.scene || scenes[dailyChallenge.scene_id];
-      if (s) openModal(dailyChallenge.scene_id, s);
+      const sid = nextDailySceneId();
+      const s = scenes[sid] || dailyChallenge.scene;
+      if (s) openModal(sid, s);
     });
   }
 })();
@@ -4468,30 +4542,48 @@ const MissionsController = {
         : 'Complete a mission today to start your streak';
     if (sub)   sub.textContent   = 'Longest: ' + (s.longest || 0) + ' days · Total XP: ' + (s.total_xp || 0).toLocaleString();
 
-    // Daily quest card
+    // Daily Take card.
+    //
+    // Progress comes from d.daily_take, which the server derives from scores in
+    // the user's own day -- not from the daily mission row, which expires on the
+    // UTC clock and so disagrees with it every morning for anyone who practises
+    // late. The mission row still carries the XP; this card shows the number the
+    // streak is actually credited on. Falls back to the mission row if an older
+    // bundle is talking to a server without daily_take.
     const dq = d.daily_quest;
+    const take = d.daily_take;
     const dailyMovie = document.getElementById('mpDailyMovie');
     const dailyQuote = document.getElementById('mpDailyQuote');
     const dailyBar   = document.getElementById('mpDailyBar');
     const dailyCount = document.getElementById('mpDailyCount');
     const dailyCta   = document.getElementById('mpDailyCta');
-    const dailySid   = (typeof userProfile !== 'undefined' && userProfile && userProfile.daily_scene_id) || '';
+    const doneCount  = take ? take.lines_done : (dq ? dq.progress : 0);
+    const totalCount = take ? take.line_total : (dq ? dq.goal : 0);
+    const allDone    = take ? take.all_done : !!(dq && dq.completed);
+    const dailySid   = (take && take.next_scene_id)
+      || (typeof userProfile !== 'undefined' && userProfile && userProfile.daily_scene_id)
+      || '';
     const dailyScene = (typeof scenes !== 'undefined' && scenes && dailySid) ? scenes[dailySid] : null;
-    if (dailyMovie) dailyMovie.textContent = dailyScene ? (dailyScene.movie || dailyScene.title || dailySid) : '—';
+    if (dailyMovie) {
+      const name = dailyScene ? (dailyScene.movie || dailyScene.title || dailySid) : '—';
+      dailyMovie.textContent = (!allDone && totalCount > 1)
+        ? (name + ' · line ' + Math.min(doneCount + 1, totalCount) + ' of ' + totalCount)
+        : name;
+    }
     if (dailyQuote) {
       const q = dailyScene ? (dailyScene.quote || '') : '';
       dailyQuote.textContent = q ? '"' + (q.length > 90 ? q.slice(0, 90) + '…' : q) + '"' : '';
     }
-    if (dq && dailyBar)   dailyBar.style.width = Math.min(100, (dq.progress / dq.goal) * 100) + '%';
-    if (dq && dailyCount) dailyCount.textContent = dq.progress + '/' + dq.goal;
+    if (dailyBar && totalCount)   dailyBar.style.width = Math.min(100, (doneCount / totalCount) * 100) + '%';
+    if (dailyCount && totalCount) dailyCount.textContent = doneCount + '/' + totalCount;
     if (dailyCta) {
-      if (dq && dq.completed) {
+      if (allDone) {
         dailyCta.textContent = '✓ Completed';
         dailyCta.style.background = 'rgba(106,170,46,0.2)';
         dailyCta.style.color = '#6aaa2e';
         dailyCta.style.cursor = 'default';
       } else {
-        dailyCta.textContent = 'Practice →';
+        dailyCta.textContent = doneCount > 0 ? 'Next line →' : 'Practice →';
         dailyCta.style.background = '#c8a96e';
         dailyCta.style.color = '#0d0d0d';
         dailyCta.style.cursor = 'pointer';
@@ -4533,8 +4625,13 @@ const MissionsController = {
     const cta = document.getElementById('mpDailyCta');
     if (!cta) return;
     cta.onclick = () => {
-      if (this.data && this.data.daily_quest && this.data.daily_quest.completed) return;
-      const sid = (typeof userProfile !== 'undefined' && userProfile && userProfile.daily_scene_id) || '';
+      const take = this.data && this.data.daily_take;
+      if (take ? take.all_done
+               : (this.data && this.data.daily_quest && this.data.daily_quest.completed)) return;
+      // The next undone line, so the CTA resumes the set rather than restarting it.
+      const sid = (take && take.next_scene_id)
+        || (typeof userProfile !== 'undefined' && userProfile && userProfile.daily_scene_id)
+        || '';
       if (sid && typeof scenes !== 'undefined' && scenes && scenes[sid] && typeof openModal === 'function') {
         openModal(sid, scenes[sid]);
       }

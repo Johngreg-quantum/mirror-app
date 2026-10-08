@@ -67,22 +67,26 @@ async function loadDailyViewModel(appState) {
 }
 
 function renderDailySurface({ daily, profile, profileError, session }) {
+  const lineTotal = daily.lineTotal || 1;
+
   return h('article', { className: 'ns-page' }, [
     h('header', { className: 'ns-page__header' }, [
       h('div', {}, [
-        h('p', { className: 'ns-eyebrow', text: 'Daily challenge' }),
-        h('h2', { text: 'Daily challenge' }),
+        h('p', { className: 'ns-eyebrow', text: 'Daily Take' }),
+        h('h2', { text: 'Daily Take' }),
         h('p', {
           className: 'ns-page__summary',
-          text: 'Practice today\'s scene and keep your streak moving when your session is active.',
+          text: lineTotal > 1
+            ? `${lineTotal} short lines, one sitting. Finish all ${lineTotal} to count the day towards your streak.`
+            : 'Practice today\'s scene and keep your streak moving when your session is active.',
         }),
       ]),
-      statusPill(daily.resetLabel),
+      statusPill(daily.progressLabel),
     ]),
     renderSessionPrompt({
       session,
       title: 'Streak data needs sign-in',
-      body: 'The daily scene is public. Streak status appears after your session is verified.',
+      body: 'Today\'s lines are public. Which ones you have recorded appears after your session is verified.',
     }),
     renderDailyChallengeCard({ daily }),
     h('div', { className: 'ns-grid ns-grid--two' }, [
@@ -93,16 +97,22 @@ function renderDailySurface({ daily, profile, profileError, session }) {
             body: profileError?.message || 'Sign in to show streak status here.',
             children: [statusPill(profileError?.rateLimited ? 'Rate limited' : 'Session')],
           }),
+      // The next line to record, as a full scene card. Once the set is done
+      // there is no next line, so this falls back to the first.
       renderSceneCard({ scene: daily.scene, entrySource: 'daily' }),
     ]),
     h('div', { className: 'ns-grid ns-grid--two' }, [
       card({
-        title: 'Daily result summary',
-        body: 'Points, streak bonus, and reset timing update after a scored daily take.',
+        title: 'How the set is scored',
+        body: lineTotal > 1
+          ? `Each line pays its own points as you record it. Finishing all ${lineTotal} pays a completion award on the average of the set, doubled, plus a bonus when every line clears 70%.`
+          : 'Points, streak bonus, and reset timing update after a scored daily take.',
+        children: [statusPill(daily.streakBonus)],
       }),
       card({
-        title: 'Daily sync',
-        body: 'Daily scene, streak status, profile points, and reset copy update from the current server data.',
+        title: 'When the lines change',
+        body: 'A new set appears at midnight where you are, so an evening session is never interrupted by the rotation. Progress is read from your recorded takes, so it survives a reload or a switch of device — and a set left unfinished at midnight is replaced rather than carried over.',
+        children: [statusPill(daily.resetLabel)],
       }),
     ]),
   ]);

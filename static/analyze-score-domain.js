@@ -46,11 +46,21 @@
       if (refs.ptsTotalValEl) refs.ptsTotalValEl.textContent = data.total_points || 0;
 
       const ptsPanel = refs.ptsPanelEl;
+      const daily = data.daily;
       let extra = '';
-      if (data.is_daily && data.daily_bonus > 0) {
+      // The 2x is no longer per take -- it applies to the Daily Take as a whole
+      // and is paid on the line that finishes it, so this only has something to
+      // say once the set is complete. A take that merely advances the set says
+      // how much is left instead of claiming a bonus it has not earned yet.
+      if (daily && daily.completed_now && data.daily_bonus > 0) {
+        extra += `<div style="font-size:11px;color:var(--gold);margin-top:4px">&#9733; Daily Take complete &nbsp;&bull;&nbsp; +${data.daily_bonus}pts</div>`;
+      } else if (daily && !daily.completed_now && !daily.already_done && daily.line_total > 1) {
+        extra += `<div style="font-size:11px;color:var(--gold);margin-top:4px">&#9733; Daily Take ${daily.lines_done}/${daily.line_total}</div>`;
+      } else if (!daily && data.is_daily && data.daily_bonus > 0) {
+        // Older server without the daily block.
         extra += `<div style="font-size:11px;color:var(--gold);margin-top:4px">&#9733; Daily 2&times; bonus +${data.daily_bonus}pts</div>`;
       }
-      if (data.is_daily && data.streak > 0 && !data.daily_already_done) {
+      if (daily && daily.completed_now && data.streak > 0) {
         extra += `<div style="font-size:11px;color:#fb923c;margin-top:2px">&#128293; ${data.streak}-day streak!</div>`;
       }
       if (extra && ptsPanel) {

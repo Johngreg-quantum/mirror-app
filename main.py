@@ -401,9 +401,19 @@ def user_zone(tz_name) -> ZoneInfo:
     return ZoneInfo(DEFAULT_TIMEZONE)
 
 
+def local_day_of(tz_name, when=None) -> str:
+    """The user's calendar day for an instant, as YYYY-MM-DD.
+
+    `when` exists so the day arithmetic can be tested at a chosen instant. The
+    cases that matter here are all of the form "9pm on a Tuesday in Miami", and
+    a running server cannot be asked to believe it is any particular time."""
+    when = when or datetime.now(timezone.utc)
+    return when.astimezone(user_zone(tz_name)).strftime("%Y-%m-%d")
+
+
 def local_today(tz_name) -> str:
     """The user's current calendar day as YYYY-MM-DD."""
-    return datetime.now(user_zone(tz_name)).strftime("%Y-%m-%d")
+    return local_day_of(tz_name)
 
 
 def local_yesterday(tz_name) -> str:
@@ -416,17 +426,131 @@ def local_yesterday(tz_name) -> str:
 
 
 # ---------------------------------------------------------------------------
-# Daily challenge — deterministic scene selection from UTC date
+# The Daily Take — three short lines, deterministic from the UTC date
 # ---------------------------------------------------------------------------
+#
+# The daily used to be one scene drawn from all 47, which meant some days it was
+# a 41-word Titanic monologue behind a 74-second clip. That is a practice
+# session, not a daily habit: the thing you are asking someone to do every
+# single evening has to be short enough that doing it is never a decision.
+#
+# So the Daily Take is three SHORT lines. The pool is every scene whose quote is
+# at most DAILY_MAX_WORDS words and whose clip runs at most
+# DAILY_MAX_CLIP_SECONDS -- computed from scene_config.json rather than written
+# out here, so adding a short scene puts it in the rotation with no code change
+# and nobody has to remember that a second list exists.
 
-def get_daily_scene_id() -> str:
-    """Return today's challenge scene.  MD5 of the UTC date string gives a
-    stable, evenly-distributed index — same result for every server instance.
+DAILY_LINE_COUNT        = 3
+DAILY_MAX_WORDS         = 10
+DAILY_MAX_CLIP_SECONDS  = 20
 
-    Deliberately UTC, not the user's zone: see the note above."""
-    date_str = datetime.now(timezone.utc).strftime("%Y-%m-%d")
-    h = int(hashlib.md5(date_str.encode()).hexdigest(), 16)
-    return list(SCENES.keys())[h % len(SCENES)]
+
+def _build_daily_pool() -> list:
+    """Scene ids short enough to be one of three lines in an evening.
+
+    Order follows scene_config, so the pool is stable across processes: the
+    selection below indexes into it and every instance must agree."""
+    pool = []
+    for sid, scene in SCENES.items():
+        quote = (scene.get("quote") or "").strip()
+        if not quote or len(quote.split()) > DAILY_MAX_WORDS:
+            continue
+        ui = scene.get("ui") or {}
+        start, end = ui.get("clip_start"), ui.get("clip_end")
+        if not isinstance(start, (int, float)) or not isinstance(end, (int, float)):
+            continue
+        if (end - start) <= 0 or (end - start) > DAILY_MAX_CLIP_SECONDS:
+            continue
+        pool.append(sid)
+    # A config change that emptied the pool would otherwise take the daily down
+    # with it. Falling back to every scene makes that a worse daily, not a
+    # broken one, and the log line says which happened.
+    if len(pool) < DAILY_LINE_COUNT:
+        logger.warning(
+            "[daily] only %s scene(s) qualify as short lines; falling back to all %s",
+            len(pool), len(SCENES),
+        )
+        return list(SCENES.keys())
+    return pool
+
+
+DAILY_POOL = _build_daily_pool()
+
+
+def get_daily_scene_ids(date_str: str = None) -> list:
+    """The three lines for a given CALENDAR DATE. The one place the daily is
+    decided; callers decide whose date it is, and they all ask
+    daily_scene_ids_for_user() so that it is always the user's own.
+
+    Deterministic from a date string and nothing else: the ids are never
+    client-supplied, so the free hole they open (see can_play_scene) cannot be
+    pointed at a scene of the caller's choosing.
+
+    Distinctness is explicit rather than left to a sampling function: three
+    separate digests, walked until three different ids have been collected. A
+    pool of 23 makes a collision likely enough to matter, and random.sample()
+    would tie the day's lines to a shuffle implementation that is not promised
+    to be stable between Python versions -- a server upgrade would silently
+    change today's daily under users who were half way through it.
+    """
+    date_str = date_str or local_day_of(None)
+    ids = []
+    i = 0
+    # Bounded: the pool is at least DAILY_LINE_COUNT long, so this terminates.
+    while len(ids) < min(DAILY_LINE_COUNT, len(DAILY_POOL)):
+        h = int(hashlib.md5(f"{date_str}:{i}".encode()).hexdigest(), 16)
+        sid = DAILY_POOL[h % len(DAILY_POOL)]
+        if sid not in ids:
+            ids.append(sid)
+        i += 1
+    return ids
+
+
+def user_timezone(cur, user_id: int):
+    """The stored IANA zone for a user, or None for the default.
+
+    One indexed primary-key lookup. Read on the gate path, which is only reached
+    for a scene the user neither owns nor gets free, so it costs nothing on the
+    ordinary case."""
+    cur.execute(f"SELECT timezone FROM users WHERE id = {PH}", (user_id,))
+    row = cur.fetchone()
+    return row[0] if row else None
+
+
+def daily_scene_ids_for_user(cur, user_id: int, tz_name=None, when=None) -> list:
+    """This user's three lines, for THEIR calendar date.
+
+    The set follows the user's local day, exactly like the streak that depends
+    on it. Anchoring it to the UTC date instead put the rotation at 8pm Eastern,
+    which is when these users practise: someone two lines in at 7:58pm found
+    three different scenes at 8:00pm and the evening's work no longer counted
+    towards a day. Progress is counted in the user's day, so the set it is
+    counted against has to be the same day's set or the two disagree for five
+    hours every evening.
+
+    The trade, accepted: two users in different zones can be on different lines
+    at the same instant. Everyone on the same local date gets the same three,
+    which is what makes "today's daily" a thing people can compare.
+
+    Pass `tz_name` when the caller has already read it; otherwise it is looked
+    up. A user who crosses zones mid-day can see the set change with them, which
+    is rare, self-correcting the next day, and the honest consequence of letting
+    the day follow the person."""
+    if tz_name is None:
+        tz_name = user_timezone(cur, user_id)
+    return get_daily_scene_ids(local_day_of(tz_name, when))
+
+
+def _secs_until_local_midnight(tz_name, when=None) -> int:
+    """Seconds until this user's lines rotate, i.e. until their own midnight.
+
+    Shown wherever the Daily Take is. It used to count down to UTC midnight,
+    which was both the wrong moment and an alarming one -- 8pm, mid-session."""
+    now = when or datetime.now(timezone.utc)
+    zone = user_zone(tz_name)
+    local = now.astimezone(zone)
+    next_midnight = local.replace(hour=0, minute=0, second=0, microsecond=0) + timedelta(days=1)
+    return max(0, int((next_midnight - local).total_seconds()))
 
 
 # ---------------------------------------------------------------------------
@@ -443,23 +567,32 @@ DEFAULT_MISSIONS = [
 ]
 
 
-def _midnight_tonight_utc_str() -> str:
-    """End of today UTC, i.e. tomorrow 00:00:00 UTC, formatted YYYY-MM-DD HH:MM:SS."""
-    now = datetime.now(timezone.utc)
-    end = now.replace(hour=0, minute=0, second=0, microsecond=0) + timedelta(days=1)
-    return end.strftime("%Y-%m-%d %H:%M:%S")
+# Mission windows end at the USER's midnight, expressed in UTC because that is
+# what the expires_at column is compared against.
+#
+# They used to end at UTC midnight, which was fine while the daily set rotated
+# then too. Now that the set follows the user's date, a UTC-ended daily mission
+# would reset at 8pm Eastern -- mid-set -- so an evening user's three lines would
+# land one in the old row and two in the new one and the mission would never
+# reach 3. Its 100 XP would have become quietly unreachable for exactly the users
+# the local-day change is for.
+def _midnight_tonight_utc_str(tz_name=None) -> str:
+    """The user's next midnight, as a UTC 'YYYY-MM-DD HH:MM:SS' string."""
+    local = datetime.now(user_zone(tz_name))
+    end_local = local.replace(hour=0, minute=0, second=0, microsecond=0) + timedelta(days=1)
+    return end_local.astimezone(timezone.utc).strftime("%Y-%m-%d %H:%M:%S")
 
 
-def _next_sunday_midnight_utc_str() -> str:
-    """End of the upcoming Sunday UTC (i.e. next Monday 00:00:00 UTC). If today is
-    already Sunday, returns end of next Sunday (7 days out)."""
-    now = datetime.now(timezone.utc)
-    today = now.replace(hour=0, minute=0, second=0, microsecond=0)
-    days_until_sunday = (6 - now.weekday()) % 7  # Monday=0 ... Sunday=6
+def _next_sunday_midnight_utc_str(tz_name=None) -> str:
+    """End of the user's upcoming Sunday (their Monday 00:00), as a UTC string.
+    If today is already Sunday, the end of next Sunday -- 7 days out."""
+    local = datetime.now(user_zone(tz_name))
+    today_local = local.replace(hour=0, minute=0, second=0, microsecond=0)
+    days_until_sunday = (6 - local.weekday()) % 7  # Monday=0 ... Sunday=6
     if days_until_sunday == 0:
         days_until_sunday = 7
-    end = today + timedelta(days=days_until_sunday + 1)  # Monday 00:00 == end of Sunday
-    return end.strftime("%Y-%m-%d %H:%M:%S")
+    end_local = today_local + timedelta(days=days_until_sunday + 1)
+    return end_local.astimezone(timezone.utc).strftime("%Y-%m-%d %H:%M:%S")
 
 
 SCENE_GENRES = {
@@ -524,14 +657,17 @@ MISSION_XP = {
 }
 
 
-def seed_user_missions(user_id: int, username: str, db) -> None:
+def seed_user_missions(user_id: int, username: str, db, tz_name=None) -> None:
     """Insert any default missions the user is missing or whose previous instance
     has expired. `db` is a database cursor (matches the pattern of other helpers).
 
     Addressed by user_id, not username. The username is still written on insert
     because the column is NOT NULL and it is what the Missions panel's older rows
     are found by, but nothing is ever *read* by it -- so a re-registered name
-    inherits no mission progress."""
+    inherits no mission progress.
+
+    `tz_name` sets when the window ends: the user's midnight, not the server's.
+    See the note on _midnight_tonight_utc_str()."""
     now_str = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S")
     db.execute(
         f"SELECT mission_id FROM user_missions "
@@ -543,7 +679,8 @@ def seed_user_missions(user_id: int, username: str, db) -> None:
     for mission_id, goal, cadence in DEFAULT_MISSIONS:
         if mission_id in active_ids:
             continue
-        expires = _midnight_tonight_utc_str() if cadence == "daily" else _next_sunday_midnight_utc_str()
+        expires = (_midnight_tonight_utc_str(tz_name) if cadence == "daily"
+                   else _next_sunday_midnight_utc_str(tz_name))
         db.execute(
             f"INSERT INTO user_missions (user_id, username, mission_id, progress, goal, expires_at) "
             f"VALUES ({PH}, {PH}, {PH}, 0, {PH}, {PH})",
@@ -553,7 +690,7 @@ def seed_user_missions(user_id: int, username: str, db) -> None:
 
 async def update_missions(user_id: int, username: str, scene_id: str, score: float,
                           duration_seconds: float, take_number: int, db,
-                          local_day: str = None):
+                          local_day: str = None, daily_line_completed: bool = False):
     """Advance any active user_missions matching this submission. Returns
     [{mission_id, new_progress, completed, xp_earned}]. Also rolls the XP
     counters in user_streak.
@@ -566,7 +703,14 @@ async def update_missions(user_id: int, username: str, scene_id: str, score: flo
     that the XP goal rolls over at the user's midnight rather than the server's.
     `date.today()` was the server's local day, which is UTC on Render and the
     developer's zone on a laptop -- a third notion of "today" alongside the two
-    that already existed."""
+    that already existed.
+
+    `daily_line_completed` says this take finished one of the Daily Take's three
+    lines for the first time today. The "daily" mission's goal has always been
+    3, which used to mean three takes of one scene; it now means the three lines,
+    so the missions panel's 0/3 and the Daily Take's 0/3 are the same number.
+    Passing the fact rather than re-deriving it here is what keeps them equal --
+    /api/submit already knows, and asking twice is how two counters drift."""
     now_str   = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S")
     today_str = local_day or local_today(None)
 
@@ -577,7 +721,6 @@ async def update_missions(user_id: int, username: str, scene_id: str, score: flo
     )
     rows = db.fetchall()
 
-    daily_today = get_daily_scene_id()
     genre       = SCENE_GENRES.get(scene_id, "")
     duration    = float(duration_seconds or 0)
     score_pct   = float(score or 0)
@@ -594,7 +737,7 @@ async def update_missions(user_id: int, username: str, scene_id: str, score: flo
             continue
 
         advances = (
-            (mid == "daily"           and scene_id == daily_today) or
+            (mid == "daily"           and daily_line_completed)    or
             (mid == "pronunciation"   and score_pct >= SCORE_TIER_STRONG) or
             (mid == "genre_drama"     and genre == "drama")        or
             (mid == "sprint"          and take_number == 1 and duration > 0 and duration <= 240) or
@@ -1350,9 +1493,19 @@ SCORE_PERFECT     = 100.0  # points tier / perfect-take flag
 # 9,125 and carry a non-improving user to the edge of Director, which would make
 # the divisions meaningless.
 #
-# Applied AFTER the 2x, as a floor on the final figure, so it stays a single
-# explainable promise: the daily never pays less than 10.
+# Applied to the award for completing the Daily Take AS A WHOLE -- once per
+# local day, on the take that finishes the third line -- so it stays a single
+# explainable promise: finishing the daily never pays less than 10. Not per
+# line, which would turn one promise into three and pay 30 for three silent
+# takes.
 DAILY_COMPLETION_FLOOR = 10
+
+# Combo: all three lines above a threshold. Both numbers reuse the existing
+# score tiers rather than inventing thresholds, and 25 -- what one proficient
+# take pays -- is the right size for a consistency bonus: worth chasing, nowhere
+# near enough to beat actually scoring well.
+DAILY_COMBO_PROFICIENT_BONUS = 25   # all three >= SCORE_PROFICIENT
+DAILY_COMBO_STRONG_BONUS     = 50   # all three >= SCORE_TIER_STRONG
 
 
 def calc_points(score: float, is_first_attempt: bool) -> int:
@@ -1369,6 +1522,126 @@ def calc_points(score: float, is_first_attempt: bool) -> int:
     elif score >= SCORE_PROFICIENT:
         pts += 25
     return pts
+
+
+def _tier_points(score: float) -> int:
+    """Score-tier portion of calc_points (omits first-attempt bonus)."""
+    if score >= SCORE_PERFECT:     return 100
+    if score >= SCORE_TIER_ELITE:  return 75
+    if score >= SCORE_TIER_STRONG: return 50
+    if score >= SCORE_PROFICIENT:  return 25
+    return 0
+
+
+def _local_day_bounds_utc(tz_name, when=None) -> tuple:
+    """The user's local day as a UTC half-open interval, formatted to match
+    `scores.created_at`.
+
+    Both backends store created_at as a UTC-ish naive timestamp (SQLite's
+    CURRENT_TIMESTAMP is UTC; Render's Postgres runs in UTC), and the existing
+    weekly-XP query already compares that column against a Python-formatted
+    string, so this follows the pattern that is in production rather than
+    inventing a second one.
+
+    The end is start + 1 local day rather than +24h, so the 23- and 25-hour days
+    either side of a DST change are the right length."""
+    when = when or datetime.now(timezone.utc)
+    start_local = when.astimezone(user_zone(tz_name)).replace(
+        hour=0, minute=0, second=0, microsecond=0)
+    end_local = start_local + timedelta(days=1)
+    fmt = "%Y-%m-%d %H:%M:%S"
+    return (start_local.astimezone(timezone.utc).strftime(fmt),
+            end_local.astimezone(timezone.utc).strftime(fmt))
+
+
+def daily_state(cur, user_id: int, tz_name, last_daily=None, when=None) -> dict:
+    """Where this user stands in today's Daily Take.
+
+    Derived from `scores`, so there is no progress table to keep in step with
+    reality and partial progress survives anything -- a reload, a crash, a
+    different device, a switch between the two shells.
+
+    One day, consistently: the set is the user's local date's set, and a line
+    counts as done when they have a score for it inside that same local day. Both
+    halves move together, so there is no window in which progress is measured
+    against a set the user was never offered -- which is what a UTC-dated set
+    produced for five hours every evening in the Americas.
+
+    `when` is for tests: every interesting case here is a particular hour in a
+    particular zone.
+    """
+    now = when or datetime.now(timezone.utc)
+    ids = get_daily_scene_ids(local_day_of(tz_name, now))
+    start_utc, end_utc = _local_day_bounds_utc(tz_name, now)
+    slots = ", ".join([PH] * len(ids))
+    cur.execute(
+        f"SELECT scene_id, MAX(sync_score) FROM scores "
+        f"WHERE user_id = {PH} AND created_at >= {PH} AND created_at < {PH} "
+        f"AND scene_id IN ({slots}) GROUP BY scene_id",
+        (user_id, start_utc, end_utc, *ids),
+    )
+    best = {r[0]: float(r[1] or 0) for r in cur.fetchall()}
+
+    lines = [
+        {
+            "scene_id": sid,
+            "done":     sid in best,
+            "score":    round(best[sid], 1) if sid in best else None,
+        }
+        for sid in ids
+    ]
+    done_ids = [ln["scene_id"] for ln in lines if ln["done"]]
+    return {
+        "scene_ids":      ids,
+        "lines":          lines,
+        "done_scene_ids": done_ids,
+        "lines_done":     len(done_ids),
+        "line_total":     len(ids),
+        # What every "practise the daily" button should open. None once the set
+        # is finished, so a caller can tell "next line" from "nothing left".
+        "next_scene_id":  next((ln["scene_id"] for ln in lines if not ln["done"]), None),
+        "all_done":       len(done_ids) == len(ids),
+        # Whether the streak has already been credited for this local day. The
+        # streak is credited once; the lines can be re-recorded all evening.
+        "credited_today": bool(last_daily) and last_daily == local_day_of(tz_name, now),
+    }
+
+
+def daily_completion_award(scores: list) -> dict:
+    """What finishing the whole Daily Take pays, from the stored line scores.
+
+    Computed from the scores in the table rather than accumulated across the
+    three requests, so it cannot be inflated by a replayed submit and does not
+    need a column to remember a half-finished daily.
+
+    The 2x that used to multiply a single daily take lives here now: the
+    multiplier applies to the Daily Take as a whole, on the average of its three
+    lines. Individual lines pay ordinary points -- practising three scenes has
+    always paid what practising three scenes pays, and calling that a bonus
+    would be counting the same thing twice."""
+    scores = [float(s) for s in scores if s is not None]
+    if not scores:
+        return {"avg": 0.0, "base": 0, "combo": None, "combo_bonus": 0,
+                "floor_applied": 0, "award": 0}
+
+    avg   = sum(scores) / len(scores)
+    base  = _tier_points(avg) * 2
+    combo, bonus = None, 0
+    if all(s >= SCORE_TIER_STRONG for s in scores):
+        combo, bonus = "all_strong", DAILY_COMBO_STRONG_BONUS
+    elif all(s >= SCORE_PROFICIENT for s in scores):
+        combo, bonus = "all_proficient", DAILY_COMBO_PROFICIENT_BONUS
+
+    total = base + bonus
+    floor_applied = max(0, DAILY_COMPLETION_FLOOR - total)
+    return {
+        "avg":           round(avg, 1),
+        "base":          base,
+        "combo":         combo,
+        "combo_bonus":   bonus,
+        "floor_applied": floor_applied,
+        "award":         total + floor_applied,
+    }
 
 
 # ---------------------------------------------------------------------------
@@ -2100,7 +2373,8 @@ def _challenge_scene_id(cur, challenge_id: str):
     return row[0] if row else None
 
 
-def can_play_scene(cur, user_id: int, scene_id: str, challenge_id: str = "") -> bool:
+def can_play_scene(cur, user_id: int, scene_id: str, challenge_id: str = "",
+                   when=None) -> bool:
     """Entitlement, OR one of two deliberate holes.
 
     The daily challenge and shared challenge links are the acquisition hook:
@@ -2112,14 +2386,29 @@ def can_play_scene(cur, user_id: int, scene_id: str, challenge_id: str = "") -> 
     So they are open on purpose, and said so here rather than being left to
     emerge from whatever the gate happened not to cover:
 
-      daily      today's scene only, computed server-side from the UTC date.
-                 Not client-supplied, so it cannot be pointed at another scene.
+      daily      this user's three lines, and exactly those, from the same
+                 daily_scene_ids_for_user() that /api/daily offers them from --
+                 so the hole is always the set the user is actually being shown,
+                 for the same local date, on both sides. Computed server-side
+                 and not client-supplied, so it cannot be pointed at a scene of
+                 the caller's choosing.
       challenge  the scene named by an existing challenge row, looked up, not
                  taken from the request.
 
-    Both are one scene at a time and neither grants anything: nothing is
-    written, and the next request is gated again. A free user who wants a
-    sixth scene of their own choosing still has to buy one."""
+    The daily hole is three scenes wide now rather than one, and 11 of the 23
+    scenes it can draw from are Level 2 -- so on some days it opens paid-tier
+    scenes. That is the hook working as intended, but it is a wider hole than
+    the single daily was and it should not be discovered later by reading the
+    pool filter.
+
+    Neither hole grants anything: nothing is written, and the next request is
+    gated again. A free user who wants a scene of their own choosing still has
+    to buy one.
+
+    `when` is for tests only -- no caller passes it, and it cannot come from a
+    request. It exists so "the gate opens for exactly the set this user is being
+    offered" can be asserted at a chosen hour in a chosen zone, which is the
+    only way to check the two for agreement across a date boundary."""
     # The switch. Before the store can take a payment, refusing a scene offers
     # the user nothing to do about it, so nothing is refused. Deliberately the
     # first line: no entitlement is read and no row is consulted, so the flag
@@ -2128,7 +2417,7 @@ def can_play_scene(cur, user_id: int, scene_id: str, challenge_id: str = "") -> 
         return True
     if can_access_scene(cur, user_id, scene_id):
         return True
-    if scene_id == get_daily_scene_id():
+    if scene_id in daily_scene_ids_for_user(cur, user_id, when=when):
         return True
     # bool(), not `challenge_id and ...`: that returns the empty string when no
     # challenge was sent, which is falsy and so enforces correctly, but makes a
@@ -2782,21 +3071,75 @@ async def get_history(user: dict = Depends(current_user)):
 
 
 @app.get("/api/daily")
-async def get_daily():
-    """Return today's challenge scene (same for every user, resets at UTC midnight)."""
-    sid   = get_daily_scene_id()
-    today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
-    # Seconds until next UTC midnight
-    now     = datetime.now(timezone.utc)
-    midnight = datetime(now.year, now.month, now.day, tzinfo=timezone.utc) + timedelta(days=1)
-    secs_left = int((midnight - now).total_seconds())
-    return {
-        "scene_id":       sid,
-        "scene":          PUBLIC_SCENES[sid],
-        "date":           today,
-        "bonus_multiplier": 2,
-        "secs_until_reset": secs_left,
-    }
+async def get_daily(creds: HTTPAuthorizationCredentials = Depends(bearer)):
+    """The Daily Take: three short lines for the caller's own calendar date,
+    rotating at their midnight.
+
+    AUTH IS OPTIONAL. Anonymous callers get the public half -- which lines they
+    are and when they rotate -- for the DEFAULT zone, because that is the only
+    day we can attribute to them. A caller with a valid token gets their own
+    date's lines and their own progress through the set, including
+    `next_scene_id`.
+
+    That is here rather than left to the client on purpose. "Which line is next"
+    and "how many are done" are the only new pieces of logic the UI needs, and
+    this app has two frontends that share no JavaScript: computing it client-side
+    means writing it twice, and the two copies disagreeing is not a theoretical
+    risk in this repo. One server answer, both shells render it.
+
+    `scene_id` / `scene` are kept, pointing at the first line, so the daily
+    leaderboard tab and any client still running yesterday's bundle keep
+    working instead of reading undefined."""
+
+    def _public(tz_name, ids):
+        return {
+            "scene_id":         ids[0],
+            "scene":            PUBLIC_SCENES[ids[0]],
+            "scene_ids":        ids,
+            "scenes":           [PUBLIC_SCENES[sid] for sid in ids],
+            "line_total":       len(ids),
+            # The user's date, not the server's: it is the date these lines
+            # belong to, and a client that logs it should log the same one the
+            # streak will be credited against.
+            "date":             local_day_of(tz_name),
+            "bonus_multiplier": 2,
+            "secs_until_reset": _secs_until_local_midnight(tz_name),
+        }
+
+    # Progress needs a user. A bad or expired token is treated as anonymous
+    # rather than as an error: the daily is a public page, and failing the whole
+    # card because a month-old token is still in localStorage would break the
+    # one surface that is supposed to work for people who have not signed up.
+    try:
+        user = require_live_user(decode_token(creds))
+    except HTTPException:
+        return _public(None, get_daily_scene_ids(local_day_of(None)))
+
+    conn = get_conn()
+    try:
+        cur = conn.cursor()
+        cur.execute(
+            f"SELECT timezone, last_daily FROM users WHERE id = {PH}",
+            (user["id"],),
+        )
+        row = cur.fetchone()
+        tz_name = row[0] if row else None
+        state = daily_state(cur, user["id"], tz_name, row[1] if row else None)
+    finally:
+        conn.close()
+
+    # Built from the state's own ids, so the lines offered and the lines counted
+    # are one list rather than two calls that have to agree.
+    payload = _public(tz_name, state["scene_ids"])
+    payload.update({
+        "lines":          state["lines"],
+        "done_scene_ids": state["done_scene_ids"],
+        "lines_done":     state["lines_done"],
+        "next_scene_id":  state["next_scene_id"],
+        "all_done":       state["all_done"],
+        "credited_today": state["credited_today"],
+    })
+    return payload
 
 
 @app.post("/api/submit")
@@ -2900,10 +3243,9 @@ async def submit_recording(
         (scene_id, scene["movie"], expected_quote, transcription, score, user["username"], user["id"]),
     )
 
-    # Daily challenge detection
-    daily_scene_id     = get_daily_scene_id()
-    is_daily           = scene_id == daily_scene_id
-    # Fetch streak state, and the timezone the day boundary depends on
+    # Streak state, and the timezone every day boundary below depends on. Read
+    # BEFORE the daily set is resolved, because which three lines today has is
+    # now a question about the user's date.
     cur.execute(
         f"SELECT streak, last_daily, timezone, longest_streak FROM users WHERE id = {PH}",
         (user["id"],),
@@ -2921,24 +3263,80 @@ async def submit_recording(
     yesterday_str = local_yesterday(tz_name)
     daily_already_done = (last_daily == today_str)
 
-    # Award points (2× if it's the daily and not yet done today)
-    base_pts   = calc_points(score, is_first_attempt)
-    daily_bonus = 0
-    if is_daily and not daily_already_done:
-        daily_bonus = base_pts          # extra pts from doubling
-        pts_earned  = base_pts * 2
-    else:
-        pts_earned  = base_pts
+    # Daily Take detection — three lines for the user's own date, this take is
+    # one of them or none. The same call the gate made a few lines earlier, with
+    # the timezone passed in rather than read a second time.
+    daily_scene_ids    = daily_scene_ids_for_user(cur, user["id"], tz_name)
+    is_daily           = scene_id in daily_scene_ids
 
-    # Floor on completing the daily. calc_points() awards nothing below 70% on a
-    # repeat attempt, and 2 x 0 is 0 -- so the daily could be completed and pay
-    # literally nothing, which is the one thing a habit loop cannot do. Showing
-    # up is now always worth something; see DAILY_COMPLETION_FLOOR for the
-    # number and why it is that number.
+    # Every take pays its own ordinary points, daily or not. The 2x used to
+    # apply here, to a single daily take; it now applies to the Daily Take as a
+    # whole, once, in daily_completion_award(). Three lines each doubled would
+    # be three times the old daily bonus for the same habit.
+    base_pts   = calc_points(score, is_first_attempt)
+    pts_earned = base_pts
+
+    # ── The Daily Take ───────────────────────────────────────────────────────
+    # The score row for this take is already inserted above, so daily_state()
+    # sees it: if this was the third line, the set reads as complete here.
+    daily_payload       = None
+    daily_bonus         = 0
     daily_floor_applied = 0
-    if is_daily and not daily_already_done and pts_earned < DAILY_COMPLETION_FLOOR:
-        daily_floor_applied = DAILY_COMPLETION_FLOOR - pts_earned
-        pts_earned = DAILY_COMPLETION_FLOOR
+    daily_completed_now = False
+    daily_line_first_today = False
+
+    if is_daily:
+        state = daily_state(cur, user["id"], tz_name, last_daily)
+
+        # Whether THIS take is what turned this line from undone to done. The
+        # row is already inserted, so a count of 1 means it is the only take on
+        # this line today. Used for mission progress, which must count lines
+        # rather than takes -- otherwise three goes at line 1 completes the
+        # three-line mission without the user ever seeing lines 2 and 3.
+        start_utc, end_utc = _local_day_bounds_utc(tz_name)
+        cur.execute(
+            f"SELECT COUNT(*) FROM scores WHERE user_id = {PH} AND scene_id = {PH} "
+            f"AND created_at >= {PH} AND created_at < {PH}",
+            (user["id"], scene_id, start_utc, end_utc),
+        )
+        daily_line_first_today = int(cur.fetchone()[0] or 0) <= 1
+
+        # Completion pays once per local day. `daily_already_done` is the guard;
+        # with the set anchored to the user's date there is no second set inside
+        # one day to finish, but re-recording the three lines after finishing
+        # them still must not pay the award again or tick the streak twice.
+        daily_completed_now = state["all_done"] and not daily_already_done
+        award = daily_completion_award(
+            [ln["score"] for ln in state["lines"] if ln["score"] is not None]
+        ) if state["all_done"] else daily_completion_award([])
+
+        if daily_completed_now:
+            pts_earned         += award["award"]
+            # Kept under the old name: static/analyze-score-domain.js and any
+            # client still on an older bundle read `daily_bonus` to decide
+            # whether to show a daily line at all.
+            daily_bonus         = award["award"]
+            daily_floor_applied = award["floor_applied"]
+
+        daily_payload = {
+            "line_total":     state["line_total"],
+            "lines_done":     state["lines_done"],
+            "line_index":     daily_scene_ids.index(scene_id) + 1,
+            "scene_ids":      state["scene_ids"],
+            "done_scene_ids": state["done_scene_ids"],
+            "lines":          state["lines"],
+            "next_scene_id":  state["next_scene_id"],
+            "completed_now":  daily_completed_now,
+            "already_done":   daily_already_done,
+            # The aggregate the end-of-set reward screen shows. Zeroed until the
+            # set is finished, so a client cannot render a combo for one line.
+            "avg_score":      award["avg"],
+            "combo":          award["combo"],
+            "combo_bonus":    award["combo_bonus"],
+            "floor_applied":  award["floor_applied"],
+            "award":          award["award"] if daily_completed_now else 0,
+            "secs_until_reset": _secs_until_local_midnight(tz_name),
+        }
 
     if pts_earned > 0:
         cur.execute(
@@ -2946,10 +3344,10 @@ async def submit_recording(
             (pts_earned, user["id"]),
         )
 
-    # Update streak if this completes today's daily for the first time.
-    # THE ONLY PLACE users.streak CHANGES.
+    # Update streak if this take completed all three lines for the first time in
+    # the user's day. THE ONLY PLACE users.streak CHANGES.
     new_streak = current_streak
-    if is_daily and not daily_already_done:
+    if daily_completed_now:
         if last_daily == yesterday_str:
             new_streak = current_streak + 1
         else:
@@ -2980,7 +3378,7 @@ async def submit_recording(
     # Advance any active missions and roll user_streak XP/streak counters.
     # take_number is 1-based: this submission's position in the user's history
     # for this scene (1 = first attempt).
-    seed_user_missions(user["id"], user["username"], cur)
+    seed_user_missions(user["id"], user["username"], cur, tz_name)
     take_number = int(attempt_count) + 1
     missions_updated = await update_missions(
         user_id=user["id"],
@@ -2991,6 +3389,7 @@ async def submit_recording(
         take_number=take_number,
         db=cur,
         local_day=today_str,
+        daily_line_completed=bool(is_daily and daily_line_first_today),
     )
     total_xp_earned = sum(m["xp_earned"] for m in missions_updated)
 
@@ -3024,6 +3423,11 @@ async def submit_recording(
         # the reward sequence can say "you showed up" instead of implying the
         # take itself earned it.
         "daily_floor_applied":  daily_floor_applied,
+        # The whole Daily Take: where this take sat in the set, what is left,
+        # and -- only once the third line lands -- the aggregate the end-of-set
+        # reward screen is built from. None when this scene is not a daily line,
+        # so a client can branch on presence rather than on a flag.
+        "daily":                daily_payload,
         "streak":               new_streak,
         "longest_streak":       max(longest_streak, new_streak),
         "is_new_pb":            is_new_pb,
@@ -3116,15 +3520,6 @@ async def get_leaderboard():
             })
     conn.close()
     return result
-
-
-def _tier_points(score: float) -> int:
-    """Score-tier portion of calc_points (omits first-attempt bonus)."""
-    if score >= SCORE_PERFECT:     return 100
-    if score >= SCORE_TIER_ELITE:  return 75
-    if score >= SCORE_TIER_STRONG: return 50
-    if score >= SCORE_PROFICIENT:  return 25
-    return 0
 
 
 @app.get("/api/ranks/social")
@@ -3254,7 +3649,16 @@ async def get_missions(user: dict = Depends(current_user)):
     conn = get_conn()
     cur  = conn.cursor()
 
-    seed_user_missions(user["id"], user["username"], cur)
+    # The user row first: mission windows now end at the user's midnight, so
+    # seeding needs the timezone before it can write an expires_at.
+    cur.execute(
+        f"SELECT streak, longest_streak, last_daily, timezone FROM users WHERE id = {PH}",
+        (user["id"],),
+    )
+    urow    = cur.fetchone()
+    tz_name = urow[3] if urow else None
+
+    seed_user_missions(user["id"], user["username"], cur, tz_name)
 
     now_str = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S")
     cur.execute(
@@ -3280,18 +3684,13 @@ async def get_missions(user: dict = Depends(current_user)):
     # used to read user_streak.current_streak -- the counter with no gap check --
     # so the missions panel could show "5-day streak" while the reward sequence
     # showed 1 for the same user on the same day. Both now render this number.
-    cur.execute(
-        f"SELECT streak, longest_streak, last_daily, timezone FROM users WHERE id = {PH}",
-        (user["id"],),
-    )
-    urow = cur.fetchone()
     streak = {
         "current":          int(urow[0] or 0) if urow else 0,
         "longest":          int(urow[1] or 0) if urow else 0,
         "last_active_date": (urow[2] or "") if urow else "",
         "total_xp":         0,
     }
-    today_str = local_today(urow[3] if urow else None)
+    today_str = local_today(tz_name)
 
     # XP still lives in user_streak, by user_id so a freed username carries none.
     cur.execute(
@@ -3305,11 +3704,20 @@ async def get_missions(user: dict = Depends(current_user)):
     else:
         today_xp = 0
 
+    # The Daily Take, in the same response the panel already fetches.
+    #
+    # The panel renders ITS progress from here rather than from the daily
+    # mission row. Both windows now end at the user's midnight so they agree,
+    # but only one of them is derived from the scores the streak is credited on,
+    # and that is the number to show.
+    daily = daily_state(cur, user["id"], tz_name, urow[2] if urow else None)
+
     conn.commit()
     conn.close()
 
     return {
         "daily_quest":      by_id.get("daily"),
+        "daily_take":       daily,
         "streak":           streak,
         "weekly_challenge": by_id.get("weekly_thriller"),
         "active_missions":  missions,
@@ -3347,6 +3755,7 @@ async def get_profile(user: dict = Depends(current_user)):
         (user["id"],),
     )
     scene_rows = cur.fetchall()
+    daily = daily_state(cur, user["id"], row[4] if row else None, last_daily)
     conn.close()
 
     scene_stats = {}
@@ -3372,7 +3781,17 @@ async def get_profile(user: dict = Depends(current_user)):
         "streak":                streak,
         "longest_streak":        longest_streak,
         "daily_done_today":      daily_done_today,
-        "daily_scene_id":        get_daily_scene_id(),
+        # daily_scene_id is kept and now means "the line to practise next", so
+        # every existing caller -- the missions CTA, the home daily title --
+        # resumes the set instead of reopening line 1. It falls back to the
+        # first line once all three are done, because those callers expect a
+        # scene id and a null would read as "no daily today".
+        "daily_scene_id":        daily["next_scene_id"] or daily["scene_ids"][0],
+        "daily_scene_ids":       daily["scene_ids"],
+        "daily_lines":           daily["lines"],
+        "daily_lines_done":      daily["lines_done"],
+        "daily_line_total":      daily["line_total"],
+        "daily_all_done":        daily["all_done"],
         "avatar_scene_id":       avatar_scene_id,
     }
 

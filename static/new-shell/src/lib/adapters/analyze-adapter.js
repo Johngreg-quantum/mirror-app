@@ -37,7 +37,17 @@ function buildResultPills(rawResult) {
     pills.push('First attempt');
   }
 
-  if (rawResult?.is_daily) {
+  if (rawResult?.daily) {
+    const daily = rawResult.daily;
+
+    if (daily.completed_now) {
+      pills.push('Daily Take complete');
+    } else if (daily.already_done) {
+      pills.push('Daily already done');
+    } else {
+      pills.push(`Daily line ${daily.lines_done}/${daily.line_total}`);
+    }
+  } else if (rawResult?.is_daily) {
     pills.push(rawResult.daily_already_done ? 'Daily already done' : 'Daily scored');
   }
 
@@ -70,7 +80,31 @@ export function adaptAnalyzeResult(rawResult) {
     },
   ];
 
-  if (rawResult.is_daily) {
+  // The aggregate belongs to the set, not to this take, so it only appears on
+  // the take that finished the set. Before that the only honest daily number is
+  // how many lines are left.
+  if (rawResult.daily) {
+    const daily = rawResult.daily;
+
+    metrics.push({
+      label: 'Daily Take',
+      value: `${daily.lines_done}/${daily.line_total}`,
+    });
+
+    if (daily.completed_now) {
+      metrics.push(
+        { label: 'Set average', value: formatScore(daily.avg_score) },
+        { label: 'Completion award', value: formatCount(daily.award) },
+      );
+
+      if (daily.combo_bonus > 0) {
+        metrics.push({
+          label: daily.combo === 'all_strong' ? 'Combo (all above 85%)' : 'Combo (all above 70%)',
+          value: formatCount(daily.combo_bonus),
+        });
+      }
+    }
+  } else if (rawResult.is_daily) {
     metrics.push(
       { label: 'Daily bonus', value: formatCount(rawResult.daily_bonus) },
       { label: 'Daily status', value: rawResult.daily_already_done ? 'Already completed today' : 'First completion today' },

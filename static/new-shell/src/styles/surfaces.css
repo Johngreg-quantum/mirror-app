@@ -445,6 +445,76 @@
   gap: var(--ns-space-4);
 }
 
+/* ─── Daily Take lines ───────────────────────────── */
+/* Three short lines, listed so the remaining work is visibly small. */
+
+.ns-daily-lines {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--ns-space-3);
+}
+
+.ns-daily-line {
+  display: grid;
+  grid-template-columns: 1.75rem minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--ns-space-3);
+  padding: var(--ns-space-3);
+  border: 1px solid rgba(200, 169, 110, 0.14);
+  border-radius: 12px;
+}
+
+.ns-daily-line--done {
+  border-color: rgba(106, 170, 46, 0.3);
+  opacity: 0.72;
+}
+
+.ns-daily-line__index {
+  font-family: var(--font-display);
+  font-size: 20px;
+  line-height: 1;
+  color: var(--gold-light);
+  text-align: center;
+}
+
+.ns-daily-line__film {
+  margin: 0 0 2px;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: rgba(240, 237, 230, 0.45);
+}
+
+.ns-daily-line blockquote {
+  margin: 0;
+  font-size: 14px;
+}
+
+.ns-daily-card__warning {
+  margin: 0;
+  font-size: 12px;
+  color: #fb923c;
+}
+
+.ns-daily-card__done {
+  margin: 0;
+  font-size: 13px;
+  color: #6aaa2e;
+}
+
+@media (max-width: 40rem) {
+  .ns-daily-line {
+    grid-template-columns: 1.75rem minmax(0, 1fr);
+  }
+
+  .ns-daily-line > :last-child {
+    grid-column: 2;
+    justify-self: start;
+  }
+}
+
 /* ─── Streak card ────────────────────────────────── */
 
 .ns-streak-card strong {

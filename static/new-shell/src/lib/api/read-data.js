@@ -9,7 +9,9 @@ export function fetchCurrentSession() {
 }
 
 export function fetchDailyChallenge() {
-  return getJson('/api/daily');
+  // Optional auth: the day's three lines are public, and a signed-in caller
+  // also gets which of them they have already recorded and which is next.
+  return getJson('/api/daily', { authOptional: true });
 }
 
 export function fetchLeaderboard() {
