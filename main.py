@@ -24,6 +24,7 @@ from collections import defaultdict, deque
 from datetime import datetime, timedelta, timezone, date
 from email.utils import formatdate
 from typing import Optional
+from zoneinfo import ZoneInfo, ZoneInfoNotFoundError, available_timezones
 
 from fastapi import FastAPI, File, UploadFile, Form, HTTPException, Depends, Request
 from fastapi.middleware.cors import CORSMiddleware
@@ -353,22 +354,79 @@ def get_next_division(points: int) -> Optional[dict]:
     return None  # already at max rank
 
 # ---------------------------------------------------------------------------
+# Time — one notion of "today" per user, and one for the daily scene
+# ---------------------------------------------------------------------------
+# These are different questions and they get different answers on purpose.
+#
+# WHICH SCENE is today's daily must be the same for everybody, or the shared
+# leaderboard on it compares people performing different lines, and a challenge
+# link sent across a timezone opens a scene the recipient's own daily is not.
+# So that stays on UTC.
+#
+# WHETHER YOU PRACTISED TODAY is a question about the user's day, and answering
+# it in UTC was a real bug rather than an inaccuracy. UTC midnight is 8pm in
+# New York, so a Miami user who practised at 6pm Monday and 9pm Tuesday local
+# landed on UTC Monday and UTC *Wednesday* -- consecutive evenings, a skipped
+# UTC day, and a streak reset to 1. For a product whose users are mostly on the
+# US east coast, that broke the streak for anyone who practises in the evening,
+# which is most people.
+DEFAULT_TIMEZONE = "America/New_York"
+
+# Resolved once at import: available_timezones() walks the tz database and is
+# far too slow to call per request.
+_VALID_TIMEZONES = available_timezones()
+
+
+def is_valid_timezone(name) -> bool:
+    """Whether this is an IANA zone we can actually resolve.
+
+    The name arrives from the browser, so it is untrusted input that ends up in
+    a date calculation; anything unrecognised is rejected rather than stored and
+    silently falling back forever."""
+    return bool(name) and isinstance(name, str) and name in _VALID_TIMEZONES
+
+
+def user_zone(tz_name) -> ZoneInfo:
+    """A user's zone, falling back to DEFAULT_TIMEZONE.
+
+    Never raises. A user with no timezone yet -- every user, until their browser
+    reports one -- gets the default, which is where most of them are. Falling
+    back to UTC instead would reintroduce the 8pm-midnight bug for exactly the
+    users who have not been migrated yet."""
+    if is_valid_timezone(tz_name):
+        try:
+            return ZoneInfo(tz_name)
+        except (ZoneInfoNotFoundError, ValueError):
+            pass
+    return ZoneInfo(DEFAULT_TIMEZONE)
+
+
+def local_today(tz_name) -> str:
+    """The user's current calendar day as YYYY-MM-DD."""
+    return datetime.now(user_zone(tz_name)).strftime("%Y-%m-%d")
+
+
+def local_yesterday(tz_name) -> str:
+    """The day before the user's current calendar day.
+
+    Subtracts a day from the local wall clock rather than from UTC, so it stays
+    correct across a DST transition, where a local day is 23 or 25 hours long.
+    """
+    return (datetime.now(user_zone(tz_name)) - timedelta(days=1)).strftime("%Y-%m-%d")
+
+
+# ---------------------------------------------------------------------------
 # Daily challenge — deterministic scene selection from UTC date
 # ---------------------------------------------------------------------------
 
 def get_daily_scene_id() -> str:
     """Return today's challenge scene.  MD5 of the UTC date string gives a
-    stable, evenly-distributed index — same result for every server instance."""
+    stable, evenly-distributed index — same result for every server instance.
+
+    Deliberately UTC, not the user's zone: see the note above."""
     date_str = datetime.now(timezone.utc).strftime("%Y-%m-%d")
     h = int(hashlib.md5(date_str.encode()).hexdigest(), 16)
     return list(SCENES.keys())[h % len(SCENES)]
-
-
-def get_today_daily_scene(scenes):
-    """Return one scene from the list, deterministic per UTC calendar day."""
-    if not scenes:
-        return None
-    return scenes[date.today().toordinal() % len(scenes)]
 
 
 # ---------------------------------------------------------------------------
@@ -489,12 +547,23 @@ def seed_user_missions(username: str, db) -> None:
 
 
 async def update_missions(username: str, scene_id: str, score: float,
-                          duration_seconds: float, take_number: int, db):
+                          duration_seconds: float, take_number: int, db,
+                          user_id: int = None, local_day: str = None):
     """Advance any active user_missions matching this submission. Returns
-    [{mission_id, new_progress, completed, xp_earned}]. Also updates user_streak
-    (current/longest streak, daily_xp, total_xp)."""
+    [{mission_id, new_progress, completed, xp_earned}]. Also rolls the XP
+    counters in user_streak.
+
+    It no longer touches that table's streak columns -- the streak is
+    users.streak and is maintained by /api/submit alone, so there is exactly one
+    place it can change.
+
+    `local_day` is the user's own calendar day, used for the daily XP reset so
+    that the XP goal rolls over at the user's midnight rather than the server's.
+    `date.today()` was the server's local day, which is UTC on Render and the
+    developer's zone on a laptop -- a third notion of "today" alongside the two
+    that already existed."""
     now_str   = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S")
-    today_str = date.today().strftime("%Y-%m-%d")
+    today_str = local_day or local_today(None)
 
     db.execute(
         f"SELECT id, mission_id, progress, goal, completed, xp_awarded "
@@ -560,46 +629,54 @@ async def update_missions(username: str, scene_id: str, score: float,
 
     total_xp_earned = sum(m["xp_earned"] for m in matched)
 
-    # Ensure user_streak row exists; load current state
-    db.execute(
-        f"SELECT current_streak, longest_streak, last_active_date, total_xp, daily_xp, daily_xp_date "
-        f"FROM user_streak WHERE username = {PH}",
-        (username,),
-    )
-    srow = db.fetchone()
-    if srow is None:
-        cur_streak, longest, last_active = 0, 0, ""
-        total_xp,  daily_xp, daily_xp_date = 0, 0, ""
+    # XP counters. Read by user_id where we have one, so a re-registered
+    # username cannot pick up the previous holder's XP; the username is still
+    # written on insert because it is the table's primary key.
+    if user_id is not None:
         db.execute(
-            f"INSERT INTO user_streak (username) VALUES ({PH})",
-            (username,),
+            f"SELECT total_xp, daily_xp, daily_xp_date FROM user_streak "
+            f"WHERE user_id = {PH}",
+            (user_id,),
         )
     else:
-        cur_streak    = int(srow[0] or 0)
-        longest       = int(srow[1] or 0)
-        last_active   = (srow[2] or "")
-        total_xp      = int(srow[3] or 0)
-        daily_xp      = int(srow[4] or 0)
-        daily_xp_date = (srow[5] or "")
+        db.execute(
+            f"SELECT total_xp, daily_xp, daily_xp_date FROM user_streak "
+            f"WHERE username = {PH}",
+            (username,),
+        )
+    srow = db.fetchone()
+    if srow is None:
+        total_xp, daily_xp, daily_xp_date = 0, 0, ""
+        db.execute(
+            f"INSERT INTO user_streak (username, user_id) VALUES ({PH}, {PH})",
+            (username, user_id),
+        )
+    else:
+        total_xp      = int(srow[0] or 0)
+        daily_xp      = int(srow[1] or 0)
+        daily_xp_date = (srow[2] or "")
 
-    if last_active != today_str:
-        cur_streak += 1
-        last_active = today_str
-        if cur_streak > longest:
-            longest = cur_streak
-
+    # Rolls at the USER's midnight, not the server's.
     if daily_xp_date != today_str:
         daily_xp = 0
         daily_xp_date = today_str
     daily_xp += total_xp_earned
     total_xp += total_xp_earned
 
-    db.execute(
-        f"UPDATE user_streak SET current_streak = {PH}, longest_streak = {PH}, "
-        f"last_active_date = {PH}, total_xp = {PH}, daily_xp = {PH}, daily_xp_date = {PH} "
-        f"WHERE username = {PH}",
-        (cur_streak, longest, last_active, total_xp, daily_xp, daily_xp_date, username),
-    )
+    # current_streak / longest_streak / last_active_date are deliberately not
+    # written: retired, see the table definition.
+    if user_id is not None:
+        db.execute(
+            f"UPDATE user_streak SET total_xp = {PH}, daily_xp = {PH}, "
+            f"daily_xp_date = {PH} WHERE user_id = {PH}",
+            (total_xp, daily_xp, daily_xp_date, user_id),
+        )
+    else:
+        db.execute(
+            f"UPDATE user_streak SET total_xp = {PH}, daily_xp = {PH}, "
+            f"daily_xp_date = {PH} WHERE username = {PH}",
+            (total_xp, daily_xp, daily_xp_date, username),
+        )
 
     return matched
 
@@ -616,8 +693,21 @@ async def update_missions(username: str, scene_id: str, score: float,
 # given, and the version pins which text they saw.
 _USERS_MIGRATION_COLUMNS = [
     ("points",                     "INTEGER DEFAULT 0"),
+    # THE streak. There used to be a second one in user_streak.current_streak,
+    # keyed on username and with no gap check, so it never reset and counted
+    # distinct active days instead. The missions panel rendered that one while
+    # the reward sequence rendered this one, so a user could be shown a 5-day
+    # streak on one screen and a 1-day streak on another. This is the survivor;
+    # see the note on user_streak for why.
     ("streak",                     "INTEGER DEFAULT 0"),
+    ("longest_streak",             "INTEGER DEFAULT 0"),
+    # The user's LOCAL calendar day of their last completed daily, in their own
+    # timezone -- not UTC. Values written before this change are UTC dates; see
+    # _enforce_streak_invariants() for what that costs.
     ("last_daily",                 "TEXT"),
+    # IANA zone name reported by the browser (Intl.DateTimeFormat). NULL until
+    # one is reported, and treated as DEFAULT_TIMEZONE throughout.
+    ("timezone",                   "TEXT"),
     ("is_pro",                     "BOOLEAN DEFAULT FALSE"),
     ("avatar_scene_id",            "TEXT"),
     ("recording_consent_at",       "TEXT"),
@@ -660,6 +750,77 @@ def _verify_users_columns(cur, sqlite: bool) -> None:
             + ", ".join(missing)
             + " — the ALTER did not apply. Fix the schema before serving."
         )
+
+
+def _link_user_streak_to_user_id(conn, cur) -> None:
+    """Point each XP row at a user id instead of only a username.
+
+    user_streak was keyed on username alone, and usernames are freed for
+    re-registration (see the note on _USER_DATA_TABLES). So someone who signed
+    up with a freed name inherited the previous holder's XP and total. Keyed on
+    user_id, a new account starts at zero whatever it calls itself.
+
+    Run every boot, matching only rows that are still unlinked, so it finishes
+    the job for rows written before this change without needing a marker.
+    Rows whose username no longer matches any user keep user_id NULL: that data
+    was already orphaned, and inventing an owner for it would be worse than
+    leaving it where it is."""
+    try:
+        cur.execute(
+            "UPDATE user_streak SET user_id = ("
+            "  SELECT u.id FROM users u WHERE u.username = user_streak.username"
+            ") WHERE user_id IS NULL"
+        )
+        n = cur.rowcount if cur.rowcount is not None and cur.rowcount >= 0 else 0
+        conn.commit()
+        if n:
+            logger.info("[streak] linked %s user_streak row(s) to a user_id", n)
+    except Exception:
+        conn.rollback()
+        logger.exception("[streak] could not link user_streak rows to user_id")
+
+
+def _enforce_streak_invariants(conn, cur) -> None:
+    """Seed users.longest_streak, and keep it >= users.streak.
+
+    NOT a one-time migration, and deliberately not marked as one: "your longest
+    streak is at least your current streak" is an invariant, so running it every
+    boot is self-healing rather than something to guard against repeating.
+
+    WHICH COUNTER SURVIVED, AND WHY IT IS NOT THE OTHER ONE
+
+    longest_streak is seeded from users.streak, never from
+    user_streak.longest_streak. That column was the high-water mark of a counter
+    that incremented on any submission on a new day and never reset, so its
+    "longest" is really "total distinct days active". Migrating it would hand
+    every user a longest streak they never achieved -- and the ones who had been
+    away longest would get the biggest inflation. Seeding from the honest current
+    streak understates history for a few users and overstates it for nobody.
+
+    Current streaks need no migration at all: users.streak is already the right
+    number, already keyed on the user row, and already the figure the reward
+    sequence has been showing people after every take.
+
+    One cost, accepted knowingly: existing last_daily values are UTC dates,
+    and are now read as local ones. UTC is never behind US Eastern, so a stored
+    value can be one day AHEAD of the user's local day -- for anyone whose last
+    daily was between 8pm and midnight Eastern. That user is told the daily is
+    already done for one day, loses that day's 2x bonus, and then continues
+    normally: the next local day matches last_daily as yesterday and the streak
+    increments. Nobody loses a streak over it, so it is not worth a backfill
+    that would have to guess at times of day the column never stored."""
+    try:
+        cur.execute(
+            "UPDATE users SET longest_streak = streak "
+            "WHERE COALESCE(streak, 0) > COALESCE(longest_streak, 0)"
+        )
+        n = cur.rowcount if cur.rowcount is not None and cur.rowcount >= 0 else 0
+        conn.commit()
+        if n:
+            logger.info("[streak] longest_streak raised to match streak for %s user(s)", n)
+    except Exception:
+        conn.rollback()
+        logger.exception("[streak] could not enforce longest_streak invariant")
 
 
 def _backfill_entitlements(conn, cur) -> None:
@@ -902,9 +1063,16 @@ def init_db():
                 created_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         """)
+        # user_streak now holds XP ONLY. current_streak / longest_streak /
+        # last_active_date are RETIRED: they were a second streak, keyed on
+        # username and with no gap check, so they never reset. Nothing reads or
+        # writes them any more -- the streak lives on users. The columns stay
+        # because SQLite cannot drop a column without rebuilding the table, and
+        # a rebuild is not worth the risk for three fields nobody reads.
         cur.execute("""
             CREATE TABLE IF NOT EXISTS user_streak (
                 username         TEXT PRIMARY KEY,
+                user_id          INTEGER,
                 current_streak   INTEGER DEFAULT 0,
                 longest_streak   INTEGER DEFAULT 0,
                 last_active_date TEXT DEFAULT '',
@@ -927,9 +1095,16 @@ def init_db():
                 created_at  TEXT DEFAULT (datetime('now'))
             )
         """)
+        # user_streak now holds XP ONLY. current_streak / longest_streak /
+        # last_active_date are RETIRED: they were a second streak, keyed on
+        # username and with no gap check, so they never reset. Nothing reads or
+        # writes them any more -- the streak lives on users. The columns stay
+        # because SQLite cannot drop a column without rebuilding the table, and
+        # a rebuild is not worth the risk for three fields nobody reads.
         cur.execute("""
             CREATE TABLE IF NOT EXISTS user_streak (
                 username         TEXT PRIMARY KEY,
+                user_id          INTEGER,
                 current_streak   INTEGER DEFAULT 0,
                 longest_streak   INTEGER DEFAULT 0,
                 last_active_date TEXT DEFAULT '',
@@ -971,8 +1146,22 @@ def init_db():
         )
     """)
 
+    # user_streak.user_id on databases that predate it. Separate from the
+    # CREATE TABLE above, which only runs for a database that does not have the
+    # table at all.
+    if USE_PG:
+        cur.execute("ALTER TABLE user_streak ADD COLUMN IF NOT EXISTS user_id INTEGER")
+    else:
+        try:
+            cur.execute("ALTER TABLE user_streak ADD COLUMN user_id INTEGER")
+        except sqlite3.OperationalError as exc:
+            if "duplicate column name" not in str(exc).lower():
+                raise
+
     conn.commit()
     _backfill_entitlements(conn, cur)
+    _link_user_streak_to_user_id(conn, cur)
+    _enforce_streak_invariants(conn, cur)
 
     conn.commit()
     conn.close()
@@ -1096,6 +1285,32 @@ SCORE_PROFICIENT  = 70.0   # translation unlock, Level-1 quiz pass, first points
 SCORE_TIER_STRONG = 85.0   # points tier
 SCORE_TIER_ELITE  = 95.0   # points tier
 SCORE_PERFECT     = 100.0  # points tier / perfect-take flag
+
+
+# Minimum points for completing the daily, however badly it went.
+#
+# WHY 10
+#
+# calc_points() pays 0 below 70% unless it is a first attempt, and the daily's
+# 2x multiplier doubles that to 0. So a user could do the work and be told
+# nothing happened -- worst for exactly the users who need the habit most.
+#
+# 10 is the smallest unit this economy already uses: it is the first-attempt
+# bonus, so it reads as "we counted that" rather than as a new currency.
+#
+# It is deliberately well below the lowest real tier. A 70% take on the daily
+# pays 50 (25 doubled), so scoring pays 5x showing up -- the floor rewards the
+# habit without competing with the scoring it exists to support.
+#
+# And it cannot inflate the ranks, which is the check that actually constrains
+# the number: floor-only dailies every day for a year total 3,650 points, still
+# inside Gold (2,000-4,999) and nowhere near Diamond. A floor of 25 would reach
+# 9,125 and carry a non-improving user to the edge of Director, which would make
+# the divisions meaningless.
+#
+# Applied AFTER the 2x, as a floor on the final figure, so it stays a single
+# explainable promise: the daily never pays less than 10.
+DAILY_COMPLETION_FLOOR = 10
 
 
 def calc_points(score: float, is_first_attempt: bool) -> int:
@@ -1452,7 +1667,7 @@ async def me(user: dict = Depends(current_user)):
     # was already happening — the gate costs no extra round-trip.
     try:
         cur.execute(
-            f"SELECT is_pro, recording_consent_at FROM users WHERE id = {PH}",
+            f"SELECT is_pro, recording_consent_at, timezone FROM users WHERE id = {PH}",
             (user["id"],)
         )
         row = cur.fetchone()
@@ -1460,9 +1675,11 @@ async def me(user: dict = Depends(current_user)):
         # Fail closed: if this read fails we report "not consented", which shows
         # the notice again. Showing it twice is harmless; skipping it is not.
         recording_consent = bool(row[1]) if row and row[1] else False
+        stored_tz = row[2] if row else None
     except Exception:
         is_pro = False
         recording_consent = False
+        stored_tz = None
     finally:
         conn.close()
     return {
@@ -1470,7 +1687,52 @@ async def me(user: dict = Depends(current_user)):
         "username": user["username"],
         "is_pro": is_pro,
         "recording_consent": recording_consent,
+        # Returned so the client can compare it against the browser's own zone
+        # and only POST when they differ. null means none stored yet, and the
+        # server is treating this user as DEFAULT_TIMEZONE meanwhile.
+        "timezone": stored_tz,
     }
+
+
+class TimezoneRequest(BaseModel):
+    timezone: str = Field(..., max_length=64)
+
+
+@app.post("/api/profile/timezone")
+async def set_timezone(req: TimezoneRequest, user: dict = Depends(current_user)):
+    """Store the user's IANA timezone, as reported by their browser.
+
+    This is what makes a streak day the user's day. Until a user has one they
+    are treated as DEFAULT_TIMEZONE, which is where most of them are -- so the
+    absence of this call degrades to "probably right" rather than to UTC, which
+    is reliably wrong for the US evening practice that is most of the usage.
+
+    The name is validated against the tz database rather than stored as given:
+    it comes from the client, and it is about to be used in a date calculation
+    that decides whether someone keeps their streak. An unrecognised zone is a
+    400 rather than a silent fallback, so a browser reporting something we
+    cannot resolve shows up instead of quietly costing that user their streak.
+    Idempotent, and cheap enough to call on every boot."""
+    name = (req.timezone or "").strip()
+    if not is_valid_timezone(name):
+        raise HTTPException(400, "Unrecognised timezone")
+
+    conn = get_conn()
+    cur  = conn.cursor()
+    try:
+        cur.execute(
+            f"UPDATE users SET timezone = {PH} WHERE id = {PH}",
+            (name, user["id"]),
+        )
+        conn.commit()
+    except Exception:
+        conn.rollback()
+        logger.exception("[timezone] failed to store for user_id=%s", user["id"])
+        raise HTTPException(500, "Could not save your timezone")
+    finally:
+        conn.close()
+
+    return {"timezone": name, "local_date": local_today(name)}
 
 
 @app.post("/api/consent/recording")
@@ -1517,6 +1779,10 @@ _USER_DATA_TABLES = [
     ("challenges",    "challenger_user_id",  "id"),
     ("challenges",    "challenger_username", "username"),
     ("user_missions", "username",            "username"),
+    # Both keys. user_id is the real one now, but rows written before the
+    # user_id column existed can still have it NULL if the username had already
+    # been freed by then, and erasure has to clear those too.
+    ("user_streak",   "user_id",             "id"),
     ("user_streak",   "username",            "username"),
 ]
 
@@ -2595,14 +2861,22 @@ async def submit_recording(
     # Daily challenge detection
     daily_scene_id     = get_daily_scene_id()
     is_daily           = scene_id == daily_scene_id
-    today_str          = datetime.now(timezone.utc).strftime("%Y-%m-%d")
-    yesterday_str      = (datetime.now(timezone.utc) - timedelta(days=1)).strftime("%Y-%m-%d")
+    # Fetch streak state, and the timezone the day boundary depends on
+    cur.execute(
+        f"SELECT streak, last_daily, timezone, longest_streak FROM users WHERE id = {PH}",
+        (user["id"],),
+    )
+    u_row           = cur.fetchone()
+    current_streak  = int(u_row[0] or 0) if u_row else 0
+    last_daily      = u_row[1] if u_row else None
+    tz_name         = u_row[2] if u_row else None
+    longest_streak  = int(u_row[3] or 0) if u_row else 0
 
-    # Fetch user streak and last_daily before updating
-    cur.execute(f"SELECT streak, last_daily FROM users WHERE id = {PH}", (user["id"],))
-    u_row          = cur.fetchone()
-    current_streak = int(u_row[0] or 0) if u_row else 0
-    last_daily     = u_row[1] if u_row else None
+    # The user's day, not UTC's. This is the whole fix: in UTC, a Miami user
+    # practising at 6pm Monday and 9pm Tuesday local recorded Monday and
+    # Wednesday, skipped a UTC day, and had their streak reset to 1.
+    today_str     = local_today(tz_name)
+    yesterday_str = local_yesterday(tz_name)
     daily_already_done = (last_daily == today_str)
 
     # Award points (2× if it's the daily and not yet done today)
@@ -2614,22 +2888,37 @@ async def submit_recording(
     else:
         pts_earned  = base_pts
 
+    # Floor on completing the daily. calc_points() awards nothing below 70% on a
+    # repeat attempt, and 2 x 0 is 0 -- so the daily could be completed and pay
+    # literally nothing, which is the one thing a habit loop cannot do. Showing
+    # up is now always worth something; see DAILY_COMPLETION_FLOOR for the
+    # number and why it is that number.
+    daily_floor_applied = 0
+    if is_daily and not daily_already_done and pts_earned < DAILY_COMPLETION_FLOOR:
+        daily_floor_applied = DAILY_COMPLETION_FLOOR - pts_earned
+        pts_earned = DAILY_COMPLETION_FLOOR
+
     if pts_earned > 0:
         cur.execute(
             f"UPDATE users SET points = points + {PH} WHERE id = {PH}",
             (pts_earned, user["id"]),
         )
 
-    # Update streak if this completes today's daily for the first time
+    # Update streak if this completes today's daily for the first time.
+    # THE ONLY PLACE users.streak CHANGES.
     new_streak = current_streak
     if is_daily and not daily_already_done:
         if last_daily == yesterday_str:
             new_streak = current_streak + 1
         else:
+            # No daily yesterday: a fresh streak, whether this is their first
+            # ever or they missed a day.
             new_streak = 1
+        new_longest = max(longest_streak, new_streak)
         cur.execute(
-            f"UPDATE users SET streak = {PH}, last_daily = {PH} WHERE id = {PH}",
-            (new_streak, today_str, user["id"]),
+            f"UPDATE users SET streak = {PH}, longest_streak = {PH}, last_daily = {PH} "
+            f"WHERE id = {PH}",
+            (new_streak, new_longest, today_str, user["id"]),
         )
 
     # Fetch updated total points
@@ -2658,6 +2947,8 @@ async def submit_recording(
         duration_seconds=duration_seconds,
         take_number=take_number,
         db=cur,
+        user_id=user["id"],
+        local_day=today_str,
     )
     total_xp_earned = sum(m["xp_earned"] for m in missions_updated)
 
@@ -2687,7 +2978,12 @@ async def submit_recording(
         "is_daily":             is_daily,
         "daily_bonus":          daily_bonus,
         "daily_already_done":   daily_already_done,
+        # How much of pts_earned was the completion floor rather than scoring, so
+        # the reward sequence can say "you showed up" instead of implying the
+        # take itself earned it.
+        "daily_floor_applied":  daily_floor_applied,
         "streak":               new_streak,
+        "longest_streak":       max(longest_streak, new_streak),
         "is_new_pb":            is_new_pb,
         "prev_best":            prev_best,
         "missions_updated":     missions_updated,
@@ -2938,23 +3234,33 @@ async def get_missions(user: dict = Depends(current_user)):
     ]
     by_id = {m["mission_id"]: m for m in missions}
 
-    today_str = date.today().strftime("%Y-%m-%d")
+    # The streak comes from users, which is now the only place it lives. This
+    # used to read user_streak.current_streak -- the counter with no gap check --
+    # so the missions panel could show "5-day streak" while the reward sequence
+    # showed 1 for the same user on the same day. Both now render this number.
     cur.execute(
-        f"SELECT current_streak, longest_streak, last_active_date, total_xp, daily_xp, daily_xp_date "
-        f"FROM user_streak WHERE username = {PH}",
-        (user["username"],),
+        f"SELECT streak, longest_streak, last_daily, timezone FROM users WHERE id = {PH}",
+        (user["id"],),
+    )
+    urow = cur.fetchone()
+    streak = {
+        "current":          int(urow[0] or 0) if urow else 0,
+        "longest":          int(urow[1] or 0) if urow else 0,
+        "last_active_date": (urow[2] or "") if urow else "",
+        "total_xp":         0,
+    }
+    today_str = local_today(urow[3] if urow else None)
+
+    # XP still lives in user_streak, by user_id so a freed username carries none.
+    cur.execute(
+        f"SELECT total_xp, daily_xp, daily_xp_date FROM user_streak WHERE user_id = {PH}",
+        (user["id"],),
     )
     srow = cur.fetchone()
     if srow:
-        streak = {
-            "current":          int(srow[0] or 0),
-            "longest":          int(srow[1] or 0),
-            "last_active_date": srow[2] or "",
-            "total_xp":         int(srow[3] or 0),
-        }
-        today_xp = int(srow[4] or 0) if (srow[5] or "") == today_str else 0
+        streak["total_xp"] = int(srow[0] or 0)
+        today_xp = int(srow[1] or 0) if (srow[2] or "") == today_str else 0
     else:
-        streak   = {"current": 0, "longest": 0, "last_active_date": "", "total_xp": 0}
         today_xp = 0
 
     conn.commit()
@@ -2976,13 +3282,20 @@ async def get_profile(user: dict = Depends(current_user)):
     conn = get_conn()
     cur  = conn.cursor()
 
-    cur.execute(f"SELECT points, streak, last_daily, avatar_scene_id FROM users WHERE id = {PH}", (user["id"],))
+    cur.execute(
+        f"SELECT points, streak, last_daily, avatar_scene_id, timezone, longest_streak "
+        f"FROM users WHERE id = {PH}",
+        (user["id"],),
+    )
     row = cur.fetchone()
     total_points    = int(row[0]) if row and row[0] else 0
     streak          = int(row[1]) if row and row[1] else 0
     last_daily      = row[2] if row else None
     avatar_scene_id = row[3] if row else None
-    today_str       = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    longest_streak  = int(row[5]) if row and row[5] else 0
+    # The user's day. In UTC this said "daily not done" to a Miami user who had
+    # just done it at 9pm local, because 9pm EDT is already the next UTC day.
+    today_str       = local_today(row[4] if row else None)
     daily_done_today = (last_daily == today_str)
 
     # Per-scene stats: attempt count + best score
@@ -3015,6 +3328,7 @@ async def get_profile(user: dict = Depends(current_user)):
         "scene_stats":           scene_stats,
         "translations_unlocked": translations_unlocked,
         "streak":                streak,
+        "longest_streak":        longest_streak,
         "daily_done_today":      daily_done_today,
         "daily_scene_id":        get_daily_scene_id(),
         "avatar_scene_id":       avatar_scene_id,

@@ -581,11 +581,35 @@ async function verifyToken() {
     });
     if (!r.ok) throw new Error();
     authUser = await r.json();
+    reportTimezone(authUser.timezone);
     return true;
   } catch {
     clearAuth();
     return false;
   }
+}
+
+// Tells the server which calendar day is this user's, which is what the streak
+// is counted in. Sent only when it differs from what the server already has, so
+// the common case costs nothing.
+//
+// Deliberately not awaited and never surfaced: a user whose timezone fails to
+// store is treated as America/New_York, which is right for most of them and
+// never worse than the UTC boundary this replaces. Blocking the app's startup
+// on it, or showing an error for it, would both be out of proportion.
+function reportTimezone(storedTz) {
+  let tz = null;
+  try {
+    tz = Intl.DateTimeFormat().resolvedOptions().timeZone || null;
+  } catch (err) { return; }
+  if (!tz || tz === storedTz) return;
+  fetch(`${API}/api/profile/timezone`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${authToken}` },
+    body: JSON.stringify({ timezone: tz }),
+  }).then(function (r) {
+    if (r.ok && authUser) authUser.timezone = tz;
+  }).catch(function () {});
 }
 
 function showAuthScreen() {
@@ -2187,7 +2211,13 @@ const RewardSequence = {
       steps.push({
         icon: '⚡', label: 'Points earned',
         value: '+' + xp,
-        sub: 'You now have <strong>' + (data.total_points || 0).toLocaleString() + '</strong> points.',
+        // When the whole award was the daily completion floor, say that rather
+        // than implying the take earned it. The score below 70% earned nothing
+        // on its own; turning up is what paid, and claiming otherwise next to a
+        // low score reads as the app not having noticed.
+        sub: (data.daily_floor_applied && data.daily_floor_applied >= xp)
+          ? 'For completing today’s daily. Score 70% or better to earn more.'
+          : 'You now have <strong>' + (data.total_points || 0).toLocaleString() + '</strong> points.',
       });
     }
 

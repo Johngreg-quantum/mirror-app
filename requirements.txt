@@ -35,3 +35,9 @@ watchfiles==1.1.1
 websockets==16.0
 pg8000==1.31.2
 aiofiles==23.2.1
+# Ships the IANA tz database for zoneinfo. Streak days are the user's local
+# calendar day, so ZoneInfo("America/New_York") has to resolve on every machine
+# that runs this -- it falls back to the OS tz database, which Windows does not
+# have at all and a slim Linux image may omit. Pinning it here makes the day
+# boundary deterministic rather than dependent on the host.
+tzdata==2026.3
