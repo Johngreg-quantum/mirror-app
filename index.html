@@ -4693,7 +4693,7 @@
       <button class="ml-pill-btn ml-on" onclick="mlPill(this)">CREATE</button>
       <button class="ml-pill-btn" onclick="mlPill(this)">EXPLORE</button>
     </div>
-    <div class="ml-topright">LEARNERS IN<br>20+ COUNTRIES</div>
+    <div class="ml-topright">50+ LEARNERS<br>AND COUNTING</div>
   </div>
 
   <div id="mlCenter">
@@ -4974,7 +4974,7 @@
   <div class="mm-eyebrow ms-anim">The Mirror Method</div>
   <h2 class="mm-head ms-anim d1">See a take<br>come together</h2>
   <div class="mm-card ms-anim d3">
-    <p class="mm-card-body">Pick a scene. Hear the line. Speak it back. Our engine scores your delivery against the original performance &mdash; word by word, beat by beat &mdash; until it sounds like you own it.</p>
+    <p class="mm-card-body">Pick a scene. Hear the line. Speak it back. Our engine transcribes what you actually said and scores it against the script &mdash; word by word, matched, close or missed &mdash; until you can land the whole line clean.</p>
     <button class="mm-ghost" type="button" id="mmWatchBtn">Watch a scene &rarr;</button>
   </div>
 </section>
@@ -5110,10 +5110,13 @@
     <h2 class="mls-h">THE AI <em>NEVER LIES</em></h2>
     <div class="mls-score"><span id="mlsScoreNum">0</span></div>
     <div class="mls-scorelabel">SYNC SCORE</div>
+    <!-- The real breakdown, for the nine-word line in Beat 2. These are word
+         counts, not sub-scores: the engine reports which words it heard, so
+         8 matched + 1 close + 0 missed is what a 94 actually looks like. -->
     <div class="mls-subscores">
-      <div>PRONUNCIATION <b data-target="96">0</b></div>
-      <div>RHYTHM <b data-target="91">0</b></div>
-      <div>EMOTION <b data-target="88">0</b></div>
+      <div>MATCHED <b data-target="8">0</b></div>
+      <div>CLOSE <b data-target="1">0</b></div>
+      <div>MISSED <b data-target="0">0</b></div>
     </div>
   </div>
 
@@ -5203,7 +5206,7 @@
         <div class="mw-card-arrow" aria-hidden="true">&rarr;</div>
         <div class="mw-card-tag">FEEDBACK</div>
         <div class="mw-card-title">Live Scoring</div>
-        <p class="mw-card-desc">Word-by-word pronunciation and timing scores against the original take, the instant you finish.</p>
+        <p class="mw-card-desc">A sync score the instant you finish &mdash; plus every word of the line marked matched, close or missed against the script.</p>
       </div>
     </div>
     <div class="mw-card ms-anim d2">
@@ -5212,7 +5215,7 @@
         <div class="mw-card-arrow" aria-hidden="true">&rarr;</div>
         <div class="mw-card-tag">PROGRESS</div>
         <div class="mw-card-title">Ranks &amp; Leagues</div>
-        <p class="mw-card-desc">Climb from Bronze to Platinum as you master scenes. Compete on weekly leaderboards with other performers.</p>
+        <p class="mw-card-desc">Climb from Bronze to Director as you master scenes. Compete on weekly leaderboards with other performers.</p>
       </div>
     </div>
     <div class="mw-card ms-anim d3">
@@ -5220,8 +5223,8 @@
       <div class="mw-card-body">
         <div class="mw-card-arrow" aria-hidden="true">&rarr;</div>
         <div class="mw-card-tag">HABIT</div>
-        <div class="mw-card-title">Daily Challenge</div>
-        <p class="mw-card-desc">One fresh scene every day. Keep your streak alive and earn bonus XP for showing up on time.</p>
+        <div class="mw-card-title">The Daily Take</div>
+        <p class="mw-card-desc">Three short lines, one sitting. Finish all three to keep your streak alive &mdash; and finishing always pays, however the takes went.</p>
       </div>
     </div>
   </div>
@@ -5277,11 +5280,11 @@
   </div>
   <div class="actI-ticker act-anim" data-delay="400">
     <div class="actI-ticker-track">
-      <span class="actI-ticker-item">PRONUNCIATION</span><span class="actI-ticker-dot">•</span>
+      <span class="actI-ticker-item">WORD BREAKDOWN</span><span class="actI-ticker-dot">•</span>
       <span class="actI-ticker-item">SYNC SCORE</span><span class="actI-ticker-dot">•</span>
       <span class="actI-ticker-item">FLUENCY RANK</span><span class="actI-ticker-dot">•</span>
       <span class="actI-ticker-item">47+ SCENES</span><span class="actI-ticker-dot">•</span>
-      <span class="actI-ticker-item">PRONUNCIATION</span><span class="actI-ticker-dot">•</span>
+      <span class="actI-ticker-item">WORD BREAKDOWN</span><span class="actI-ticker-dot">•</span>
       <span class="actI-ticker-item">SYNC SCORE</span><span class="actI-ticker-dot">•</span>
       <span class="actI-ticker-item">FLUENCY RANK</span><span class="actI-ticker-dot">•</span>
       <span class="actI-ticker-item">47+ SCENES</span><span class="actI-ticker-dot">•</span>
@@ -5323,27 +5326,26 @@
   <div class="act-vlabel">ACT <em>III</em></div>
   <h2 class="actIV-head act-anim">THE AI <em>NEVER LIES.</em></h2>
   <div class="actIV-score act-anim" data-delay="100" id="actIVScore" data-target="94">94</div>
-  <div class="actIV-score-sub act-anim" data-delay="200">Mirror sync score · last take</div>
+  <div class="actIV-score-sub act-anim" data-delay="200">Mirror sync score · last take · 9 words</div>
+  <!-- What the result screen actually shows: the sync score above, and the
+       word breakdown. The three rows are word counts out of nine, so the bar
+       widths are shares of the line rather than scores out of 100. The old
+       fourth row repeated the sync score that is already the hero number. -->
   <div class="actIV-meters">
     <div class="actIV-meter-row act-anim" data-delay="300">
-      <span class="actIV-meter-label">Pronunciation</span>
-      <div class="actIV-meter-bar"><div class="actIV-meter-fill" style="width:96%"></div></div>
-      <span class="actIV-meter-val">96</span>
+      <span class="actIV-meter-label">Matched</span>
+      <div class="actIV-meter-bar"><div class="actIV-meter-fill" style="width:89%"></div></div>
+      <span class="actIV-meter-val">8</span>
     </div>
     <div class="actIV-meter-row act-anim" data-delay="400">
-      <span class="actIV-meter-label">Rhythm</span>
-      <div class="actIV-meter-bar"><div class="actIV-meter-fill" style="width:91%"></div></div>
-      <span class="actIV-meter-val">91</span>
+      <span class="actIV-meter-label">Close</span>
+      <div class="actIV-meter-bar"><div class="actIV-meter-fill" style="width:11%"></div></div>
+      <span class="actIV-meter-val">1</span>
     </div>
     <div class="actIV-meter-row act-anim" data-delay="500">
-      <span class="actIV-meter-label">Emotional Match</span>
-      <div class="actIV-meter-bar"><div class="actIV-meter-fill" style="width:88%"></div></div>
-      <span class="actIV-meter-val">88</span>
-    </div>
-    <div class="actIV-meter-row act-anim" data-delay="500">
-      <span class="actIV-meter-label">Sync Score</span>
-      <div class="actIV-meter-bar"><div class="actIV-meter-fill" style="width:94%"></div></div>
-      <span class="actIV-meter-val">94</span>
+      <span class="actIV-meter-label">Missed</span>
+      <div class="actIV-meter-bar"><div class="actIV-meter-fill" style="width:0%"></div></div>
+      <span class="actIV-meter-val">0</span>
     </div>
   </div>
 </section>
@@ -5396,13 +5398,13 @@
     <div>STARTS</div>
     <div><em>NOW.</em></div>
   </div>
-  <p class="actVII-sub act-anim" data-delay="200">Learners in 20+ countries are already speaking cinema. The next great performance is yours.</p>
+  <p class="actVII-sub act-anim" data-delay="200">50+ learners are already speaking cinema. The next great performance is yours.</p>
   <button class="actVII-cta act-anim" data-delay="300" id="actVIIStartBtn">START PRACTICING →</button>
   <div class="actVII-proof act-anim" data-delay="400">
     <div class="actVII-avatars">
       <span>🎭</span><span>🎬</span><span>🎞️</span><span>🎤</span><span>⭐</span>
     </div>
-    <div class="actVII-proof-text">50+ learners · 20+ countries</div>
+    <div class="actVII-proof-text">50+ learners · 47 scenes</div>
   </div>
 </section>
 
@@ -5536,7 +5538,7 @@
               <div class="what-card-num">ii.</div>
               <h3 class="what-card-title">Act it out</h3>
               <p class="what-card-body">
-                Speak the line in real time. Mirror listens, scores your pronunciation, rhythm, and emotion.
+                Speak the line in real time. Mirror hears every word, then scores what you said against the line itself.
               </p>
             </div>
             <div class="what-card">
@@ -5577,7 +5579,7 @@
       <div class="level-card-edt locked" onclick="openLevelPanel(2)">
         <div class="level-card-num">Act ii.</div>
         <h3 class="level-card-title">Intermediate</h3>
-        <p class="level-card-desc">Rhythm and emotion start to matter.</p>
+        <p class="level-card-desc">Longer lines, faster delivery.</p>
         <div class="level-card-meta" id="clvLock2Meta">
           <span id="clvLock2MetaText">20 Scenes · Score 60% to unlock</span>
         </div>
@@ -5585,7 +5587,7 @@
       <div class="level-card-edt locked" onclick="openLevelPanel(3)">
         <div class="level-card-num">Act iii.</div>
         <h3 class="level-card-title">Advanced</h3>
-        <p class="level-card-desc">Accent precision and raw delivery.</p>
+        <p class="level-card-desc">Full monologues, at speed.</p>
         <div class="level-card-meta" id="clvLock3Meta">
           <span id="clvLock3MetaText">7 Scenes · Score 70% to unlock</span>
         </div>
