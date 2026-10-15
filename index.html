@@ -3565,6 +3565,30 @@
       text-align: center;
       margin-bottom: 52px;
     }
+    /* The method, stated next to the measurement. Emotion is what the performer
+       does; the bars below only count words. Keeping both on this screen is the
+       point -- the claim is loud, and the honest limit is right under it. */
+    .actIV-method {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: clamp(1.5rem, 3.4vw, 2.4rem);
+      line-height: 1.1;
+      letter-spacing: 0.02em;
+      color: #f0ede6;
+      text-align: center;
+      max-width: 680px;
+      margin: 0 auto 10px;
+    }
+    .actIV-method em { font-style: normal; color: #c8a96e; }
+    .actIV-method-sub {
+      font-family: 'DM Sans', sans-serif;
+      font-weight: 300;
+      font-size: 13.5px;
+      line-height: 1.6;
+      color: rgba(240,237,230,0.4);
+      text-align: center;
+      max-width: 540px;
+      margin: 0 auto 44px;
+    }
     .actIV-meters {
       max-width: 680px;
       width: 100%;
@@ -4167,6 +4191,23 @@
       font-family: 'DM Sans', sans-serif;
       font-weight: 300; font-size: 14.5px; line-height: 1.7;
       color: rgba(240,237,230,0.45); margin: 0;
+    }
+    /* Sits below the why-row rather than inside it: .mp-whyrow is a
+       1fr / 1px / 1fr grid, so a third child would land in the divider column. */
+    .mp-founder {
+      max-width: 1080px;
+      margin: 40px auto 0;
+      padding-top: 28px;
+      border-top: 1px solid rgba(200,169,110,0.18);
+    }
+    .mp-founder .mp-block-body {
+      font-size: 15.5px;
+      color: rgba(240,237,230,0.6);
+    }
+    .mp-founder-sign {
+      font-family: 'Inter', sans-serif;
+      font-size: 11px; letter-spacing: 0.22em; text-transform: uppercase;
+      color: rgba(200,169,110,0.65); margin-top: 12px;
     }
 
     @media (max-width: 860px) {
@@ -5182,6 +5223,14 @@
       away speaking with the confidence of the screen, not the textbook.</p>
     </div>
   </div>
+
+  <div class="mp-founder ms-anim d3">
+    <div class="mp-block-label">Why Mirror exists</div>
+    <p class="mp-block-body">I learned English by repeating movie lines until I could
+    match how the actors felt them &mdash; not just what they said. Mirror is that
+    habit, turned into an app.</p>
+    <div class="mp-founder-sign">John Greg &middot; Founder</div>
+  </div>
 </section>
 
 <!-- ─── SECTION 4 — What you get ─── -->
@@ -5201,7 +5250,7 @@
       </div>
     </div>
     <div class="mw-card ms-anim d1">
-      <div class="mw-card-img"><picture><source srcset="/static/posters/whiplash.webp" type="image/webp"><img src="/static/posters/whiplash.jpg" alt="" loading="lazy" decoding="async"></picture></div>
+      <div class="mw-card-img"><img src="/static/live-scoring-result.webp" width="1200" height="750" alt="Mirror result screen showing a sync score and points earned" loading="lazy" decoding="async"></div>
       <div class="mw-card-body">
         <div class="mw-card-arrow" aria-hidden="true">&rarr;</div>
         <div class="mw-card-tag">FEEDBACK</div>
@@ -5210,7 +5259,7 @@
       </div>
     </div>
     <div class="mw-card ms-anim d2">
-      <div class="mw-card-img"><picture><source srcset="/static/posters/gladiator.webp" type="image/webp"><img src="/static/posters/gladiator.jpg" alt="" loading="lazy" decoding="async"></picture></div>
+      <div class="mw-card-img"><img src="/static/ranks-feed.webp" width="1200" height="750" alt="Mirror Ranks screen showing league and percentile" loading="lazy" decoding="async"></div>
       <div class="mw-card-body">
         <div class="mw-card-arrow" aria-hidden="true">&rarr;</div>
         <div class="mw-card-tag">PROGRESS</div>
@@ -5219,7 +5268,7 @@
       </div>
     </div>
     <div class="mw-card ms-anim d3">
-      <div class="mw-card-img"><picture><source srcset="/static/posters/top_gun.webp" type="image/webp"><img src="/static/posters/top_gun.jpg" alt="" loading="lazy" decoding="async"></picture></div>
+      <div class="mw-card-img"><img src="/static/daily-take.webp" width="1200" height="750" alt="Mirror Daily Take showing today&rsquo;s line, weak words and streak" loading="lazy" decoding="async"></div>
       <div class="mw-card-body">
         <div class="mw-card-arrow" aria-hidden="true">&rarr;</div>
         <div class="mw-card-tag">HABIT</div>
@@ -5327,6 +5376,8 @@
   <h2 class="actIV-head act-anim">THE AI <em>NEVER LIES.</em></h2>
   <div class="actIV-score act-anim" data-delay="100" id="actIVScore" data-target="94">94</div>
   <div class="actIV-score-sub act-anim" data-delay="200">Mirror sync score · last take · 9 words</div>
+  <p class="actIV-method act-anim" data-delay="200">Don&rsquo;t just say the line. <em>Match the emotion.</em></p>
+  <p class="actIV-method-sub act-anim" data-delay="300">We count the words. The feeling is the work.</p>
   <!-- What the result screen actually shows: the sync score above, and the
        word breakdown. The three rows are word counts out of nine, so the bar
        widths are shares of the line rather than scores out of 100. The old
@@ -5538,7 +5589,7 @@
               <div class="what-card-num">ii.</div>
               <h3 class="what-card-title">Act it out</h3>
               <p class="what-card-body">
-                Speak the line in real time. Mirror hears every word, then scores what you said against the line itself.
+                Perform it, don&rsquo;t recite it &mdash; carry the actor&rsquo;s feeling in your voice. Mirror checks every word against the original, so you know exactly which words landed.
               </p>
             </div>
             <div class="what-card">
