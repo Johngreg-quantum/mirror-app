@@ -1,4 +1,5 @@
 import os
+import base64
 import json
 import re
 import time
@@ -232,6 +233,38 @@ LS_LEVEL1_ID      = os.getenv("LEMONSQUEEZY_LEVEL1_VARIANT_ID", "")
 # It reads from the environment anyway, because it is the store's number to
 # own rather than this file's.
 LS_STORE_ID       = os.getenv("LEMONSQUEEZY_STORE_ID", "396208")
+
+# ─── Which payment provider is live ─────────────────────────────────────────
+#
+# Defaults to lemonsqueezy, so a deploy of this change alters nothing: the same
+# code paths run, the same requests go to the same host. Polar is selected by
+# setting BILLING_PROVIDER=polar, which is one env var and a restart.
+#
+# The Lemon Squeezy code is kept rather than deleted. The store was never
+# activated, so there is no live traffic to protect -- but there are also no
+# real Polar orders yet, and until there are, the ability to switch back by
+# unsetting one variable is worth more than the tidiness of a deletion.
+#
+# Everything below this line is provider-specific. Everything that matters --
+# entitlements, grants, revocations, the gate -- is not, and never learns which
+# provider paid for a row.
+BILLING_PROVIDER = os.getenv("BILLING_PROVIDER", "lemonsqueezy").strip().lower()
+
+# ─── Polar billing ──────────────────────────────────────────────────────────
+POLAR_ACCESS_TOKEN   = os.getenv("POLAR_ACCESS_TOKEN", "")
+POLAR_WEBHOOK_SECRET = os.getenv("POLAR_WEBHOOK_SECRET", "")
+# Sandbox is a separate deployment with separate data and separate tokens -- a
+# production token does not work against it and vice versa, so the server and
+# the token have to be set as a pair.
+POLAR_SERVER         = os.getenv("POLAR_SERVER", "production").strip().lower()
+POLAR_API_BASE       = ("https://sandbox-api.polar.sh"
+                        if POLAR_SERVER == "sandbox" else "https://api.polar.sh")
+# Used only for the fallback portal link (polar.sh/<slug>/portal) when we have
+# no customer id to mint a pre-authenticated session for.
+POLAR_ORG_SLUG       = os.getenv("POLAR_ORG_SLUG", "")
+POLAR_MONTHLY_ID     = os.getenv("POLAR_MONTHLY_PRODUCT_ID", "")
+POLAR_YEARLY_ID      = os.getenv("POLAR_YEARLY_PRODUCT_ID", "")
+POLAR_LEVEL1_ID      = os.getenv("POLAR_LEVEL1_PRODUCT_ID", "")
 
 
 def build_app_url(path: str) -> str:
@@ -858,6 +891,12 @@ _USERS_MIGRATION_COLUMNS = [
     # for them.
     ("ls_subscription_id",         "TEXT"),
     ("ls_customer_portal_url",     "TEXT"),
+    # Polar identifiers, same purpose. Note what is NOT here: a portal URL.
+    # Polar's customer sessions are short-lived and the docs say to mint a fresh
+    # link when the customer clicks, so storing one would hand out a dead link.
+    # The customer id is what we keep, and the link is made on demand from it.
+    ("polar_subscription_id",      "TEXT"),
+    ("polar_customer_id",          "TEXT"),
 ]
 
 
@@ -2121,14 +2160,24 @@ async def delete_account(req: DeleteAccountRequest, user: dict = Depends(current
     try:
         cur.execute(
             f"SELECT username, password_hash, is_pro, ls_subscription_id, "
-            f"ls_customer_portal_url FROM users WHERE id = {PH}",
+            f"ls_customer_portal_url, polar_subscription_id, polar_customer_id "
+            f"FROM users WHERE id = {PH}",
             (user["id"],),
         )
         row = cur.fetchone()
         if row is None:
             raise HTTPException(401, "Account no longer exists")
         db_username, password_hash, is_pro = row[0], row[1], row[2]
-        subscription_id, portal_url = row[3], row[4]
+        polar_customer_id = row[6]
+        # Whichever provider is live owns the id we are about to cancel with.
+        # Reading the other one would send a Polar uuid to Lemon Squeezy, or a
+        # numeric LS id to Polar, and the cancel would fail on an account we
+        # are about to erase -- the one failure this whole phase exists to
+        # prevent.
+        if BILLING_PROVIDER == "polar":
+            subscription_id, portal_url = row[5], None
+        else:
+            subscription_id, portal_url = row[3], row[4]
     finally:
         conn.close()
 
@@ -2151,9 +2200,13 @@ async def delete_account(req: DeleteAccountRequest, user: dict = Depends(current
         if not subscription_id:
             # Pre-dates the webhook storing the id, so we cannot cancel for
             # them. Hand over the self-service route rather than a dead end.
+            # Polar portal links are short-lived and have to be minted now --
+            # there is no stored URL to fall back on, by design.
+            if BILLING_PROVIDER == "polar":
+                portal_url = await _polar_portal_url(polar_customer_id)
             raise HTTPException(409, _subscription_blocked_message(portal_url))
         try:
-            await _cancel_ls_subscription(str(subscription_id))
+            await _cancel_subscription(str(subscription_id))
         except SubscriptionCancelError as exc:
             logger.error(
                 "[account] refusing to delete user_id=%s — cancel failed: %s",
@@ -2446,30 +2499,80 @@ _LOCKED_DETAIL = (
 # (kind, ref). It lives beside the ids so adding Level 2 stays one env var
 # plus one row -- the webhook maps a purchased variant to a grant through
 # this table and nowhere else.
+# What a plan IS, independent of who sells it. The key is ours and never
+# changes; the provider's identifier for the same thing is config. This split is
+# the whole abstraction: a Lemon Squeezy variant id and a Polar product UUID are
+# both just "the id the provider knows monthly by".
+_PLAN_ROWS = (
+    ("monthly", "Monthly",        ("pro",   "")),
+    ("yearly",  "Yearly",         ("pro",   "")),
+    ("level1",  "Mirror Level 1", ("level", "1")),
+)
+
+
+def _provider_product_ids() -> dict:
+    """plan key -> the current provider's id for it."""
+    if BILLING_PROVIDER == "polar":
+        return {"monthly": POLAR_MONTHLY_ID,
+                "yearly":  POLAR_YEARLY_ID,
+                "level1":  POLAR_LEVEL1_ID}
+    return {"monthly": LS_MONTHLY_ID,
+            "yearly":  LS_YEARLY_ID,
+            "level1":  LS_LEVEL1_ID}
+
+
 def _configured_plans() -> list:
-    rows = (
-        ("monthly", LS_MONTHLY_ID, "Monthly",        ("pro",   "")),
-        ("yearly",  LS_YEARLY_ID,  "Yearly",         ("pro",   "")),
-        ("level1",  LS_LEVEL1_ID,  "Mirror Level 1", ("level", "1")),
-    )
+    ids = _provider_product_ids()
     return [
-        {"key": k, "variant_id": str(v), "label": lb, "grants": g}
-        for k, v, lb, g in rows if v
+        {
+            "key":        k,
+            "product_id": str(ids[k]),
+            # Kept under the old name too, so a browser running yesterday's
+            # bundle still finds the field it reads.
+            "variant_id": str(ids[k]),
+            "label":      lb,
+            "grants":     g,
+        }
+        for k, lb, g in _PLAN_ROWS if ids.get(k)
     ]
 
 
-def _grant_for_variant(variant_id: str):
-    """(kind, ref) for a purchased variant, or None if it is not ours."""
+def _grant_for_variant(product_id: str):
+    """(kind, ref) for a purchased product/variant, or None if it is not ours."""
     for p in _configured_plans():
-        if p["variant_id"] == str(variant_id):
+        if p["product_id"] == str(product_id):
             return p["grants"]
+    return None
+
+
+def _plan_by_key(plan_key: str):
+    for p in _configured_plans():
+        if p["key"] == str(plan_key):
+            return p
+    return None
+
+
+def _resolve_plan(plan_key=None, variant_id=None):
+    """The plan a checkout request names, by key or by provider id.
+
+    `plan_key` is the contract going forward: the client should not have to know
+    a provider's identifiers, and when the provider changes every stored id
+    changes with it. `variant_id` stays accepted because a cached bundle still
+    sends it, and a checkout that 400s on a returning visitor is a worse failure
+    than carrying one alias."""
+    if plan_key:
+        return _plan_by_key(plan_key)
+    if variant_id:
+        for p in _configured_plans():
+            if p["product_id"] == str(variant_id):
+                return p
     return None
 
 
 def _allowed_variant_ids() -> set:
     """The checkout allowlist, derived from the same registry the catalogue
     serves. One source, so a new plan is an env var and nothing else."""
-    return {p["variant_id"] for p in _configured_plans()}
+    return {p["product_id"] for p in _configured_plans()}
 
 
 # Prices belong to the store, not to this codebase, so they are read from the
@@ -2534,6 +2637,84 @@ async def _ls_variant_prices() -> dict:
     return _LS_PRICE_CACHE["variants"]
 
 
+_POLAR_PRICE_CACHE = {"at": 0.0, "variants": {}}
+
+
+def _polar_headers() -> dict:
+    return {"Authorization": f"Bearer {POLAR_ACCESS_TOKEN}",
+            "Content-Type": "application/json"}
+
+
+async def _polar_product_prices() -> dict:
+    """product_id -> price attributes, in the same shape the Lemon Squeezy
+    fetcher returns, so /api/billing/plans does not care which one ran.
+
+    Same contract as its sibling: never raises, 600s cache, and a failure
+    degrades to the last good copy -- or to no price at all, which the client
+    renders as a dash while the buy button keeps working. Prices belong to the
+    store rather than to this codebase either way."""
+    now = time.time()
+    if _POLAR_PRICE_CACHE["variants"] and now - _POLAR_PRICE_CACHE["at"] < _LS_PRICE_TTL:
+        return _POLAR_PRICE_CACHE["variants"]
+    if not POLAR_ACCESS_TOKEN:
+        return _POLAR_PRICE_CACHE["variants"]
+
+    try:
+        async with httpx.AsyncClient() as client:
+            resp = await client.get(
+                # Trailing slash is required: Polar 307s the bare path, and
+                # httpx does not follow redirects by default, so without it
+                # every price fetch silently returned the empty cache.
+                f"{POLAR_API_BASE}/v1/products/",
+                params={"is_archived": "false", "limit": 100},
+                headers=_polar_headers(),
+                timeout=10,
+            )
+        if resp.status_code != 200:
+            logger.warning("[billing] polar product fetch got HTTP %s", resp.status_code)
+            return _POLAR_PRICE_CACHE["variants"]
+        body = resp.json()
+    except Exception as exc:
+        logger.warning("[billing] polar product fetch failed: %s", exc)
+        return _POLAR_PRICE_CACHE["variants"]
+
+    out = {}
+    for item in body.get("items", []):
+        pid = str(item.get("id") or "")
+        if not pid:
+            continue
+        # First live price. Polar allows several per product; we sell one, and
+        # picking the first non-archived one is the honest reading of "the
+        # price of this product" without inventing a selection rule.
+        price = next((p for p in (item.get("prices") or [])
+                      if not p.get("is_archived")), None)
+        if price is None:
+            continue
+        out[pid] = {
+            "name":            item.get("name"),
+            "price_cents":     price.get("price_amount"),
+            "interval":        item.get("recurring_interval"),
+            "interval_count":  item.get("recurring_interval_count") or 1,
+            # recurring_interval is null on a one-time product, which is what
+            # distinguishes the $1 Level 1 purchase from the subscriptions.
+            "is_subscription": bool(item.get("is_recurring")),
+            "status":          "archived" if item.get("is_archived") else "published",
+            "test_mode":       POLAR_SERVER == "sandbox",
+        }
+
+    if out:
+        _POLAR_PRICE_CACHE["variants"] = out
+        _POLAR_PRICE_CACHE["at"] = now
+    return _POLAR_PRICE_CACHE["variants"]
+
+
+async def _plan_prices() -> dict:
+    """Prices from whichever provider is live, keyed by that provider's id."""
+    if BILLING_PROVIDER == "polar":
+        return await _polar_product_prices()
+    return await _ls_variant_prices()
+
+
 @app.get("/api/billing/plans")
 async def billing_plans():
     """Plans the client may offer, with prices from the store.
@@ -2544,12 +2725,15 @@ async def billing_plans():
     false the ids are still correct, so the button must stay usable and only
     the amount degrades -- showing a stale hardcoded price is the failure this
     endpoint exists to prevent."""
-    prices = await _ls_variant_prices()
+    prices = await _plan_prices()
     out = []
     for p in _configured_plans():
-        info = prices.get(p["variant_id"], {})
+        info = prices.get(p["product_id"], {})
         out.append({
             "key":             p["key"],
+            # What the client should send back. `variant_id` is the same value
+            # under the name an older bundle looks for.
+            "plan_key":        p["key"],
             "variant_id":      p["variant_id"],
             "label":           p["label"],
             "price_cents":     info.get("price_cents"),
@@ -2570,14 +2754,19 @@ async def create_checkout(request: Request, user: dict = Depends(current_user)):
     except Exception:
         body = {}
 
-    variant_id = body.get("variant_id")
-    if not variant_id:
-        raise HTTPException(status_code=400, detail="variant_id required")
+    # plan_key is the contract; variant_id is the alias an older bundle sends.
+    plan = _resolve_plan(body.get("plan_key"), body.get("variant_id"))
+    if not plan:
+        if not body.get("plan_key") and not body.get("variant_id"):
+            raise HTTPException(status_code=400, detail="plan_key required")
+        # Only configured plans, derived from the same registry
+        # /api/billing/plans serves, so the two can never disagree.
+        raise HTTPException(status_code=400, detail="Invalid plan")
 
-    # Only allow configured variants. Derived from the same registry
-    # /api/billing/plans serves, so the two can never disagree.
-    if str(variant_id) not in _allowed_variant_ids():
-        raise HTTPException(status_code=400, detail="Invalid variant")
+    if BILLING_PROVIDER == "polar":
+        return await _polar_create_checkout(plan, user)
+
+    variant_id = plan["product_id"]
 
     if not LS_API_KEY:
         raise HTTPException(status_code=500, detail="Payment not configured")
@@ -2628,6 +2817,103 @@ async def create_checkout(request: Request, user: dict = Depends(current_user)):
     return {"checkout_url": checkout_url}
 
 
+def _polar_checkout_payload(plan: dict, user: dict) -> dict:
+    """The body sent to Polar to open a checkout.
+
+    Split out from the request so a test can assert on the exact dict that
+    ships, rather than on a copy of it that can drift. What the checkout
+    carries is the whole attribution story -- get it wrong and a paid order
+    arrives with nobody to grant it to."""
+    payload = {
+        "products": [plan["product_id"]],
+        "external_customer_id": str(user["id"]),
+        "customer_email": user.get("email") or None,
+        "success_url": f"{CANONICAL_BASE_URL}/?checkout=success",
+        "metadata": {
+            "user_id":  str(user["id"]),
+            "username": str(user["username"]),
+            "plan_key": plan["key"],
+        },
+    }
+    # Polar rejects an explicit null for customer_email rather than ignoring it.
+    return {k: v for k, v in payload.items() if v is not None}
+
+
+async def _polar_create_checkout(plan: dict, user: dict) -> dict:
+    """Create a Polar checkout session and return {checkout_url}.
+
+    The user id travels twice on purpose:
+
+      metadata.user_id       rides along to the order and subscription events,
+                             which is how the webhook knows whose entitlement
+                             to grant. This is the Polar equivalent of Lemon
+                             Squeezy's meta.custom_data.
+      external_customer_id   ties Polar's customer record to our user row, so a
+                             later lookup does not depend on an email match.
+
+    Both are cheap, and losing either one would mean a paid order we cannot
+    attribute -- the failure that the LS integration shipped with before the
+    order_created branch existed."""
+    if not POLAR_ACCESS_TOKEN:
+        raise HTTPException(status_code=500, detail="Payment not configured")
+
+    payload = _polar_checkout_payload(plan, user)
+
+    try:
+        async with httpx.AsyncClient() as client:
+            resp = await client.post(
+                f"{POLAR_API_BASE}/v1/checkouts/",
+                headers=_polar_headers(),
+                json=payload,
+                timeout=15,
+            )
+    except Exception as exc:
+        logger.warning("[billing] polar checkout unreachable: %s", exc)
+        raise HTTPException(status_code=502, detail="Checkout creation failed")
+
+    if resp.status_code not in (200, 201):
+        logger.warning(
+            "[billing] polar checkout failed HTTP %s: %s",
+            resp.status_code, resp.text[:300],
+        )
+        raise HTTPException(status_code=502, detail="Checkout creation failed")
+
+    url = (resp.json() or {}).get("url")
+    if not url:
+        raise HTTPException(status_code=502, detail="Checkout creation failed")
+    return {"checkout_url": url}
+
+
+async def _polar_portal_url(customer_id: Optional[str]) -> Optional[str]:
+    """A link the customer can actually use, minted now.
+
+    Polar customer sessions are short-lived, so unlike the Lemon Squeezy portal
+    URL this cannot be stored at webhook time and handed out later -- it has to
+    be created at the moment someone needs it. Falls back to the organisation's
+    public portal, where the customer authenticates by email code, and to None
+    when we have neither."""
+    if customer_id and POLAR_ACCESS_TOKEN:
+        try:
+            async with httpx.AsyncClient() as client:
+                resp = await client.post(
+                    f"{POLAR_API_BASE}/v1/customer-sessions/",
+                    headers=_polar_headers(),
+                    json={"customer_id": str(customer_id),
+                          "return_url": f"{CANONICAL_BASE_URL}/"},
+                    timeout=10,
+                )
+            if resp.status_code in (200, 201):
+                url = (resp.json() or {}).get("customer_portal_url")
+                if url:
+                    return url
+            logger.warning("[billing] polar customer session HTTP %s", resp.status_code)
+        except Exception as exc:
+            logger.warning("[billing] polar customer session failed: %s", exc)
+    if POLAR_ORG_SLUG:
+        return f"https://polar.sh/{POLAR_ORG_SLUG}/portal"
+    return None
+
+
 def _subscription_blocked_message(portal_url: Optional[str]) -> str:
     """Message for a subscriber whose subscription we cannot cancel ourselves.
 
@@ -2645,8 +2931,8 @@ def _subscription_blocked_message(portal_url: Optional[str]) -> str:
         )
     return (
         "You have an active MIRROR Pro subscription, and we could not cancel it "
-        "automatically. Use the subscription management link in your Lemon "
-        "Squeezy receipt email to cancel it first, then delete your account — "
+        "automatically. Use the subscription management link in your receipt "
+        "email to cancel it first, then delete your account — "
         "or email contact@mirrorspeak.app and we will do it for you. "
         "Your account has not been deleted."
     )
@@ -2704,8 +2990,112 @@ async def _cancel_ls_subscription(subscription_id: str) -> None:
         )
 
 
+async def _cancel_polar_subscription(subscription_id: str) -> None:
+    """Revoke a Polar subscription, or raise SubscriptionCancelError.
+
+    DELETE /v1/subscriptions/{id} is Polar's *revoke*: it cancels immediately
+    rather than at period end. That differs from the Lemon Squeezy path above,
+    and for account deletion it is the better of the two -- the account is being
+    erased, so there is nothing left for a remaining paid period to be worth.
+
+    403 and 404 both count as success: already revoked, or not there at all.
+    Either way nothing can bill a deleted account, which is the only thing this
+    call has to guarantee. 409 means Polar has a pending update on the
+    subscription and genuinely does not know its state, so that one aborts."""
+    if not POLAR_ACCESS_TOKEN:
+        raise SubscriptionCancelError("Polar access token is not configured")
+
+    try:
+        async with httpx.AsyncClient() as client:
+            resp = await client.delete(
+                f"{POLAR_API_BASE}/v1/subscriptions/{subscription_id}",
+                headers=_polar_headers(),
+                timeout=15,
+            )
+    except Exception as exc:
+        raise SubscriptionCancelError(f"could not reach Polar: {exc}") from exc
+
+    if resp.status_code in (403, 404):
+        logger.info(
+            "[billing] polar subscription %s already revoked or absent (HTTP %s)",
+            subscription_id, resp.status_code,
+        )
+        return
+
+    if resp.status_code not in (200, 201, 202, 204):
+        raise SubscriptionCancelError(f"Polar returned {resp.status_code}")
+
+
+async def _cancel_subscription(subscription_id: str) -> None:
+    """Cancel through whichever provider sold the subscription."""
+    if BILLING_PROVIDER == "polar":
+        await _cancel_polar_subscription(subscription_id)
+    else:
+        await _cancel_ls_subscription(subscription_id)
+
+
+# ─── Webhooks ────────────────────────────────────────────────────────────────
+
+def _verify_polar_signature(headers, raw_body: bytes) -> bool:
+    """Standard Webhooks verification.
+
+    Polar signs with Standard Webhooks for every secret generated on or after
+    8 September 2026, which is every secret anyone can create now. The older
+    Polar-specific HMAC scheme is deliberately not implemented: supporting it
+    would mean carrying a second code path for secrets that can no longer be
+    issued, and getting it silently wrong is worse than refusing.
+
+    The signed content is `{webhook-id}.{webhook-timestamp}.{body}`, the secret
+    is base64 after its `whsec_` prefix, and the signature header is a
+    space-delimited list so a rotation can present two valid signatures at once.
+    """
+    secret = POLAR_WEBHOOK_SECRET
+    msg_id = headers.get("webhook-id", "")
+    timestamp = headers.get("webhook-timestamp", "")
+    sig_header = headers.get("webhook-signature", "")
+    if not (secret and msg_id and timestamp and sig_header):
+        return False
+
+    # Reject replays of an old capture. Five minutes is the usual tolerance.
+    try:
+        age = abs(time.time() - int(timestamp))
+    except (TypeError, ValueError):
+        return False
+    if age > 300:
+        logger.warning("[billing] polar webhook timestamp out of tolerance (%ss)", int(age))
+        return False
+
+    raw_secret = secret[len("whsec_"):] if secret.startswith("whsec_") else secret
+    try:
+        key = base64.b64decode(raw_secret)
+    except Exception:
+        logger.error("[billing] POLAR_WEBHOOK_SECRET is not valid base64")
+        return False
+
+    signed = msg_id.encode("utf-8") + b"." + timestamp.encode("utf-8") + b"." + raw_body
+    expected = base64.b64encode(hmac.new(key, signed, hashlib.sha256).digest()).decode()
+
+    for part in sig_header.split():
+        version, _, value = part.partition(",")
+        # Only the symmetric scheme; v1a is ed25519 and we do not issue those.
+        if version == "v1" and hmac.compare_digest(value, expected):
+            return True
+    return False
+
+
 @app.post("/api/billing/webhook")
-async def lemonsqueezy_webhook(request: Request):
+async def billing_webhook(request: Request):
+    """One endpoint, whichever provider is live.
+
+    The URL does not change when the provider does, so the webhook registered
+    in either dashboard keeps pointing at the right place and going live stays
+    an env change."""
+    if BILLING_PROVIDER == "polar":
+        return await _polar_webhook(request)
+    return await _lemonsqueezy_webhook(request)
+
+
+async def _lemonsqueezy_webhook(request: Request):
     """Receive Lemon Squeezy webhook events and update user pro status."""
     raw_body = await request.body()
     signature = request.headers.get("X-Signature", "")
@@ -2788,6 +3178,24 @@ async def lemonsqueezy_webhook(request: Request):
             if not order_id:
                 return {"ok": True}
             n = revoke_entitlements_by_source(cur, "order", order_id, "refund")
+            # A subscription's pro row is sourced to the SUBSCRIPTION, so
+            # revoking by order id alone matched nothing and a refunded
+            # subscriber kept full access -- the gate reads entitlements, and
+            # nothing had revoked one. Clearing is_pro alongside stops
+            # /api/auth/me reporting a subscription that no longer buys
+            # anything.
+            try:
+                sub_id = str(
+                    payload["data"]["attributes"].get("subscription_id") or ""
+                ) or None
+            except (KeyError, TypeError):
+                sub_id = None
+            if sub_id:
+                n += revoke_entitlements_by_source(cur, "subscription", sub_id, "refund")
+                cur.execute(
+                    f"UPDATE users SET is_pro = {PH} WHERE id = {PH}",
+                    (False, user_id),
+                )
             conn.commit()
             # A refund for an order we never granted is a no-op, not an
             # error: a 5xx here would make Lemon Squeezy retry forever.
@@ -2882,6 +3290,221 @@ async def lemonsqueezy_webhook(request: Request):
         # Squeezy never retried and a paid order could be silently never
         # granted. Harmless while nothing was gated; not harmless now.
         logger.exception("[billing] webhook %s failed for user_id=%s", event, user_id)
+        conn.close()
+        raise HTTPException(status_code=500, detail="Webhook processing failed")
+    finally:
+        try:
+            conn.close()
+        except Exception:
+            pass
+
+    return {"ok": True}
+
+
+def _polar_user_id(data: dict) -> int:
+    """The user this event belongs to, from the metadata we set at checkout.
+
+    Checked in order: the object's own metadata, then the subscription or
+    checkout it came from. Polar copies checkout metadata onto the order and
+    the subscription, but an event for an object created another way (a
+    dashboard refund, say) can carry it one level down instead.
+
+    external_customer_id is the last resort rather than the first: it is the
+    same number, but metadata is what we explicitly set for this purpose, and
+    preferring it keeps one answer rather than two that could disagree."""
+    for holder in (data,
+                   data.get("subscription") or {},
+                   data.get("checkout") or {}):
+        if not isinstance(holder, dict):
+            continue
+        meta = holder.get("metadata") or {}
+        raw = meta.get("user_id")
+        if raw:
+            try:
+                return int(raw)
+            except (TypeError, ValueError):
+                pass
+    customer = data.get("customer") or {}
+    raw = (data.get("external_customer_id")
+           or (customer.get("external_id") if isinstance(customer, dict) else None))
+    try:
+        return int(raw) if raw else 0
+    except (TypeError, ValueError):
+        return 0
+
+
+def _polar_product_id(data: dict) -> str:
+    """The product a paid order was for."""
+    pid = data.get("product_id")
+    if pid:
+        return str(pid)
+    product = data.get("product") or {}
+    if isinstance(product, dict) and product.get("id"):
+        return str(product["id"])
+    for item in (data.get("items") or []):
+        if isinstance(item, dict):
+            ipid = item.get("product_id") or ((item.get("product") or {}).get("id"))
+            if ipid:
+                return str(ipid)
+    return ""
+
+
+async def _polar_webhook(request: Request):
+    """Receive Polar webhook events and update entitlements.
+
+    Grants and revocations go through exactly the same helpers the Lemon
+    Squeezy handler uses, with the same source_type values, so an entitlement
+    row is indistinguishable afterwards -- which is what lets the gate stay
+    provider-agnostic.
+    """
+    raw_body = await request.body()
+
+    # Fail closed, same as the Lemon Squeezy path: with no secret we cannot
+    # verify anything, and an unsigned request that reached this far could
+    # grant anyone Pro. 503 disables only this endpoint.
+    if not POLAR_WEBHOOK_SECRET:
+        logger.error(
+            "SECURITY: /api/billing/webhook received a Polar request but "
+            "POLAR_WEBHOOK_SECRET is not set — rejecting."
+        )
+        raise HTTPException(status_code=503, detail="Webhook verification unavailable")
+
+    if not _verify_polar_signature(request.headers, raw_body):
+        raise HTTPException(status_code=401, detail="Invalid signature")
+
+    try:
+        payload = json.loads(raw_body)
+    except Exception:
+        raise HTTPException(status_code=400, detail="Invalid JSON")
+
+    event = str(payload.get("type") or "")
+    data = payload.get("data") or {}
+    user_id = _polar_user_id(data)
+
+    if not user_id:
+        # Nothing to attribute it to. 200 so Polar stops retrying -- a retry
+        # would not make the metadata appear.
+        logger.warning("[billing] polar %s had no attributable user_id", event)
+        return {"ok": True}
+
+    conn = get_conn()
+    cur = conn.cursor()
+    try:
+        if event == "order.paid":
+            # order.paid rather than order.created: created fires before the
+            # money moves, and granting on it would hand out an entitlement for
+            # a payment that can still fail.
+            product_id = _polar_product_id(data)
+            order_id = str(data.get("id") or "") or None
+            grant = _grant_for_variant(product_id) if product_id else None
+            sub_id = str(data.get("subscription_id") or "") or None
+
+            if not grant or not order_id:
+                logger.warning(
+                    "[billing] polar order.paid ignored: product=%r order=%r",
+                    product_id, order_id,
+                )
+                return {"ok": True}
+
+            kind, ref = grant
+            if kind == "pro" and sub_id:
+                # A subscription's renewal order. Source it to the
+                # SUBSCRIPTION, not the order, so the row matches what
+                # subscription.revoked will later expire -- and so a refund of
+                # this order can find it (see order.refunded below).
+                grant_entitlement(cur, user_id, "pro", "", "subscription", sub_id)
+            else:
+                grant_entitlement(cur, user_id, kind, ref, "order", order_id)
+            conn.commit()
+            logger.info(
+                "[billing] polar granted %s:%s to user_id=%s from order %s",
+                kind, ref, user_id, order_id,
+            )
+
+        elif event == "order.refunded":
+            # Revoke by source, never by user: a refunded $1 level purchase
+            # must not take away a subscription the same user also holds.
+            order_id = str(data.get("id") or "") or None
+            sub_id = str(data.get("subscription_id") or "") or None
+            n = 0
+            if order_id:
+                n = revoke_entitlements_by_source(cur, "order", order_id, "refund")
+            if sub_id:
+                # The gap this closes: a subscription's pro row is sourced to
+                # the subscription, so revoking by order id alone matched
+                # nothing and a refunded subscriber kept full access. Clearing
+                # is_pro alongside keeps /api/auth/me from claiming a
+                # subscription the gate has already stopped honouring.
+                n += revoke_entitlements_by_source(cur, "subscription", sub_id, "refund")
+                cur.execute(
+                    f"UPDATE users SET is_pro = {PH} WHERE id = {PH}",
+                    (False, user_id),
+                )
+            conn.commit()
+            logger.info(
+                "[billing] polar order.refunded order=%s subscription=%s revoked %s row(s)",
+                order_id, sub_id, n,
+            )
+
+        elif event in ("subscription.active", "subscription.uncanceled"):
+            sub_id = str(data.get("id") or "") or None
+            customer_id = str(data.get("customer_id") or "") or None
+            cur.execute(
+                f"UPDATE users SET is_pro = {PH}, "
+                f"polar_subscription_id = COALESCE({PH}, polar_subscription_id), "
+                f"polar_customer_id = COALESCE({PH}, polar_customer_id) "
+                f"WHERE id = {PH}",
+                (True, sub_id, customer_id, user_id),
+            )
+            # Re-granting clears any expires_at a previous cancellation set,
+            # which is exactly what uncanceled has to do.
+            grant_entitlement(cur, user_id, "pro", "", "subscription", sub_id)
+            conn.commit()
+            logger.info(
+                "[billing] polar %s user_id=%s subscription=%s", event, user_id, sub_id,
+            )
+
+        elif event == "subscription.canceled":
+            # An INTENTION to end, not the end. The subscription stays active
+            # with cancel_at_period_end set, and the user keeps what they paid
+            # for. Revoking here would cut off someone mid-period who is still
+            # paid up; subscription.revoked is the event that ends access.
+            ends_at = (data.get("ends_at") or data.get("current_period_end")
+                       or data.get("cancel_at") or None)
+            if ends_at:
+                expire_entitlement(cur, user_id, "pro", "", ends_at)
+                conn.commit()
+            logger.info(
+                "[billing] polar subscription.canceled user_id=%s ends_at=%s "
+                "-- access continues until then",
+                user_id, ends_at,
+            )
+
+        elif event == "subscription.revoked":
+            # The real end: billing stops and benefits are revoked.
+            cur.execute(
+                f"UPDATE users SET is_pro = {PH}, polar_subscription_id = NULL "
+                f"WHERE id = {PH}",
+                (False, user_id),
+            )
+            # Expire rather than delete: the row is the record that they once
+            # held this, and a lapse is a different fact from a refund.
+            expire_entitlement(cur, user_id, "pro", "", _now_iso())
+            conn.commit()
+            logger.info("[billing] polar subscription.revoked user_id=%s", user_id)
+
+        elif event == "subscription.past_due":
+            # Deliberately does not revoke. Polar runs its own retries, and
+            # pulling access on one failed charge punishes an expired card.
+            # If it never recovers, subscription.revoked fires and is handled.
+            logger.warning(
+                "[billing] polar subscription.past_due user_id=%s -- not revoking",
+                user_id,
+            )
+
+    except Exception:
+        conn.rollback()
+        logger.exception("[billing] polar webhook %s failed for user_id=%s", event, user_id)
         conn.close()
         raise HTTPException(status_code=500, detail="Webhook processing failed")
     finally:

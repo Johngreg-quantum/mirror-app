@@ -68,6 +68,25 @@ export function createAppLayout({ routes, sessionActions = {} }) {
       }),
       sessionSlot,
       nav,
+      // The only route to a purchase from this shell.
+      //
+      // Everything buyable lives on the legacy landing page: this shell has no
+      // pricing card, no checkout call, and no billing code of any kind. Anyone
+      // who arrives on a shared /challenge/:id or /scene/:id link and signs in
+      // here therefore had no way to pay at all. That costs nothing while
+      // ENFORCE_ENTITLEMENTS is off and becomes a dead end the hour it goes on.
+      //
+      // A plain absolute href on purpose -- createAppHref() would prefix /app
+      // and point at a page that does not exist. One link, no billing code
+      // duplicated into a second frontend.
+      h('a', {
+        className: 'ns-shell__upgrade',
+        href: '/#pricingSection',
+        attrs: { title: 'See plans on the Mirror home page' },
+      }, [
+        h('span', { text: 'Upgrade' }),
+        h('small', { text: 'plans & pricing' }),
+      ]),
     ]),
     h('div', { className: 'ns-shell__main' }, [
       h('header', { className: 'ns-shell__topbar' }, [

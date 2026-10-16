@@ -347,9 +347,11 @@ def main():
                   for sid in daily_ids),
               "daily=%s free=%s" % (daily_ids, [s in free for s in daily_ids]))
 
-        # A paid scene that is not today's daily, so the hole cannot be the
-        # reason it passes or fails.
-        target = next((s for s in paid_lvl1 if s != daily), None)
+        # A paid scene that is not ANY of today's daily lines, so the hole
+        # cannot be the reason it passes or fails. Excluding only the first line
+        # left two scenes the daily hole legitimately opens, which made this
+        # section pass or fail depending on the date.
+        target = next((s for s in paid_lvl1 if s not in daily_ids), None)
         if target:
             check("a paid scene is refused with no challenge",
                   app.can_play_scene(cur, hole_user, target) is False, target)
@@ -367,7 +369,7 @@ def main():
             # request's scene_id alongside any valid challenge id would open all
             # 47 scenes to anyone who has ever been sent a single link.
             other = next((s for s in (lvl2 or paid_lvl1)
-                          if s not in (target, daily) and s not in free), None)
+                          if s != target and s not in daily_ids and s not in free), None)
             if other:
                 check("A CHALLENGE DOES NOT OPEN ANY OTHER SCENE",
                       app.can_play_scene(cur, hole_user, other, "a" * 16) is False, other)

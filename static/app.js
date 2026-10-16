@@ -708,8 +708,12 @@ async function enterAuthenticatedApp(options = {}) {
 
   if (window._pendingProCheckout && !window.mirrorIsPro) {
     window._pendingProCheckout = null;
+    // Which button, so a Level 1 purchase interrupted by the signup modal
+    // resumes as a Level 1 purchase rather than silently becoming a Pro one.
+    const pendingBtnId = window._pendingCheckoutBtnId || 'pricingProBtn';
+    window._pendingCheckoutBtnId = null;
     setTimeout(function() {
-      const btn = document.getElementById('pricingProBtn');
+      const btn = document.getElementById(pendingBtnId);
       if (btn) btn.click();
     }, 800);
   }
@@ -885,6 +889,23 @@ const BillingPlans = {
       b.disabled = none;
       b.title = none ? 'Pricing is unavailable right now' : '';
     });
+
+    // Level 1 is shown only when the server actually has that plan configured.
+    // An environment without POLAR_LEVEL1_PRODUCT_ID (or its Lemon Squeezy
+    // equivalent) serves no level1 plan, and a visible button there would open
+    // a checkout that 400s.
+    const lvl1 = loading ? null : this.get('level1');
+    const lvl1Wrap = document.getElementById('pricingLevel1Wrap');
+    if (lvl1Wrap) lvl1Wrap.hidden = !lvl1;
+    const lvl1Btn = document.getElementById('pricingLevel1Btn');
+    if (lvl1Btn && lvl1) {
+      // The amount comes from the provider like every other price, so a $1
+      // product repriced in the dashboard does not leave a stale "$1" here.
+      const amount = this.money(lvl1.price_cents);
+      lvl1Btn.textContent = amount
+        ? ('Buy Level 1 · ' + amount)
+        : 'Buy Level 1';
+    }
   },
 };
 window.BillingPlans = BillingPlans;
@@ -919,33 +940,40 @@ onClick('navLoginBtn',     () => openAuthModal('login'));
 onClick('navRegisterBtn',  () => openAuthModal('register'));
 onClick('heroStartBtn',    () => openAuthModal('register'));
 onClick('pricingFreeBtn',  () => openAuthModal('register'));
-onClick('pricingProBtn', async () => {
-  // The variant id is the store's, not this file's. It used to be hardcoded
-  // here, which meant a live-key swap failed every checkout with "Invalid
-  // variant" -- the ids stayed valid-looking, they just belonged to the test
-  // store. They come from /api/billing/plans now.
+// One checkout path for every plan.
+//
+// The server is asked by PLAN KEY ('monthly' / 'yearly' / 'level1') rather than
+// by a provider identifier. Ids used to be hardcoded here, which meant a
+// live-key swap failed every checkout with "Invalid variant" -- the ids stayed
+// valid-looking, they just belonged to the test store. Then they came from
+// /api/billing/plans. Now they do not cross the wire at all: a provider change
+// swaps every id at once, and a client that never learned them cannot be
+// holding a stale one. `variant_id` still rides along for a server running an
+// older build.
+async function startCheckout(planKey, btnId, idleLabel) {
   await BillingPlans.load();
-  const billing = BillingPlans.activeBilling();
-  const plan = BillingPlans.get(billing);
+  const plan = BillingPlans.get(planKey);
   if (!plan) {
     if (typeof showToast === 'function') showToast('Pricing is unavailable right now.', 3000);
     return;
   }
-  const variantId = plan.variant_id;
 
   if (!authToken) {
     // Only read as a flag on the way back in -- enterAuthenticatedApp re-clicks
-    // this button rather than using the value, so the plan is resolved again.
-    window._pendingProCheckout = billing;
+    // the button rather than using the value, so the plan is resolved again.
+    window._pendingProCheckout = planKey;
+    window._pendingCheckoutBtnId = btnId;
     openAuthModal('register');
     return;
   }
   if (window.mirrorIsPro) {
+    // Pro already covers every scene, so Level 1 would be buying something the
+    // user has.
     if (typeof showToast === 'function') showToast('You already have Mirror Pro!', 2500);
     return;
   }
 
-  const btn = document.getElementById('pricingProBtn');
+  const btn = document.getElementById(btnId);
   if (btn) { btn.textContent = 'Loading...'; btn.disabled = true; }
 
   try {
@@ -955,7 +983,7 @@ onClick('pricingProBtn', async () => {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${authToken}`
       },
-      body: JSON.stringify({ variant_id: variantId })
+      body: JSON.stringify({ plan_key: planKey, variant_id: plan.variant_id })
     });
     const data = await resp.json();
     if (data.checkout_url) {
@@ -965,9 +993,19 @@ onClick('pricingProBtn', async () => {
     }
   } catch(e) {
     if (typeof showToast === 'function') showToast('Something went wrong. Try again.', 3000);
-    if (btn) { btn.textContent = 'Go pro'; btn.disabled = false; }
+    if (btn) { btn.textContent = idleLabel; btn.disabled = false; }
   }
-});
+}
+
+onClick('pricingProBtn', () =>
+  startCheckout(BillingPlans.activeBilling(), 'pricingProBtn', 'Go pro'));
+
+// The $1 one-time Level 1 purchase. The plan has been configured server-side
+// and served by /api/billing/plans all along, but nothing in either shell could
+// ever ask for it: the only checkout path resolved its plan from the
+// monthly/yearly pricing pill, so `level1` was unreachable from the browser.
+onClick('pricingLevel1Btn', () =>
+  startCheckout('level1', 'pricingLevel1Btn', 'Buy Level 1 · $1'));
 
 // ══════════════════════════════════════════════
 // AUTH ORCHESTRATION — tab switching

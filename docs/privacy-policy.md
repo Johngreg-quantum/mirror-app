@@ -1,6 +1,6 @@
 # MIRROR — Privacy Policy
 
-**Effective date:** October 8, 2026
+**Effective date:** October 15, 2026
 **Data controller:** John Greg (sole trader), 14610 Bull Run Road, Miami Lakes,
 FL 33014, USA, contact contact@mirrorspeak.app.
 
@@ -108,7 +108,7 @@ by a data-processing agreement:
 |---|---|---|---|
 | **OpenAI** | Your voice recording (audio) | Speech-to-text transcription | Not used for training: "As of March 1, 2023, data sent to the OpenAI API is not used to train or improve OpenAI models (unless you explicitly opt in to share data with us)." Abuse-monitoring logs are retained "for up to 30 days, unless longer retention is required by law", then deleted. Source: [OpenAI — data controls in the OpenAI platform](https://developers.openai.com/api/docs/guides/your-data) (checked 22 August 2026). |
 | **Anthropic** | The scene identifier only (no audio, no personal data) | Generating study vocabulary for a scene | Called once per scene, on a cache miss only; the request contains the scene id and nothing else, and the result is stored and reused for all users. No user personal data is sent. |
-| **Lemon Squeezy** | Name, email, payment details you enter with them | Processing subscriptions | They act as controller for payment data under their own policy: [Privacy](https://www.lemonsqueezy.com/privacy) · [DPA](https://www.lemonsqueezy.com/dpa). |
+| **Polar** | Name, email, payment details you enter with them | Processing payments and subscriptions as merchant of record | They act as controller for payment data under their own policy: [Privacy](https://polar.sh/legal/privacy) · [Terms](https://polar.sh/legal/terms). We never receive or store card details. |
 | **Render** | All data above, at rest and in transit | Application and database hosting | Region: Oregon, USA (US West). |
 | **TMDB** | No personal data | Movie artwork/metadata only | Data flows to us, not from you. |
 

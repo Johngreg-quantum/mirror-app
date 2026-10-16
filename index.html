@@ -2842,6 +2842,39 @@
     }
     .price-card-cta:hover { transform: scale(1.02); }
 
+    /* The one-time Level 1 purchase, offered under the Free card: it is the
+       step up from free that does not involve a subscription, so it belongs
+       there rather than as a third pricing column that would need its own
+       grid. Quieter than either primary CTA on purpose -- it is an
+       alternative, not the recommendation. */
+    .price-card-alt {
+      margin-top: 14px;
+      padding-top: 14px;
+      border-top: 0.5px solid rgba(255,255,255,0.08);
+      text-align: center;
+    }
+    .price-card-alt-btn {
+      width: 100%;
+      padding: 10px 18px;
+      background: transparent;
+      color: rgba(200,169,110,0.9);
+      border: 0.5px solid rgba(200,169,110,0.35);
+      border-radius: 100px;
+      font-family: 'Inter', sans-serif;
+      font-size: 12px;
+      font-weight: 500;
+      letter-spacing: 0.06em;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .price-card-alt-btn:hover { transform: scale(1.02); border-color: rgba(200,169,110,0.6); }
+    .price-card-alt-note {
+      margin: 8px 0 0;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 10.5px; line-height: 1.5;
+      color: rgba(240,237,230,0.38);
+    }
+
     @media (max-width: 720px) {
       .pricing-cards-edt { grid-template-columns: 1fr; }
     }
@@ -5677,6 +5710,17 @@
         <li>Vocabulary tracking</li>
       </ul>
       <button class="price-card-cta" id="pricingFreeBtn" onclick="mlOpenAuth()">Start free</button>
+      <!-- The $1 one-time unlock. The plan existed server-side and was served
+           by /api/billing/plans, but no button anywhere could request it, so
+           it was unbuyable. Hidden until /api/billing/plans confirms the plan
+           is configured, so an environment without it shows nothing rather
+           than a button that 400s. -->
+      <div class="price-card-alt" id="pricingLevel1Wrap" hidden>
+        <button class="price-card-alt-btn" id="pricingLevel1Btn">Buy Level 1 · $1</button>
+        <p class="price-card-alt-note">
+          One-time. All 20 Level 1 scenes, yours to keep. No subscription.
+        </p>
+      </div>
     </div>
     <div class="price-card-edt pro">
       <div class="price-card-tier">Pro</div>
@@ -5705,7 +5749,7 @@
     </div>
   </div>
   <p class="pricing-legal">
-    Payments handled by Lemon Squeezy as merchant of record. By subscribing you
+    Payments handled by Polar as merchant of record. By subscribing you
     agree to our <a href="/terms">Terms of Service</a> and
     <a href="/refunds">Refund Policy</a>.
   </p>

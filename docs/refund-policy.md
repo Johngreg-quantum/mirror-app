@@ -1,6 +1,6 @@
 # MIRROR — Refund Policy
 
-**Effective date:** September 30, 2026
+**Effective date:** October 15, 2026
 **Provider:** John Greg (sole trader), 14610 Bull Run Road, Miami Lakes,
 FL 33014, USA, contact contact@mirrorspeak.app.
 
@@ -18,12 +18,12 @@ This policy forms part of our [Terms of Service](/terms).
 
 ## 2. Who processes your refund
 
-Payments for MIRROR are processed by **Lemon Squeezy, which acts as merchant of
+Payments for MIRROR are processed by **Polar, which acts as merchant of
 record**. Your contract of sale is with them, they hold the payment
 relationship, and **they carry out and have final discretion over any refund.**
 
 This policy sets out the circumstances in which *we* will support and request a
-refund on your behalf. It does not and cannot oblige Lemon Squeezy to issue
+refund on your behalf. It does not and cannot oblige Polar to issue
 one, and it does not replace their terms — which also let them refund, delay or
 reverse a payment independently of us, for example where they detect fraud.
 
@@ -51,7 +51,7 @@ does not want the product.
 leaves you with access until the end of the period you have already paid for.
 Asking for a refund asks for money back and ends access now. If you only want
 to stop being charged, cancel — you do not need this policy. You can cancel
-from the customer portal linked in your Lemon Squeezy receipt, or by emailing
+from the Polar customer portal, linked in your receipt, or by emailing
 us.
 
 **Partial periods are not pro-rated.** If you cancel mid-period you keep access
@@ -83,9 +83,9 @@ Either path works, and you do not need to try both:
   Your MIRROR username or the email you bought with is enough to find the
   order. This is the better route if something is broken, because we can fix
   it as well as refund it.
-- **Use your Lemon Squeezy receipt.** Every purchase receipt links to a
+- **Use your Polar receipt.** Every purchase receipt links to a
   customer portal where you can manage or cancel the subscription and contact
-  support. Lemon Squeezy handles order support as merchant of record.
+  support. Polar handles order support as merchant of record.
 
 We aim to reply within 3 business days. We will tell you the outcome either
 way, and if we decline a request we will say why.
