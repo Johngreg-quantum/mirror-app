@@ -34,6 +34,7 @@ import sqlite3
 import sys
 import urllib.error
 import urllib.request
+import uuid
 
 BASE = (sys.argv[1] if len(sys.argv) > 1 else "http://127.0.0.1:8077").rstrip("/")
 DB = sys.argv[2] if len(sys.argv) > 2 else "mirror.db"
@@ -75,7 +76,18 @@ def secret():
 SECRET = secret()
 
 
+# Lemon Squeezy sends no delivery id, so main.py dedupes on a hash of the body.
+# That table is persistent, which means a suite posting FIXED payloads is
+# deduped away on its second run: every grant silently no-ops and the failures
+# look like product bugs. Stamping each run makes the bodies unique.
+RUN_NONCE = uuid.uuid4().hex[:8]
+
+
 def post_event(event, payload, sign=True):
+    payload = dict(payload)
+    meta = dict(payload.get("meta") or {})
+    meta["_test_run"] = RUN_NONCE
+    payload["meta"] = meta
     body = json.dumps(payload).encode("utf-8")
     sig = hmac.new(SECRET.encode("utf-8"), body, hashlib.sha256).hexdigest()
     if not sign:
