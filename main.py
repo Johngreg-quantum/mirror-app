@@ -262,6 +262,25 @@ POLAR_API_BASE       = ("https://sandbox-api.polar.sh"
 # Used only for the fallback portal link (polar.sh/<slug>/portal) when we have
 # no customer id to mint a pre-authenticated session for.
 POLAR_ORG_SLUG       = os.getenv("POLAR_ORG_SLUG", "")
+# Pinned API version. Polar keeps three alive at a time -- Next, Current and
+# Deprecated -- and rotates them in the first week of January, April, July and
+# October. Omitting the Polar-Version header does NOT mean "the version we
+# wrote this against": it means Current, which changes under us every quarter
+# and would eventually arrive as a webhook whose shape no longer matches the
+# parsing below.
+#
+# 2026-10 is Current as of this release, and is what the integration was
+# actually exercised against: every live sandbox call made while building this
+# went out unversioned -- therefore to Current -- and returned exactly the
+# fields parsed here.
+#
+# Deliberately NOT 2027-01, which is Next: schema changes are introduced in
+# Next, so it can still move before it becomes Current in January. Pinning to
+# a version that is still changing is the same bug as not pinning at all.
+#
+# The webhook endpoint's version must match this, or we would create checkouts
+# under one contract and parse deliveries under another.
+POLAR_API_VERSION    = os.getenv("POLAR_API_VERSION", "2026-10")
 POLAR_MONTHLY_ID     = os.getenv("POLAR_MONTHLY_PRODUCT_ID", "")
 POLAR_YEARLY_ID      = os.getenv("POLAR_YEARLY_PRODUCT_ID", "")
 POLAR_LEVEL1_ID      = os.getenv("POLAR_LEVEL1_PRODUCT_ID", "")
@@ -2764,8 +2783,14 @@ _POLAR_PRICE_CACHE = {"at": 0.0, "variants": {}}
 
 
 def _polar_headers() -> dict:
+    """Auth plus the pinned API version.
+
+    Polar-Version goes on every request. Without it Polar serves Current,
+    which rotates quarterly -- so an integration that omits the header is
+    pinned to nothing and changes shape four times a year on its own."""
     return {"Authorization": f"Bearer {POLAR_ACCESS_TOKEN}",
-            "Content-Type": "application/json"}
+            "Content-Type": "application/json",
+            "Polar-Version": POLAR_API_VERSION}
 
 
 async def _polar_product_prices() -> dict:

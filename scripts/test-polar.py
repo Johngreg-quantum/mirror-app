@@ -30,6 +30,7 @@ import hashlib
 import hmac
 import json
 import os
+import re
 import sqlite3
 import sys
 import time
@@ -174,6 +175,21 @@ def main():
     check("plan_key resolves, and variant_id still resolves as an alias",
           app._resolve_plan("level1", None)["product_id"] == LEVEL1
           and app._resolve_plan(None, LEVEL1)["key"] == "level1")
+
+    # Omitting Polar-Version does not mean "the version we wrote this against";
+    # it means Current, which rotates every quarter. An unpinned integration
+    # changes shape on Polar's schedule rather than ours.
+    hdrs = app._polar_headers()
+    check("every Polar request pins an API version",
+          hdrs.get("Polar-Version") == app.POLAR_API_VERSION,
+          str(hdrs.get("Polar-Version")))
+    check("...to a YYYY-MM version, not Next or blank",
+          bool(re.match(r"^\d{4}-\d{2}$", app.POLAR_API_VERSION)),
+          app.POLAR_API_VERSION)
+    check("...and the webhook endpoint must be registered on the same one",
+          "POLAR_API_VERSION" in open(os.path.join(
+              os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+              ".env.example"), encoding="utf-8").read())
 
     # ── 1. SIGNATURES ─────────────────────────────────────────────────────────
     print("\nwebhook signature")
