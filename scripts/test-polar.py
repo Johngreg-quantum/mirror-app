@@ -495,6 +495,149 @@ def main():
     check("a user who owns nothing is NOT blocked (checkout reaches Polar)",
           r.status_code in (200, 502), str(r.status_code))
 
+    # ── 4f. A FAILED HANDLER MUST NOT BURN THE DELIVERY ───────────────────────
+    # The worst shape of bug this integration can have: the buyer pays, the
+    # handler fails, the provider retries, and the retry is answered "already
+    # handled" -- so the money moved and the access never arrives, silently and
+    # permanently. The claim has to live or die with the work.
+    print("\na handler that fails, then its retry")
+    uid, _ = make_user("retry")
+    boom = {"n": 0}
+    real_guarded = app.grant_entitlement_guarded
+
+    def flaky(*a, **kw):
+        boom["n"] += 1
+        if boom["n"] == 1:
+            raise RuntimeError("simulated handler failure")
+        return real_guarded(*a, **kw)
+
+    app.grant_entitlement_guarded = flaky
+    try:
+        r1 = post("order.paid", {"id": "ord_retry", "product_id": LEVEL1,
+                                 "metadata": {"user_id": str(uid)}},
+                  msg_id="msg_retry")
+        check("the failing delivery returns 500 so the provider retries",
+              r1.status_code == 500, str(r1.status_code))
+        check("...and granted nothing", "level:1" not in held(uid), str(held(uid)))
+
+        con = sqlite3.connect(DB)
+        left = con.execute(
+            "SELECT COUNT(*) FROM webhook_events WHERE event_id = ?",
+            ("polar:%s_msg_retry" % RUN,)).fetchone()[0]
+        con.close()
+        check("...and did NOT leave the delivery id claimed", left == 0,
+              "%d rows" % left)
+
+        # Same delivery id, as a real retry would carry.
+        r2 = post("order.paid", {"id": "ord_retry", "product_id": LEVEL1,
+                                 "metadata": {"user_id": str(uid)}},
+                  msg_id="msg_retry")
+        check("THE RETRY IS PROCESSED, NOT SKIPPED", r2.status_code == 200,
+              str(r2.status_code))
+        check("...and the buyer finally gets access", "level:1" in held(uid),
+              str(held(uid)))
+    finally:
+        app.grant_entitlement_guarded = real_guarded
+
+    # And a third delivery of the same id, now that it succeeded, is a no-op.
+    r3 = post("order.paid", {"id": "ord_retry", "product_id": LEVEL1,
+                             "metadata": {"user_id": str(uid)}}, msg_id="msg_retry")
+    check("...while a further retry after success is still deduped",
+          r3.status_code == 200)
+
+    # ── 4g. A DEAD API VERSION MUST NOT READ AS "ALREADY CANCELLED" ───────────
+    # Polar 404s both a missing subscription and a request carrying an API
+    # version it no longer serves. Treating the second as success would erase
+    # accounts while their subscriptions kept billing -- and it would start
+    # happening on its own the day the pinned version ages out.
+    print("\ncancel: a dead API version is not success")
+
+    class _Resp:
+        def __init__(self, code, body):
+            self.status_code = code
+            self._body = body
+
+        def json(self):
+            return self._body
+
+    import asyncio
+
+    async def cancel_with(resp):
+        class _Client:
+            async def __aenter__(self):
+                return self
+
+            async def __aexit__(self, *a):
+                return False
+
+            async def delete(self, *a, **kw):
+                return resp
+
+        real_client = app.httpx.AsyncClient
+        app.httpx.AsyncClient = lambda *a, **kw: _Client()
+        try:
+            await app._cancel_polar_subscription("sub_x")
+            return None
+        except app.SubscriptionCancelError as exc:
+            return str(exc)
+        finally:
+            app.httpx.AsyncClient = real_client
+
+    err = asyncio.run(cancel_with(_Resp(404, {"error": "ResourceNotFound",
+                                              "detail": "Not found"})))
+    check("a REAL not-found still counts as cancelled", err is None, str(err))
+
+    err = asyncio.run(cancel_with(_Resp(404, {"detail": "Not Found"})))
+    check("A DEAD API VERSION 404 ABORTS THE DELETION", err is not None, str(err))
+
+    err = asyncio.run(cancel_with(_Resp(403, {"error": "insufficient_scope",
+                                              "error_description": "..."})))
+    check("a 403 for a missing token scope aborts too", err is not None, str(err))
+
+    err = asyncio.run(cancel_with(_Resp(403, {"error": "AlreadyRevokedSubscription"})))
+    check("...but a genuine already-revoked 403 is success", err is None, str(err))
+
+    # ── 4h. REVOCATION CANNOT BE UNDONE BY A LATE EVENT ───────────────────────
+    print("\nsubscription.revoked holds")
+    uid, _ = make_user("revokedlate")
+    post("subscription.active", {"id": "sub_r", "customer_id": "cus_r",
+                                 "status": "active",
+                                 "modified_at": "2026-02-01T00:00:00Z",
+                                 "metadata": {"user_id": str(uid)}})
+    check("subscriber holds pro", "pro" in held(uid))
+
+    post("subscription.revoked", {"id": "sub_r",
+                                  "modified_at": "2026-03-01T00:00:00Z",
+                                  "metadata": {"user_id": str(uid)}})
+    check("revoked removes access", "pro" not in held(uid), str(held(uid)))
+    rows = [r for r in entitlements(uid) if r[0] == "pro"]
+    check("...by REVOKING the row, not merely dating it",
+          rows and rows[0][4] is not None and rows[0][5] is None,
+          str(rows))
+
+    post("subscription.active", {"id": "sub_r", "customer_id": "cus_r",
+                                 "status": "active",
+                                 "modified_at": "2026-02-15T00:00:00Z",
+                                 "metadata": {"user_id": str(uid)}})
+    check("A LATE subscription.active DOES NOT UNDO A REVOCATION",
+          "pro" not in held(uid), str(held(uid)))
+    post("subscription.uncanceled", {"id": "sub_r", "customer_id": "cus_r",
+                                     "status": "active",
+                                     "modified_at": "2026-02-20T00:00:00Z",
+                                     "metadata": {"user_id": str(uid)}})
+    check("...nor does a late uncanceled", "pro" not in held(uid), str(held(uid)))
+    post("order.paid", {"id": "ord_r_late", "product_id": MONTHLY,
+                        "subscription_id": "sub_r", "total_amount": 899,
+                        "modified_at": "2026-02-25T00:00:00Z",
+                        "metadata": {"user_id": str(uid)}})
+    check("...nor a late renewal order", "pro" not in held(uid), str(held(uid)))
+
+    post("subscription.active", {"id": "sub_r2", "customer_id": "cus_r",
+                                 "status": "active",
+                                 "modified_at": "2027-01-01T00:00:00Z",
+                                 "metadata": {"user_id": str(uid)}})
+    check("...but resubscribing afterwards works", "pro" in held(uid), str(held(uid)))
+
     # ── 5. ATTRIBUTION ────────────────────────────────────────────────────────
     print("\nattribution")
     uid, _ = make_user("attrib")
@@ -541,10 +684,17 @@ def main():
     # The Lemon Squeezy Order object has no subscription_id, so an earlier
     # version of the refund fix read a field that never exists and was a
     # permanent no-op. The limitation is documented rather than faked.
-    check("the dead LS subscription_id read is gone",
+    # The original bug: order_refunded read a subscription_id off the ORDER,
+    # which Lemon Squeezy orders do not have, so it was a permanent no-op.
+    check("the dead LS order subscription_id read is gone",
           'payload["data"]["attributes"].get("subscription_id")' not in src)
-    check("...and the limitation is written down where the code is",
-          "KNOWN LIMITATION" in src and "has no subscription_id field" in src)
+    # The limitation it used to document is now closed: a refunded Lemon
+    # Squeezy subscription arrives as subscription_payment_refunded, whose
+    # Subscription Invoice object DOES carry subscription_id.
+    check("a refunded LS subscription is handled, not documented away",
+          'elif event == "subscription_payment_refunded":' in src)
+    check("...and it revokes by subscription, never by user",
+          'revoke_entitlements_by_source(cur, "subscription", sub_id, "refund")' in src)
     # The plain upsert should appear exactly twice: its own definition, and the
     # single call inside grant_entitlement_guarded(). Any third occurrence is a
     # webhook branch granting without the refund guard.

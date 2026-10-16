@@ -2432,14 +2432,19 @@ def grant_entitlement_guarded(cur, user_id: int, kind: str, ref: str,
         (user_id, kind, ref),
     )
     row = cur.fetchone()
-    if row and row[0] and str(row[1] or "") == "refund":
+    if row and row[0]:
+        # ANY revocation, not just a refund. A subscription that was revoked at
+        # the end of its period is equally entitled not to be resurrected by a
+        # subscription.active that was queued before the revocation -- the
+        # money stopped either way, and only the reason differs.
         revoked_at = _parse_iso(row[0])
         happened_at = _parse_iso(event_at)
         if revoked_at and (happened_at is None or happened_at <= revoked_at):
             logger.warning(
                 "[billing] refusing to re-grant %s:%s to user_id=%s -- row was "
-                "revoked for refund at %s and this event is from %s",
-                kind, ref, user_id, row[0], event_at or "an unknown time",
+                "revoked (%s) at %s and this event is from %s",
+                kind, ref, user_id, row[1] or "no reason", row[0],
+                event_at or "an unknown time",
             )
             return False
 
@@ -2451,9 +2456,19 @@ def mark_webhook_seen(conn, cur, provider: str, event_id: str,
                       event_type: str = "") -> bool:
     """Claim a delivery. False means it has already been handled.
 
-    Insert-first rather than select-then-insert: two retries arriving at once
-    would both pass a SELECT and both grant. The primary key decides, and the
-    loser backs out.
+    DOES NOT COMMIT. The claim and the work it guards belong to one
+    transaction, and this is the whole reason why: committing the id first
+    meant that a handler which then failed left the id recorded, so the
+    provider's retry was answered "already handled" and the buyer who had paid
+    never got access -- silently, permanently, with a 200 on the way out.
+
+    Committed by the caller once the work succeeds, and undone by the caller's
+    rollback when it does not, so a retry finds the row absent and runs.
+
+    Insert-first rather than select-then-insert: two deliveries racing would
+    both pass a SELECT and both grant. The primary key decides. Uncommitted,
+    the insert still holds its lock, so the second waits and then loses -- the
+    exclusion survives the move into the transaction.
 
     A provider that gives us no delivery id gets a hash of the body instead --
     see the call sites. Failing open on an unexpected database error is
@@ -2467,7 +2482,6 @@ def mark_webhook_seen(conn, cur, provider: str, event_id: str,
             f"VALUES ({PH}, {PH}, {PH}, {PH})",
             (str(event_id), provider, event_type, _now_iso()),
         )
-        conn.commit()
         return True
     except _IntegrityError:
         conn.rollback()
@@ -2780,6 +2794,17 @@ async def _ls_variant_prices() -> dict:
 
 
 _POLAR_PRICE_CACHE = {"at": 0.0, "variants": {}}
+
+
+def _polar_error_code(resp) -> str:
+    """Polar's structured error code, or "" when the body has none.
+
+    The presence of this key is what separates Polar's own answer from a bare
+    routing miss -- see the 404 handling in _cancel_polar_subscription."""
+    try:
+        return str((resp.json() or {}).get("error") or "")
+    except Exception:
+        return ""
 
 
 def _polar_headers() -> dict:
@@ -3193,11 +3218,38 @@ async def _cancel_polar_subscription(subscription_id: str) -> None:
         raise SubscriptionCancelError(f"could not reach Polar: {exc}") from exc
 
     if resp.status_code in (403, 404):
-        logger.info(
-            "[billing] polar subscription %s already revoked or absent (HTTP %s)",
-            subscription_id, resp.status_code,
+        # A 404 is NOT automatically "already gone". Polar also 404s a request
+        # carrying an API version it no longer serves -- the route simply does
+        # not exist for that version -- and the two are indistinguishable by
+        # status code alone. Measured against the sandbox:
+        #
+        #   real not-found   {"error":"ResourceNotFound","detail":"Not found"}
+        #   dead version     {"detail":"Not Found"}          <- no error key
+        #
+        # Treating the second as success would erase accounts while their
+        # subscriptions kept billing, and it would start happening silently on
+        # the day POLAR_API_VERSION ages out. So the structured error code has
+        # to say so, and anything else aborts the deletion.
+        code = _polar_error_code(resp)
+        if resp.status_code == 404 and code == "ResourceNotFound":
+            logger.info(
+                "[billing] polar subscription %s does not exist -- nothing to cancel",
+                subscription_id,
+            )
+            return
+        if resp.status_code == 403 and "alreadyrevoked" in code.replace("_", "").lower():
+            logger.info(
+                "[billing] polar subscription %s already revoked (%s)",
+                subscription_id, code,
+            )
+            return
+        # Includes 403 insufficient_scope, which must never read as success:
+        # a token that lost subscriptions:write would otherwise let every
+        # deletion through while cancelling nothing.
+        raise SubscriptionCancelError(
+            f"Polar returned {resp.status_code} with error={code or 'none'} "
+            f"-- refusing to treat as cancelled"
         )
-        return
 
     if resp.status_code not in (200, 201, 202, 204):
         raise SubscriptionCancelError(f"Polar returned {resp.status_code}")
@@ -3352,10 +3404,13 @@ async def _lemonsqueezy_webhook(request: Request):
             if not grant or not order_id:
                 # Not one of ours, or unidentifiable. 200 so Lemon Squeezy
                 # stops retrying; never guess a grant.
-                logger.warning(
-                    "[billing] order_created ignored: variant=%r order=%r",
-                    variant_id, order_id,
+                logger.error(
+                    "[billing] PAID ORDER NOT GRANTED: order=%r variant=%r "
+                    "user_id=%s -- variant is not one of ours, or the order id is "
+                    "missing. Investigate this order manually.",
+                    order_id, variant_id, user_id,
                 )
+                conn.commit()
                 return {"ok": True}
             kind, ref = grant
             granted = grant_entitlement_guarded(
@@ -3372,6 +3427,7 @@ async def _lemonsqueezy_webhook(request: Request):
             # subscription away because a $1 level purchase was refunded.
             order_id = str(payload.get("data", {}).get("id") or "") or None
             if not order_id:
+                conn.commit()
                 return {"ok": True}
             # PARTIAL refunds do not remove access. Lemon Squeezy reports a
             # full refund as `refunded: true`, and a partial one as
@@ -3387,41 +3443,69 @@ async def _lemonsqueezy_webhook(request: Request):
                     "[billing] PARTIAL refund on order %s (status=%r) -- access kept",
                     order_id, ls_status,
                 )
+                conn.commit()
                 return {"ok": True}
 
             n = revoke_entitlements_by_source(cur, "order", order_id, "refund")
 
-            # KNOWN LIMITATION, not an oversight: refunding a Lemon Squeezy
-            # SUBSCRIPTION does not revoke pro here.
-            #
-            # A subscription's pro row is sourced to the subscription, so
-            # revoking by order id matches nothing. The obvious fix -- read the
-            # subscription id off the order -- cannot work: the Lemon Squeezy
-            # Order object has no subscription_id field. It carries
-            # first_order_item (order_id, product_id, variant_id, price) and
-            # the order's own totals, and the relationship runs the other way,
-            # from subscription.order_id. An earlier version of this handler
-            # read attributes.subscription_id and was therefore a permanent
-            # no-op that looked like a fix.
-            #
-            # Closing it properly would mean either storing subscription.order_id
-            # when subscription events arrive, or calling the Lemon Squeezy API
-            # at refund time to resolve order -> subscription. Neither is worth
-            # building for a provider that is dormant, has never processed an
-            # order, and is being replaced: BILLING_PROVIDER=polar is where
-            # refunds are handled correctly, and the Polar order payload does
-            # carry subscription_id.
-            #
-            # What still protects a refunded Lemon Squeezy subscriber: the
-            # refund is normally accompanied by a cancellation, and
-            # subscription_cancelled / subscription_expired both clear is_pro
-            # and expire the entitlement. test-polar.py pins this behaviour so
-            # it is a recorded decision rather than a silent gap.
+            # order_refunded cannot reach a SUBSCRIPTION's pro row: that row is
+            # sourced to the subscription, and the Lemon Squeezy Order object
+            # has no subscription_id to join on -- the relationship runs the
+            # other way, from subscription.order_id. A refunded subscription
+            # arrives as subscription_payment_refunded instead, which does
+            # carry one; see the branch below.
             conn.commit()
             # A refund for an order we never granted is a no-op, not an
             # error: a 5xx here would make Lemon Squeezy retry forever.
             logger.info(
                 "[billing] order_refunded %s revoked %s entitlement(s)", order_id, n,
+            )
+
+        elif event == "subscription_payment_refunded":
+            # The subscription equivalent of order_refunded, and the reason the
+            # gap above is a routing detail rather than a limitation: this
+            # event carries a Subscription Invoice, which DOES have
+            # subscription_id -- along with `refunded` and a status that
+            # distinguishes a full refund from a partial one.
+            try:
+                attrs = payload["data"]["attributes"]
+            except (KeyError, TypeError):
+                attrs = {}
+            sub_id = str(attrs.get("subscription_id") or "") or None
+            inv_status = str(attrs.get("status") or "").lower()
+
+            # Positive evidence of partial, same rule as everywhere else.
+            if inv_status == "partial_refund":
+                logger.info(
+                    "[billing] PARTIAL subscription refund (subscription=%s) "
+                    "-- access kept", sub_id,
+                )
+                conn.commit()
+                return {"ok": True}
+
+            if not sub_id:
+                logger.error(
+                    "[billing] subscription_payment_refunded for user_id=%s had no "
+                    "subscription_id -- pro NOT revoked, investigate manually",
+                    user_id,
+                )
+                conn.commit()
+                return {"ok": True}
+
+            n = revoke_entitlements_by_source(cur, "subscription", sub_id, "refund")
+            # Clear is_pro alongside, so /api/auth/me cannot keep claiming a
+            # subscription the gate has stopped honouring. The id stays: the
+            # subscription may well still exist at Lemon Squeezy, and account
+            # deletion needs it to cancel.
+            cur.execute(
+                f"UPDATE users SET is_pro = {PH} WHERE id = {PH}",
+                (False, user_id),
+            )
+            conn.commit()
+            logger.info(
+                "[billing] subscription_payment_refunded subscription=%s "
+                "revoked %s entitlement(s) for user_id=%s",
+                sub_id, n, user_id,
             )
 
         elif event in ("subscription_created", "subscription_updated", "subscription_resumed"):
@@ -3640,10 +3724,17 @@ async def _polar_webhook(request: Request):
             status = str(data.get("status") or "").lower()
 
             if not grant or not order_id:
-                logger.warning(
-                    "[billing] polar order.paid ignored: product=%r order=%r",
-                    product_id, order_id,
+                # ERROR, not warning: this is a PAID order we cannot attribute.
+                # Someone's money moved and nobody got anything, and this line
+                # is the only way to find them later -- so it carries the order
+                # id and shouts.
+                logger.error(
+                    "[billing] POLAR PAID ORDER NOT GRANTED: order=%r product=%r "
+                    "user_id=%s -- product is not one of ours, or the order id is "
+                    "missing. Investigate this order manually.",
+                    order_id, product_id, user_id,
                 )
+                conn.commit()
                 return {"ok": True}
 
             # An order that has already been refunded must not grant, however
@@ -3655,6 +3746,7 @@ async def _polar_webhook(request: Request):
                     "[billing] polar order.paid for order %s ignored: status=%r",
                     order_id, status,
                 )
+                conn.commit()
                 return {"ok": True}
 
             kind, ref = grant
@@ -3707,6 +3799,7 @@ async def _polar_webhook(request: Request):
                     "-- access kept",
                     order_id, status, refunded_amount, total_amount,
                 )
+                conn.commit()
                 return {"ok": True}
 
             n = 0
@@ -3744,6 +3837,7 @@ async def _polar_webhook(request: Request):
                     "[billing] polar %s for user_id=%s ignored: status=%r",
                     event, user_id, status,
                 )
+                conn.commit()
                 return {"ok": True}
 
             granted = grant_entitlement_guarded(
@@ -3785,16 +3879,32 @@ async def _polar_webhook(request: Request):
 
         elif event == "subscription.revoked":
             # The real end: billing stops and benefits are revoked.
+            revoked_sub = str(data.get("id") or "") or None
             cur.execute(
                 f"UPDATE users SET is_pro = {PH}, polar_subscription_id = NULL "
                 f"WHERE id = {PH}",
                 (False, user_id),
             )
-            # Expire rather than delete: the row is the record that they once
-            # held this, and a lapse is a different fact from a refund.
-            expire_entitlement(cur, user_id, "pro", "", _now_iso())
+            # REVOKE, not merely expire. expires_at alone left the row
+            # un-revoked, and grant_entitlement_guarded only refuses to clear a
+            # revocation -- so a subscription.active still in flight would land
+            # afterwards, clear the end date, and hand Pro back to someone
+            # whose subscription had ended. Revoking records the stop and makes
+            # the row ineligible for re-grant by anything older than it.
+            #
+            # Still not a delete: the row is the record that they once held
+            # this, and a lapse is a different fact from a refund, which is
+            # what the reason column is for.
+            if revoked_sub:
+                revoke_entitlements_by_source(cur, "subscription", revoked_sub, "revoked")
+            else:
+                # No id to revoke by; end access now rather than leave it open.
+                expire_entitlement(cur, user_id, "pro", "", _now_iso())
             conn.commit()
-            logger.info("[billing] polar subscription.revoked user_id=%s", user_id)
+            logger.info(
+                "[billing] polar subscription.revoked user_id=%s subscription=%s",
+                user_id, revoked_sub,
+            )
 
         elif event == "subscription.past_due":
             # Deliberately does not revoke. Polar runs its own retries, and
