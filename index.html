@@ -2353,7 +2353,7 @@
     /* Loading placeholder for the Pro amount.
 
        The card used to ship a literal em dash here, which is also what a
-       missing price degrades to -- so "still loading" and "Lemon Squeezy did
+       missing price degrades to -- so "still loading" and "the provider did
        not answer" rendered identically, and both looked like a finished price
        of "—". A shimmer cannot be mistaken for a price, so the two states are
        now distinguishable and only the real failure shows an em dash.
@@ -5726,8 +5726,9 @@
       <div class="price-card-tier">Pro</div>
       <div class="price-card-amount">
         <!-- Amount and cadence come from /api/billing/plans, which reads them
-             from Lemon Squeezy. This card used to state $4.99 for a variant that
-             charges $8.99. A price the store owns does not belong in markup. -->
+             from the payment provider. This card used to state $4.99 for a
+             variant that charges $8.99. A price the store owns does not belong
+             in markup. -->
         <span class="pro-price" id="proPriceAmount" aria-busy="true"><span class="price-skeleton" aria-hidden="true"></span></span><span class="pro-price-cadence" id="proPriceCadence" style="font-size:22px;color:rgba(255,255,255,0.5);" hidden>/mo</span>
       </div>
       <div class="pro-price-sub" id="proPriceSub"></div>
@@ -5743,7 +5744,7 @@
            without hunting, and this is the moment they are deciding. -->
       <p class="checkout-legal">
         Renews automatically. Cancel anytime.
-        <a href="/refunds">14-day refund</a> ·
+        <a href="/refunds">All sales final</a> ·
         <a href="/terms">Terms</a>
       </p>
     </div>
@@ -6731,7 +6732,7 @@
            it and half do not. -->
       <p class="checkout-legal">
         Renews automatically. Cancel anytime.
-        <a href="/refunds" target="_blank" rel="noopener">14-day refund</a> ·
+        <a href="/refunds" target="_blank" rel="noopener">All sales final</a> ·
         <a href="/terms" target="_blank" rel="noopener">Terms</a>
       </p>
     </div>

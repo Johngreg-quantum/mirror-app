@@ -1,6 +1,6 @@
 # MIRROR — Refund Policy
 
-**Effective date:** October 15, 2026
+**Effective date:** October 16, 2026
 **Provider:** John Greg (sole trader), 14610 Bull Run Road, Miami Lakes,
 FL 33014, USA, contact contact@mirrorspeak.app.
 
@@ -12,9 +12,12 @@ This policy forms part of our [Terms of Service](/terms).
 
 | What you bought | Refundable? |
 |---|---|
-| **Mirror Pro** — monthly or yearly subscription | Yes, within **14 days of your first charge** |
-| **Mirror Pro** — a later renewal charge | Not as a matter of course; see §3 |
-| **Level 1** — the one-time $1 purchase | **No**, except where a technical fault prevents access (§4) |
+| **Mirror Pro** — monthly or yearly subscription | **No** — all sales are final (§3) |
+| **Mirror Pro** — a later renewal charge | **No** — cancel before the renewal date to avoid it (§3) |
+| **The one-time $1 purchase** | **No** — all sales are final (§4) |
+
+The one exception, for both, is **technical failure**: if what you paid for does
+not work, that is our fault and we will fix it or refund it (§4).
 
 ## 2. Who processes your refund
 
@@ -32,20 +35,22 @@ processed. We tell you either way.
 
 ## 3. Mirror Pro
 
-**You can request a full refund within 14 days of your first Pro charge**, for
-any reason. You do not have to explain why. Pro access ends when the refund is
-issued.
+**All sales are final.** A Pro charge, whether it is your first or a renewal,
+is not refundable as a matter of course.
 
-The 14 days run from your **first** charge on a subscription, not from each
-renewal. This is deliberate: the window exists so you can decide whether MIRROR
-works for you, and that decision happens at the start.
+**Cancel before the renewal date and the charge never happens.** That is the
+control this policy asks you to use, and it is always available to you: one
+click in the customer portal, at any point in the period you have already paid
+for. Nothing is charged after you cancel.
 
-**Renewals.** A renewal is not automatically refundable, because you have had
-the intervening period to cancel. Cancelling before the renewal date always
-prevents the charge. If a renewal caught you out — you meant to cancel, or you
-had not used MIRROR in that period — write to us anyway and we will look at it.
-We would rather refund an unwanted renewal than keep money from someone who
-does not want the product.
+**The exception is technical failure**, and it applies to Pro exactly as it
+applies to the one-time purchase — see §4. If you paid and the product does not
+work, that is not a change of mind and we will fix it or refund you.
+
+If a renewal genuinely caught you out — you meant to cancel and did not — write
+to us anyway. We are not obliged to refund it and this policy does not promise
+that we will, but we would still rather hear from you than take money from
+someone who does not want the product.
 
 **Cancelling is not the same as a refund.** Cancelling stops future charges and
 leaves you with access until the end of the period you have already paid for.
@@ -57,11 +62,11 @@ us.
 **Partial periods are not pro-rated.** If you cancel mid-period you keep access
 to the end of it rather than receiving part of the payment back.
 
-## 4. The one-time Level 1 purchase
+## 4. The one-time $1 purchase, and the technical-fault exception
 
-**The $1 Level 1 purchase is not refundable.**
+**The one-time $1 purchase is not refundable.**
 
-It grants permanent, non-expiring access to that level's scenes, and it is
+It grants permanent, non-expiring access to the scenes it covers, and it is
 delivered in full the moment it is paid for. A refund after delivery would mean
 returning the money while the access remains granted, so it is priced as a
 one-way purchase and sold at $1 on that basis.
@@ -104,10 +109,13 @@ consumer protection law, you may have a statutory right to cancel a purchase
 within a set period — and in some cases that right is stronger than this
 policy.
 
-**This policy does not reduce those rights.** Where your local law gives you
-more than the 14 days in §3, or a right to withdraw from the Level 1 purchase
-that §4 does not offer, your legal right applies and we will honour it. Write
-to us and say so.
+**This policy does not reduce those rights.** Where your local law gives you a
+right to cancel or withdraw that §3 and §4 do not offer, your legal right
+applies and we will honour it regardless of what this policy says. Write to us
+and say so.
+
+This matters here: "all sales final" is our policy, not an override of your
+statutory rights, and it is not a waiver of them.
 
 ## 7. Changes
 

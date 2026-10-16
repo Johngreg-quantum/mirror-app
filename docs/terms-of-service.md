@@ -1,6 +1,6 @@
 # MIRROR — Terms of Service
 
-**Effective date:** October 15, 2026
+**Effective date:** October 16, 2026
 **Provider:** John Greg (sole trader), 14610 Bull Run Road, Miami Lakes,
 FL 33014, USA, contact contact@mirrorspeak.app.
 
@@ -96,10 +96,16 @@ it applies to you, and you will have the chance to cancel first.
 
 ## 6. Refunds
 
-The [Refund Policy](/refunds) forms part of these terms. In summary: Mirror Pro
-is refundable within 14 days of your first charge, and the one-time Level 1
-purchase is not refundable except where a technical fault prevents access. As
-merchant of record, Polar has final discretion over any refund.
+The [Refund Policy](/refunds) forms part of these terms. In summary: **all
+sales are final** — neither a Mirror Pro charge nor the one-time purchase is
+refundable as a matter of course. The exception is technical failure: if what
+you paid for does not work, we will fix it or refund it.
+
+Cancelling a subscription before its renewal date always prevents that charge,
+and you keep access until the end of the period you have already paid for.
+
+As merchant of record, Polar has final discretion over any refund, and nothing
+here reduces a statutory right of withdrawal you may have as a consumer.
 
 ## 7. Acceptable use
 
