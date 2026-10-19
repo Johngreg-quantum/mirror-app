@@ -32,8 +32,17 @@ import main as app   # noqa: E402
 # table -> the column holding a scene id. Ordered so that anything a foreign
 # key might hang off goes last; today nothing does, and the order is kept
 # meaningful so adding a table later does not have to rediscover that.
+#
+# `scores` is the one with consequences. A row there is a take somebody
+# recorded, and deleting it moves their level, their best scores, their
+# division and their streak. It is in the list because a score against a scene
+# that no longer exists is worse than no score: compute_user_level() still
+# counts it toward unlocking, and /api/history renders a row whose scene cannot
+# be opened. The catalogue was replaced wholesale, so every one of those rows
+# refers to a film scene that is gone.
 SCENE_TABLES = [
     ("word_vocab", "scene_id"),
+    ("scores", "scene_id"),
 ]
 
 
@@ -80,6 +89,21 @@ def main() -> int:
     if not plans:
         print("  (nothing to delete)")
 
+    # Deleting from `scores` changes what users see, so say so in numbers
+    # rather than leaving it to the table name.
+    if any(t == "scores" for t, _ in plans):
+        try:
+            cur.execute(
+                "SELECT COUNT(DISTINCT user_id) FROM scores "
+                "WHERE user_id IS NOT NULL AND scene_id NOT IN (%s)" % placeholders,
+                live)
+            users = cur.fetchone()[0] or 0
+            print("\n  that removes takes belonging to %d user(s); their level, "
+                  "best scores,\n  points and streak are recomputed from what is left."
+                  % users)
+        except Exception:                             # noqa: BLE001
+            pass
+
     if not args.apply:
         print("\nDry run. Nothing was changed. Pass --apply to run it.")
         conn.close()
@@ -91,9 +115,41 @@ def main() -> int:
             "DELETE FROM %s WHERE %s NOT IN (%s)"
             % (table, column, placeholders), live)
         deleted += cur.rowcount if cur.rowcount and cur.rowcount > 0 else 0
+
+    # An avatar pointing at a deleted scene renders a broken image on the
+    # profile. NULL is already the "no avatar chosen" state, so this puts those
+    # users back where a new account starts rather than inventing a default.
+    cleared = 0
+    try:
+        cur.execute(
+            "UPDATE users SET avatar_scene_id = NULL "
+            "WHERE avatar_scene_id IS NOT NULL AND avatar_scene_id NOT IN (%s)"
+            % placeholders, live)
+        cleared = cur.rowcount if cur.rowcount and cur.rowcount > 0 else 0
+    except Exception as exc:                          # noqa: BLE001
+        print("  avatar_scene_id not cleared (%s)" % str(exc).splitlines()[0][:60])
+
+    # points, streak and last_daily are stored totals, not derived, so deleting
+    # the takes behind them leaves a total earned against scenes that no longer
+    # exist. Only users with NO takes left are reset: a user who still has some
+    # history keeps it, and recomputing a partial total from scores would
+    # silently rewrite points that missions and the daily also contributed to.
+    reset = 0
+    try:
+        cur.execute(
+            "UPDATE users SET points = 0, streak = 0, longest_streak = 0, "
+            "last_daily = NULL "
+            "WHERE (points > 0 OR streak > 0) "
+            "AND id NOT IN (SELECT user_id FROM scores WHERE user_id IS NOT NULL)")
+        reset = cur.rowcount if cur.rowcount and cur.rowcount > 0 else 0
+    except Exception as exc:                          # noqa: BLE001
+        print("  totals not reset (%s)" % str(exc).splitlines()[0][:60])
+
     conn.commit()
     conn.close()
     print("\ndeleted %d row(s)" % deleted)
+    print("cleared %d dead avatar(s)" % cleared)
+    print("reset totals for %d user(s) left with no takes" % reset)
     return 0
 
 
