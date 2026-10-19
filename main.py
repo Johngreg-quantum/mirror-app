@@ -48,7 +48,7 @@ load_dotenv()
 # their defaults (or to unguessable paths) if an external integration ever
 # needs them.
 app = FastAPI(
-    title="MIRROR — Movie Scene Language Learning",
+    title="MIRROR — Cinematic Scene Language Learning",
     docs_url=None,
     redoc_url=None,
     openapi_url=None,
@@ -5155,11 +5155,23 @@ async def get_vocab(scene_id: str, challenge_id: str = "",
         conn.close()
         raise HTTPException(500, "ANTHROPIC_API_KEY environment variable is not set")
 
+    # The old prompt asked for words "from the movie scene '{scene_id}'" and
+    # sent nothing but the id. That worked only because the ids were film
+    # titles and the model recognised them -- `fight_club` was a prompt. With
+    # scenes we wrote, `last_train` carries no meaning at all, so the line
+    # itself has to be in the prompt. It should have been from the start: the
+    # words a learner needs are the words actually in front of them.
+    scene = SCENES[scene_id]
     prompt = (
-        f"Generate exactly 8 key English vocabulary words from the movie scene "
-        f"'{scene_id}' for Spanish-speaking ESL learners. Return ONLY a JSON array: "
+        f"These are the words a Spanish-speaking English learner is about to "
+        f"perform, from a scene called '{scene.get('title', scene_id)}':\n\n"
+        f"\"{scene.get('line', '')}\"\n\n"
+        f"Generate exactly 8 key English vocabulary items for them. Prefer "
+        f"words and phrases that appear in the line above; fill any remainder "
+        f"with closely related vocabulary a learner would need to understand "
+        f"or reuse it. Return ONLY a JSON array: "
         f"[{{\"en\":\"word\",\"es\":\"español\",\"phonetic\":\"/fəˈnɛtɪk/\","
-        f"\"example\":\"Short cinematic example sentence.\",\"type\":\"verb\"}}] "
+        f"\"example\":\"Short natural example sentence.\",\"type\":\"verb\"}}] "
         f"Types: verb, noun, adj, adv."
     )
 
