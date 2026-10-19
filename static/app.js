@@ -4181,106 +4181,103 @@ const QuizController = {
   wordSlots: [], wordBank: [],
   level: 'L1',
 
+  // Every phrase below is a line from docs/original-scenes.json. The film
+  // version quoted fourteen films here, which is the one place a learner was
+  // asked to read copyrighted dialogue rather than hear it.
+  //
+  // Level 1 asks about the words in the line; level 2 asks about the structure
+  // holding the line together, because that is what separates the two levels in
+  // the scenes themselves.
   VOCAB_QUESTIONS_L1: [
-    { scene:'fight_club', phrase:"You know what a duvet is? Comforter. It's a blanket.",
-      q:'¿Qué significa "duvet" en esta frase?', correct:'edredón', wrong:['almohada','cortina'] },
-    { scene:'back_to_the_future', phrase:"Where we're going we don't need roads!",
-      q:'En "we don\'t need roads", ¿qué expresa "don\'t need"?', correct:'no necesitamos', wrong:['no podemos','no queremos'] },
-    { scene:'forrest_gump', phrase:"You never know what you're gonna get.",
-      q:'¿Qué significa "gonna get" (informal)?', correct:'vas a obtener / recibir', wrong:['vas a perder','vas a comprar'] },
-    { scene:'the_matrix', phrase:'I know kung fu. Show me.',
-      q:'En "Show me", ¿qué significa "show"?', correct:'mostrar / enseñar', wrong:['esconder','vender'] },
-    { scene:'seven', phrase:'Put the gun down. I saw you with the box.',
-      q:'¿Qué significa el phrasal verb "put down"?', correct:'bajar / soltar', wrong:['levantar','recoger'] },
-    { scene:'home_alone', phrase:'I made my family disappear.',
-      q:'¿Qué significa "disappear"?', correct:'desaparecer', wrong:['aparecer','esconderse'] },
-    { scene:'pursuit_of_happyness', phrase:"You got a dream, you gotta protect it.",
-      q:'¿Qué significa "you gotta" (informal)?', correct:'tienes que / debes', wrong:['puedes','quieres'] },
-    { scene:'jerry_maguire', phrase:'You had me at hello.',
-      q:'En "You had me at hello", ¿qué significa "had me"?', correct:'me conquistaste / me convenciste', wrong:['me golpeaste','me perdiste'] },
-    { scene:'cast_away', phrase:'I know you. So are we okay?',
-      q:'¿Qué expresa "Are we okay?" entre dos personas?', correct:'¿estamos bien? (entre nosotros)', wrong:['¿estás sano?','¿somos correctos?'] },
-    { scene:'social_network', phrase:'I deserve some recognition.',
-      q:'¿Qué significa "deserve"?', correct:'merecer', wrong:['pedir','recibir'] },
-    { scene:'devil_wears_prada', phrase:'She needs skirts from Calvin Klein.',
-      q:'¿Qué significa "needs" en tercera persona?', correct:'ella necesita', wrong:['ella tiene','ella busca'] },
-    { scene:'apollo_13', phrase:'Houston, we have a problem.',
-      q:'¿Qué expresa la frase idiomática "Houston, we have a problem"?', correct:'algo salió mal (expresión cultural)', wrong:['una llamada amistosa','una pregunta científica'] },
-    { scene:'top_gun', phrase:'I feel the need... the need for speed.',
-      q:'¿Qué significa "I feel the need"?', correct:'siento la necesidad', wrong:['tengo hambre','estoy cansado'] },
-    { scene:'clueless', phrase:"Why don't you just tell me what you want?",
-      q:'¿Qué expresa "Why don\'t you just..."?', correct:'una sugerencia (¿por qué no simplemente...?)', wrong:['una pregunta sobre el pasado','una orden directa'] },
-    { scene:'men_in_black', phrase:"What's up? He's coming because I failed.",
-      q:'¿Qué significa "What\'s up?" como saludo?', correct:'¿qué tal? / ¿qué pasa?', wrong:['¿qué está arriba?','¿qué hora es?'] },
-    { scene:'mrs_doubtfire', phrase:"Could you make me a woman? I knew you'd understand.",
-      q:'¿Qué expresa "Could you...?"?', correct:'una petición cortés (¿podrías...?)', wrong:['una orden','una pregunta sobre el pasado'] },
-    { scene:'fifth_element', phrase:'Yeah, multipass, she knows it\'s a multipass.',
-      q:'¿Qué significa "Yeah" en inglés informal?', correct:'sí (informal)', wrong:['no','tal vez'] },
-    { scene:'mystic_river', phrase:'When was the last time you saw Dave?',
-      q:'¿Qué significa "the last time"?', correct:'la última vez', wrong:['la primera vez','la próxima vez'] },
-    { scene:'the_blind_side', phrase:'I kinda thought I already was.',
-      q:'¿Qué significa "kinda" en inglés informal?', correct:'más o menos / un poco', wrong:['nunca','exactamente'] },
-    { scene:'the_intern', phrase:'Actually I have to go.',
-      q:'¿Qué expresa "I have to go"?', correct:'tengo que irme (obligación)', wrong:['puedo irme','quiero irme'] },
+    { scene:'last_train', phrase:"If you get on that train, don't come back.",
+      q:'¿Qué significa el phrasal verb "get on" aquí?', correct:'subirse a', wrong:['bajarse de','esperar'] },
+    { scene:'fashionably_late', phrase:"I'm not late. Everyone else is just early.",
+      q:'¿Qué significa "early"?', correct:'temprano', wrong:['tarde','puntual'] },
+    { scene:'rooftop', phrase:'I almost said it a hundred times. I love you.',
+      q:'¿Qué significa "almost"?', correct:'casi', wrong:['siempre','nunca'] },
+    { scene:'countdown', phrase:'We have ninety seconds. Grab the bag and run!',
+      q:'¿Qué significa "grab"?', correct:'agarrar', wrong:['soltar','esconder'] },
+    { scene:'locked_door', phrase:'Someone was in this house. The door was locked.',
+      q:'¿Qué significa "locked"?', correct:'cerrada con llave', wrong:['abierta','rota'] },
+    { scene:'first_day', phrase:"Hi! I'm new. Is it always this loud in here?",
+      q:'¿Qué significa "loud"?', correct:'ruidoso', wrong:['oscuro','frío'] },
+    { scene:'the_promise', phrase:"I'll come back for you. I promise.",
+      q:'¿Qué expresa "I\'ll" en "I\'ll come back"?', correct:'futuro (volveré)', wrong:['pasado','obligación'] },
+    { scene:'no_signal', phrase:'No signal. No road. And the gas is almost gone.',
+      q:'En inglés de EE. UU., ¿qué es "gas" aquí?', correct:'gasolina', wrong:['gas de cocina','aire'] },
+    { scene:'champion', phrase:'Nobody believed in us. Look at us now!',
+      q:'¿Qué significa "believe in"?', correct:'creer en / confiar en', wrong:['dudar de','olvidarse de'] },
+    { scene:'wrong_number', phrase:'Sorry, who is this? Why do you have my dog?',
+      q:'Al teléfono, ¿qué significa "who is this?"?', correct:'¿quién habla?', wrong:['¿quién es ese?','¿dónde estás?'] },
+    { scene:'the_storm', phrase:"Hold on to the rope! Don't look down!",
+      q:'¿Qué significa "hold on to"?', correct:'agarrarse a', wrong:['soltar','buscar'] },
+    { scene:'the_letter', phrase:'I read your letter. Every word. Twice.',
+      q:'¿Qué significa "twice"?', correct:'dos veces', wrong:['una vez','despacio'] },
+    { scene:'interrogation', phrase:'You were there that night. Stop lying to me.',
+      q:'¿Qué expresa "stop lying"?', correct:'deja de mentir (stop + -ing)', wrong:['detente para mentir','empieza a mentir'] },
+    { scene:'the_deal', phrase:'Ten thousand. Final offer. Take it or leave it.',
+      q:'¿Qué significa "take it or leave it"?', correct:'lo tomas o lo dejas', wrong:['tómalo y vete','déjalo ahí'] },
+    { scene:'coffee_shop', phrase:'Is this seat taken, or saved for me?',
+      q:'¿Qué significa "taken" en "is this seat taken?"?', correct:'ocupado', wrong:['roto','reservado por el local'] },
   ],
 
   VERB_BANK_L1: [
-    { q:'¿Cómo se dice "to deserve" en español?',     correct:'merecer',           wrong:['pedir','recibir'] },
-    { q:'¿Cómo se dice "to disappear" en español?',   correct:'desaparecer',       wrong:['aparecer','esconder'] },
-    { q:'¿Cómo se dice "to protect" en español?',     correct:'proteger',          wrong:['atacar','ignorar'] },
-    { q:'¿Cómo se dice "to put down" (phrasal verb) en español?', correct:'bajar / soltar', wrong:['levantar','tirar al suelo'] },
-    { q:'¿Cómo se dice "to show" en español?',        correct:'mostrar / enseñar', wrong:['esconder','vender'] },
-    { q:'¿Cómo se dice "to fail" en español?',        correct:'fracasar / fallar', wrong:['triunfar','intentar'] },
-    { q:'¿Cómo se dice "to understand" en español?',  correct:'entender',          wrong:['olvidar','recordar'] },
-    { q:'¿Cómo se dice "to get" (obtener) en español?', correct:'conseguir / obtener', wrong:['perder','regalar'] },
-    { q:'¿Cómo se dice "to go up" (phrasal) en español?', correct:'subir',         wrong:['bajar','regresar'] },
-    { q:'¿Cómo se dice "to make (someone) do something" en español?', correct:'hacer que alguien haga algo (causativo)', wrong:['pedir a alguien','obligar a alguien legalmente'] },
+    { q:'¿Cómo se dice "to get on" (phrasal) en español?', correct:'subirse a',          wrong:['bajarse de','quedarse'] },
+    { q:'¿Cómo se dice "to grab" en español?',             correct:'agarrar',            wrong:['soltar','empujar'] },
+    { q:'¿Cómo se dice "to lock" en español?',             correct:'cerrar con llave',   wrong:['abrir','golpear'] },
+    { q:'¿Cómo se dice "to promise" en español?',          correct:'prometer',           wrong:['dudar','preguntar'] },
+    { q:'¿Cómo se dice "to hold on" (phrasal) en español?', correct:'agarrarse / aguantar', wrong:['soltarse','rendirse'] },
+    { q:'¿Cómo se dice "to lie" (decir mentiras) en español?', correct:'mentir',         wrong:['acostarse','callarse'] },
+    { q:'¿Cómo se dice "to come back" (phrasal) en español?', correct:'volver / regresar', wrong:['irse','quedarse'] },
+    { q:'¿Cómo se dice "to believe" en español?',          correct:'creer',              wrong:['dudar','olvidar'] },
+    { q:'¿Cómo se dice "to run" en español?',              correct:'correr',             wrong:['caminar','saltar'] },
+    { q:'¿Cómo se dice "to look down" (phrasal) en español?', correct:'mirar hacia abajo', wrong:['mirar arriba','cerrar los ojos'] },
   ],
 
   VOCAB_QUESTIONS_L2: [
-    { scene:'good_will_hunting', phrase:"It's not your fault.",
-      q:'¿Qué significa "fault" en esta frase?', correct:'culpa', wrong:['miedo','dolor'] },
-    { scene:'shawshank', phrase:'Get busy living, or get busy dying.',
-      q:'¿Qué significa "get busy" en este contexto?', correct:'ponerse a / dedicarse a', wrong:['estar libre','estar cansado'] },
-    { scene:'godfather', phrase:"I'm gonna make him an offer he can't refuse.",
-      q:'¿Qué significa "refuse"?', correct:'rechazar', wrong:['aceptar','pedir'] },
-    { scene:'dead_poets', phrase:'Carpe diem. Seize the day, boys.',
-      q:'¿Qué significa "seize"?', correct:'aprovechar / aferrarse a', wrong:['perder','ignorar'] },
-    { scene:'a_few_good_men', phrase:"You can't handle the truth!",
-      q:'¿Qué significa "handle" en esta frase?', correct:'soportar / manejar', wrong:['esconder','tocar'] },
-    { scene:'whiplash', phrase:'Not quite my tempo.',
-      q:'¿Qué expresa "not quite"?', correct:'no exactamente / no del todo', wrong:['definitivamente no','perfectamente'] },
-    { scene:'breakfast_club', phrase:"We're all pretty bizarre. Some of us are just better at hiding it.",
-      q:'"Bizarre" parece "bizarro" pero en inglés significa:', correct:'extraño / raro', wrong:['valiente','normal'] },
-    { scene:'ferris_bueller', phrase:'Life moves pretty fast.',
-      q:'En "pretty fast", ¿qué significa "pretty"?', correct:'bastante / muy (adverbio)', wrong:['bonito','dulce'] },
-    { scene:'legally_blonde', phrase:"What, like it's hard?",
-      q:'¿Qué expresa "like it\'s hard?"?', correct:'sarcasmo (como si fuera difícil)', wrong:['una pregunta sincera','una confesión'] },
-    { scene:'wall_street', phrase:'Greed, for lack of a better word, is good.',
-      q:'¿Qué significa "greed"?', correct:'codicia / avaricia', wrong:['bondad','tristeza'] },
-    { scene:'wolf_of_wall_street', phrase:'I am not leaving! The show goes on!',
-      q:'¿Qué significa la expresión "the show goes on"?', correct:'el espectáculo continúa (a pesar de todo)', wrong:['el espectáculo termina','el espectáculo falla'] },
-    { scene:'interstellar', phrase:'We used to look up at the sky and wonder.',
-      q:'¿Qué expresa "we used to"?', correct:'solíamos (acción habitual del pasado)', wrong:['usamos','debemos'] },
-    { scene:'terminator', phrase:"I'll be back.",
-      q:'¿Qué tiempo verbal expresa "I\'ll be back"?', correct:'futuro (volveré)', wrong:['pasado','presente'] },
-    { scene:'titanic', phrase:"Keep your eyes closed, don't peek.",
-      q:'¿Qué significa "peek"?', correct:'espiar / echar un vistazo', wrong:['gritar','cerrar los ojos'] },
-    { scene:'braveheart', phrase:"They may take our lives, but they'll never take our freedom!",
-      q:'En "they may take... but never...", ¿qué construcción se usa?', correct:'concesiva (aunque hagan X, nunca Y)', wrong:['condicional','comparativa'] },
+    { scene:'job_offer', phrase:'They offered me the job in New York. I asked for one night to think.',
+      q:'¿Qué significa "ask for"?', correct:'pedir', wrong:['preguntar por alguien','responder'] },
+    { scene:'the_heist', phrase:"We're in and out in four minutes.",
+      q:'¿Qué significa "in and out" aquí?', correct:'entrar y salir', wrong:['de un lado a otro','dentro y fuera de la ley'] },
+    { scene:'old_friends', phrase:"You haven't changed at all.",
+      q:'¿Qué añade "at all" a la frase?', correct:'énfasis negativo (nada en absoluto)', wrong:['duda','cortesía'] },
+    { scene:'good_news', phrase:"The doctor says she's going to be fine. I can finally breathe again.",
+      q:'¿Qué significa "breathe"?', correct:'respirar', wrong:['descansar','llorar'] },
+    { scene:'blind_date', phrase:"I'll be honest, I almost cancelled tonight.",
+      q:'¿Qué significa "I almost cancelled"?', correct:'estuve a punto de cancelar', wrong:['cancelé','nunca cancelo'] },
+    { scene:'final_round', phrase:'Your legs are tired and your lungs are burning, but you are not done yet.',
+      q:'¿Qué son los "lungs"?', correct:'los pulmones', wrong:['las piernas','los hombros'] },
+    { scene:'the_secret', phrase:"If I tell you what I saw, you have to promise you'll never repeat it.",
+      q:'¿Qué tipo de oración es "If I tell you..., you have to..."?', correct:'condicional real (primer condicional)', wrong:['condicional imposible','una orden'] },
+    { scene:'moving_out', phrase:'This apartment was too small, too loud, and the best home I ever had.',
+      q:'¿Qué expresa "the best home I ever had"?', correct:'superlativo con experiencia pasada', wrong:['comparativo entre dos','una suposición'] },
+    { scene:'lost_luggage', phrase:'So my suitcase went to Paris, and I went to Chicago. Great start to my vacation.',
+      q:'¿Cómo se usa "Great start" aquí?', correct:'con ironía (fue un mal comienzo)', wrong:['con entusiasmo sincero','como agradecimiento'] },
+    { scene:'the_pilot', phrase:"I'm going to land this plane, so everybody hold on.",
+      q:'¿Qué expresa "I\'m going to land"?', correct:'intención decidida (voy a aterrizar)', wrong:['una posibilidad remota','una costumbre'] },
+    { scene:'missed_games', phrase:"I wasn't there for your games, and I'm sorry. Let me be there now.",
+      q:'¿Qué expresa "Let me..."?', correct:'permiso o ruego (déjame...)', wrong:['una obligación','una prohibición'] },
+    { scene:'the_window', phrase:'Whoever did this never left the house.',
+      q:'¿Qué significa "whoever"?', correct:'quienquiera que / sea quien sea', wrong:['cuando sea','donde sea'] },
+    { scene:'wedding_toast', phrase:'Clearly, she was half right.',
+      q:'¿Qué significa "half right"?', correct:'tenía razón a medias', wrong:['se equivocó del todo','tenía toda la razón'] },
+    { scene:'night_shift', phrase:'I work two jobs so you can have the chances I never had.',
+      q:'¿Qué expresa "so you can have"?', correct:'finalidad (para que puedas tener)', wrong:['consecuencia pasada','una condición'] },
+    { scene:'grandmas_kitchen', phrase:'She taught me to cook without a recipe. Just taste it, and trust yourself.',
+      q:'¿Qué significa "trust yourself"?', correct:'confía en ti mismo', wrong:['cuídate','date prisa'] },
   ],
 
   VERB_BANK_L2: [
-    { q:'¿Cómo se dice "to handle" en español?',   correct:'manejar / soportar',           wrong:['tocar','esconder'] },
-    { q:'¿Cómo se dice "to refuse" en español?',   correct:'rechazar',                     wrong:['aceptar','pedir'] },
-    { q:'¿Cómo se dice "to seize" en español?',    correct:'aprovechar / aferrarse a',     wrong:['perder','soltar'] },
-    { q:'¿Cómo se dice "to peek" en español?',     correct:'espiar / echar un vistazo',    wrong:['cerrar los ojos','gritar'] },
-    { q:'¿Cómo se dice "to wonder" en español?',   correct:'preguntarse / maravillarse',   wrong:['saber con certeza','olvidar'] },
-    { q:'¿Cómo se dice "to take (something) away" en español?', correct:'quitar / llevarse', wrong:['dar','prestar'] },
-    { q:'¿Cómo se dice "to step up" (phrasal) en español?', correct:'dar un paso adelante / asumir', wrong:['retroceder','sentarse'] },
-    { q:'¿Cómo se dice "to look up" (phrasal) en español?', correct:'mirar hacia arriba',   wrong:['mirar abajo','cerrar los ojos'] },
-    { q:'¿Cómo se dice "to hold on" (phrasal) en español?', correct:'aguantar / esperar',   wrong:['soltar','rendirse'] },
-    { q:'¿Cómo se dice "to clench up" (phrasal) en español?', correct:'tensarse / apretarse', wrong:['relajarse','dormirse'] },
+    { q:'¿Cómo se dice "to ask for" (phrasal) en español?', correct:'pedir',             wrong:['preguntar por','responder a'] },
+    { q:'¿Cómo se dice "to breathe" en español?',          correct:'respirar',           wrong:['soplar','descansar'] },
+    { q:'¿Cómo se dice "to cancel" en español?',           correct:'cancelar',           wrong:['confirmar','retrasar'] },
+    { q:'¿Cómo se dice "to burn" en español?',             correct:'arder / quemar',     wrong:['enfriar','apagar'] },
+    { q:'¿Cómo se dice "to repeat" en español?',           correct:'repetir',            wrong:['olvidar','resumir'] },
+    { q:'¿Cómo se dice "to leave" en español?',            correct:'irse / dejar',       wrong:['llegar','quedarse'] },
+    { q:'¿Cómo se dice "to practise" en español?',         correct:'practicar',          wrong:['abandonar','descansar'] },
+    { q:'¿Cómo se dice "to trust" en español?',            correct:'confiar',            wrong:['dudar','mentir'] },
+    { q:'¿Cómo se dice "to taste" en español?',            correct:'probar / saborear',  wrong:['oler','tocar'] },
+    { q:'¿Cómo se dice "to beat (someone)" en español?',   correct:'vencer / ganarle a', wrong:['perder contra','empatar'] },
   ],
 
   shuffle(arr) { return [...arr].sort(() => Math.random() - 0.5); },
@@ -4294,7 +4291,13 @@ const QuizController = {
       return {
         type: 'vocab',
         typeLabel: 'Vocabulario de la escena',
-        scene: { id: item.scene, title: item.scene.replace(/_/g,' ') },
+        // The real title from scene_config, not the id with underscores
+        // swapped for spaces -- that rendered "last train" under a poster
+        // whose scene is called "Last Train".
+        scene: {
+          id: item.scene,
+          title: (scenes[item.scene] && scenes[item.scene].title) || item.scene.replace(/_/g, ' '),
+        },
         question: `De la frase:\n"${item.phrase}"\n\n${item.q}`,
         options: options,
         answer: item.correct
@@ -4351,15 +4354,26 @@ const QuizController = {
     document.getElementById('quizComboBadge').style.display = 'none';
     this.answered = false;
 
+    // Was /static/posters/<id>.jpg -- TMDB film artwork, deleted in stage 6.
+    // The scene's own still, and the typographic poster when a scene has
+    // none, so the slot is never an empty grey box.
     const img = document.getElementById('quizPosterImg');
     const movieLabel = document.getElementById('quizPosterMovie');
+    const wrap = document.getElementById('quizPosterWrap');
+    if (wrap) {
+      const stale = wrap.querySelector('.scene-art-fallback');
+      if (stale) stale.remove();
+    }
     if (img) {
-      if (q.scene && q.scene.id) {
+      const art = (q.scene && q.scene.id) ? getSceneArtThumb(q.scene.id) : '';
+      if (art) {
         img.style.display = '';
-        img.src = '/static/posters/'+q.scene.id+'.jpg';
-        img.onerror = () => { img.style.display='none'; };
+        img.src = art;
       } else {
         img.style.display = 'none';
+        if (wrap && q.scene && q.scene.id) {
+          wrap.insertAdjacentHTML('afterbegin', sceneArtFallbackHTML(q.scene.title));
+        }
       }
     }
     if (movieLabel) movieLabel.textContent = q.scene && q.scene.title ? q.scene.title : '';
