@@ -6,3 +6,8 @@ __pycache__
 .codex
 node_modules/
 verify-*.png
+
+# Per-machine Claude Code tool permissions. Local by name and local in fact:
+# it says what this checkout is allowed to run, which is a property of the
+# machine and the person at it, not of the project.
+.claude/settings.local.json
