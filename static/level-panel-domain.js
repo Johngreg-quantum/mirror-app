@@ -45,7 +45,7 @@
         locked: !unlockedSceneIds.includes(sceneId),
         title: scene.title || sceneId,
         pb: pb,
-        poster: helpers.getSceneArt(sceneId),
+        poster: helpers.sceneArtHTML(sceneId, scene.title || sceneId, { thumb: true }),
         quote: scene.line ? scene.line.slice(0, 55) + (scene.line.length > 55 ? '\u2026' : '') : '',
         sid: sceneId,
         genre: scene.genre,

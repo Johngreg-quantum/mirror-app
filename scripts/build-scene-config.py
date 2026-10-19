@@ -31,6 +31,9 @@ SOURCE = ROOT / "docs" / "original-scenes.json"
 TARGET = ROOT / "scene_config.json"
 AUDIO_DIR = ROOT / "static" / "scenes" / "audio"
 AUDIO_URL = "/static/scenes/audio/%s.mp3"
+ART_DIR = ROOT / "static" / "scenes" / "art"
+ART_URL = "/static/scenes/art/%s.webp"
+ART_SM_URL = "/static/scenes/art/%s-sm.webp"
 
 # Unlock thresholds are a product decision, not something the scene list knows,
 # and they are unchanged from the film version: level 1 is open, level 2 wants
@@ -87,6 +90,16 @@ def build() -> dict:
             entry["ui"]["audio"] = AUDIO_URL % s["id"]
             entry["ui"]["audio_seconds"] = mp3_duration_seconds(mp3)
 
+        # Both sizes or neither: a card that falls back to the typographic
+        # poster looks deliberate, whereas one that stretches the 400px thumb
+        # to 800px looks broken. The client picks a size; it should never have
+        # to decide whether a declared file is real.
+        art = ART_DIR / ("%s.webp" % s["id"])
+        art_sm = ART_DIR / ("%s-sm.webp" % s["id"])
+        if art.exists() and art_sm.exists():
+            entry["ui"]["art"] = ART_URL % s["id"]
+            entry["ui"]["art_sm"] = ART_SM_URL % s["id"]
+
         if s.get("idioms"):
             entry["idioms"] = list(s["idioms"])
 
@@ -125,10 +138,12 @@ def main() -> int:
         TARGET.write_text(text, encoding="utf-8", newline="")
         print("wrote %s" % TARGET.name)
 
+    total = len(config["scenes"])
     with_audio = sum(1 for sc in config["scenes"].values() if sc["ui"].get("audio"))
+    with_art = sum(1 for sc in config["scenes"].values() if sc["ui"].get("art"))
     print("  scenes %d   levels %s   starter pack %d: %s"
-          % (len(config["scenes"]), counts, len(starters), ", ".join(starters)))
-    print("  audio %d/%d" % (with_audio, len(config["scenes"])))
+          % (total, counts, len(starters), ", ".join(starters)))
+    print("  audio %d/%d   art %d/%d" % (with_audio, total, with_art, total))
     return 0
 
 

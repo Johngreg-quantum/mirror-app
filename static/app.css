@@ -934,6 +934,49 @@ header {
 /* #videoFrame now holds the scene audio player rather than a YouTube iframe. */
 #videoFrame { width: 100%; height: 100%; }
 
+/* ─── TYPOGRAPHIC FALLBACK POSTER ───
+   Shown wherever a scene has no generated art. Built in CSS rather than as an
+   SVG data URI on purpose: an SVG rendered through <img> cannot load a webfont,
+   so Bebas Neue would silently become Impact on every machine that does not
+   happen to have it installed. Here it is real type in a real document.
+
+   The title comes from data-scene-title, so one rule serves the scene cards,
+   the level path tiles and the scene header without any of them having to
+   build markup for it. */
+.scene-art-fallback {
+  position: absolute; inset: 0;
+  background:
+    radial-gradient(90% 70% at 50% 18%, rgba(200,169,110,0.10), transparent 70%),
+    #080808;
+  display: flex; align-items: center; justify-content: center;
+  padding: 12% 10%;
+  overflow: hidden;
+}
+.scene-art-fallback::before {
+  content: attr(data-scene-title);
+  font-family: 'Bebas Neue', 'Oswald', sans-serif;
+  font-size: clamp(16px, 22cqw, 68px);
+  line-height: 0.95;
+  letter-spacing: 0.04em;
+  text-align: center;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.14);
+  overflow-wrap: anywhere;
+}
+/* The gold hairline is the only saturated thing on it, so a wall of fallbacks
+   still reads as Mirror rather than as a wall of missing images. */
+.scene-art-fallback::after {
+  content: '';
+  position: absolute; left: 50%; bottom: 14%;
+  width: 26px; height: 2px; margin-left: -13px;
+  background: #c8a96e;
+}
+/* cqw above needs a container to measure against; every surface that uses the
+   fallback is already position:relative, this just names it as the query root. */
+.sc-poster, .gw-tile, .carousel-poster, .hero-poster, .pp-film-thumb {
+  container-type: inline-size;
+}
+
 /* ─── SCENE AUDIO PLAYER ─── */
 .sa-player {
   width: 100%; height: 100%;

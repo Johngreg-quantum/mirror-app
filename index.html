@@ -7322,11 +7322,11 @@ function buildGatewayLevel1() {
   if (strip) {
     const stripScenes = begannerScenes.slice(0,6);
     strip.innerHTML = stripScenes.map(([id,s]) => {
-      const poster = (s.ui && s.ui.art) ? s.ui.art : '';
+      const poster = (s.ui && (s.ui.art_sm || s.ui.art)) || '';
       const color = (s.ui && s.ui.card_color) ? s.ui.card_color : '#1a1a1a';
       return '<div class="gw-ps">' +
-        (poster ? '<img src="'+poster+'" onerror="this.style.display=\'none\'">' : '') +
-        '<div class="gw-ps-color" style="background:linear-gradient(160deg,'+color+',#080808);'+(poster?'display:none':'')+'"></div>' +
+        (poster ? '<img src="'+poster+'" loading="lazy">' : sceneArtFallbackHTML(s.title || id)) +
+        '' +
         '</div>';
     }).join('');
   }
@@ -7338,12 +7338,12 @@ function buildGatewayLevel1() {
       const isDone = score !== null && score >= SCORE.PASS;
       const isCurrent = !isDone && Object.keys(bestScores).length > 0 && !isDone;
       const isLocked = !score && !isCurrent;
-      const poster = (s.ui && s.ui.art) ? s.ui.art : '';
+      const poster = (s.ui && (s.ui.art_sm || s.ui.art)) || '';
       const color = (s.ui && s.ui.card_color) ? s.ui.card_color : '#1a1a1a';
       const cls = isDone ? 't-done' : (score ? 't-current' : 't-locked');
       return `<div class="gw-tile ${cls}" onclick="event.stopPropagation(); if(typeof openModal==='function') openModal('${id}', scenes['${id}'])">` +
-        (poster ? '<img src="'+poster+'" onerror="this.style.background=\''+color+'\';this.style.display=\'none\'">' : '') +
-        '<div style="position:absolute;inset:0;background:linear-gradient(160deg,'+color+',#080808);z-index:-1;"></div>' +
+        (poster ? '<img src="'+poster+'" loading="lazy">' : sceneArtFallbackHTML(s.title || id)) +
+        '' +
         '<div class="gw-tile-grad"></div>' +
         (isDone ? '<div class="gw-check">✓</div>' : '') +
         (score && !isDone ? '<div class="gw-now">Now</div>' : '') +
@@ -7386,11 +7386,11 @@ function buildGatewayLevel2() {
   if (strip) {
     const stripScenes = level2Scenes.slice(0, 6);
     strip.innerHTML = stripScenes.map(([id, s]) => {
-      const poster = (s.ui && s.ui.art) ? s.ui.art : '';
+      const poster = (s.ui && (s.ui.art_sm || s.ui.art)) || '';
       const color = (s.ui && s.ui.card_color) ? s.ui.card_color : '#1a1a1a';
       return '<div class="gw-ps">' +
-        (poster ? '<img src="' + poster + '" onerror="this.style.display=\'none\'">' : '') +
-        '<div class="gw-ps-color" style="background:linear-gradient(160deg,' + color + ',#080808);' + (poster ? 'display:none' : '') + '"></div>' +
+        (poster ? '<img src="' + poster + '" loading="lazy">' : sceneArtFallbackHTML(s.title || id)) +
+        '' +
         '</div>';
     }).join('');
   }
@@ -7401,11 +7401,11 @@ function buildGatewayLevel2() {
       const score = bestScores[id] ? Math.round(bestScores[id]) : null;
       const isDone = score !== null && score >= SCORE.PASS;
       const color = (s.ui && s.ui.card_color) ? s.ui.card_color : '#1a1a1a';
-      const poster = (s.ui && s.ui.art) ? s.ui.art : '';
+      const poster = (s.ui && (s.ui.art_sm || s.ui.art)) || '';
       const cls = isDone ? 't-done' : (score ? 't-current' : 't-locked');
       return '<div class="gw-tile ' + cls + '" onclick="event.stopPropagation(); if(typeof openModal===\'function\') openModal(\'' + id + '\', scenes[\'' + id + '\'])">' +
-        (poster ? '<img src="' + poster + '" onerror="this.style.display=\'none\'">' : '') +
-        '<div style="position:absolute;inset:0;background:linear-gradient(160deg,' + color + ',#080808);z-index:-1;"></div>' +
+        (poster ? '<img src="' + poster + '" loading="lazy">' : sceneArtFallbackHTML(s.title || id)) +
+        '' +
         '<div class="gw-tile-grad"></div>' +
         (isDone ? '<div class="gw-check">✓</div>' : '') +
         (score && !isDone ? '<div class="gw-now">Now</div>' : '') +
@@ -7452,7 +7452,7 @@ function checkLevel2Unlock() {
   function esc(str){ return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 
   function renderNode(id, s, slot, stateClasses, color){
-    var poster = (s.ui && s.ui.art) ? s.ui.art : '';
+    var poster = (s.ui && (s.ui.art_sm || s.ui.art)) || '';
     var safeId = String(id).replace(/'/g, "\\'");
     var label = esc(s.title || id);
     var isDone = stateClasses.indexOf('done') !== -1;
@@ -7463,7 +7463,7 @@ function checkLevel2Unlock() {
       '<div class="lp-node-img">' +
         (poster
           ? '<img src="' + esc(poster) + '" alt="" onerror="this.style.display=\'none\'">'
-          : '<div class="lp-node-fallback" style="background:linear-gradient(160deg,' + color + ',#080808);"></div>') +
+          : sceneArtFallbackHTML(s.title || id)) +
       '</div>' +
       (isDone                    ? '<div class="lp-check">&#10003;</div>' : '') +
       (isCurrent && !isDone      ? '<div class="lp-now-pill">Now</div>'   : '') +
@@ -7692,7 +7692,7 @@ function checkLevel2Unlock() {
 
   function posterFor(sid){
     var s = (typeof scenes !== 'undefined' && scenes) ? scenes[sid] : null;
-    return (s && s.ui && s.ui.art) ? s.ui.art : '';
+    return (s && s.ui && (s.ui.art_sm || s.ui.art)) || '';
   }
 
   function fetchHistory(){
@@ -7751,7 +7751,7 @@ function checkLevel2Unlock() {
     var s = (typeof scenes !== 'undefined' && scenes) ? scenes[sid] : null;
     if (!s) return '';
     var safeId = String(sid).replace(/'/g, "\\'");
-    var poster = (s.ui && s.ui.art) ? s.ui.art : '';
+    var poster = (s.ui && (s.ui.art_sm || s.ui.art)) || '';
     var title = esc(s.title || sid);
     var score = Math.round(bestScores[sid]);
     var genre = s.genre ? esc(String(s.genre)) : '';
@@ -7760,7 +7760,7 @@ function checkLevel2Unlock() {
     var scoreCls = score >= 60 ? 'gold' : 'muted';
     return '<div class="pp-film-row" onclick="if(typeof openModal===\'function\') openModal(\'' + safeId + '\', scenes[\'' + safeId + '\'])">' +
       '<div class="pp-film-poster">' +
-        (poster ? '<img src="' + esc(poster) + '" alt="" onerror="this.style.display=\'none\'">' : '') +
+        (poster ? '<img src="' + esc(poster) + '" alt="" loading="lazy">' : sceneArtFallbackHTML(s.title || sid)) +
       '</div>' +
       '<div class="pp-film-body">' +
         '<div class="pp-film-title">' + title + '</div>' +
@@ -7828,7 +7828,7 @@ function checkLevel2Unlock() {
       '<div class="pp-avatar-choice-img">' +
         (poster
           ? '<img src="' + esc(poster) + '" alt="" onerror="this.style.display=\'none\'">'
-          : '<div class="pp-avatar-choice-fallback" style="background:linear-gradient(160deg,' + color + ',#080808);"></div>') +
+          : sceneArtFallbackHTML(s.title || sid)) +
       '</div>' +
       '<div class="pp-avatar-choice-label">' + title + '</div>' +
     '</button>';

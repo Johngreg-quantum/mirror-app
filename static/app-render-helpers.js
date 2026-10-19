@@ -22,9 +22,11 @@
   }
 
   function buildLevelPanelSceneCardHTML(card) {
-    const posterHTML = card.poster
-      ? `<img src="${card.poster}" alt="${card.title}" loading="lazy">`
-      : `<div class="sc-poster-ph" style="background:linear-gradient(150deg,${card.color},#111)"></div>`;
+    // card.poster is already either the scene art or the typographic fallback
+    // markup, decided by sceneArtHTML() in app.js. The old branch here painted
+    // a colour gradient instead, which read as "image failed to load" rather
+    // than as a poster.
+    const posterHTML = card.poster;
 
     let scoreHTML = '';
     if (card.locked) {

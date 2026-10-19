@@ -447,10 +447,38 @@ function getSceneArt(sceneId) {
   return (typeof art === 'string') ? art : '';
 }
 
+// The 400x600 cut. Anywhere a scene appears as a thumbnail -- the level path,
+// the carousel, the profile rows -- shipping the 800x1200 is four times the
+// bytes for pixels nobody sees.
+function getSceneArtThumb(sceneId) {
+  const sm = getSceneUiMeta(sceneId).art_sm;
+  if (typeof sm === 'string' && sm) return sm;
+  return getSceneArt(sceneId);
+}
+
 function getSceneArtWide(sceneId) {
   const wide = getSceneUiMeta(sceneId).art_wide;
   if (typeof wide === 'string' && wide) return wide;
   return getSceneArt(sceneId);
+}
+
+// The typographic poster, for a scene whose art has not been generated. Markup
+// rather than an image so the title is real text in Bebas Neue; see
+// .scene-art-fallback in app.css for why it is not an SVG data URI.
+function sceneArtFallbackHTML(title) {
+  const safe = String(title || 'Mirror')
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  return `<div class="scene-art-fallback" data-scene-title="${safe}"></div>`;
+}
+
+// One answer for every surface: the <img> when there is art, the typographic
+// poster when there is not. Callers stopped having to invent a placeholder.
+function sceneArtHTML(sceneId, title, opts) {
+  const url = (opts && opts.thumb) ? getSceneArtThumb(sceneId) : getSceneArt(sceneId);
+  if (!url) return sceneArtFallbackHTML(title);
+  const safe = String(title || '').replace(/"/g, '&quot;');
+  return `<img src="${url}" alt="${safe}" loading="lazy">`;
 }
 
 function getScenePlaybackMeta(sceneId) {
@@ -3194,6 +3222,7 @@ async function openLevelPanel(level) {
       getPositiveSceneScores: getPositiveSceneScores,
       getSceneColor: getSceneColor,
       getSceneArt: getSceneArt,
+      sceneArtHTML: sceneArtHTML,
       setHtmlIfPresent: setHtmlIfPresent,
       setTextIfPresent: setTextIfPresent,
     },
@@ -3247,11 +3276,23 @@ function renderHeroFeatured() {
     || dailyChallenge.scene;
   if (!s) return;
 
+  // The scene header. No art yet means the typographic poster, injected
+  // beside the <img> rather than instead of it, so the existing gradient
+  // and title overlay keep working either way.
   const heroImg = getSceneArtWide(sid);
   const posterImg = document.getElementById('heroPosterImg');
-  if (posterImg && heroImg) {
-    posterImg.src = heroImg;
-    posterImg.alt = s.title;
+  if (posterImg) {
+    const host = posterImg.parentElement;
+    const stale = host && host.querySelector('.scene-art-fallback');
+    if (stale) stale.remove();
+    if (heroImg) {
+      posterImg.src = heroImg;
+      posterImg.alt = s.title;
+      posterImg.hidden = false;
+    } else if (host) {
+      posterImg.hidden = true;
+      host.insertAdjacentHTML('afterbegin', sceneArtFallbackHTML(s.title));
+    }
   }
 
   const titleEl = document.getElementById('heroTitle');
@@ -3303,7 +3344,7 @@ function renderCarousel() {
   sceneIds.forEach((sid, i) => {
     const s = scenes[sid];
     if (!s) return;
-    const poster = getSceneArt(sid);
+    const poster = getSceneArtThumb(sid);
 
     const card = document.createElement('div');
     card.className = 'carousel-card';
@@ -3313,7 +3354,10 @@ function renderCarousel() {
     const posterDiv = document.createElement('div');
     posterDiv.className = 'carousel-poster';
 
-    if (poster) {
+    if (!poster) {
+      posterDiv.innerHTML = sceneArtFallbackHTML(s.title);
+      card.appendChild(posterDiv);
+    } else {
       const img = document.createElement('img');
       img.src = poster;
       img.alt = s.title;
@@ -3330,9 +3374,6 @@ function renderCarousel() {
       ref.appendChild(refImg);
       card.appendChild(posterDiv);
       card.appendChild(ref);
-    } else {
-      posterDiv.style.background = `linear-gradient(135deg, ${getSceneColor(sid)}22, #111)`;
-      card.appendChild(posterDiv);
     }
 
     card.addEventListener('click', () => {

@@ -13,7 +13,9 @@
       "ui": {
         "card_color": "#8a5a1a",
         "audio": "/static/scenes/audio/last_train.mp3",
-        "audio_seconds": 4.06
+        "audio_seconds": 4.06,
+        "art": "/static/scenes/art/last_train.webp",
+        "art_sm": "/static/scenes/art/last_train-sm.webp"
       }
     },
     "fashionably_late": {
@@ -29,7 +31,9 @@
       "ui": {
         "card_color": "#d4a843",
         "audio": "/static/scenes/audio/fashionably_late.mp3",
-        "audio_seconds": 3.86
+        "audio_seconds": 3.86,
+        "art": "/static/scenes/art/fashionably_late.webp",
+        "art_sm": "/static/scenes/art/fashionably_late-sm.webp"
       }
     },
     "rooftop": {
@@ -45,7 +49,9 @@
       "ui": {
         "card_color": "#c75050",
         "audio": "/static/scenes/audio/rooftop.mp3",
-        "audio_seconds": 5.45
+        "audio_seconds": 5.45,
+        "art": "/static/scenes/art/rooftop.webp",
+        "art_sm": "/static/scenes/art/rooftop-sm.webp"
       }
     },
     "countdown": {
@@ -61,7 +67,9 @@
       "ui": {
         "card_color": "#cc2233",
         "audio": "/static/scenes/audio/countdown.mp3",
-        "audio_seconds": 3.5
+        "audio_seconds": 3.5,
+        "art": "/static/scenes/art/countdown.webp",
+        "art_sm": "/static/scenes/art/countdown-sm.webp"
       }
     },
     "locked_door": {
@@ -77,7 +85,9 @@
       "ui": {
         "card_color": "#2a3a5a",
         "audio": "/static/scenes/audio/locked_door.mp3",
-        "audio_seconds": 5.57
+        "audio_seconds": 5.57,
+        "art": "/static/scenes/art/locked_door.webp",
+        "art_sm": "/static/scenes/art/locked_door-sm.webp"
       }
     },
     "first_day": {
@@ -93,7 +103,9 @@
       "ui": {
         "card_color": "#d4a843",
         "audio": "/static/scenes/audio/first_day.mp3",
-        "audio_seconds": 3.6
+        "audio_seconds": 3.6,
+        "art": "/static/scenes/art/first_day.webp",
+        "art_sm": "/static/scenes/art/first_day-sm.webp"
       }
     },
     "the_promise": {
@@ -109,7 +121,9 @@
       "ui": {
         "card_color": "#8a5a1a",
         "audio": "/static/scenes/audio/the_promise.mp3",
-        "audio_seconds": 4.42
+        "audio_seconds": 4.42,
+        "art": "/static/scenes/art/the_promise.webp",
+        "art_sm": "/static/scenes/art/the_promise-sm.webp"
       }
     },
     "no_signal": {
@@ -125,7 +139,9 @@
       "ui": {
         "card_color": "#1a2a4a",
         "audio": "/static/scenes/audio/no_signal.mp3",
-        "audio_seconds": 4.92
+        "audio_seconds": 4.92,
+        "art": "/static/scenes/art/no_signal.webp",
+        "art_sm": "/static/scenes/art/no_signal-sm.webp"
       }
     },
     "champion": {
@@ -141,7 +157,9 @@
       "ui": {
         "card_color": "#e07b39",
         "audio": "/static/scenes/audio/champion.mp3",
-        "audio_seconds": 5.02
+        "audio_seconds": 5.02,
+        "art": "/static/scenes/art/champion.webp",
+        "art_sm": "/static/scenes/art/champion-sm.webp"
       }
     },
     "wrong_number": {
@@ -157,7 +175,9 @@
       "ui": {
         "card_color": "#d4a843",
         "audio": "/static/scenes/audio/wrong_number.mp3",
-        "audio_seconds": 5.21
+        "audio_seconds": 5.21,
+        "art": "/static/scenes/art/wrong_number.webp",
+        "art_sm": "/static/scenes/art/wrong_number-sm.webp"
       }
     },
     "the_storm": {
@@ -173,7 +193,9 @@
       "ui": {
         "card_color": "#4a7c8c",
         "audio": "/static/scenes/audio/the_storm.mp3",
-        "audio_seconds": 3.22
+        "audio_seconds": 3.22,
+        "art": "/static/scenes/art/the_storm.webp",
+        "art_sm": "/static/scenes/art/the_storm-sm.webp"
       }
     },
     "the_letter": {
@@ -189,7 +211,9 @@
       "ui": {
         "card_color": "#8a5a1a",
         "audio": "/static/scenes/audio/the_letter.mp3",
-        "audio_seconds": 5.21
+        "audio_seconds": 5.21,
+        "art": "/static/scenes/art/the_letter.webp",
+        "art_sm": "/static/scenes/art/the_letter-sm.webp"
       }
     },
     "interrogation": {
@@ -205,7 +229,9 @@
       "ui": {
         "card_color": "#3a2a4a",
         "audio": "/static/scenes/audio/interrogation.mp3",
-        "audio_seconds": 3.96
+        "audio_seconds": 3.96,
+        "art": "/static/scenes/art/interrogation.webp",
+        "art_sm": "/static/scenes/art/interrogation-sm.webp"
       }
     },
     "surprise": {
@@ -221,7 +247,9 @@
       "ui": {
         "card_color": "#5a7d8c",
         "audio": "/static/scenes/audio/surprise.mp3",
-        "audio_seconds": 3.26
+        "audio_seconds": 3.26,
+        "art": "/static/scenes/art/surprise.webp",
+        "art_sm": "/static/scenes/art/surprise-sm.webp"
       }
     },
     "the_deal": {
@@ -237,7 +265,9 @@
       "ui": {
         "card_color": "#8a5a1a",
         "audio": "/static/scenes/audio/the_deal.mp3",
-        "audio_seconds": 5.45
+        "audio_seconds": 5.45,
+        "art": "/static/scenes/art/the_deal.webp",
+        "art_sm": "/static/scenes/art/the_deal-sm.webp"
       }
     },
     "lost_city": {
@@ -253,7 +283,9 @@
       "ui": {
         "card_color": "#4a7c8c",
         "audio": "/static/scenes/audio/lost_city.mp3",
-        "audio_seconds": 5.62
+        "audio_seconds": 5.62,
+        "art": "/static/scenes/art/lost_city.webp",
+        "art_sm": "/static/scenes/art/lost_city-sm.webp"
       }
     },
     "the_apology": {
@@ -269,7 +301,9 @@
       "ui": {
         "card_color": "#c75050",
         "audio": "/static/scenes/audio/the_apology.mp3",
-        "audio_seconds": 5.3
+        "audio_seconds": 5.3,
+        "art": "/static/scenes/art/the_apology.webp",
+        "art_sm": "/static/scenes/art/the_apology-sm.webp"
       }
     },
     "midnight_call": {
@@ -285,7 +319,9 @@
       "ui": {
         "card_color": "#2a3a5a",
         "audio": "/static/scenes/audio/midnight_call.mp3",
-        "audio_seconds": 4.42
+        "audio_seconds": 4.42,
+        "art": "/static/scenes/art/midnight_call.webp",
+        "art_sm": "/static/scenes/art/midnight_call-sm.webp"
       }
     },
     "stand_up": {
@@ -301,7 +337,9 @@
       "ui": {
         "card_color": "#8a5a1a",
         "audio": "/static/scenes/audio/stand_up.mp3",
-        "audio_seconds": 5.71
+        "audio_seconds": 5.71,
+        "art": "/static/scenes/art/stand_up.webp",
+        "art_sm": "/static/scenes/art/stand_up-sm.webp"
       }
     },
     "coffee_shop": {
@@ -317,7 +355,9 @@
       "ui": {
         "card_color": "#c75050",
         "audio": "/static/scenes/audio/coffee_shop.mp3",
-        "audio_seconds": 3.36
+        "audio_seconds": 3.36,
+        "art": "/static/scenes/art/coffee_shop.webp",
+        "art_sm": "/static/scenes/art/coffee_shop-sm.webp"
       }
     },
     "job_offer": {
@@ -333,7 +373,9 @@
       "ui": {
         "card_color": "#8a5a1a",
         "audio": "/static/scenes/audio/job_offer.mp3",
-        "audio_seconds": 6.0
+        "audio_seconds": 6.0,
+        "art": "/static/scenes/art/job_offer.webp",
+        "art_sm": "/static/scenes/art/job_offer-sm.webp"
       }
     },
     "the_heist": {
@@ -349,7 +391,9 @@
       "ui": {
         "card_color": "#3a2a4a",
         "audio": "/static/scenes/audio/the_heist.mp3",
-        "audio_seconds": 5.86
+        "audio_seconds": 5.86,
+        "art": "/static/scenes/art/the_heist.webp",
+        "art_sm": "/static/scenes/art/the_heist-sm.webp"
       }
     },
     "old_friends": {
@@ -365,7 +409,9 @@
       "ui": {
         "card_color": "#d4a843",
         "audio": "/static/scenes/audio/old_friends.mp3",
-        "audio_seconds": 5.45
+        "audio_seconds": 5.45,
+        "art": "/static/scenes/art/old_friends.webp",
+        "art_sm": "/static/scenes/art/old_friends-sm.webp"
       }
     },
     "good_news": {
@@ -381,7 +427,9 @@
       "ui": {
         "card_color": "#8a5a1a",
         "audio": "/static/scenes/audio/good_news.mp3",
-        "audio_seconds": 4.2
+        "audio_seconds": 4.2,
+        "art": "/static/scenes/art/good_news.webp",
+        "art_sm": "/static/scenes/art/good_news-sm.webp"
       }
     },
     "blind_date": {
@@ -397,7 +445,9 @@
       "ui": {
         "card_color": "#c75050",
         "audio": "/static/scenes/audio/blind_date.mp3",
-        "audio_seconds": 5.71
+        "audio_seconds": 5.71,
+        "art": "/static/scenes/art/blind_date.webp",
+        "art_sm": "/static/scenes/art/blind_date-sm.webp"
       }
     },
     "final_round": {
@@ -413,7 +463,9 @@
       "ui": {
         "card_color": "#e07b39",
         "audio": "/static/scenes/audio/final_round.mp3",
-        "audio_seconds": 5.3
+        "audio_seconds": 5.3,
+        "art": "/static/scenes/art/final_round.webp",
+        "art_sm": "/static/scenes/art/final_round-sm.webp"
       }
     },
     "the_secret": {
@@ -429,7 +481,9 @@
       "ui": {
         "card_color": "#2a3a5a",
         "audio": "/static/scenes/audio/the_secret.mp3",
-        "audio_seconds": 5.76
+        "audio_seconds": 5.76,
+        "art": "/static/scenes/art/the_secret.webp",
+        "art_sm": "/static/scenes/art/the_secret-sm.webp"
       }
     },
     "moving_out": {
@@ -445,7 +499,9 @@
       "ui": {
         "card_color": "#8a5a1a",
         "audio": "/static/scenes/audio/moving_out.mp3",
-        "audio_seconds": 6.86
+        "audio_seconds": 6.86,
+        "art": "/static/scenes/art/moving_out.webp",
+        "art_sm": "/static/scenes/art/moving_out-sm.webp"
       }
     },
     "lost_luggage": {
@@ -461,7 +517,9 @@
       "ui": {
         "card_color": "#d4a843",
         "audio": "/static/scenes/audio/lost_luggage.mp3",
-        "audio_seconds": 5.81
+        "audio_seconds": 5.81,
+        "art": "/static/scenes/art/lost_luggage.webp",
+        "art_sm": "/static/scenes/art/lost_luggage-sm.webp"
       }
     },
     "the_pilot": {
@@ -477,7 +535,9 @@
       "ui": {
         "card_color": "#cc2233",
         "audio": "/static/scenes/audio/the_pilot.mp3",
-        "audio_seconds": 5.16
+        "audio_seconds": 5.16,
+        "art": "/static/scenes/art/the_pilot.webp",
+        "art_sm": "/static/scenes/art/the_pilot-sm.webp"
       }
     },
     "missed_games": {
@@ -493,7 +553,9 @@
       "ui": {
         "card_color": "#5a7d8c",
         "audio": "/static/scenes/audio/missed_games.mp3",
-        "audio_seconds": 5.16
+        "audio_seconds": 5.16,
+        "art": "/static/scenes/art/missed_games.webp",
+        "art_sm": "/static/scenes/art/missed_games-sm.webp"
       }
     },
     "the_window": {
@@ -509,7 +571,9 @@
       "ui": {
         "card_color": "#3a2a4a",
         "audio": "/static/scenes/audio/the_window.mp3",
-        "audio_seconds": 6.22
+        "audio_seconds": 6.22,
+        "art": "/static/scenes/art/the_window.webp",
+        "art_sm": "/static/scenes/art/the_window-sm.webp"
       }
     },
     "wedding_toast": {
@@ -525,7 +589,9 @@
       "ui": {
         "card_color": "#d4a843",
         "audio": "/static/scenes/audio/wedding_toast.mp3",
-        "audio_seconds": 5.45
+        "audio_seconds": 5.45,
+        "art": "/static/scenes/art/wedding_toast.webp",
+        "art_sm": "/static/scenes/art/wedding_toast-sm.webp"
       }
     },
     "night_shift": {
@@ -541,7 +607,9 @@
       "ui": {
         "card_color": "#8a5a1a",
         "audio": "/static/scenes/audio/night_shift.mp3",
-        "audio_seconds": 5.66
+        "audio_seconds": 5.66,
+        "art": "/static/scenes/art/night_shift.webp",
+        "art_sm": "/static/scenes/art/night_shift-sm.webp"
       }
     },
     "the_audition": {
@@ -557,7 +625,9 @@
       "ui": {
         "card_color": "#8a5a1a",
         "audio": "/static/scenes/audio/the_audition.mp3",
-        "audio_seconds": 5.4
+        "audio_seconds": 5.4,
+        "art": "/static/scenes/art/the_audition.webp",
+        "art_sm": "/static/scenes/art/the_audition-sm.webp"
       }
     },
     "oxygen_low": {
@@ -573,7 +643,9 @@
       "ui": {
         "card_color": "#2a5a8a",
         "audio": "/static/scenes/audio/oxygen_low.mp3",
-        "audio_seconds": 6.41
+        "audio_seconds": 6.41,
+        "art": "/static/scenes/art/oxygen_low.webp",
+        "art_sm": "/static/scenes/art/oxygen_low-sm.webp"
       }
     },
     "first_dance": {
@@ -589,7 +661,9 @@
       "ui": {
         "card_color": "#c75050",
         "audio": "/static/scenes/audio/first_dance.mp3",
-        "audio_seconds": 5.52
+        "audio_seconds": 5.52,
+        "art": "/static/scenes/art/first_dance.webp",
+        "art_sm": "/static/scenes/art/first_dance-sm.webp"
       }
     },
     "the_rival": {
@@ -605,7 +679,9 @@
       "ui": {
         "card_color": "#e07b39",
         "audio": "/static/scenes/audio/the_rival.mp3",
-        "audio_seconds": 5.62
+        "audio_seconds": 5.62,
+        "art": "/static/scenes/art/the_rival.webp",
+        "art_sm": "/static/scenes/art/the_rival-sm.webp"
       }
     },
     "runaway": {
@@ -621,7 +697,9 @@
       "ui": {
         "card_color": "#1a2a4a",
         "audio": "/static/scenes/audio/runaway.mp3",
-        "audio_seconds": 6.96
+        "audio_seconds": 6.96,
+        "art": "/static/scenes/art/runaway.webp",
+        "art_sm": "/static/scenes/art/runaway-sm.webp"
       }
     },
     "grandmas_kitchen": {
@@ -637,7 +715,9 @@
       "ui": {
         "card_color": "#5a7d8c",
         "audio": "/static/scenes/audio/grandmas_kitchen.mp3",
-        "audio_seconds": 6.0
+        "audio_seconds": 6.0,
+        "art": "/static/scenes/art/grandmas_kitchen.webp",
+        "art_sm": "/static/scenes/art/grandmas_kitchen-sm.webp"
       }
     },
     "boardroom": {
@@ -653,7 +733,9 @@
       "ui": {
         "card_color": "#8a5a1a",
         "audio": "/static/scenes/audio/boardroom.mp3",
-        "audio_seconds": 4.92
+        "audio_seconds": 4.92,
+        "art": "/static/scenes/art/boardroom.webp",
+        "art_sm": "/static/scenes/art/boardroom-sm.webp"
       },
       "idioms": [
         "beat around the bush",
@@ -673,7 +755,9 @@
       "ui": {
         "card_color": "#d4a843",
         "audio": "/static/scenes/audio/roommate.mp3",
-        "audio_seconds": 6.41
+        "audio_seconds": 6.41,
+        "art": "/static/scenes/art/roommate.webp",
+        "art_sm": "/static/scenes/art/roommate-sm.webp"
       },
       "idioms": [
         "sarcasm"
@@ -692,7 +776,9 @@
       "ui": {
         "card_color": "#e07b39",
         "audio": "/static/scenes/audio/the_comeback.mp3",
-        "audio_seconds": 5.57
+        "audio_seconds": 5.57,
+        "art": "/static/scenes/art/the_comeback.webp",
+        "art_sm": "/static/scenes/art/the_comeback-sm.webp"
       },
       "idioms": [
         "write someone off"
@@ -711,7 +797,9 @@
       "ui": {
         "card_color": "#d4a843",
         "audio": "/static/scenes/audio/cold_feet.mp3",
-        "audio_seconds": 5.06
+        "audio_seconds": 5.06,
+        "art": "/static/scenes/art/cold_feet.webp",
+        "art_sm": "/static/scenes/art/cold_feet-sm.webp"
       },
       "idioms": [
         "get cold feet"
@@ -730,7 +818,9 @@
       "ui": {
         "card_color": "#3a2a4a",
         "audio": "/static/scenes/audio/the_bluff.mp3",
-        "audio_seconds": 5.21
+        "audio_seconds": 5.21,
+        "art": "/static/scenes/art/the_bluff.webp",
+        "art_sm": "/static/scenes/art/the_bluff-sm.webp"
       },
       "idioms": [
         "read someone like a book",
@@ -750,7 +840,9 @@
       "ui": {
         "card_color": "#8a5a1a",
         "audio": "/static/scenes/audio/done_waiting.mp3",
-        "audio_seconds": 5.71
+        "audio_seconds": 5.71,
+        "art": "/static/scenes/art/done_waiting.webp",
+        "art_sm": "/static/scenes/art/done_waiting-sm.webp"
       },
       "idioms": [
         "bend over backwards",
@@ -770,7 +862,9 @@
       "ui": {
         "card_color": "#1a2a4a",
         "audio": "/static/scenes/audio/lucky.mp3",
-        "audio_seconds": 4.8
+        "audio_seconds": 4.8,
+        "art": "/static/scenes/art/lucky.webp",
+        "art_sm": "/static/scenes/art/lucky-sm.webp"
       },
       "idioms": [
         "if it helps you sleep at night"
