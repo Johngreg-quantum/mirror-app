@@ -1,6 +1,6 @@
 # MIRROR — Refund Policy
 
-**Effective date:** October 16, 2026
+**Effective date:** October 19, 2026
 **Provider:** John Greg (sole trader), 14610 Bull Run Road, Miami Lakes,
 FL 33014, USA, contact contact@mirrorspeak.app.
 
@@ -14,7 +14,7 @@ This policy forms part of our [Terms of Service](/terms).
 |---|---|
 | **Mirror Pro** — monthly or yearly subscription | **No** — all sales are final (§3) |
 | **Mirror Pro** — a later renewal charge | **No** — cancel before the renewal date to avoid it (§3) |
-| **The one-time $1 purchase** | **No** — all sales are final (§4) |
+| **The $1 Starter Pack** | **No** — all sales are final (§4) |
 
 The one exception, for both, is **technical failure**: if what you paid for does
 not work, that is our fault and we will fix it or refund it (§4).
@@ -62,11 +62,11 @@ us.
 **Partial periods are not pro-rated.** If you cancel mid-period you keep access
 to the end of it rather than receiving part of the payment back.
 
-## 4. The one-time $1 purchase, and the technical-fault exception
+## 4. The $1 Starter Pack, and the technical-fault exception
 
-**The one-time $1 purchase is not refundable.**
+**The $1 Starter Pack is not refundable.**
 
-It grants permanent, non-expiring access to the scenes it covers, and it is
+It grants permanent, non-expiring access to the five starter scenes, and it is
 delivered in full the moment it is paid for. A refund after delivery would mean
 returning the money while the access remains granted, so it is priced as a
 one-way purchase and sold at $1 on that basis.

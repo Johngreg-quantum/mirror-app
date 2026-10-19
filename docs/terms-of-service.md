@@ -1,6 +1,6 @@
 # MIRROR — Terms of Service
 
-**Effective date:** October 16, 2026
+**Effective date:** October 19, 2026
 **Provider:** John Greg (sole trader), 14610 Bull Run Road, Miami Lakes,
 FL 33014, USA, contact contact@mirrorspeak.app.
 
@@ -8,10 +8,10 @@ FL 33014, USA, contact contact@mirrorspeak.app.
 
 ## 1. The service
 
-MIRROR ("we", "us") is a language-learning service. You watch a short clip of a
-film scene, record yourself performing the line, and receive an automated score
-comparing your delivery to the original, along with vocabulary and practice
-features.
+MIRROR ("we", "us") is a language-learning service. You listen to a short
+original scene, record yourself performing the line, and receive an automated
+score comparing the words you said to the words in the line, along with
+vocabulary and practice features.
 
 Scores are generated automatically by speech-recognition software. They are an
 approximation for practice purposes. They are not an assessment of language
@@ -34,22 +34,22 @@ You can delete your account at any time from your profile. Deleting it erases
 your recordings-derived data as described in the
 [Privacy Policy](/privacy), and cancels any active subscription.
 
-## 3. Free tier and paid access
+## 3. What is free, and what is paid
 
-Part of MIRROR is free. The free tier currently includes the first five
-Beginner scenes, the daily challenge, and challenges shared with you by other
-users. The exact contents of the free tier may change.
+Creating an account is free, and so are the Daily Take and any challenge link
+another user shares with you. Those do not require a purchase and are not
+limited by one. There is no free tier of scenes beyond them.
 
 Paid access comes in two forms:
 
 | | What it is | Term |
 |---|---|---|
 | **Mirror Pro** | A subscription giving access to all scenes and Pro features | Recurring, monthly or yearly |
-| **Level purchase** | A one-time purchase giving permanent access to one level's scenes | One-time, no expiry |
+| **Starter Pack** | A one-time purchase giving permanent access to the five starter scenes | One-time, no expiry |
 
-Reaching a level also requires meeting its practice score threshold. Buying a
-level gives you access to that level's scenes; it does not skip the score
-needed to reach it. (Level 1 has no threshold, so a Level 1 purchase is usable
+Reaching a level also requires meeting its practice score threshold. A purchase
+gives you access to the scenes it covers; it does not skip the score needed to
+reach a level. (Level 1 has no threshold, so the Starter Pack is usable
 immediately.)
 
 Current prices are shown on the pricing section of our site and at checkout.
@@ -82,14 +82,14 @@ contact@mirrorspeak.app.
 
 **Cancelling stops future charges. It does not end your current period.** You
 keep Pro access until the end of the period you have already paid for, and then
-revert to the free tier. Cancelling is not the same as requesting a refund —
+keep only what you bought outright. Cancelling is not the same as requesting a refund —
 see the [Refund Policy](/refunds).
 
 If a renewal payment fails, Polar may retry it. If it ultimately fails,
-your Pro access ends and you revert to the free tier.
+your Pro access ends and you keep only what you bought outright.
 
-A one-time level purchase does not renew and cannot be cancelled, because there
-is no recurring charge. The access it grants does not expire.
+The Starter Pack does not renew and cannot be cancelled, because there is no
+recurring charge. The access it grants does not expire.
 
 If we raise the price of a plan you are subscribed to, we will tell you before
 it applies to you, and you will have the chance to cancel first.
@@ -114,7 +114,7 @@ Don't:
 - share your account, or resell or redistribute access to it;
 - record content that is unlawful, abusive, or harassing, or that contains
   someone else's personal information;
-- try to extract, scrape, or bulk-download scene content, clips, audio, or
+- try to extract, scrape, or bulk-download scene content, audio, artwork, or
   vocabulary data;
 - attempt to bypass access controls, level gating, or payment;
 - probe, overload, or interfere with the service, or use automated tools to
@@ -141,27 +141,26 @@ create, because that is the point of those features.
 Full detail on how audio is handled, how long it is kept, and who processes it
 is in the [Privacy Policy](/privacy).
 
-## 9. Film clips, posters and quoted dialogue
+## 9. Scene content
 
-MIRROR teaches using material from existing films: clips are embedded from
-YouTube and played from there, posters and artwork come from The Movie Database
-(TMDB), and short lines of dialogue are reproduced as the text you practise
-against.
+**Every scene in MIRROR is original.** The lines, the scene titles, the audio
+performances and the artwork were written, generated and produced for MIRROR.
+No film, television programme, actor or existing work is reproduced, quoted or
+depicted, and nothing is embedded from a third-party video service.
 
-We do not own this material, and these terms grant you no rights in it. It
-remains the property of its respective rights holders. Your licence to use
-MIRROR does not give you any licence to the films, the clips, the artwork or
-the dialogue, and you may not extract or redistribute them.
+That material is ours. These terms give you a personal, non-transferable
+licence to use it inside MIRROR for your own language practice, and nothing
+more. You may not extract, scrape, bulk-download, republish or redistribute the
+scene text, the audio or the artwork, or use any of it to train a model.
 
-Embedded clips are delivered by YouTube and are also subject to YouTube's
-terms. If a rights holder wishes to raise an issue about material used in
-MIRROR, contact contact@mirrorspeak.app and we will respond.
+Earlier versions of MIRROR taught using clips, posters and dialogue from
+existing films. That material has been removed and replaced in full.
 
 ## 10. Availability
 
 We aim to keep MIRROR available but do not guarantee it. It may be unavailable
 for maintenance, or because of a failure at a provider we depend on — hosting,
-YouTube, speech processing, or payments. We do not promise any uptime level,
+speech processing, or payments. We do not promise any uptime level,
 and interruption is not by itself grounds for a refund outside the
 [Refund Policy](/refunds).
 

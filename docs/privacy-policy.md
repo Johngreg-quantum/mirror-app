@@ -1,6 +1,6 @@
 # MIRROR — Privacy Policy
 
-**Effective date:** October 15, 2026
+**Effective date:** October 19, 2026
 **Data controller:** John Greg (sole trader), 14610 Bull Run Road, Miami Lakes,
 FL 33014, USA, contact contact@mirrorspeak.app.
 
@@ -9,7 +9,7 @@ FL 33014, USA, contact contact@mirrorspeak.app.
 ## 1. Who we are and what this covers
 
 MIRROR ("we", "us") is a language-learning app in which you record yourself
-speaking lines from movie scenes and receive a pronunciation/accuracy score.
+speaking lines from original scenes and receive an accuracy score.
 This policy explains what personal data we collect when you use the app, why,
 how long we keep it, who processes it on our behalf, and your rights.
 
@@ -107,10 +107,9 @@ by a data-processing agreement:
 | Processor | What they receive | Purpose | Notes |
 |---|---|---|---|
 | **OpenAI** | Your voice recording (audio) | Speech-to-text transcription | Not used for training: "As of March 1, 2023, data sent to the OpenAI API is not used to train or improve OpenAI models (unless you explicitly opt in to share data with us)." Abuse-monitoring logs are retained "for up to 30 days, unless longer retention is required by law", then deleted. Source: [OpenAI — data controls in the OpenAI platform](https://developers.openai.com/api/docs/guides/your-data) (checked 22 August 2026). |
-| **Anthropic** | The scene identifier only (no audio, no personal data) | Generating study vocabulary for a scene | Called once per scene, on a cache miss only; the request contains the scene id and nothing else, and the result is stored and reused for all users. No user personal data is sent. |
+| **Anthropic** | The scene title and its line only (no audio, no personal data) | Generating study vocabulary for a scene | Called once per scene, on a cache miss only; the request contains our own scene text and nothing else, and the result is stored and reused for all users. No user personal data is sent. |
 | **Polar** | Name, email, payment details you enter with them | Processing payments and subscriptions as merchant of record | They act as controller for payment data under their own policy: [Privacy](https://polar.sh/legal/privacy) · [Terms](https://polar.sh/legal/terms). We never receive or store card details. |
 | **Render** | All data above, at rest and in transit | Application and database hosting | Region: Oregon, USA (US West). |
-| **TMDB** | No personal data | Movie artwork/metadata only | Data flows to us, not from you. |
 
 If we add a new provider that processes your voice (for example, a
 pronunciation-assessment service), we will update this policy and, where
