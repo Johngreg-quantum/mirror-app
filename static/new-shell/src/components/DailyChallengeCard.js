@@ -11,8 +11,8 @@ function renderLineRow(line) {
   }, [
     h('span', { className: 'ns-daily-line__index', text: String(line.index) }),
     h('div', { className: 'ns-daily-line__body' }, [
-      h('p', { className: 'ns-daily-line__film', text: line.scene?.film || line.sceneId }),
-      h('blockquote', { text: line.scene?.quote || '' }),
+      h('p', { className: 'ns-daily-line__film', text: line.scene?.title || line.sceneId }),
+      h('blockquote', { text: line.scene?.line || '' }),
     ]),
     line.done
       ? statusPill(line.score === null ? 'Done' : `Done · ${line.score}%`)
@@ -30,7 +30,7 @@ export function renderDailyChallengeCard({ daily }) {
     h('img', {
       className: 'ns-daily-card__image',
       src: daily.scene?.imageUrl || '/static/beginner-card.webp',
-      alt: `${daily.scene?.film || 'Daily'} scene still reference`,
+      alt: `${daily.scene?.title || 'Daily'} scene art`,
     }),
     h('div', { className: 'ns-daily-card__body' }, [
       h('p', { className: 'ns-eyebrow', text: 'Daily Take' }),

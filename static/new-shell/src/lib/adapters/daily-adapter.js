@@ -31,10 +31,10 @@ export function adaptDailyChallenge(rawDaily, scenes = [], profile = null) {
   const doneIds = Array.isArray(rawDaily.done_scene_ids) ? rawDaily.done_scene_ids : [];
   const sceneFor = (sceneId, index) => scenes.find((item) => item.id === sceneId) || {
     id: sceneId,
-    title: rawDaily.scenes?.[index]?.movie || sceneId,
-    film: rawDaily.scenes?.[index]?.movie || sceneId,
-    year: rawDaily.scenes?.[index]?.year || '',
-    quote: rawDaily.scenes?.[index]?.quote || '',
+    title: rawDaily.scenes?.[index]?.title || sceneId,
+    genre: rawDaily.scenes?.[index]?.genre || '',
+    emotion: rawDaily.scenes?.[index]?.emotion || '',
+    line: rawDaily.scenes?.[index]?.line || '',
     actor: rawDaily.scenes?.[index]?.actor || '',
     levelName: rawDaily.scenes?.[index]?.difficulty || 'Daily',
     difficulty: rawDaily.scenes?.[index]?.difficulty || 'Daily',
@@ -43,7 +43,7 @@ export function adaptDailyChallenge(rawDaily, scenes = [], profile = null) {
     personalBest: null,
     locked: false,
     isDaily: true,
-    imageUrl: rawDaily.scenes?.[index]?.ui?.poster_image || '/static/beginner-card.webp',
+    imageUrl: rawDaily.scenes?.[index]?.ui?.art || '/static/beginner-card.webp',
   };
 
   const lines = sceneIds.map((sceneId, index) => {

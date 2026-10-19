@@ -68,7 +68,7 @@
         color: item.sync_score >= 85 ? '#06d6a0' : item.sync_score >= 65 ? '#ffd166' : item.sync_score >= 40 ? '#f4a261' : '#e63946',
         date: item.created_at ? new Date(item.created_at).toLocaleDateString() : '—',
         isImproved: improved.has(item.id),
-        movie: item.movie,
+        title: item.title,
         score: item.sync_score,
       });
     }).join('');
@@ -102,7 +102,7 @@
       return helpers.buildPersonalBestItemHTML({
         color: helpers.getSceneColor(sid, 'var(--gold)'),
         improved: latest !== undefined && prev !== undefined && latest > prev,
-        movie: scenes[sid] && scenes[sid].movie ? scenes[sid].movie : sid,
+        title: scenes[sid] && scenes[sid].title ? scenes[sid].title : sid,
         rank: idx + 1,
         score: Math.round(score),
       });

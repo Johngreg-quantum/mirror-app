@@ -429,39 +429,37 @@ function getSceneColor(sceneId, fallback = '#c9a84c') {
   return (typeof color === 'string' && color.trim()) ? color : fallback;
 }
 
-function getSceneYouTubeId(sceneId) {
-  const ytId = getSceneUiMeta(sceneId).youtube_id;
-  return (typeof ytId === 'string') ? ytId.trim() : '';
+// ── Scene media ──
+// The film version read a YouTube id and a clip range out of scene_config, and
+// poster/backdrop paths pointing at TMDB artwork. Original scenes carry none of
+// those. Stage 2 writes `ui.audio` (the generated mp3) and stage 3 writes
+// `ui.art` / `ui.art_sm`, and these accessors are where those land.
+//
+// Until then every one of them returns empty, which is the "scene has no
+// media" path the callers were already written to survive -- the scene player
+// shows nothing between this stage and stage 2, on purpose.
+
+function getSceneAudioUrl(sceneId) {
+  const url = getSceneUiMeta(sceneId).audio;
+  return (typeof url === 'string') ? url.trim() : '';
 }
 
-function getSceneTimes(sceneId) {
-  const meta = getSceneUiMeta(sceneId);
-  const start = Number(meta.clip_start);
-  const end = Number(meta.clip_end);
-  if (Number.isFinite(start) && Number.isFinite(end)) return { start, end };
-  return null;
+function getSceneArt(sceneId) {
+  const art = getSceneUiMeta(sceneId).art;
+  return (typeof art === 'string') ? art : '';
 }
 
-function getScenePoster(sceneId) {
-  const poster = getSceneUiMeta(sceneId).poster_image;
-  return (typeof poster === 'string') ? poster : '';
-}
-
-function getSceneBackdrop(sceneId) {
-  const backdrop = getSceneUiMeta(sceneId).backdrop_image;
-  if (typeof backdrop === 'string' && backdrop) return backdrop;
-  return getScenePoster(sceneId);
+function getSceneArtWide(sceneId) {
+  const wide = getSceneUiMeta(sceneId).art_wide;
+  if (typeof wide === 'string' && wide) return wide;
+  return getSceneArt(sceneId);
 }
 
 function getScenePlaybackMeta(sceneId) {
-  const ytRaw = getSceneYouTubeId(sceneId);
-  const times = getSceneTimes(sceneId);
-  return {
-    ytRaw,
-    videoId: ytRaw ? ytRaw.split('?')[0] : '',
-    times,
-    startSec: times ? times.start : 0,
-  };
+  // Shape is unchanged so the player keeps compiling; the values are empty
+  // because there is nothing to play yet. Stage 2 replaces this function and
+  // the player it feeds with the audio transport in one go.
+  return { audioUrl: getSceneAudioUrl(sceneId), startSec: 0 };
 }
 
 // ══════════════════════════════════════════════
@@ -708,8 +706,8 @@ async function enterAuthenticatedApp(options = {}) {
 
   if (window._pendingProCheckout && !window.mirrorIsPro) {
     window._pendingProCheckout = null;
-    // Which button, so a Level 1 purchase interrupted by the signup modal
-    // resumes as a Level 1 purchase rather than silently becoming a Pro one.
+    // Which button, so a Starter Pack purchase interrupted by the signup modal
+    // resumes as a pack purchase rather than silently becoming a Pro one.
     const pendingBtnId = window._pendingCheckoutBtnId || 'pricingProBtn';
     window._pendingCheckoutBtnId = null;
     setTimeout(function() {
@@ -789,7 +787,7 @@ const BillingPlans = {
   perMonthCents(p) {
     if (!p || p.price_cents === null || p.price_cents === undefined) return null;
     // A one-time plan has no months to divide by. Lemon Squeezy still returns
-    // an `interval` on those variants -- Mirror Level 1 comes back as
+    // an `interval` on those variants -- the one-time pack comes back as
     // interval:'year' with is_subscription:false -- so trusting interval alone
     // would price a $1 purchase at $0.08.
     if (!p.is_subscription) return p.price_cents;
@@ -890,11 +888,11 @@ const BillingPlans = {
       b.title = none ? 'Pricing is unavailable right now' : '';
     });
 
-    // Level 1 is shown only when the server actually has that plan configured.
+    // The Starter Pack is shown only when the server has that plan configured.
     // An environment without POLAR_LEVEL1_PRODUCT_ID (or its Lemon Squeezy
-    // equivalent) serves no level1 plan, and a visible button there would open
+    // equivalent) serves no starter plan, and a visible button there would open
     // a checkout that 400s.
-    const lvl1 = loading ? null : this.get('level1');
+    const lvl1 = loading ? null : this.get('starter');
     const lvl1Wrap = document.getElementById('pricingLevel1Wrap');
     if (lvl1Wrap) lvl1Wrap.hidden = !lvl1;
     const lvl1Btn = document.getElementById('pricingLevel1Btn');
@@ -903,8 +901,8 @@ const BillingPlans = {
       // product repriced in the dashboard does not leave a stale "$1" here.
       const amount = this.money(lvl1.price_cents);
       lvl1Btn.textContent = amount
-        ? ('Buy Level 1 · ' + amount)
-        : 'Buy Level 1';
+        ? ('Starter Pack · ' + amount)
+        : 'Starter Pack';
     }
   },
 };
@@ -942,7 +940,7 @@ onClick('heroStartBtn',    () => openAuthModal('register'));
 onClick('pricingFreeBtn',  () => openAuthModal('register'));
 // One checkout path for every plan.
 //
-// The server is asked by PLAN KEY ('monthly' / 'yearly' / 'level1') rather than
+// The server is asked by PLAN KEY ('monthly' / 'yearly' / 'starter') rather than
 // by a provider identifier. Ids used to be hardcoded here, which meant a
 // live-key swap failed every checkout with "Invalid variant" -- the ids stayed
 // valid-looking, they just belonged to the test store. Then they came from
@@ -1000,12 +998,16 @@ async function startCheckout(planKey, btnId, idleLabel) {
 onClick('pricingProBtn', () =>
   startCheckout(BillingPlans.activeBilling(), 'pricingProBtn', 'Go pro'));
 
-// The $1 one-time Level 1 purchase. The plan has been configured server-side
-// and served by /api/billing/plans all along, but nothing in either shell could
+// The $1 one-time Starter Pack. The plan has been configured server-side and
+// served by /api/billing/plans all along, but nothing in either shell could
 // ever ask for it: the only checkout path resolved its plan from the
-// monthly/yearly pricing pill, so `level1` was unreachable from the browser.
+// monthly/yearly pricing pill, so it was unreachable from the browser.
+//
+// The element ids still say Level1. They are hidden DOM on the pricing card
+// and stage 7 rewrites that card wholesale; renaming them here would churn
+// three files for no behaviour change.
 onClick('pricingLevel1Btn', () =>
-  startCheckout('level1', 'pricingLevel1Btn', 'Buy Level 1 · $1'));
+  startCheckout('starter', 'pricingLevel1Btn', 'Starter Pack · $1'));
 
 // ══════════════════════════════════════════════
 // AUTH ORCHESTRATION — tab switching
@@ -1157,7 +1159,7 @@ async function loadScenes() {
   const dailyEl = document.getElementById('homeDailyTitle');
   if (dailyEl && userProfile.daily_scene_id && scenes[userProfile.daily_scene_id]) {
     const s = scenes[userProfile.daily_scene_id];
-    dailyEl.textContent = s.title || s.movie || userProfile.daily_scene_id;
+    dailyEl.textContent = s.title || userProfile.daily_scene_id;
   }
 }
 
@@ -1214,15 +1216,15 @@ function makeCard(id, s) {
       <span>${owned ? `Level ${LEVEL_MAP[id]} Required` : 'Upgrade to unlock'}</span>
     </div>` : ''}
     <div class="card-top" ${isDaily ? 'style="margin-top:18px"' : ''}>
-      <span class="movie-year">${s.year}</span>
+      <span class="scene-genre">${s.genre || ''}</span>
       <div style="display:flex;gap:6px;align-items:center">
         ${s.mature ? '<span class="badge mature">18+</span>' : ''}
         <span class="badge ${s.difficulty.toLowerCase()}">${s.difficulty}</span>
       </div>
     </div>
     ${pb ? `<div class="pb-badge-row"><span class="pb-badge">&#11088; PB: ${Math.round(pb)}%</span></div>` : ''}
-    <div class="card-movie">${s.movie}</div>
-    <div class="card-quote">&ldquo;${s.quote}&rdquo;</div>
+    <div class="card-movie">${s.title}</div>
+    <div class="card-quote">&ldquo;${s.line}&rdquo;</div>
     <div class="card-foot">
       <span class="card-actor">${s.actor}</span>
       <span class="card-cta">
@@ -1886,7 +1888,7 @@ function showScore(data) {
   const pct = data.sync_score;
   renderScoreDisplay({
     data: data,
-    hasYt: !!getSceneYouTubeId(activeScene),
+    hasYt: !!getSceneAudioUrl(activeScene),
     helpers: {
       animateNum: animateNum,
     },
@@ -2915,7 +2917,7 @@ function onYTStateChange(e) {
 function startEndCheck() {
   ytEndInterval = startYouTubeEndCheck({
     getPlayer: function() { return ytPlayer; },
-    getTimes: function() { return getSceneTimes(activeScene); },
+    getTimes: function() { return null; },
     onEnded: showReplayLine,
     setIntervalFn: setInterval,
     stopCurrent: stopEndCheck,
@@ -2963,7 +2965,7 @@ async function loadChallengePage(cid) {
     activeChallenge = await r.json();
     setText('chlgChallenger', activeChallenge.challenger_username);
     setText('chlgScoreVal', Math.round(activeChallenge.score_to_beat));
-    setText('chlgMovie', activeChallenge.scene.movie || '');
+    setText('chlgMovie', activeChallenge.scene.title || '');
     const noteEl = el('chlgAuthNote');
     if (authToken) {
       const ok = await verifyToken();
@@ -3026,8 +3028,8 @@ async function createChallenge() {
     if (!r.ok) throw new Error('Failed');
     const data = await r.json();
     const challengeUrl = resolveAppUrl(data.url);
-    const movie = scenes[activeScene]?.movie || 'MIRROR';
-    const msg   = `I scored ${score}% on ${movie} in MIRROR! Can you beat it? ${challengeUrl}`;
+    const sceneTitle = scenes[activeScene]?.title || 'MIRROR';
+    const msg   = `I scored ${score}% on ${sceneTitle} in MIRROR! Can you beat it? ${challengeUrl}`;
     setText('chlgLinkInput', challengeUrl);
     el('btnCopyLink').onclick = () => {
       navigator.clipboard.writeText(challengeUrl).then(() => {
@@ -3105,7 +3107,7 @@ async function openLevelPanel(level) {
       formatAvgPb: formatAvgPb,
       getPositiveSceneScores: getPositiveSceneScores,
       getSceneColor: getSceneColor,
-      getScenePoster: getScenePoster,
+      getSceneArt: getSceneArt,
       setHtmlIfPresent: setHtmlIfPresent,
       setTextIfPresent: setTextIfPresent,
     },
@@ -3159,21 +3161,21 @@ function renderHeroFeatured() {
     || dailyChallenge.scene;
   if (!s) return;
 
-  const heroImg = getSceneBackdrop(sid);
+  const heroImg = getSceneArtWide(sid);
   const posterImg = document.getElementById('heroPosterImg');
   if (posterImg && heroImg) {
     posterImg.src = heroImg;
-    posterImg.alt = s.movie;
+    posterImg.alt = s.title;
   }
 
   const titleEl = document.getElementById('heroTitle');
-  if (titleEl) titleEl.textContent = s.movie.toUpperCase();
+  if (titleEl) titleEl.textContent = s.title.toUpperCase();
 
   const yearEl = document.getElementById('heroYear');
-  if (yearEl) yearEl.textContent = s.year || '';
+  if (yearEl) yearEl.textContent = s.genre || '';
 
   const quoteEl = document.getElementById('heroQuote');
-  if (quoteEl) quoteEl.textContent = s.quote || '';
+  if (quoteEl) quoteEl.textContent = s.line || '';
 }
 
 // Hero play button → open the next undone line of the Daily Take
@@ -3215,7 +3217,7 @@ function renderCarousel() {
   sceneIds.forEach((sid, i) => {
     const s = scenes[sid];
     if (!s) return;
-    const poster = getScenePoster(sid);
+    const poster = getSceneArt(sid);
 
     const card = document.createElement('div');
     card.className = 'carousel-card';
@@ -3228,7 +3230,7 @@ function renderCarousel() {
     if (poster) {
       const img = document.createElement('img');
       img.src = poster;
-      img.alt = s.movie;
+      img.alt = s.title;
       img.loading = 'lazy';
       posterDiv.appendChild(img);
 
@@ -3314,7 +3316,7 @@ function renderCarousel() {
     const c = cards[cfState.center];
     const titleEl = document.getElementById('coverflowTitle');
     const actorEl = document.getElementById('coverflowActor');
-    if (titleEl && c) titleEl.textContent = c.scene.movie || c.scene.title || '';
+    if (titleEl && c) titleEl.textContent = c.scene.title || '';
     if (actorEl && c) actorEl.textContent = (c.scene.actor || '') + (c.scene.difficulty ? ' · ' + c.scene.difficulty : '');
   }
 
@@ -3380,7 +3382,7 @@ async function renderWeakWords() {
     for (const entry of history) {
       const scene = scenes[entry.scene_id];
       if (!scene) continue;
-      const expected = (scene.quote || '').toLowerCase().replace(/[^\w\s']/g, '').split(/\s+/).filter(Boolean);
+      const expected = (scene.line || '').toLowerCase().replace(/[^\w\s']/g, '').split(/\s+/).filter(Boolean);
       // We don't have word-level data from history alone, so score each scene's words
       // by comparing the scene's sync_score — lower score = weaker words
       const score = entry.sync_score || 0;
@@ -3443,7 +3445,7 @@ const WordsController = {
     const ids = userProfile.translations_unlocked || [];
     this.scenes = ids.map(id => ({
       id,
-      movie: (scenes && scenes[id] && (scenes[id].movie || scenes[id].title)) || id,
+      title: (scenes && scenes[id] && (scenes[id].title || scenes[id].title)) || id,
     }));
     this.sceneIdx = 0;
     this.mastery  = {};
@@ -3456,7 +3458,7 @@ const WordsController = {
     const cont = document.getElementById('wordsScenePills');
     if (!cont) return;
     cont.innerHTML = this.scenes.map((s, i) =>
-      `<button class="words-scene-pill${i === this.sceneIdx ? ' active' : ''}" data-idx="${i}">${s.movie}</button>`
+      `<button class="words-scene-pill${i === this.sceneIdx ? ' active' : ''}" data-idx="${i}">${s.title}</button>`
     ).join('');
     cont.querySelectorAll('.words-scene-pill').forEach(btn => {
       btn.addEventListener('click', () => {
@@ -3466,7 +3468,7 @@ const WordsController = {
         cont.querySelectorAll('.words-scene-pill').forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
         const targetId = this.scenes[idx].id;
-        console.log('[WordsController] pill click → loadScene scene_id:', JSON.stringify(targetId), 'idx:', idx, 'movie:', this.scenes[idx].movie);
+        console.log('[WordsController] pill click → loadScene scene_id:', JSON.stringify(targetId), 'idx:', idx, 'title:', this.scenes[idx].title);
         this.loadScene(targetId);
       });
     });
@@ -3980,7 +3982,7 @@ const RanksController = {
     if (!d) return null;
     return {
       title: 'Mirror',
-      text: `I'm better than ${d.percentile}% of Mirror users! 🎬 ${d.scenes_completed} scenes completed · ${d.streak}-day streak · ${d.weekly_xp} XP this week. Practice English with iconic movie scenes.`,
+      text: `I'm better than ${d.percentile}% of Mirror users! 🎬 ${d.scenes_completed} scenes completed · ${d.streak}-day streak · ${d.weekly_xp} XP this week. Practice English with original cinematic scenes.`,
       url: CANONICAL_ORIGIN + '/',
     };
   },
@@ -4165,7 +4167,7 @@ const QuizController = {
       return {
         type: 'vocab',
         typeLabel: 'Vocabulario de la escena',
-        scene: { id: item.scene, movie: item.scene.replace(/_/g,' ') },
+        scene: { id: item.scene, title: item.scene.replace(/_/g,' ') },
         question: `De la frase:\n"${item.phrase}"\n\n${item.q}`,
         options: options,
         answer: item.correct
@@ -4233,7 +4235,7 @@ const QuizController = {
         img.style.display = 'none';
       }
     }
-    if (movieLabel) movieLabel.textContent = q.scene && q.scene.movie ? q.scene.movie : '';
+    if (movieLabel) movieLabel.textContent = q.scene && q.scene.title ? q.scene.title : '';
 
     const optEl = document.getElementById('quizOptions');
     const woEl = document.getElementById('quizWordOrder');
@@ -4603,13 +4605,13 @@ const MissionsController = {
       || '';
     const dailyScene = (typeof scenes !== 'undefined' && scenes && dailySid) ? scenes[dailySid] : null;
     if (dailyMovie) {
-      const name = dailyScene ? (dailyScene.movie || dailyScene.title || dailySid) : '—';
+      const name = dailyScene ? (dailyScene.title || dailyScene.title || dailySid) : '—';
       dailyMovie.textContent = (!allDone && totalCount > 1)
         ? (name + ' · line ' + Math.min(doneCount + 1, totalCount) + ' of ' + totalCount)
         : name;
     }
     if (dailyQuote) {
-      const q = dailyScene ? (dailyScene.quote || '') : '';
+      const q = dailyScene ? (dailyScene.line || '') : '';
       dailyQuote.textContent = q ? '"' + (q.length > 90 ? q.slice(0, 90) + '…' : q) + '"' : '';
     }
     if (dailyBar && totalCount)   dailyBar.style.width = Math.min(100, (doneCount / totalCount) * 100) + '%';

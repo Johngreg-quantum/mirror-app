@@ -33,8 +33,8 @@
       || scenes[lines.nextId]
       || daily.scene
       || {};
-    refs.movieEl.textContent = scene.movie || lines.nextId;
-    refs.quoteEl.textContent = scene.quote ? `\u201c${scene.quote}\u201d` : '';
+    refs.movieEl.textContent = scene.title || lines.nextId;
+    refs.quoteEl.textContent = scene.line ? `\u201c${scene.line}\u201d` : '';
     refs.actorEl.textContent = scene.actor || '';
     refs.levelEl.textContent = scene.difficulty || '';
     refs.levelEl.className = `badge ${(scene.difficulty || '').toLowerCase()}`;

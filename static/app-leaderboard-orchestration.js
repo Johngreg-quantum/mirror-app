@@ -22,7 +22,7 @@
 
       const tab = options.createElement('button');
       tab.className = 'lb-tab' + (active ? ' active' : '');
-      tab.textContent = scene.movie || sid;
+      tab.textContent = scene.title || sid;
       tab.style.setProperty('--tab-color', color);
       tab.addEventListener('click', function() { options.onTabSelected(sid); });
       refs.tabsEl.appendChild(tab);

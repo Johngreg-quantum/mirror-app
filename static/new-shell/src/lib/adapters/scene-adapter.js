@@ -17,12 +17,13 @@ function buildLevelMap(levels = []) {
 }
 
 function formatRuntime(scene) {
-  const start = Number(scene?.ui?.clip_start || 0);
-  const end = Number(scene?.ui?.clip_end || 0);
-  const seconds = Math.max(0, end - start);
+  // Was the YouTube clip's length. Stage 2 reads the generated audio's duration
+  // here; until the mp3 exists there is nothing to measure, so the card shows
+  // the genre slot instead of a runtime.
+  const seconds = Number(scene?.ui?.audio_seconds || 0);
 
   if (!seconds) {
-    return 'Clip';
+    return 'Scene';
   }
 
   return `${seconds}s`;
@@ -62,11 +63,10 @@ export function adaptSceneConfig(rawConfig, { progress = null, daily = null } = 
 
     return {
       id,
-      title: scene.movie,
-      film: scene.movie,
-      year: scene.year,
-      quote: scene.quote,
-      actor: scene.actor,
+      title: scene.title,
+      genre: scene.genre || '',
+      emotion: scene.emotion || '',
+      line: scene.line,
       level,
       levelName: LEVEL_LABELS[level] || `Level ${level}`,
       difficulty: scene.difficulty || LEVEL_LABELS[level] || 'Scene',
@@ -82,8 +82,8 @@ export function adaptSceneConfig(rawConfig, { progress = null, daily = null } = 
         ? (!unlocked.has(id) && !(enforcing && dailyIds.has(id)))
         : false,
       isDaily: dailyIds.has(id),
-      tags: [scene.actor, scene.difficulty].filter(Boolean),
-      imageUrl: scene?.ui?.poster_image || posterFallback(level),
+      tags: [scene.genre, scene.difficulty].filter(Boolean),
+      imageUrl: scene?.ui?.art || posterFallback(level),
       source: scene,
     };
   });

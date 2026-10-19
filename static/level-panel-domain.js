@@ -43,12 +43,12 @@
       return helpers.buildLevelPanelSceneCardHTML({
         color: helpers.getSceneColor(sceneId),
         locked: !unlockedSceneIds.includes(sceneId),
-        movie: scene.movie || sceneId,
+        title: scene.title || sceneId,
         pb: pb,
-        poster: helpers.getScenePoster(sceneId),
-        quote: scene.quote ? scene.quote.slice(0, 55) + (scene.quote.length > 55 ? '\u2026' : '') : '',
+        poster: helpers.getSceneArt(sceneId),
+        quote: scene.line ? scene.line.slice(0, 55) + (scene.line.length > 55 ? '\u2026' : '') : '',
         sid: sceneId,
-        year: scene.year,
+        genre: scene.genre,
       });
     }).join('');
 

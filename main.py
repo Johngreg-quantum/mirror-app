@@ -222,12 +222,37 @@ CANONICAL_BASE_URL = APP_BASE_URL or "https://mirrorspeak.app"
 # own — the gate checks only whether recording_consent_at is set.
 RECORDING_CONSENT_VERSION = "2026-08-23"
 
+def _getenv_renamed(new_name: str, old_name: str, default: str = "") -> str:
+    """Read `new_name`, falling back to the name it used to have.
+
+    The $1 product stopped being "Level 1" and became the Starter Pack, so the
+    variables holding its id were renamed to match. A rename that has to be
+    applied by hand in the Render dashboard before the next deploy is a rename
+    that takes the checkout down the one time somebody forgets, and the thing it
+    buys is tidier spelling. Both names work; the old one logs a warning so it
+    does not become permanent by silence.
+    """
+    value = os.getenv(new_name, "").strip()
+    if value:
+        return value
+    legacy = os.getenv(old_name, "").strip()
+    if legacy:
+        logger.warning(
+            "[config] %s is unset; using the old name %s. Rename it when "
+            "convenient -- the fallback is for the deploy, not forever.",
+            new_name, old_name,
+        )
+        return legacy
+    return default
+
+
 # Lemon Squeezy billing
 LS_API_KEY        = os.getenv("LEMONSQUEEZY_API_KEY", "")
 LS_SIGNING_SECRET = os.getenv("LEMONSQUEEZY_SIGNING_SECRET", "")
 LS_MONTHLY_ID     = os.getenv("LEMONSQUEEZY_MONTHLY_VARIANT_ID", "")
 LS_YEARLY_ID      = os.getenv("LEMONSQUEEZY_YEARLY_VARIANT_ID", "")
-LS_LEVEL1_ID      = os.getenv("LEMONSQUEEZY_LEVEL1_VARIANT_ID", "")
+LS_STARTER_ID     = _getenv_renamed("LEMONSQUEEZY_STARTER_VARIANT_ID",
+                                    "LEMONSQUEEZY_LEVEL1_VARIANT_ID")
 # Lemon Squeezy keeps one store id across test and live, so the previous
 # hardcoded value stays the default and nothing breaks if this is unset.
 # It reads from the environment anyway, because it is the store's number to
@@ -283,7 +308,8 @@ POLAR_ORG_SLUG       = os.getenv("POLAR_ORG_SLUG", "")
 POLAR_API_VERSION    = os.getenv("POLAR_API_VERSION", "2026-10")
 POLAR_MONTHLY_ID     = os.getenv("POLAR_MONTHLY_PRODUCT_ID", "")
 POLAR_YEARLY_ID      = os.getenv("POLAR_YEARLY_PRODUCT_ID", "")
-POLAR_LEVEL1_ID      = os.getenv("POLAR_LEVEL1_PRODUCT_ID", "")
+POLAR_STARTER_ID     = _getenv_renamed("POLAR_STARTER_PRODUCT_ID",
+                                       "POLAR_LEVEL1_PRODUCT_ID")
 
 
 def build_app_url(path: str) -> str:
@@ -365,11 +391,19 @@ def _load_scene_config() -> dict:
     return data
 
 
+# `voice` and `direction` steer the text-to-speech generator that produces the
+# scene audio; they are production notes, not something a learner reads, so
+# they never reach the client. `translation` is withheld for its own reason --
+# it unlocks after 3 attempts at 70%.
+_PRIVATE_SCENE_FIELDS = ("translation", "voice", "direction")
+
+
 def _build_public_scene_config(config: dict) -> dict:
     public_scenes = {}
     for scene_id, scene in config["scenes"].items():
         public_scene = dict(scene)
-        public_scene.pop("translation", None)
+        for field in _PRIVATE_SCENE_FIELDS:
+            public_scene.pop(field, None)
         public_scenes[scene_id] = public_scene
     public_config = dict(config)
     public_config["scenes"] = public_scenes
@@ -486,15 +520,19 @@ def local_yesterday(tz_name) -> str:
 # session, not a daily habit: the thing you are asking someone to do every
 # single evening has to be short enough that doing it is never a decision.
 #
-# So the Daily Take is three SHORT lines. The pool is every scene whose quote is
-# at most DAILY_MAX_WORDS words and whose clip runs at most
-# DAILY_MAX_CLIP_SECONDS -- computed from scene_config.json rather than written
+# So the Daily Take is three SHORT lines. The pool is every scene whose line is
+# at most DAILY_MAX_WORDS words and whose audio runs at most
+# DAILY_MAX_AUDIO_SECONDS -- computed from scene_config.json rather than written
 # out here, so adding a short scene puts it in the rotation with no code change
 # and nobody has to remember that a second list exists.
+#
+# The second half of that is dormant: the duration used to come from the
+# YouTube clip's start and end, and it comes back in stage 2 read from the
+# generated mp3. Until then _build_daily_pool() filters on word count alone.
 
 DAILY_LINE_COUNT        = 3
 DAILY_MAX_WORDS         = 10
-DAILY_MAX_CLIP_SECONDS  = 20
+DAILY_MAX_AUDIO_SECONDS = 20
 
 
 def _build_daily_pool() -> list:
@@ -504,15 +542,14 @@ def _build_daily_pool() -> list:
     selection below indexes into it and every instance must agree."""
     pool = []
     for sid, scene in SCENES.items():
-        quote = (scene.get("quote") or "").strip()
-        if not quote or len(quote.split()) > DAILY_MAX_WORDS:
+        line = (scene.get("line") or "").strip()
+        if not line or len(line.split()) > DAILY_MAX_WORDS:
             continue
-        ui = scene.get("ui") or {}
-        start, end = ui.get("clip_start"), ui.get("clip_end")
-        if not isinstance(start, (int, float)) or not isinstance(end, (int, float)):
-            continue
-        if (end - start) <= 0 or (end - start) > DAILY_MAX_CLIP_SECONDS:
-            continue
+        # The second filter used to be the YouTube clip's length. Scene audio
+        # replaces it in stage 2 and the duration check comes back then, read
+        # from the generated mp3. Until the audio exists there is nothing to
+        # measure, so word count alone decides the pool -- which for level 1,
+        # where every line is ten words or fewer, is the same answer.
         pool.append(sid)
     # A config change that emptied the pool would otherwise take the daily down
     # with it. Falling back to every scene makes that a worse daily, not a
@@ -2310,17 +2347,28 @@ async def delete_account(req: DeleteAccountRequest, user: dict = Depends(current
 # Squeezy dashboard remains the transaction record.
 #
 #   kind='pro'   ref=''          satisfies every scene
+#   kind='pack'  ref='starter'   satisfies the five starter scenes
 #   kind='level' ref='1'         satisfies every scene in that level
 #
 # Active means: not revoked, and not expired. Cancellation sets expires_at so
 # access runs to the end of the paid period; a refund sets revoked_at, which is
 # immediate. Those are different facts and the table remembers which happened.
+#
+# 'pack' is what the $1 purchase grants now. It used to grant level:1, which
+# was all twenty Beginner scenes for a dollar; the starter pack is the five
+# scenes marked starter=true in docs/original-scenes.json. 'level' stays in the
+# model because nothing is gained by removing it and a level may yet be sold on
+# its own, but no product grants it today.
 
-# Decision (c) in the spec: new users get the first few scenes free, and the
-# ~50 users who predate the gate were grandfathered to all of Level 1 by the
-# one-time backfill. No special case in the check -- the difference is entirely
-# in who holds a level entitlement.
-FREE_SCENE_COUNT = 5
+# There is no free tier. The five starter scenes used to be free to everyone,
+# which is exactly the set the $1 pack now sells -- leaving both in place would
+# have priced a dollar on scenes nobody had to pay for. Registration is still
+# free and still required; it just no longer comes with scenes attached.
+#
+# Kept as a constant rather than deleted: _free_scene_ids() is read in four
+# places and by both shells, and a tier of size zero is one number to change if
+# a free taste is ever wanted back.
+FREE_SCENE_COUNT = 0
 
 # ─── The enforcement switch ──────────────────────────────────────────────────
 # OFF by default, and it stays off until the Lemon Squeezy store is activated
@@ -2350,6 +2398,18 @@ ENFORCE_ENTITLEMENTS = os.getenv("ENFORCE_ENTITLEMENTS", "").strip().lower() in 
 
 def _free_scene_ids() -> list:
     return list(LEVELS[0]["scenes"][:FREE_SCENE_COUNT]) if LEVELS else []
+
+
+# Derived from the scene data rather than listed here, so adding a sixth
+# starter scene is an edit to docs/original-scenes.json and nothing else. Order
+# follows scene_config, which is the order both shells render.
+_STARTER_SCENE_IDS = tuple(
+    sid for sid, scene in SCENES.items() if scene.get("starter")
+)
+
+
+def _starter_scene_ids() -> list:
+    return list(_STARTER_SCENE_IDS)
 
 
 def _scene_level(scene_id: str):
@@ -2545,6 +2605,8 @@ def can_access_scene(cur, user_id: int, scene_id: str) -> bool:
     held = load_entitlements(cur, user_id)
     if "pro" in held:
         return True
+    if "pack:starter" in held and scene_id in _STARTER_SCENE_IDS:
+        return True
     lvl = _scene_level(scene_id)
     return lvl is not None and f"level:{lvl}" in held
 
@@ -2555,14 +2617,15 @@ def accessible_scene_ids(cur, user_id: int) -> list:
     Exists so /api/progress can intersect its level-progression list against
     entitlements without asking can_access_scene() 47 times, each of which
     would re-read the entitlements table."""
-    held = load_entitlements(cur, user_id)
-    free = set(_free_scene_ids())
-    pro  = "pro" in held
-    out  = []
+    held    = load_entitlements(cur, user_id)
+    free    = set(_free_scene_ids())
+    starter = set(_STARTER_SCENE_IDS) if "pack:starter" in held else set()
+    pro     = "pro" in held
+    out     = []
     for lvl in LEVELS:
         owns_level = pro or f"level:{int(lvl['level'])}" in held
         for sid in lvl["scenes"]:
-            if owns_level or sid in free:
+            if owns_level or sid in free or sid in starter:
                 out.append(sid)
     return out
 
@@ -2636,8 +2699,8 @@ def can_play_scene(cur, user_id: int, scene_id: str, challenge_id: str = "",
 
 
 _LOCKED_DETAIL = (
-    "This scene is not included in your plan. Upgrade to Mirror Pro, or buy "
-    "the level, to unlock it."
+    "This scene is not included in your plan. Upgrade to Mirror Pro to "
+    "unlock it."
 )
 
 
@@ -2662,7 +2725,7 @@ _LOCKED_DETAIL = (
 _PLAN_ROWS = (
     ("monthly", "Monthly",        ("pro",   "")),
     ("yearly",  "Yearly",         ("pro",   "")),
-    ("level1",  "Mirror Level 1", ("level", "1")),
+    ("starter", "Starter Pack",   ("pack",  "starter")),
 )
 
 
@@ -2671,10 +2734,10 @@ def _provider_product_ids() -> dict:
     if BILLING_PROVIDER == "polar":
         return {"monthly": POLAR_MONTHLY_ID,
                 "yearly":  POLAR_YEARLY_ID,
-                "level1":  POLAR_LEVEL1_ID}
+                "starter": POLAR_STARTER_ID}
     return {"monthly": LS_MONTHLY_ID,
             "yearly":  LS_YEARLY_ID,
-            "level1":  LS_LEVEL1_ID}
+            "starter": LS_STARTER_ID}
 
 
 def _configured_plans() -> list:
@@ -2949,15 +3012,16 @@ async def create_checkout(request: Request, user: dict = Depends(current_user)):
         held = load_entitlements(conn_own.cursor(), user["id"])
     finally:
         conn_own.close()
-    if "pro" in held and kind == "level":
+    # Pro contains every one-time purchase, so holding it refuses both of them.
+    if "pro" in held and kind in ("level", "pack"):
         raise HTTPException(
             status_code=409,
-            detail="Your Mirror Pro subscription already includes this level.",
+            detail="Your Mirror Pro subscription already includes this.",
         )
-    if kind == "level" and f"level:{ref}" in held:
+    if kind in ("level", "pack") and f"{kind}:{ref}" in held:
         raise HTTPException(
             status_code=409,
-            detail="You already own this level.",
+            detail="You already own this.",
         )
     if kind == "pro" and "pro" in held:
         raise HTTPException(
@@ -4080,7 +4144,7 @@ async def get_history(user: dict = Depends(current_user)):
         {
             "id":         r[0],
             "scene_id":   r[1],
-            "movie":      r[2],
+            "title":      r[2],
             "sync_score": float(r[3]) if r[3] is not None else 0.0,
             "created_at": r[4].isoformat() if hasattr(r[4], "isoformat") else r[4],
         }
@@ -4223,7 +4287,7 @@ async def submit_recording(
         conn_rl.close()
 
     scene          = SCENES[scene_id]
-    expected_quote = scene["quote"]
+    expected_line = scene["line"]
 
     # Validate and read audio
     audio_bytes = await audio.read()
@@ -4256,7 +4320,7 @@ async def submit_recording(
         if os.path.exists(tmp_path):
             os.unlink(tmp_path)
 
-    score = sync_score(expected_quote, transcription)
+    score = sync_score(expected_line, transcription)
 
     conn = get_conn()
     cur  = conn.cursor()
@@ -4276,7 +4340,7 @@ async def submit_recording(
     cur.execute(
         f"INSERT INTO scores (scene_id, movie, quote, transcription, sync_score, username, user_id) "
         f"VALUES ({PH}, {PH}, {PH}, {PH}, {PH}, {PH}, {PH})",
-        (scene_id, scene["movie"], expected_quote, transcription, score, user["username"], user["id"]),
+        (scene_id, scene["title"], expected_line, transcription, score, user["username"], user["id"]),
     )
 
     # Streak state, and the timezone every day boundary below depends on. Read
@@ -4441,7 +4505,7 @@ async def submit_recording(
     prev_division = get_division(max(0, total_points - pts_earned))
     return {
         "transcription":        transcription,
-        "expected":             expected_quote,
+        "expected":             expected_line,
         "sync_score":           score,
         "scene":                PUBLIC_SCENES[scene_id],
         "points_earned":        pts_earned,
@@ -4547,7 +4611,7 @@ async def get_leaderboard():
             streak = int(r[9]) if r[9] is not None else 0
             div    = get_division(pts)
             result[sid].append({
-                "id": r[0], "scene_id": r[1], "movie": r[2], "quote": r[3],
+                "id": r[0], "scene_id": r[1], "title": r[2], "line": r[3],
                 "transcription": r[4], "sync_score": r[5], "username": r[6] or "",
                 "created_at": r[7].isoformat() if hasattr(r[7], "isoformat") else r[7],
                 "user_points": pts,
@@ -4954,7 +5018,7 @@ async def quiz_pass(payload: dict, user: dict = Depends(current_user)):
     cur.execute(
         f"INSERT INTO scores (scene_id, movie, quote, transcription, sync_score, username, user_id) "
         f"VALUES ({PH}, {PH}, {PH}, {PH}, {PH}, {PH}, {PH})",
-        (sid, scene.get("movie", ""), scene.get("quote", ""), "[quiz pass]", granted,
+        (sid, scene.get("title", ""), scene.get("line", ""), "[quiz pass]", granted,
          user["username"], user["id"]),
     )
     conn.commit()

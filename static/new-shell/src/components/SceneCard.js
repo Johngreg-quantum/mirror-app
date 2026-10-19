@@ -7,7 +7,7 @@ export function renderSceneCard({ scene, entrySource = 'home' }) {
     h('div', { className: 'ns-scene-card__media' }, [
       h('img', {
         src: scene.imageUrl,
-        alt: `${scene.film} visual reference`,
+        alt: `${scene.title} scene art`,
       }),
       scene.isDaily ? h('span', { className: 'ns-scene-card__badge', text: 'Daily' }) : null,
     ]),
@@ -19,8 +19,8 @@ export function renderSceneCard({ scene, entrySource = 'home' }) {
         ]),
         statusPill(scene.locked ? 'Locked' : `PB ${scene.personalBest ?? '--'}`),
       ]),
-      h('p', { text: `${scene.film} (${scene.year})` }),
-      h('blockquote', { text: scene.quote }),
+      h('p', { text: [scene.genre, scene.emotion].filter(Boolean).join(' · ') }),
+      h('blockquote', { text: scene.line }),
       h('div', { className: 'ns-inline-list' }, [
         statusPill(scene.difficulty),
         statusPill(scene.runtime),

@@ -213,34 +213,15 @@ export function createSceneDetailPanel({
   const mediaSlot = h('div');
 
   function renderMedia(s) {
-    const youtubeId = s.source?.ui?.youtube_id;
-    const clipStart = Number(s.source?.ui?.clip_start || 0);
-    const clipEnd = Number(s.source?.ui?.clip_end || 0);
-
-    if (youtubeId) {
-      const src = `https://www.youtube.com/embed/${youtubeId}?start=${clipStart}&autoplay=0&rel=0&modestbranding=1`;
-      mediaSlot.replaceChildren(
-        h('div', { className: 'ns-scene-detail__video-wrap' }, [
-          h('iframe', {
-            className: 'ns-scene-detail__video',
-            src,
-            attrs: {
-              frameborder: '0',
-              allowfullscreen: '',
-              allow: 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share',
-              referrerpolicy: 'strict-origin-when-cross-origin',
-            },
-          }),
-        ]),
-      );
-      return;
-    }
-
+    // The film version embedded a YouTube player here. Stage 2 puts the scene's
+    // generated audio and its waveform in this slot; until the mp3 exists the
+    // scene art stands alone, which is also the fallback whenever audio fails
+    // to load.
     mediaSlot.replaceChildren(
       h('img', {
         className: 'ns-scene-detail__image',
         src: s.imageUrl,
-        alt: `${s.film} scene reference`,
+        alt: `${s.title} scene art`,
       }),
     );
   }
@@ -263,8 +244,8 @@ export function createSceneDetailPanel({
     detailBody.replaceChildren(
       h('p', { className: 'ns-eyebrow', text: currentScene.levelName }),
       h('h2', { text: currentScene.title }),
-      h('p', { className: 'ns-scene-detail__meta', text: `${currentScene.film} (${currentScene.year})` }),
-      h('blockquote', { text: currentScene.quote }),
+      h('p', { className: 'ns-scene-detail__meta', text: [currentScene.genre, currentScene.emotion].filter(Boolean).join(' · ') }),
+      h('blockquote', { text: currentScene.line }),
       h('div', { className: 'ns-inline-list' }, [
         statusPill(currentScene.difficulty),
         statusPill(currentScene.runtime),

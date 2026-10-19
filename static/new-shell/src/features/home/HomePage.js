@@ -211,7 +211,7 @@ function renderHomeSurface({ appState, scenes, leaderboard, profile, progressSum
                 } },
               }, [
                 h('div', { className: 'ns-cf-poster' }, [
-                  h('img', { src: scene.imageUrl, alt: scene.film }),
+                  h('img', { src: scene.imageUrl, alt: scene.title }),
                 ]),
                 h('div', { className: 'ns-cf-reflection' }, [
                   h('img', { src: scene.imageUrl, alt: '' }),
@@ -222,7 +222,7 @@ function renderHomeSurface({ appState, scenes, leaderboard, profile, progressSum
           ]),
           h('div', { className: 'ns-coverflow-info', id: 'nsCoverflowInfo' }, [
             h('div', { className: 'ns-coverflow-title', id: 'nsCoverflowTitle',
-              text: scenes[0] ? (scenes[0].film || scenes[0].title || '') : '' }),
+              text: scenes[0] ? (scenes[0].title || '') : '' }),
             h('div', { className: 'ns-coverflow-actor', id: 'nsCoverflowActor',
               text: scenes[0] ? (scenes[0].actor || '') : '' }),
           ]),

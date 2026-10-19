@@ -41,7 +41,7 @@ export function adaptPersonalBests({ progress, scenes }) {
       const scene = scenes.find((item) => item.id === sceneId);
       return {
         sceneTitle: scene?.title || sceneId,
-        film: scene?.film || sceneId,
+        title: scene?.title || sceneId,
         score: Math.round(score),
         date: 'Best',
       };
@@ -52,7 +52,7 @@ export function adaptPersonalBests({ progress, scenes }) {
 
 export function adaptRecentHistory(history) {
   return (history?.history || []).slice(0, 6).map((item) => ({
-    sceneTitle: item.movie || item.scene_id,
+    sceneTitle: item.title || item.scene_id,
     score: Math.round(item.sync_score || 0),
     delta: '',
     result: item.created_at ? new Date(item.created_at).toLocaleDateString() : 'Recent take',

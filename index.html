@@ -5716,7 +5716,7 @@
            is configured, so an environment without it shows nothing rather
            than a button that 400s. -->
       <div class="price-card-alt" id="pricingLevel1Wrap" hidden>
-        <button class="price-card-alt-btn" id="pricingLevel1Btn">Buy Level 1 · $1</button>
+        <button class="price-card-alt-btn" id="pricingLevel1Btn">Starter Pack · $1</button>
         <p class="price-card-alt-note">
           One-time. All 20 Level 1 scenes, yours to keep. No subscription.
         </p>
@@ -7188,7 +7188,7 @@ function enterAppMode() {
         const data = await res.json();
         const entries = data[bestSceneId[0]] || [];
         const scene = scenes ? scenes[bestSceneId[0]] : null;
-        const sceneTitle = scene ? (scene.movie || scene.title || bestSceneId[0]) : bestSceneId[0];
+        const sceneTitle = scene ? (scene.title || bestSceneId[0]) : bestSceneId[0];
         const lb = el('sceneLeaderboard');
         if (lb && entries.length) {
           lb.innerHTML = '<div style="padding:10px 16px 6px;font-family:DM Sans,sans-serif;font-size:10px;letter-spacing:1px;text-transform:uppercase;color:#555;">' + sceneTitle + '</div>' +
@@ -7223,17 +7223,17 @@ function enterAppMode() {
       if (hint) hint.style.display = 'none';
       if (list) list.innerHTML = ids.map(sid => {
         const scene = scenes ? scenes[sid] : null;
-        const movie = scene ? (scene.movie || scene.title || sid) : sid;
-        const quote = scene ? (scene.quote || scene.target_line || '') : '';
+        const title = scene ? (scene.title || sid) : sid;
+        const line  = scene ? (scene.line || scene.target_line || '') : '';
         const score = bestScores[sid] ? Math.round(bestScores[sid]) : 0;
         const translation = translations[sid] || '';
         return '<div style="background:rgba(255,255,255,0.02);border:0.5px solid rgba(255,255,255,0.07);border-radius:14px;overflow:hidden;">' +
           '<div style="padding:14px 16px 10px;">' +
           '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;">' +
-          '<div style="font-family:Georgia,serif;font-size:15px;color:#fff;">' + movie + '</div>' +
+          '<div style="font-family:Georgia,serif;font-size:15px;color:#fff;">' + title + '</div>' +
           '<div style="font-family:DM Sans,sans-serif;font-size:11px;font-weight:700;color:#c8a96e;background:rgba(200,169,110,0.1);border:0.5px solid rgba(200,169,110,0.3);border-radius:6px;padding:3px 8px;">' + score + '%</div>' +
           '</div>' +
-          '<div style="font-family:DM Sans,sans-serif;font-size:12px;color:#888;line-height:1.5;margin-bottom:8px;font-style:italic;">"' + (quote.length > 90 ? quote.slice(0,90)+'…' : quote) + '"</div>' +
+          '<div style="font-family:DM Sans,sans-serif;font-size:12px;color:#888;line-height:1.5;margin-bottom:8px;font-style:italic;">"' + (line.length > 90 ? line.slice(0,90)+'…' : line) + '"</div>' +
           '<div style="height:0.5px;background:rgba(255,255,255,0.06);margin-bottom:8px;"></div>' +
           '<div style="font-family:DM Sans,sans-serif;font-size:9px;letter-spacing:1px;text-transform:uppercase;color:#555;margin-bottom:4px;">🇪🇸 Spanish</div>' +
           '<div style="font-family:DM Sans,sans-serif;font-size:12px;color:#c8a96e;line-height:1.5;">"' + (translation.length > 90 ? translation.slice(0,90)+'…' : translation) + '"</div>' +
@@ -7313,7 +7313,7 @@ function buildGatewayLevel1() {
   if (strip) {
     const stripScenes = begannerScenes.slice(0,6);
     strip.innerHTML = stripScenes.map(([id,s]) => {
-      const poster = (s.ui && s.ui.poster_image) ? s.ui.poster_image : '';
+      const poster = (s.ui && s.ui.art) ? s.ui.art : '';
       const color = (s.ui && s.ui.card_color) ? s.ui.card_color : '#1a1a1a';
       return '<div class="gw-ps">' +
         (poster ? '<img src="'+poster+'" onerror="this.style.display=\'none\'">' : '') +
@@ -7329,7 +7329,7 @@ function buildGatewayLevel1() {
       const isDone = score !== null && score >= SCORE.PASS;
       const isCurrent = !isDone && Object.keys(bestScores).length > 0 && !isDone;
       const isLocked = !score && !isCurrent;
-      const poster = (s.ui && s.ui.poster_image) ? s.ui.poster_image : '';
+      const poster = (s.ui && s.ui.art) ? s.ui.art : '';
       const color = (s.ui && s.ui.card_color) ? s.ui.card_color : '#1a1a1a';
       const cls = isDone ? 't-done' : (score ? 't-current' : 't-locked');
       return `<div class="gw-tile ${cls}" onclick="event.stopPropagation(); if(typeof openModal==='function') openModal('${id}', scenes['${id}'])">` +
@@ -7339,7 +7339,7 @@ function buildGatewayLevel1() {
         (isDone ? '<div class="gw-check">✓</div>' : '') +
         (score && !isDone ? '<div class="gw-now">Now</div>' : '') +
         '<div class="gw-tile-info">' +
-          '<div class="gw-tile-title">'+(s.movie||s.title||id)+'</div>' +
+          '<div class="gw-tile-title">'+(s.title||id)+'</div>' +
           (score ? '<div class="gw-tile-score '+(isDone?'sc-green':'sc-gold')+'">'+score+'%</div>' : '') +
         '</div>' +
       '</div>';
@@ -7377,7 +7377,7 @@ function buildGatewayLevel2() {
   if (strip) {
     const stripScenes = level2Scenes.slice(0, 6);
     strip.innerHTML = stripScenes.map(([id, s]) => {
-      const poster = (s.ui && s.ui.poster_image) ? s.ui.poster_image : '';
+      const poster = (s.ui && s.ui.art) ? s.ui.art : '';
       const color = (s.ui && s.ui.card_color) ? s.ui.card_color : '#1a1a1a';
       return '<div class="gw-ps">' +
         (poster ? '<img src="' + poster + '" onerror="this.style.display=\'none\'">' : '') +
@@ -7392,7 +7392,7 @@ function buildGatewayLevel2() {
       const score = bestScores[id] ? Math.round(bestScores[id]) : null;
       const isDone = score !== null && score >= SCORE.PASS;
       const color = (s.ui && s.ui.card_color) ? s.ui.card_color : '#1a1a1a';
-      const poster = (s.ui && s.ui.poster_image) ? s.ui.poster_image : '';
+      const poster = (s.ui && s.ui.art) ? s.ui.art : '';
       const cls = isDone ? 't-done' : (score ? 't-current' : 't-locked');
       return '<div class="gw-tile ' + cls + '" onclick="event.stopPropagation(); if(typeof openModal===\'function\') openModal(\'' + id + '\', scenes[\'' + id + '\'])">' +
         (poster ? '<img src="' + poster + '" onerror="this.style.display=\'none\'">' : '') +
@@ -7401,7 +7401,7 @@ function buildGatewayLevel2() {
         (isDone ? '<div class="gw-check">✓</div>' : '') +
         (score && !isDone ? '<div class="gw-now">Now</div>' : '') +
         '<div class="gw-tile-info">' +
-          '<div class="gw-tile-title">' + (s.movie || s.title || id) + '</div>' +
+          '<div class="gw-tile-title">' + (s.title || id) + '</div>' +
           (score ? '<div class="gw-tile-score ' + (isDone ? 'sc-green' : 'sc-gold') + '">' + score + '%</div>' : '') +
         '</div>' +
       '</div>';
@@ -7443,9 +7443,9 @@ function checkLevel2Unlock() {
   function esc(str){ return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 
   function renderNode(id, s, slot, stateClasses, color){
-    var poster = (s.ui && s.ui.poster_image) ? s.ui.poster_image : '';
+    var poster = (s.ui && s.ui.art) ? s.ui.art : '';
     var safeId = String(id).replace(/'/g, "\\'");
-    var label = esc(s.movie || s.title || id);
+    var label = esc(s.title || id);
     var isDone = stateClasses.indexOf('done') !== -1;
     var isCurrent = stateClasses.indexOf('current') !== -1;
     return '<div class="lp-node ' + slot + ' ' + stateClasses.join(' ') + '"' +
@@ -7683,7 +7683,7 @@ function checkLevel2Unlock() {
 
   function posterFor(sid){
     var s = (typeof scenes !== 'undefined' && scenes) ? scenes[sid] : null;
-    return (s && s.ui && s.ui.poster_image) ? s.ui.poster_image : '';
+    return (s && s.ui && s.ui.art) ? s.ui.art : '';
   }
 
   function fetchHistory(){
@@ -7742,12 +7742,12 @@ function checkLevel2Unlock() {
     var s = (typeof scenes !== 'undefined' && scenes) ? scenes[sid] : null;
     if (!s) return '';
     var safeId = String(sid).replace(/'/g, "\\'");
-    var poster = (s.ui && s.ui.poster_image) ? s.ui.poster_image : '';
-    var title = esc(s.movie || s.title || sid);
+    var poster = (s.ui && s.ui.art) ? s.ui.art : '';
+    var title = esc(s.title || sid);
     var score = Math.round(bestScores[sid]);
-    var year = s.year ? esc(String(s.year)) : '';
+    var genre = s.genre ? esc(String(s.genre)) : '';
     var diff = s.difficulty ? esc(String(s.difficulty)) : '';
-    var meta = [year, diff].filter(Boolean).join(' · ');
+    var meta = [genre, diff].filter(Boolean).join(' · ');
     var scoreCls = score >= 60 ? 'gold' : 'muted';
     return '<div class="pp-film-row" onclick="if(typeof openModal===\'function\') openModal(\'' + safeId + '\', scenes[\'' + safeId + '\'])">' +
       '<div class="pp-film-poster">' +
@@ -7808,7 +7808,7 @@ function checkLevel2Unlock() {
     if (!s) return '';
     var safeId = String(sid).replace(/'/g, "\\'");
     var poster = posterFor(sid);
-    var title = esc(s.movie || s.title || sid);
+    var title = esc(s.title || sid);
     var color = (s.ui && s.ui.card_color) ? s.ui.card_color : '#1a1a1a';
     var locked = kind === 'locked';
     var cls = 'pp-avatar-choice ' + (locked ? 'locked' : 'unlocked') + (selected ? ' selected' : '');

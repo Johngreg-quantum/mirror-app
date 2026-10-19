@@ -76,7 +76,7 @@ def plant_score(uid, username, scene_id, score, when_utc):
         con.execute(
             "INSERT INTO scores (scene_id, movie, quote, transcription, sync_score, "
             "username, user_id, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
-            (scene_id, app.SCENES[scene_id]["movie"], app.SCENES[scene_id]["quote"],
+            (scene_id, app.SCENES[scene_id]["title"], app.SCENES[scene_id]["line"],
              "planted", score, username, uid, when_utc.strftime(UTC_FMT)),
         )
         con.commit()
@@ -116,16 +116,19 @@ def main():
     bad = []
     for sid in app.DAILY_POOL:
         s = app.SCENES[sid]
-        words = len(s["quote"].split())
-        dur = s["ui"]["clip_end"] - s["ui"]["clip_start"]
-        if words > app.DAILY_MAX_WORDS or dur > app.DAILY_MAX_CLIP_SECONDS or dur <= 0:
-            bad.append((sid, words, dur))
+        words = len(s["line"].split())
+        # The clip-duration half of the filter returns in stage 2, read from
+        # the generated audio. Word count is the whole rule until then.
+        if words > app.DAILY_MAX_WORDS:
+            bad.append((sid, words))
     check("every pooled line is short enough to do in an evening", not bad, str(bad))
     check("every pooled id is a real scene",
           all(sid in app.SCENES for sid in app.DAILY_POOL))
-    # The filter is the product promise: a 41-word monologue is not a daily.
+    # The filter is the product promise: a long line is not a daily. Every
+    # level 1 line is <= 10 words by construction, so what must be excluded
+    # is the long end of levels 2 and 3.
     check("the long scenes are excluded",
-          "titanic" not in app.DAILY_POOL and "forrest_gump" not in app.DAILY_POOL)
+          "the_heist" not in app.DAILY_POOL and "boardroom" not in app.DAILY_POOL)
 
     # ── 2. SELECTION ──────────────────────────────────────────────────────────
     print("\nselection")
@@ -434,7 +437,7 @@ def main():
                 )
 
             # Lines 1 and 2, spoken perfectly.
-            r1 = submit(set_ids[0], app.SCENES[set_ids[0]]["quote"]).json()
+            r1 = submit(set_ids[0], app.SCENES[set_ids[0]]["line"]).json()
             check("line 1 scores and reports its place in the set",
                   r1["daily"]["lines_done"] == 1 and r1["daily"]["line_index"] == 1,
                   str(r1["daily"]["lines_done"]))
@@ -445,13 +448,13 @@ def main():
                   r1["points_earned"] == app.calc_points(100.0, True),
                   "earned=%s" % r1["points_earned"])
 
-            r2 = submit(set_ids[1], app.SCENES[set_ids[1]]["quote"]).json()
+            r2 = submit(set_ids[1], app.SCENES[set_ids[1]]["line"]).json()
             check("line 2 advances the set", r2["daily"]["lines_done"] == 2)
             check("...and points at line 3", r2["daily"]["next_scene_id"] == set_ids[2])
             check("...streak still untouched", r2["streak"] == 0)
 
             # Line 3 completes the set.
-            r3 = submit(set_ids[2], app.SCENES[set_ids[2]]["quote"]).json()
+            r3 = submit(set_ids[2], app.SCENES[set_ids[2]]["line"]).json()
             d3 = r3["daily"]
             check("LINE 3 COMPLETES THE SET", d3["completed_now"] is True)
             check("...the aggregate is the three stored scores",

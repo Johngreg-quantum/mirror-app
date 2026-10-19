@@ -40,7 +40,7 @@ BASE = (sys.argv[1] if len(sys.argv) > 1 else "http://127.0.0.1:8077").rstrip("/
 DB = sys.argv[2] if len(sys.argv) > 2 else "mirror.db"
 UNENFORCED_BASE = (sys.argv[3].rstrip("/") if len(sys.argv) > 3 else "")
 
-LEVEL1_VARIANT = os.getenv("LEMONSQUEEZY_LEVEL1_VARIANT_ID", "2109931")
+STARTER_VARIANT = os.getenv("LEMONSQUEEZY_STARTER_VARIANT_ID", "2109931")
 UNKNOWN_VARIANT = "999999999"
 
 # The in-process sections import main and call can_play_scene() directly, so
@@ -207,7 +207,7 @@ def main():
         print("SQLite file not found: %s" % DB)
         sys.exit(2)
 
-    print("target %s   db %s   level1 variant %s" % (BASE, DB, LEVEL1_VARIANT))
+    print("target %s   db %s   starter variant %s" % (BASE, DB, STARTER_VARIANT))
 
     # Every gate assertion below would also pass against a build where the flag
     # is simply off and nothing is refused for a different reason. Checking
@@ -226,29 +226,29 @@ def main():
 
     # ── Signature ────────────────────────────────────────────────────────────
     print("signature")
-    code, _ = post_event("order_created", order_payload(1, 1, LEVEL1_VARIANT), sign=False)
+    code, _ = post_event("order_created", order_payload(1, 1, STARTER_VARIANT), sign=False)
     check("unsigned request is rejected", code == 401, "HTTP %s" % code)
 
     # ── REFUND CASES (written first) ─────────────────────────────────────────
     print("\nrefund")
     uid = make_user("refund")
-    post_event("order_created", order_payload(uid, "ORD-1", LEVEL1_VARIANT))
+    post_event("order_created", order_payload(uid, "ORD-1", STARTER_VARIANT))
     post_event("subscription_created", sub_payload(uid, "SUB-1"))
     before = rows(uid)
-    check("level + pro both granted before refund",
-          sorted((r[0], r[1]) for r in before) == [("level", "1"), ("pro", "")],
+    check("pack + pro both granted before refund",
+          sorted((r[0], r[1]) for r in before) == [("pack", "starter"), ("pro", "")],
           str(sorted((r[0], r[1]) for r in before)))
 
     code, _ = post_event("order_refunded", {"meta": {"custom_data": {"user_id": str(uid)}},
                                             "data": {"id": "ORD-1"}})
     after = {(r[0], r[1]): r for r in rows(uid)}
-    lvl = after.get(("level", "1"))
+    lvl = after.get(("pack", "starter"))
     pro = after.get(("pro", ""))
     check("refund returns 200", code == 200, "HTTP %s" % code)
-    check("refunded level is revoked with reason",
+    check("refunded pack is revoked with reason",
           bool(lvl) and lvl[5] is not None and lvl[6] == "refund",
           "revoked_at=%r reason=%r" % (lvl[5] if lvl else None, lvl[6] if lvl else None))
-    check("PRO ROW UNTOUCHED by a level refund",
+    check("PRO ROW UNTOUCHED by a pack refund",
           bool(pro) and pro[5] is None,
           "pro.revoked_at=%r" % (pro[5] if pro else "missing"))
     check("refunded row is kept, not deleted", lvl is not None)
@@ -266,17 +266,17 @@ def main():
     # ── ORDER GRANTS ─────────────────────────────────────────────────────────
     print("\norder_created")
     uid3 = make_user("order")
-    code, _ = post_event("order_created", order_payload(uid3, "ORD-2", LEVEL1_VARIANT))
+    code, _ = post_event("order_created", order_payload(uid3, "ORD-2", STARTER_VARIANT))
     r = rows(uid3)
-    check("grants level:1 from the configured variant",
-          code == 200 and len(r) == 1 and r[0][0] == "level" and r[0][1] == "1",
+    check("grants pack:starter from the configured variant",
+          code == 200 and len(r) == 1 and r[0][0] == "pack" and r[0][1] == "starter",
           "HTTP %s rows=%s" % (code, r))
     check("source recorded as the order",
           bool(r) and r[0][2] == "order" and r[0][3] == "ORD-2",
           "source=%r/%r" % (r[0][2], r[0][3]) if r else "")
     check("one-time grant does not expire", bool(r) and r[0][4] is None)
 
-    post_event("order_created", order_payload(uid3, "ORD-2", LEVEL1_VARIANT))
+    post_event("order_created", order_payload(uid3, "ORD-2", STARTER_VARIANT))
     check("duplicate order_created stays one row", len(rows(uid3)) == 1,
           "rows=%s" % len(rows(uid3)))
 
@@ -311,24 +311,33 @@ def main():
         cur = con.cursor()
         free = app._free_scene_ids()
         lvl1 = app.LEVELS[0]["scenes"]
-        paid_lvl1 = [s for s in lvl1 if s not in free]
+        starter = app._starter_scene_ids()
+        paid_lvl1 = [s for s in lvl1 if s not in starter]
         lvl2 = app.LEVELS[1]["scenes"] if len(app.LEVELS) > 1 else []
 
-        check("free tier is the first %d scenes" % app.FREE_SCENE_COUNT,
-              len(free) == app.FREE_SCENE_COUNT, str(free))
+        # There is no free tier any more: the five scenes that used to be
+        # free are exactly what the $1 pack sells.
+        check("free tier is empty", free == [] and app.FREE_SCENE_COUNT == 0, str(free))
+        check("the starter pack is five scenes", len(starter) == 5, str(starter))
+        check("STARTER SCENES ARE NOT FREE",
+              not set(starter) & set(free), "overlap=%s" % (set(starter) & set(free)))
 
         anon = make_user("anon")
-        check("a user with nothing can reach a free scene",
-              app.can_access_scene(cur, anon, free[0]) is True)
-        check("a user with nothing cannot reach a paid Level 1 scene",
-              app.can_access_scene(cur, anon, paid_lvl1[0]) is False)
+        check("A USER WITH NOTHING REACHES NO SCENE AT ALL",
+              not any(app.can_access_scene(cur, anon, sid) for sid in lvl1),
+              "reachable=%s" % [s for s in lvl1 if app.can_access_scene(cur, anon, s)])
+        check("a user with nothing cannot reach a starter scene",
+              app.can_access_scene(cur, anon, starter[0]) is False)
 
         holder = make_user("holder")
-        post_event("order_created", order_payload(holder, "ORD-9", LEVEL1_VARIANT))
-        check("level:1 reaches a paid Level 1 scene",
-              app.can_access_scene(cur, holder, paid_lvl1[0]) is True)
+        post_event("order_created", order_payload(holder, "ORD-9", STARTER_VARIANT))
+        check("pack:starter reaches every starter scene",
+              all(app.can_access_scene(cur, holder, sid) for sid in starter))
+        check("PACK:STARTER DOES NOT REACH THE REST OF LEVEL 1",
+              not any(app.can_access_scene(cur, holder, sid) for sid in paid_lvl1),
+              "leaked=%s" % [s for s in paid_lvl1 if app.can_access_scene(cur, holder, s)])
         if lvl2:
-            check("level:1 does NOT reach Level 2",
+            check("pack:starter does NOT reach Level 2",
                   app.can_access_scene(cur, holder, lvl2[0]) is False)
 
         post_event("order_refunded", {"meta": {"custom_data": {"user_id": str(holder)}},
@@ -337,7 +346,7 @@ def main():
               app.can_access_scene(cur, holder, paid_lvl1[0]) is False)
 
         both = make_user("both")
-        post_event("order_created", order_payload(both, "ORD-10", LEVEL1_VARIANT))
+        post_event("order_created", order_payload(both, "ORD-10", STARTER_VARIANT))
         post_event("subscription_created", sub_payload(both, "SUB-10"))
         post_event("order_refunded", {"meta": {"custom_data": {"user_id": str(both)}},
                                       "data": {"id": "ORD-10"}})
@@ -397,9 +406,9 @@ def main():
               str(app.accessible_scene_ids(cur, hole_user)))
 
         owner = make_user("owner")
-        post_event("order_created", order_payload(owner, "ORD-11", LEVEL1_VARIANT))
-        check("level:1 makes all of Level 1 accessible",
-              app.accessible_scene_ids(cur, owner) == list(lvl1),
+        post_event("order_created", order_payload(owner, "ORD-11", STARTER_VARIANT))
+        check("pack:starter makes exactly the starter scenes accessible",
+              app.accessible_scene_ids(cur, owner) == [s for s in lvl1 if s in starter],
               "%d ids" % len(app.accessible_scene_ids(cur, owner)))
 
         prouser = make_user("proaccess")
@@ -423,7 +432,12 @@ def main():
         free2 = app2._free_scene_ids()
         lvl1_2 = app2.LEVELS[0]["scenes"]
         daily2 = app2.get_daily_scene_ids()
-        paid = next(s for s in lvl1_2 if s not in free2 and s not in daily2)
+        starter2 = app2._starter_scene_ids()
+        # Must be outside the starter pack as well as outside the (now empty)
+        # free set, or the "refused" assertions below test a scene the $1
+        # purchase legitimately unlocks.
+        paid = next(s for s in lvl1_2
+                    if s not in free2 and s not in daily2 and s not in starter2)
         con.close()
 
         uname = "enttest_http"
@@ -448,9 +462,9 @@ def main():
             check("POST /api/submit REFUSES a scene the user does not own",
                   code == 403, "HTTP %s %s" % (code, body[:90]))
 
-            code, body = post_multipart("/api/submit", token, free2[0])
-            check("a free scene gets past the gate (fails later, not 403)",
-                  code != 403, "HTTP %s" % code)
+            # Nothing is free now, so the thing that must get past the gate
+            # is a scene the user actually owns. The daily is checked just
+            # below and covers the other acquisition hole.
 
             code, body = post_multipart("/api/submit", token, daily2)
             check("the daily scene gets past the gate", code != 403,
@@ -462,8 +476,8 @@ def main():
 
             code, body = get_json("/api/progress", token)
             prog = json.loads(body) if code == 200 else {}
-            check("/api/progress unlocked_scenes is the free set, not all of Level 1",
-                  prog.get("unlocked_scenes") == free2,
+            check("/api/progress unlocked_scenes is empty without a purchase",
+                  prog.get("unlocked_scenes") == free2 == [],
                   "got %s" % (prog.get("unlocked_scenes"),))
             check("/api/progress surfaces entitlements for the cosmetic lock",
                   "entitlements" in prog and "accessible_scenes" in prog,
@@ -483,14 +497,17 @@ def main():
             uid_http = con.execute("SELECT id FROM users WHERE username = ?",
                                    (uname,)).fetchone()[0]
             con.close()
-            post_event("order_created", order_payload(uid_http, "ORD-GF", LEVEL1_VARIANT))
+            post_event("order_created", order_payload(uid_http, "ORD-GF", STARTER_VARIANT))
             code, body = get_json("/api/progress", token)
             prog2 = json.loads(body) if code == 200 else {}
-            check("A GRANDFATHERED LEVEL 1 HOLDER KEEPS ALL 20 SCENES",
-                  prog2.get("unlocked_scenes") == list(lvl1_2),
+            check("A STARTER BUYER GETS EXACTLY THE FIVE SCENES",
+                  prog2.get("unlocked_scenes") == [s for s in lvl1_2 if s in starter2],
                   "%d scenes" % len(prog2.get("unlocked_scenes") or []))
+            code, _ = post_multipart("/api/submit", token, starter2[0])
+            check("and can submit a scene the pack covers", code != 403, "HTTP %s" % code)
             code, _ = post_multipart("/api/submit", token, paid)
-            check("and can submit a paid Level 1 scene", code != 403, "HTTP %s" % code)
+            check("BUT IS STILL REFUSED THE REST OF LEVEL 1", code == 403,
+                  "HTTP %s scene=%s" % (code, paid))
     except Exception as exc:
         check("HTTP enforcement check ran", False, repr(exc))
 

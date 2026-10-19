@@ -1,0 +1,551 @@
+{
+ "_about": "Mirror original scenes v1 -- 47 scenes, all written for Mirror; no film, character, actor or quote is referenced. Level 1 (20): beginner, every line <= 10 words, all eligible for the Daily Take pool; the 5 with starter=true are the $1 pack. Level 2 (20): intermediate, longer lines and connected sentences. Level 3 (7): advanced, idioms, sarcasm and fast rhythm. voice = OpenAI gpt-4o-mini-tts voice; direction = the 'instructions' text for that voice.",
+ "scenes": [
+  {
+   "id": "last_train",
+   "level": 1,
+   "title": "Last Train",
+   "genre": "Drama",
+   "emotion": "Hurt but firm",
+   "line": "If you get on that train, don't come back.",
+   "translation": "Si te subes a ese tren, no regreses.",
+   "voice": "coral",
+   "direction": "A woman on a train platform, voice shaking with hurt but completely firm. Slow, deliberate, a short pause after 'train'.",
+   "starter": true
+  },
+  {
+   "id": "fashionably_late",
+   "level": 1,
+   "title": "Fashionably Late",
+   "genre": "Comedy",
+   "emotion": "Confident, playful",
+   "line": "I'm not late. Everyone else is just early.",
+   "translation": "No llegué tarde. Los demás llegaron temprano.",
+   "voice": "ash",
+   "direction": "A charming man walking into a party late, totally unbothered, smiling as he talks. Light, playful rhythm.",
+   "starter": true
+  },
+  {
+   "id": "rooftop",
+   "level": 1,
+   "title": "Rooftop",
+   "genre": "Romance",
+   "emotion": "Nervous, sincere",
+   "line": "I almost said it a hundred times. I love you.",
+   "translation": "Casi te lo dije cien veces. Te quiero.",
+   "voice": "verse",
+   "direction": "Quiet, nervous and sincere, as if finally admitting something. Small breath before 'I love you', said softly.",
+   "starter": true
+  },
+  {
+   "id": "countdown",
+   "level": 1,
+   "title": "Countdown",
+   "genre": "Action",
+   "emotion": "Urgent",
+   "line": "We have ninety seconds. Grab the bag and run!",
+   "translation": "Tenemos noventa segundos. ¡Agarra la bolsa y corre!",
+   "voice": "onyx",
+   "direction": "Urgent and commanding, a leader in a crisis. Fast pace, sharp consonants, rising energy on 'run'.",
+   "starter": true
+  },
+  {
+   "id": "locked_door",
+   "level": 1,
+   "title": "The Locked Door",
+   "genre": "Suspense",
+   "emotion": "Whispered fear",
+   "line": "Someone was in this house. The door was locked.",
+   "translation": "Alguien estuvo en esta casa. La puerta estaba cerrada.",
+   "voice": "sage",
+   "direction": "A frightened whisper in a dark house. Slow, hushed, a pause between the two sentences.",
+   "starter": true
+  },
+  {
+   "id": "first_day",
+   "level": 1,
+   "title": "First Day",
+   "genre": "Comedy",
+   "emotion": "Nervous, friendly",
+   "line": "Hi! I'm new. Is it always this loud in here?",
+   "translation": "¡Hola! Soy nuevo. ¿Siempre hay tanto ruido aquí?",
+   "voice": "nova",
+   "direction": "Cheerful but a little nervous, someone on their first day at a busy job. Friendly, slightly fast."
+  },
+  {
+   "id": "the_promise",
+   "level": 1,
+   "title": "The Promise",
+   "genre": "Drama",
+   "emotion": "Tender",
+   "line": "I'll come back for you. I promise.",
+   "translation": "Volveré por ti. Te lo prometo.",
+   "voice": "ballad",
+   "direction": "Tender and steady, a parent saying goodbye. Warm, low, unhurried."
+  },
+  {
+   "id": "no_signal",
+   "level": 1,
+   "title": "No Signal",
+   "genre": "Thriller",
+   "emotion": "Tense",
+   "line": "No signal. No road. And the gas is almost gone.",
+   "translation": "Sin señal. Sin camino. Y casi no queda gasolina.",
+   "voice": "echo",
+   "direction": "Tense and controlled, a driver lost at night trying not to panic. Clipped phrases, worry growing on the last part."
+  },
+  {
+   "id": "champion",
+   "level": 1,
+   "title": "Champion",
+   "genre": "Sports",
+   "emotion": "Triumphant",
+   "line": "Nobody believed in us. Look at us now!",
+   "translation": "Nadie creyó en nosotros. ¡Míranos ahora!",
+   "voice": "ash",
+   "direction": "Triumphant and emotional, a team captain after a win. Loud, proud, almost laughing on 'now'."
+  },
+  {
+   "id": "wrong_number",
+   "level": 1,
+   "title": "Wrong Number",
+   "genre": "Comedy",
+   "emotion": "Confused",
+   "line": "Sorry, who is this? Why do you have my dog?",
+   "translation": "Perdón, ¿quién habla? ¿Por qué tiene a mi perro?",
+   "voice": "fable",
+   "direction": "Confused and increasingly alarmed on a phone call. Polite at first, then rising disbelief on 'my dog'."
+  },
+  {
+   "id": "the_storm",
+   "level": 1,
+   "title": "The Storm",
+   "genre": "Adventure",
+   "emotion": "Shouting over wind",
+   "line": "Hold on to the rope! Don't look down!",
+   "translation": "¡Agárrate de la cuerda! ¡No mires abajo!",
+   "voice": "onyx",
+   "direction": "Shouting over a storm to someone in danger. Loud, strong, urgent but encouraging."
+  },
+  {
+   "id": "the_letter",
+   "level": 1,
+   "title": "The Letter",
+   "genre": "Drama",
+   "emotion": "Sad, quiet",
+   "line": "I read your letter. Every word. Twice.",
+   "translation": "Leí tu carta. Cada palabra. Dos veces.",
+   "voice": "shimmer",
+   "direction": "Quiet and sad, holding back tears. Slow, with pauses between each short sentence."
+  },
+  {
+   "id": "interrogation",
+   "level": 1,
+   "title": "Interrogation",
+   "genre": "Crime",
+   "emotion": "Cold, intense",
+   "line": "You were there that night. Stop lying to me.",
+   "translation": "Estabas ahí esa noche. Deja de mentirme.",
+   "voice": "onyx",
+   "direction": "A detective, cold and intense, leaning in. Low voice, very controlled, hard stress on 'lying'."
+  },
+  {
+   "id": "surprise",
+   "level": 1,
+   "title": "Surprise",
+   "genre": "Family",
+   "emotion": "Excited",
+   "line": "Close your eyes. Okay... now open them!",
+   "translation": "Cierra los ojos. Bien... ¡ahora ábrelos!",
+   "voice": "nova",
+   "direction": "Excited and playful, about to reveal a surprise. Hushed first sentence, a pause, then a burst of joy."
+  },
+  {
+   "id": "the_deal",
+   "level": 1,
+   "title": "The Deal",
+   "genre": "Drama",
+   "emotion": "Confident",
+   "line": "Ten thousand. Final offer. Take it or leave it.",
+   "translation": "Diez mil. Última oferta. Lo tomas o lo dejas.",
+   "voice": "echo",
+   "direction": "A calm, confident negotiator. Slow and certain, each phrase landing like a decision."
+  },
+  {
+   "id": "lost_city",
+   "level": 1,
+   "title": "Lost City",
+   "genre": "Adventure",
+   "emotion": "Amazed",
+   "line": "Do you see that? It's real. It's actually real.",
+   "translation": "¿Ves eso? Es real. Es de verdad real.",
+   "voice": "verse",
+   "direction": "Breathless wonder, an explorer seeing something incredible. Soft at first, building to amazement."
+  },
+  {
+   "id": "the_apology",
+   "level": 1,
+   "title": "The Apology",
+   "genre": "Romance",
+   "emotion": "Regretful",
+   "line": "I was wrong. I'm sorry. Please don't go.",
+   "translation": "Me equivoqué. Lo siento. Por favor, no te vayas.",
+   "voice": "coral",
+   "direction": "Regretful and vulnerable, pleading gently. Quiet, a catch in the voice on 'please'."
+  },
+  {
+   "id": "midnight_call",
+   "level": 1,
+   "title": "Midnight Call",
+   "genre": "Suspense",
+   "emotion": "Afraid",
+   "line": "Don't open the door. Whatever you hear, don't open it.",
+   "translation": "No abras la puerta. Oigas lo que oigas, no la abras.",
+   "voice": "sage",
+   "direction": "Urgent and afraid on a late-night phone call. Hushed but intense, stressing 'don't'."
+  },
+  {
+   "id": "stand_up",
+   "level": 1,
+   "title": "Stand Up",
+   "genre": "Drama",
+   "emotion": "Inspiring",
+   "line": "Tonight, we don't run. Tonight, we fight back.",
+   "translation": "Esta noche no huimos. Esta noche respondemos.",
+   "voice": "ash",
+   "direction": "An inspiring speech to a crowd. Strong, rising energy, a pause between the two sentences."
+  },
+  {
+   "id": "coffee_shop",
+   "level": 1,
+   "title": "Coffee Shop",
+   "genre": "Romance",
+   "emotion": "Flirty",
+   "line": "Is this seat taken, or saved for me?",
+   "translation": "¿Este asiento está ocupado, o lo guardas para mí?",
+   "voice": "verse",
+   "direction": "Flirty and relaxed, smiling in a coffee shop. Easy, warm, a little teasing."
+  },
+  {
+   "id": "job_offer",
+   "level": 2,
+   "title": "The Offer",
+   "genre": "Drama",
+   "emotion": "Excited but unsure",
+   "line": "They offered me the job in New York. I asked for one night to think.",
+   "translation": "Me ofrecieron el trabajo en Nueva York. Pedí una noche para pensarlo.",
+   "voice": "nova",
+   "direction": "Excited and overwhelmed at the same time, telling a close friend. Fast at first, slowing down and unsure at the end."
+  },
+  {
+   "id": "the_heist",
+   "level": 2,
+   "title": "The Plan",
+   "genre": "Crime",
+   "emotion": "Cool, in control",
+   "line": "Nobody touches the alarm. Nobody uses real names. We're in and out in four minutes.",
+   "translation": "Nadie toca la alarma. Nadie usa nombres reales. Entramos y salimos en cuatro minutos.",
+   "voice": "onyx",
+   "direction": "A calm crew leader giving final instructions. Low, steady, every sentence clipped and certain."
+  },
+  {
+   "id": "old_friends",
+   "level": 2,
+   "title": "Old Friends",
+   "genre": "Comedy",
+   "emotion": "Teasing, warm",
+   "line": "You haven't changed at all. You're still the worst driver I have ever met.",
+   "translation": "No has cambiado nada. Sigues siendo el peor conductor que he conocido.",
+   "voice": "ash",
+   "direction": "Two old friends reunited. Warm, laughing, affectionate teasing; a big smile you can hear."
+  },
+  {
+   "id": "good_news",
+   "level": 2,
+   "title": "Good News",
+   "genre": "Drama",
+   "emotion": "Relief",
+   "line": "The doctor says she's going to be fine. I can finally breathe again.",
+   "translation": "El doctor dice que ella va a estar bien. Por fin puedo respirar otra vez.",
+   "voice": "shimmer",
+   "direction": "Overwhelming relief after a long, scary night. Shaky at first, then a long exhale and a soft laugh."
+  },
+  {
+   "id": "blind_date",
+   "level": 2,
+   "title": "Blind Date",
+   "genre": "Romance",
+   "emotion": "Shy, honest",
+   "line": "I'll be honest, I almost cancelled tonight. But I'm really glad I didn't.",
+   "translation": "Te seré honesto, casi cancelo esta noche. Pero me alegra mucho no haberlo hecho.",
+   "voice": "verse",
+   "direction": "Shy and honest on a first date. A little awkward at the start, warm and sincere at the end."
+  },
+  {
+   "id": "final_round",
+   "level": 2,
+   "title": "Final Round",
+   "genre": "Sports",
+   "emotion": "Intense, motivating",
+   "line": "Your legs are tired and your lungs are burning, but you are not done yet.",
+   "translation": "Tus piernas están cansadas y tus pulmones arden, pero todavía no has terminado.",
+   "voice": "onyx",
+   "direction": "A coach in the corner before the last round. Intense, close, building energy to 'not done yet'."
+  },
+  {
+   "id": "the_secret",
+   "level": 2,
+   "title": "The Secret",
+   "genre": "Suspense",
+   "emotion": "Hushed, serious",
+   "line": "If I tell you what I saw, you have to promise you'll never repeat it.",
+   "translation": "Si te digo lo que vi, tienes que prometer que nunca lo repetirás.",
+   "voice": "sage",
+   "direction": "Hushed and serious, looking around before speaking. Slow, careful, low volume."
+  },
+  {
+   "id": "moving_out",
+   "level": 2,
+   "title": "Moving Out",
+   "genre": "Drama",
+   "emotion": "Nostalgic",
+   "line": "This apartment was too small, too loud, and the best home I ever had.",
+   "translation": "Este apartamento era muy pequeño, muy ruidoso, y el mejor hogar que he tenido.",
+   "voice": "coral",
+   "direction": "Nostalgic, standing in an empty apartment. Amused at first, then soft and emotional on the last phrase."
+  },
+  {
+   "id": "lost_luggage",
+   "level": 2,
+   "title": "Lost Luggage",
+   "genre": "Comedy",
+   "emotion": "Frustrated, funny",
+   "line": "So my suitcase went to Paris, and I went to Chicago. Great start to my vacation.",
+   "translation": "Así que mi maleta se fue a París, y yo a Chicago. Gran comienzo de mis vacaciones.",
+   "voice": "fable",
+   "direction": "Frustrated but trying to laugh about it at an airport desk. Dry, tired, comic timing on the last sentence."
+  },
+  {
+   "id": "the_pilot",
+   "level": 2,
+   "title": "Mayday",
+   "genre": "Action",
+   "emotion": "Calm under pressure",
+   "line": "We lost engine two. I'm going to land this plane, so everybody hold on.",
+   "translation": "Perdimos el motor dos. Voy a aterrizar este avión, así que todos agárrense.",
+   "voice": "echo",
+   "direction": "A pilot in an emergency, impossibly calm and clear. Even pace, reassuring, firm on 'hold on'."
+  },
+  {
+   "id": "missed_games",
+   "level": 2,
+   "title": "Missed Games",
+   "genre": "Family",
+   "emotion": "Regretful, warm",
+   "line": "I wasn't there for your games, and I'm sorry. Let me be there now.",
+   "translation": "No estuve en tus partidos, y lo siento. Déjame estar ahora.",
+   "voice": "ballad",
+   "direction": "A father apologizing to his grown son. Slow, heavy with regret, hopeful at the end."
+  },
+  {
+   "id": "the_window",
+   "level": 2,
+   "title": "The Window",
+   "genre": "Crime",
+   "emotion": "Sudden realization",
+   "line": "The window was broken from the inside. Whoever did this never left the house.",
+   "translation": "La ventana se rompió desde adentro. Quien hizo esto nunca salió de la casa.",
+   "voice": "echo",
+   "direction": "A detective figuring it out in real time. Thoughtful, then a chill of realization on the second sentence."
+  },
+  {
+   "id": "wedding_toast",
+   "level": 2,
+   "title": "The Toast",
+   "genre": "Comedy",
+   "emotion": "Warm, joking",
+   "line": "When they first met, she said he was annoying. Clearly, she was half right.",
+   "translation": "Cuando se conocieron, ella dijo que él era molesto. Claramente, tenía media razón.",
+   "voice": "nova",
+   "direction": "A best friend giving a wedding toast. Warm and confident, pausing for the laugh after 'half right'."
+  },
+  {
+   "id": "night_shift",
+   "level": 2,
+   "title": "Night Shift",
+   "genre": "Drama",
+   "emotion": "Quiet intensity",
+   "line": "I work two jobs so you can have the chances I never had.",
+   "translation": "Trabajo en dos empleos para que tengas las oportunidades que yo nunca tuve.",
+   "voice": "coral",
+   "direction": "A tired mother speaking to her teenager, quietly but with deep intensity. No shouting, every word meant."
+  },
+  {
+   "id": "the_audition",
+   "level": 2,
+   "title": "The Audition",
+   "genre": "Drama",
+   "emotion": "Pleading",
+   "line": "I've practiced this every night for a year. Please, just give me one chance.",
+   "translation": "Lo he practicado cada noche durante un año. Por favor, solo dame una oportunidad.",
+   "voice": "shimmer",
+   "direction": "Desperate but dignified, asking for one more chance. Voice slightly trembling, strong on 'one chance'."
+  },
+  {
+   "id": "oxygen_low",
+   "level": 2,
+   "title": "Oxygen Low",
+   "genre": "Sci-Fi",
+   "emotion": "Tense",
+   "line": "Oxygen is at forty percent. If we don't fix this now, we won't get another try.",
+   "translation": "El oxígeno está al cuarenta por ciento. Si no arreglamos esto ahora, no habrá otro intento.",
+   "voice": "sage",
+   "direction": "An astronaut in a failing station, tense but focused. Quick, clear, controlled fear."
+  },
+  {
+   "id": "first_dance",
+   "level": 2,
+   "title": "First Dance",
+   "genre": "Romance",
+   "emotion": "Playful",
+   "line": "I don't know how to dance. Teach me, and I promise not to step on you.",
+   "translation": "No sé bailar. Enséñame, y prometo no pisarte.",
+   "voice": "verse",
+   "direction": "Playful and a little embarrassed, inviting someone to dance. Light, smiling, gentle laugh at the end."
+  },
+  {
+   "id": "the_rival",
+   "level": 2,
+   "title": "The Rival",
+   "genre": "Sports",
+   "emotion": "Competitive",
+   "line": "You beat me last year. This year, I came here ready for you.",
+   "translation": "Me ganaste el año pasado. Este año vine preparado para ti.",
+   "voice": "ash",
+   "direction": "Face to face with a rival before the match. Calm, confident, a quiet threat in the second sentence."
+  },
+  {
+   "id": "runaway",
+   "level": 2,
+   "title": "Runaway",
+   "genre": "Thriller",
+   "emotion": "Urgent whisper",
+   "line": "Leave your phone, take only cash, and don't tell anyone where you're going.",
+   "translation": "Deja tu teléfono, lleva solo efectivo y no le digas a nadie a dónde vas.",
+   "voice": "sage",
+   "direction": "An urgent whisper, helping someone escape. Fast, low, each instruction separated."
+  },
+  {
+   "id": "grandmas_kitchen",
+   "level": 2,
+   "title": "Grandma's Kitchen",
+   "genre": "Family",
+   "emotion": "Warm, loving",
+   "line": "She taught me to cook without a recipe. Just taste it, and trust yourself.",
+   "translation": "Ella me enseñó a cocinar sin receta. Solo pruébalo, y confía en ti.",
+   "voice": "ballad",
+   "direction": "Warm and loving, remembering a grandmother. Soft smile in the voice, slower on the last sentence."
+  },
+  {
+   "id": "boardroom",
+   "level": 3,
+   "title": "The Boardroom",
+   "genre": "Drama",
+   "emotion": "Blunt",
+   "line": "Let's not beat around the bush. The numbers are bad, and someone dropped the ball.",
+   "translation": "No demos rodeos. Los números son malos y alguien cometió un error grave.",
+   "voice": "echo",
+   "direction": "A blunt executive in a tense meeting. Direct, fast, no warmth; stress on 'dropped the ball'.",
+   "idioms": [
+    "beat around the bush",
+    "drop the ball"
+   ]
+  },
+  {
+   "id": "roommate",
+   "level": 3,
+   "title": "The Roommate",
+   "genre": "Comedy",
+   "emotion": "Sarcastic",
+   "line": "Oh, great, you finished the milk again. Truly, you're a gift to this apartment.",
+   "translation": "Ah, genial, otra vez te acabaste la leche. De verdad, eres un regalo para este apartamento.",
+   "voice": "fable",
+   "direction": "Heavy, dry sarcasm. Fake cheerful tone that clearly means the opposite; slow on 'truly'.",
+   "idioms": [
+    "sarcasm"
+   ]
+  },
+  {
+   "id": "the_comeback",
+   "level": 3,
+   "title": "The Comeback",
+   "genre": "Sports",
+   "emotion": "Confident, cool",
+   "line": "Everyone wrote me off. Funny thing is, I was just getting started.",
+   "translation": "Todos me dieron por acabado. Lo curioso es que apenas estaba empezando.",
+   "voice": "ash",
+   "direction": "Cool, quiet confidence after proving everyone wrong. Relaxed pace, a small smile on 'funny thing is'.",
+   "idioms": [
+    "write someone off"
+   ]
+  },
+  {
+   "id": "cold_feet",
+   "level": 3,
+   "title": "Cold Feet",
+   "genre": "Comedy",
+   "emotion": "Nervous, rambling",
+   "line": "I'm not getting cold feet. I'm just... reconsidering every decision I've ever made.",
+   "translation": "No me estoy arrepintiendo. Solo estoy... reconsiderando cada decisión que he tomado.",
+   "voice": "nova",
+   "direction": "Nervous groom or bride rambling before the ceremony. Fast, breathless, comic pause before 'reconsidering'.",
+   "idioms": [
+    "get cold feet"
+   ]
+  },
+  {
+   "id": "the_bluff",
+   "level": 3,
+   "title": "The Bluff",
+   "genre": "Crime",
+   "emotion": "Smug",
+   "line": "You're bluffing. I can read you like a book, and it's a very short book.",
+   "translation": "Estás fanfarroneando. Te leo como un libro, y es un libro muy corto.",
+   "voice": "onyx",
+   "direction": "Smug and amused at a card table. Slow, enjoying every word, a slight laugh on 'very short'.",
+   "idioms": [
+    "read someone like a book",
+    "bluff"
+   ]
+  },
+  {
+   "id": "done_waiting",
+   "level": 3,
+   "title": "Done Waiting",
+   "genre": "Drama",
+   "emotion": "Controlled anger",
+   "line": "I've bent over backwards for this company, and I'm done biting my tongue.",
+   "translation": "Me he esforzado al máximo por esta empresa, y ya no me voy a quedar callado.",
+   "voice": "coral",
+   "direction": "Controlled anger finally released in an office. Firm, rising, sharp on 'done'.",
+   "idioms": [
+    "bend over backwards",
+    "bite your tongue"
+   ]
+  },
+  {
+   "id": "lucky",
+   "level": 3,
+   "title": "Lucky",
+   "genre": "Thriller",
+   "emotion": "Cool, cutting",
+   "line": "Go ahead and call it luck, if that helps you sleep at night.",
+   "translation": "Adelante, llámalo suerte, si eso te ayuda a dormir por las noches.",
+   "voice": "verse",
+   "direction": "Cool and cutting, a quiet put-down to a rival. Low, unhurried, a hint of a smile.",
+   "idioms": [
+    "if it helps you sleep at night"
+   ]
+  }
+ ]
+}

@@ -1,7 +1,7 @@
 (function() {
   function buildHistoryItemHTML(item) {
     return `<div class="history-item${item.isImproved ? ' improved' : ''}">
-      <span class="history-movie">${item.movie}</span>
+      <span class="history-movie">${item.title}</span>
       <span class="history-date">${item.date}</span>
       <span class="history-score" style="color:${item.color}">${item.score}<sup style="font-size:11px;opacity:.7">%</sup></span>
       ${item.isImproved ? '<span class="history-improved-badge">\u2191 Improved</span>' : ''}
@@ -11,7 +11,7 @@
   function buildPersonalBestItemHTML(item) {
     return `<div class="pb-item">
       <div class="pb-rank">#${item.rank}</div>
-      <div class="pb-movie">${item.movie}</div>
+      <div class="pb-movie">${item.title}</div>
       ${item.improved ? '<div class="pb-arrow">&#8593;</div>' : ''}
       <div class="pb-score" style="color:${item.color}">${item.score}<sup>%</sup></div>
     </div>`;
@@ -23,7 +23,7 @@
 
   function buildLevelPanelSceneCardHTML(card) {
     const posterHTML = card.poster
-      ? `<img src="${card.poster}" alt="${card.movie}" loading="lazy">`
+      ? `<img src="${card.poster}" alt="${card.title}" loading="lazy">`
       : `<div class="sc-poster-ph" style="background:linear-gradient(150deg,${card.color},#111)"></div>`;
 
     let scoreHTML = '';
@@ -38,14 +38,14 @@
       <div class="sc-poster">
         ${posterHTML}
         <div class="sc-poster-overlay"></div>
-        ${card.year ? `<span class="sc-year">${card.year}</span>` : ''}
+        ${card.genre ? `<span class="sc-year">${card.genre}</span>` : ''}
         ${scoreHTML}
         ${card.locked ? '' : '<div class="sc-play"><svg width="14" height="14" viewBox="0 0 24 24" fill="#fff"><path d="M8 5v14l11-7z"/></svg></div>'}
       </div>
       <div class="sc-info">
         <div class="sc-accent" style="background:${card.color}"></div>
-        <div class="sc-movie">${card.movie}</div>
-        <div class="sc-quote">&ldquo;${card.quote}&rdquo;</div>
+        <div class="sc-movie">${card.title}</div>
+        <div class="sc-quote">&ldquo;${card.line}&rdquo;</div>
       </div>
     </div>`;
   }

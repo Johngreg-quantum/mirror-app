@@ -52,14 +52,14 @@ os.environ["POLAR_WEBHOOK_SECRET"] = SECRET
 os.environ["POLAR_SERVER"] = "sandbox"
 os.environ["POLAR_MONTHLY_PRODUCT_ID"] = "39ce5af3-a866-49fa-beb6-6bcafdcf94b6"
 os.environ["POLAR_YEARLY_PRODUCT_ID"] = "4b015299-dacc-441a-8790-a1ebb417914e"
-os.environ["POLAR_LEVEL1_PRODUCT_ID"] = "8970ad64-ec03-494a-b18f-7a5547f48d14"
+os.environ["POLAR_STARTER_PRODUCT_ID"] = "8970ad64-ec03-494a-b18f-7a5547f48d14"
 os.environ["ENFORCE_ENTITLEMENTS"] = "true"
 
 import main as app   # noqa: E402
 
 MONTHLY = os.environ["POLAR_MONTHLY_PRODUCT_ID"]
 YEARLY  = os.environ["POLAR_YEARLY_PRODUCT_ID"]
-LEVEL1  = os.environ["POLAR_LEVEL1_PRODUCT_ID"]
+STARTER  = os.environ["POLAR_STARTER_PRODUCT_ID"]
 
 results = []
 
@@ -166,15 +166,15 @@ def main():
           app.POLAR_API_BASE == "https://sandbox-api.polar.sh", app.POLAR_API_BASE)
     keys = {p["key"]: p["product_id"] for p in app._configured_plans()}
     check("all three plans are configured from env",
-          keys == {"monthly": MONTHLY, "yearly": YEARLY, "level1": LEVEL1}, str(keys))
+          keys == {"monthly": MONTHLY, "yearly": YEARLY, "starter": STARTER}, str(keys))
     check("a product id maps to the right grant",
-          app._grant_for_variant(LEVEL1) == ("level", "1")
+          app._grant_for_variant(STARTER) == ("pack", "starter")
           and app._grant_for_variant(MONTHLY) == ("pro", ""), "")
     check("an unknown product grants nothing",
           app._grant_for_variant("00000000-0000-0000-0000-000000000000") is None)
     check("plan_key resolves, and variant_id still resolves as an alias",
-          app._resolve_plan("level1", None)["product_id"] == LEVEL1
-          and app._resolve_plan(None, LEVEL1)["key"] == "level1")
+          app._resolve_plan("starter", None)["product_id"] == STARTER
+          and app._resolve_plan(None, STARTER)["key"] == "starter")
 
     # Omitting Polar-Version does not mean "the version we wrote this against";
     # it means Current, which rotates every quarter. An unpinned integration
@@ -194,7 +194,7 @@ def main():
     # ── 1. SIGNATURES ─────────────────────────────────────────────────────────
     print("\nwebhook signature")
     uid, _ = make_user("sig")
-    good = {"id": "ord_sig", "product_id": LEVEL1, "metadata": {"user_id": str(uid)}}
+    good = {"id": "ord_sig", "product_id": STARTER, "metadata": {"user_id": str(uid)}}
 
     r = post("order.paid", good, headers={})
     check("no signature headers is rejected", r.status_code == 401, str(r.status_code))
@@ -218,21 +218,21 @@ def main():
 
     r = post("order.paid", good)
     check("a VALID signature is accepted", r.status_code == 200, str(r.status_code))
-    check("...and the grant landed", "level:1" in held(uid), str(held(uid)))
+    check("...and the grant landed", "pack:starter" in held(uid), str(held(uid)))
 
     # ── 2. ONE-TIME PURCHASE ──────────────────────────────────────────────────
     print("\n$1 Level 1, bought and refunded")
-    uid, _ = make_user("level1")
-    post("order.paid", {"id": "ord_l1", "product_id": LEVEL1,
+    uid, _ = make_user("starter")
+    post("order.paid", {"id": "ord_l1", "product_id": STARTER,
                         "metadata": {"user_id": str(uid)}})
     rows = entitlements(uid)
-    check("level:1 granted, sourced to the ORDER",
-          len(rows) == 1 and rows[0][0] == "level" and rows[0][2] == "order"
+    check("pack:starter granted, sourced to the ORDER",
+          len(rows) == 1 and rows[0][0] == "pack" and rows[0][2] == "order"
           and rows[0][3] == "ord_l1", str(rows))
-    check("the gate honours it", "level:1" in held(uid))
+    check("the gate honours it", "pack:starter" in held(uid))
 
     post("order.refunded", {"id": "ord_l1", "metadata": {"user_id": str(uid)}})
-    check("REFUND removes access", "level:1" not in held(uid), str(held(uid)))
+    check("REFUND removes access", "pack:starter" not in held(uid), str(held(uid)))
     rows = entitlements(uid)
     check("...by revoking the row rather than deleting it",
           rows and rows[0][4] is not None, str(rows))
@@ -286,14 +286,14 @@ def main():
     uid, _ = make_user("both")
     post("subscription.active", {"id": "sub_2", "customer_id": "cus_2",
                                  "metadata": {"user_id": str(uid)}})
-    post("order.paid", {"id": "ord_both", "product_id": LEVEL1,
+    post("order.paid", {"id": "ord_both", "product_id": STARTER,
                         "metadata": {"user_id": str(uid)}})
-    check("the user holds both pro and level:1",
-          {"pro", "level:1"} <= held(uid), str(held(uid)))
+    check("the user holds both pro and pack:starter",
+          {"pro", "pack:starter"} <= held(uid), str(held(uid)))
 
     post("order.refunded", {"id": "ord_both", "metadata": {"user_id": str(uid)}})
     check("refunding the $1 LEVEL takes only the level",
-          "level:1" not in held(uid) and "pro" in held(uid), str(held(uid)))
+          "pack:starter" not in held(uid) and "pro" in held(uid), str(held(uid)))
     check("...and leaves is_pro alone", is_pro(uid) is True)
 
     # The bug this release fixes: a subscription's pro row is sourced to the
@@ -348,15 +348,15 @@ def main():
     # ── 4c. RETRIES AND LATE EVENTS CANNOT RESURRECT ACCESS ───────────────────
     print("\nduplicate and late deliveries")
     uid, _ = make_user("dupe")
-    post("order.paid", {"id": "ord_d", "product_id": LEVEL1,
+    post("order.paid", {"id": "ord_d", "product_id": STARTER,
                         "metadata": {"user_id": str(uid)}}, msg_id="msg_dupe_1")
-    check("the first delivery grants", "level:1" in held(uid))
+    check("the first delivery grants", "pack:starter" in held(uid))
 
     con = sqlite3.connect(DB)
     before = con.execute("SELECT granted_at FROM entitlements WHERE user_id = ?",
                          (uid,)).fetchone()[0]
     con.close()
-    r = post("order.paid", {"id": "ord_d", "product_id": LEVEL1,
+    r = post("order.paid", {"id": "ord_d", "product_id": STARTER,
                             "metadata": {"user_id": str(uid)}}, msg_id="msg_dupe_1")
     con = sqlite3.connect(DB)
     after = con.execute("SELECT granted_at FROM entitlements WHERE user_id = ?",
@@ -371,12 +371,12 @@ def main():
     # The dangerous one: refund, then a retry of the ORIGINAL purchase lands.
     post("order.refunded", {"id": "ord_d", "status": "refunded",
                             "metadata": {"user_id": str(uid)}}, msg_id="msg_dupe_ref")
-    check("the refund removes access", "level:1" not in held(uid))
-    post("order.paid", {"id": "ord_d", "product_id": LEVEL1,
+    check("the refund removes access", "pack:starter" not in held(uid))
+    post("order.paid", {"id": "ord_d", "product_id": STARTER,
                         "modified_at": "2020-01-01T00:00:00Z",
                         "metadata": {"user_id": str(uid)}}, msg_id="msg_dupe_late")
     check("A LATE order.paid DOES NOT RESURRECT a refunded entitlement",
-          "level:1" not in held(uid), str(held(uid)))
+          "pack:starter" not in held(uid), str(held(uid)))
 
     # Same shape for a subscription, which is the one that costs real money.
     uid, _ = make_user("lateactive")
@@ -471,19 +471,19 @@ def main():
     print("\nbuying something you already have")
     uid, name = make_user("owns")
     tok = {"Authorization": "Bearer %s" % app.make_token(uid, name)}
-    post("order.paid", {"id": "ord_own", "product_id": LEVEL1,
+    post("order.paid", {"id": "ord_own", "product_id": STARTER,
                         "metadata": {"user_id": str(uid)}}, msg_id="msg_own")
-    check("the user owns level:1", "level:1" in held(uid))
-    r = client.post("/api/billing/checkout", headers=tok, json={"plan_key": "level1"})
-    check("BUYING LEVEL 1 TWICE IS REFUSED BY THE SERVER",
+    check("the user owns pack:starter", "pack:starter" in held(uid))
+    r = client.post("/api/billing/checkout", headers=tok, json={"plan_key": "starter"})
+    check("BUYING THE STARTER PACK TWICE IS REFUSED BY THE SERVER",
           r.status_code == 409, "%s %s" % (r.status_code, r.text[:70]))
 
     uid, name = make_user("ownspro")
     tok = {"Authorization": "Bearer %s" % app.make_token(uid, name)}
     post("subscription.active", {"id": "sub_own", "customer_id": "cus_own",
                                  "metadata": {"user_id": str(uid)}}, msg_id="msg_ownpro")
-    r = client.post("/api/billing/checkout", headers=tok, json={"plan_key": "level1"})
-    check("a Pro subscriber is refused a level purchase", r.status_code == 409,
+    r = client.post("/api/billing/checkout", headers=tok, json={"plan_key": "starter"})
+    check("a Pro subscriber is refused a pack purchase", r.status_code == 409,
           "%s %s" % (r.status_code, r.text[:70]))
     r = client.post("/api/billing/checkout", headers=tok, json={"plan_key": "monthly"})
     check("...and is refused a second subscription", r.status_code == 409,
@@ -491,7 +491,7 @@ def main():
 
     uid, name = make_user("ownsnothing")
     tok = {"Authorization": "Bearer %s" % app.make_token(uid, name)}
-    r = client.post("/api/billing/checkout", headers=tok, json={"plan_key": "level1"})
+    r = client.post("/api/billing/checkout", headers=tok, json={"plan_key": "starter"})
     check("a user who owns nothing is NOT blocked (checkout reaches Polar)",
           r.status_code in (200, 502), str(r.status_code))
 
@@ -513,12 +513,12 @@ def main():
 
     app.grant_entitlement_guarded = flaky
     try:
-        r1 = post("order.paid", {"id": "ord_retry", "product_id": LEVEL1,
+        r1 = post("order.paid", {"id": "ord_retry", "product_id": STARTER,
                                  "metadata": {"user_id": str(uid)}},
                   msg_id="msg_retry")
         check("the failing delivery returns 500 so the provider retries",
               r1.status_code == 500, str(r1.status_code))
-        check("...and granted nothing", "level:1" not in held(uid), str(held(uid)))
+        check("...and granted nothing", "pack:starter" not in held(uid), str(held(uid)))
 
         con = sqlite3.connect(DB)
         left = con.execute(
@@ -529,18 +529,18 @@ def main():
               "%d rows" % left)
 
         # Same delivery id, as a real retry would carry.
-        r2 = post("order.paid", {"id": "ord_retry", "product_id": LEVEL1,
+        r2 = post("order.paid", {"id": "ord_retry", "product_id": STARTER,
                                  "metadata": {"user_id": str(uid)}},
                   msg_id="msg_retry")
         check("THE RETRY IS PROCESSED, NOT SKIPPED", r2.status_code == 200,
               str(r2.status_code))
-        check("...and the buyer finally gets access", "level:1" in held(uid),
+        check("...and the buyer finally gets access", "pack:starter" in held(uid),
               str(held(uid)))
     finally:
         app.grant_entitlement_guarded = real_guarded
 
     # And a third delivery of the same id, now that it succeeded, is a no-op.
-    r3 = post("order.paid", {"id": "ord_retry", "product_id": LEVEL1,
+    r3 = post("order.paid", {"id": "ord_retry", "product_id": STARTER,
                              "metadata": {"user_id": str(uid)}}, msg_id="msg_retry")
     check("...while a further retry after success is still deduped",
           r3.status_code == 200)
@@ -641,29 +641,29 @@ def main():
     # ── 5. ATTRIBUTION ────────────────────────────────────────────────────────
     print("\nattribution")
     uid, _ = make_user("attrib")
-    r = post("order.paid", {"id": "ord_nouser", "product_id": LEVEL1})
+    r = post("order.paid", {"id": "ord_nouser", "product_id": STARTER})
     check("an event with no user metadata is accepted but grants nothing",
           r.status_code == 200 and not entitlements(uid), str(r.status_code))
-    post("order.paid", {"id": "ord_extid", "product_id": LEVEL1,
+    post("order.paid", {"id": "ord_extid", "product_id": STARTER,
                         "external_customer_id": str(uid)})
     check("external_customer_id is used when metadata is absent",
-          "level:1" in held(uid), str(held(uid)))
+          "pack:starter" in held(uid), str(held(uid)))
 
     uid2, _ = make_user("nested")
-    post("order.paid", {"id": "ord_nested", "product_id": LEVEL1,
+    post("order.paid", {"id": "ord_nested", "product_id": STARTER,
                         "subscription": {"metadata": {"user_id": str(uid2)}}})
     check("metadata on a nested subscription is found too",
-          "level:1" in held(uid2), str(held(uid2)))
+          "pack:starter" in held(uid2), str(held(uid2)))
 
     # ── 6. THE GATE IS UNCHANGED BY ANY OF THIS ───────────────────────────────
     print("\nthe gate never learns who sold the scene")
     uid, _ = make_user("gate")
-    post("order.paid", {"id": "ord_gate", "product_id": LEVEL1,
+    post("order.paid", {"id": "ord_gate", "product_id": STARTER,
                         "metadata": {"user_id": str(uid)}})
     con = sqlite3.connect(DB)
     cur = con.cursor()
     paid_l1 = next(s for s in app.LEVELS[0]["scenes"] if s not in app._free_scene_ids())
-    check("a polar-granted level:1 opens a paid Level 1 scene",
+    check("a polar-granted pack:starter opens a starter scene",
           app.can_access_scene(cur, uid, paid_l1) is True, paid_l1)
     lvl2 = app.LEVELS[1]["scenes"][0] if len(app.LEVELS) > 1 else None
     if lvl2:

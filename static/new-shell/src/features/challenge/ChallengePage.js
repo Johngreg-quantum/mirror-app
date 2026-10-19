@@ -72,7 +72,7 @@ function renderChallengeEntryCard({ challengeEntry, isAuthenticated }) {
     h('div', { className: 'ns-challenge-entry__copy' }, [
       h('p', { className: 'ns-eyebrow', text: 'Incoming challenge' }),
       h('h3', { text: `${challengeEntry.challengerName} challenged you` }),
-      h('p', { text: `${challengeEntry.sceneTitle} from ${challengeEntry.film}` }),
+      h('p', { text: challengeEntry.sceneTitle }),
     ]),
     h('div', { className: 'ns-challenge-entry__benchmark' }, [
       h('span', { text: 'Score to beat' }),

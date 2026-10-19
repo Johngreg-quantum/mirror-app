@@ -133,9 +133,11 @@ def main():
         cur4 = con4.cursor()
         free = app._free_scene_ids()
         paid = [s for s in app.LEVELS[0]["scenes"] if s not in free]
-        check("...so they see the free tier and nothing more",
-              app.can_access_scene(cur4, newbie, free[0]) is True
-              and app.can_access_scene(cur4, newbie, paid[0]) is False)
+        # There is no free tier any more, so "nothing more" is literally
+        # nothing: a fresh account reaches no scene until it buys one.
+        check("...so they see NO scene at all",
+              free == []
+              and not any(app.can_access_scene(cur4, newbie, sid) for sid in paid))
         check("...while a grandfathered user still reaches all of Level 1",
               app.can_access_scene(cur4, beginner, paid[0]) is True)
         con4.close()
