@@ -23,7 +23,7 @@
        JS, so these must stay static markup in the served HTML. Absolute URLs are
        required; APP_BASE_URL is server-side only and does not reach this file. -->
   <meta property="og:title" content="Mirror — Speak like the screen" />
-  <meta property="og:description" content="Learn English by performing real movie scenes — record your take, match the delivery, and see how close you get." />
+  <meta property="og:description" content="Speak English like a movie scene. Original cinematic scenes, voiced with emotion. Hear it, say it, get scored." />
   <meta property="og:url" content="https://mirrorspeak.app/" />
   <meta property="og:type" content="website" />
   <meta property="og:image" content="https://mirrorspeak.app/static/og-image.jpg" />
@@ -3669,7 +3669,7 @@
       flex-shrink: 0;
     }
 
-    /* ─── ACT IV — 47+ ICONIC MOMENTS. ─── */
+    /* ─── ACT IV — 47 ORIGINAL SCENES. ─── */
     #actV { background: #0d0d0d; }
     .actV-head {
       font-family: 'Bebas Neue', sans-serif;
@@ -3949,7 +3949,7 @@
     }
     .mm-frame-img {
       position: absolute; inset: 0;
-      background: url('/static/backdrops/interstellar.jpg') center/cover no-repeat;
+      background: url('/static/scenes/art/no_signal.webp') center/cover no-repeat;
       filter: brightness(0.78) saturate(0.9);
     }
     .mm-frame-overlay {
@@ -4387,7 +4387,7 @@
     /* ===== Landing cleanup: hide legacy marketing surfaces ===== */
     /* heroStartBtn stays inside .hero in the DOM (mlOpenAuth() programmatically clicks it),
        but the legacy hero shell is no longer rendered. .hero is the legacy hero section
-       (ACT THE Scene. / AI-Powered Movie English). */
+       (ACT THE Scene. / AI-Scored Cinematic English). */
     .hero,
     #howItWorks,
     #whatScrollOuter,
@@ -4770,7 +4770,7 @@
 
   <div id="mlCenter">
     <h1 class="ml-hero-title">Steal the<br><em>Scene</em></h1>
-    <p class="ml-hero-sub">Practice English through iconic movie moments.<br>Speak like the legends. Perform like the greats.</p>
+    <p class="ml-hero-sub">Speak English like a movie scene.<br>Original cinematic scenes, voiced with emotion.</p>
     <div class="ml-cta-row">
       <button class="ml-btn-primary" onclick="mlOpenAuth()">Start practicing</button>
       <button class="ml-btn-secondary" onclick="mlOpenAuth('login')">Sign in</button>
@@ -4811,50 +4811,58 @@
 
 <script>
 (function(){
+  // The marquee. Was 30 film posters from TMDB; it is our own scene art now,
+  // one card per scene in scene_config order. `bg` is the genre colour, shown
+  // for the instant before the image decodes and as the whole card if it
+  // never does.
   const ML_SCENES = [
-    {id:'forrest_gump',        bg:'linear-gradient(135deg,#2a1a00,#5a3800)'},
-    {id:'the_matrix',          bg:'linear-gradient(135deg,#001a0a,#004020)'},
-    {id:'godfather',           bg:'linear-gradient(135deg,#120008,#2e0018)'},
-    {id:'dark_knight',         bg:'linear-gradient(135deg,#00091a,#001433)'},
-    {id:'fight_club',          bg:'linear-gradient(135deg,#1a0000,#3a0000)'},
-    {id:'interstellar',        bg:'linear-gradient(135deg,#000510,#000d28)'},
-    {id:'whiplash',            bg:'linear-gradient(135deg,#1a0a00,#341500)'},
-    {id:'rocky',               bg:'linear-gradient(135deg,#120000,#260000)'},
-    {id:'dead_poets',          bg:'linear-gradient(135deg,#001412,#002a24)'},
-    {id:'gladiator',           bg:'linear-gradient(135deg,#120800,#241500)'},
-    // good_will_hunting is deliberately absent: static/posters/good_will_hunting.webp
-    // does not exist and the .jpg is a 9-byte stub, so every landing-page load
-    // spent two requests (a 404 then a broken file) to render the gradient
-    // fallback. Restore this entry once a real poster is generated — the scene
-    // itself is fine and its backdrop is intact.
-    {id:'shawshank',           bg:'linear-gradient(135deg,#100e00,#201c00)'},
-    {id:'braveheart',          bg:'linear-gradient(135deg,#1a1200,#302200)'},
-    {id:'jerry_maguire',       bg:'linear-gradient(135deg,#0a0018,#180030)'},
-    {id:'apollo_13',           bg:'linear-gradient(135deg,#001828,#003050)'},
-    {id:'cast_away',           bg:'linear-gradient(135deg,#002010,#004020)'},
-    {id:'titanic',             bg:'linear-gradient(135deg,#000a1a,#001830)'},
-    {id:'social_network',      bg:'linear-gradient(135deg,#0a0a18,#14142a)'},
-    {id:'clueless',            bg:'linear-gradient(135deg,#1a0e00,#3d2800)'},
-    {id:'top_gun',             bg:'linear-gradient(135deg,#000510,#001020)'},
-    {id:'mrs_doubtfire',       bg:'linear-gradient(135deg,#001412,#002622)'},
-    {id:'legally_blonde',      bg:'linear-gradient(135deg,#1a0a00,#341500)'},
-    {id:'devil_wears_prada',   bg:'linear-gradient(135deg,#0a0006,#1e0014)'},
-    {id:'taken',               bg:'linear-gradient(135deg,#000a1a,#001433)'},
-    {id:'avengers',            bg:'linear-gradient(135deg,#1a0000,#330010)'},
-    {id:'breakfast_club',      bg:'linear-gradient(135deg,#0a0a1a,#18182a)'},
-    {id:'ferris_bueller',      bg:'linear-gradient(135deg,#001a0a,#003818)'},
-    {id:'home_alone',          bg:'linear-gradient(135deg,#1a1000,#302000)'},
-    {id:'back_to_the_future',  bg:'linear-gradient(135deg,#000a1a,#001830)'},
-    {id:'men_in_black',        bg:'linear-gradient(135deg,#080808,#181818)'},
-    {id:'rain_man',            bg:'linear-gradient(135deg,#100800,#201500)'},
-    {id:'wolf_of_wall_street', bg:'linear-gradient(135deg,#1a1400,#302800)'},
-    {id:'pursuit_of_happyness',bg:'linear-gradient(135deg,#0a0a00,#181800)'},
-    {id:'fifth_element',       bg:'linear-gradient(135deg,#00081a,#001030)'},
-    {id:'the_blind_side',      bg:'linear-gradient(135deg,#0a1400,#182800)'},
-    {id:'the_intern',          bg:'linear-gradient(135deg,#001018,#002030)'},
-    {id:'mystic_river',        bg:'linear-gradient(135deg,#080808,#141414)'},
-    {id:'wall_street',         bg:'linear-gradient(135deg,#1a1000,#302000)'},
-    {id:'a_few_good_men',      bg:'linear-gradient(135deg,#00061a,#000c30)'},
+    {id:'last_train',       bg:'#8a5a1a'},
+    {id:'fashionably_late', bg:'#d4a843'},
+    {id:'rooftop',          bg:'#c75050'},
+    {id:'countdown',        bg:'#cc2233'},
+    {id:'locked_door',      bg:'#2a3a5a'},
+    {id:'first_day',        bg:'#d4a843'},
+    {id:'the_promise',      bg:'#8a5a1a'},
+    {id:'no_signal',        bg:'#1a2a4a'},
+    {id:'champion',         bg:'#e07b39'},
+    {id:'wrong_number',     bg:'#d4a843'},
+    {id:'the_storm',        bg:'#4a7c8c'},
+    {id:'the_letter',       bg:'#8a5a1a'},
+    {id:'interrogation',    bg:'#3a2a4a'},
+    {id:'surprise',         bg:'#5a7d8c'},
+    {id:'the_deal',         bg:'#8a5a1a'},
+    {id:'lost_city',        bg:'#4a7c8c'},
+    {id:'the_apology',      bg:'#c75050'},
+    {id:'midnight_call',    bg:'#2a3a5a'},
+    {id:'stand_up',         bg:'#8a5a1a'},
+    {id:'coffee_shop',      bg:'#c75050'},
+    {id:'job_offer',        bg:'#8a5a1a'},
+    {id:'the_heist',        bg:'#3a2a4a'},
+    {id:'old_friends',      bg:'#d4a843'},
+    {id:'good_news',        bg:'#8a5a1a'},
+    {id:'blind_date',       bg:'#c75050'},
+    {id:'final_round',      bg:'#e07b39'},
+    {id:'the_secret',       bg:'#2a3a5a'},
+    {id:'moving_out',       bg:'#8a5a1a'},
+    {id:'lost_luggage',     bg:'#d4a843'},
+    {id:'the_pilot',        bg:'#cc2233'},
+    {id:'missed_games',     bg:'#5a7d8c'},
+    {id:'the_window',       bg:'#3a2a4a'},
+    {id:'wedding_toast',    bg:'#d4a843'},
+    {id:'night_shift',      bg:'#8a5a1a'},
+    {id:'the_audition',     bg:'#8a5a1a'},
+    {id:'oxygen_low',       bg:'#2a5a8a'},
+    {id:'first_dance',      bg:'#c75050'},
+    {id:'the_rival',        bg:'#e07b39'},
+    {id:'runaway',          bg:'#1a2a4a'},
+    {id:'grandmas_kitchen', bg:'#5a7d8c'},
+    {id:'boardroom',        bg:'#8a5a1a'},
+    {id:'roommate',         bg:'#d4a843'},
+    {id:'the_comeback',     bg:'#e07b39'},
+    {id:'cold_feet',        bg:'#d4a843'},
+    {id:'the_bluff',        bg:'#3a2a4a'},
+    {id:'done_waiting',     bg:'#8a5a1a'},
+    {id:'lucky',            bg:'#1a2a4a'},
   ];
 
   function mlShuffle(a){return [...a].sort(()=>Math.random()-.5);}
@@ -4908,17 +4916,15 @@
         card.className = 'ml-card';
         card.style.cssText = 'width:' + cardW + 'px;height:' + rowH + 'px;position:relative;border-radius:14px;';
 
-        // <picture> with WebP source + JPG fallback (~85% smaller WebP, ~77% smaller JPG).
+        // Scene art is webp only -- there is no JPG fallback to pick between,
+        // so the <picture>/<source> pair that existed to choose one is gone.
+        // The marquee takes the 400x600 cut: these cards are ~150px wide.
         // loading="lazy" lets the browser defer cards that aren't in the initial viewport;
         // the marquee's auto-scroll triggers normal loading once they slide in.
         const picture = document.createElement('picture');
         picture.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;display:block;';
-        const source = document.createElement('source');
-        source.srcset = '/static/posters/' + s.id + '.webp';
-        source.type = 'image/webp';
-        picture.appendChild(source);
         const img = document.createElement('img');
-        img.src = '/static/posters/' + s.id + '.jpg';
+        img.src = '/static/scenes/art/' + s.id + '-sm.webp';
         img.alt = '';
         img.loading = 'lazy';
         img.decoding = 'async';
@@ -5194,9 +5200,9 @@
 
   <!-- Level swatches -->
   <div class="mls-swatches" role="tablist" aria-label="Choose a level">
-    <button class="mls-sw active" data-poster="godfather"  data-quote="&ldquo;I&rsquo;m gonna make him an offer he can&rsquo;t refuse.&rdquo;">I</button>
-    <button class="mls-sw"        data-poster="fight_club" data-quote="&ldquo;The first rule is: you do not talk about it.&rdquo;">II</button>
-    <button class="mls-sw"        data-poster="gladiator"  data-quote="&ldquo;Are you not entertained?&rdquo;">III</button>
+    <button class="mls-sw active" data-poster="last_train" data-quote="&ldquo;If you get on that train, don&rsquo;t come back.&rdquo;">I</button>
+    <button class="mls-sw"        data-poster="night_shift" data-quote="&ldquo;I work two jobs so you can have the chances I never had.&rdquo;">II</button>
+    <button class="mls-sw"        data-poster="the_bluff"  data-quote="&ldquo;I can read you like a book, and it&rsquo;s a very short book.&rdquo;">III</button>
     <p class="mls-sw-label">CHOOSE YOUR LEVEL</p>
   </div>
 </section>
@@ -5214,7 +5220,7 @@
         playback-id="r1BCbuq01pu4L6Q71btkOiBb01i01KEEWEO7Bfl745dhpI"
         metadata-video-title="Mirror — Scene Preview"
         stream-type="on-demand"
-        poster="/static/backdrops/interstellar.jpg"
+        poster="/static/scenes/art/no_signal.webp"
         preload="none"
         playsinline
         loop
@@ -5229,7 +5235,7 @@
 
       <div class="mp-glass ms-anim d2">
         <div class="mp-glass-title">Speak the scene. <em>Own the line.</em></div>
-        <p class="mp-glass-body">Learn English through unforgettable movie moments.
+        <p class="mp-glass-body">Learn English through scenes written to be performed.
         Watch a scene, hear the original line, speak it back, and get scored
         on your delivery until it feels natural, confident, and real.</p>
         <button class="mp-glass-cta" id="mpCta" type="button">
@@ -5272,16 +5278,16 @@
   </div>
   <div class="mw-grid">
     <div class="mw-card ms-anim">
-      <div class="mw-card-img"><picture><source srcset="/static/posters/scene_studio_coverflow.webp" type="image/webp"><img src="/static/posters/scene_studio_coverflow.jpg" alt="" loading="lazy" decoding="async"></picture></div>
+      <div class="mw-card-img"><img src="/static/scenes/art/coffee_shop.webp" alt="" loading="lazy" decoding="async"></div>
       <div class="mw-card-body">
         <div class="mw-card-arrow" aria-hidden="true">&rarr;</div>
         <div class="mw-card-tag">PRACTICE</div>
         <div class="mw-card-title">Scene Studio</div>
-        <p class="mw-card-desc">47+ iconic moments to step into. Read the script, hit record, and deliver the line in your own voice.</p>
+        <p class="mw-card-desc">47 original scenes to step into. Read the line, hit record, and deliver it in your own voice.</p>
       </div>
     </div>
     <div class="mw-card ms-anim d1">
-      <div class="mw-card-img"><img src="/static/live-scoring-result.webp" width="1200" height="750" alt="Mirror result screen showing a sync score and points earned" loading="lazy" decoding="async"></div>
+      <div class="mw-card-img"><img src="/static/scenes/art/interrogation.webp" width="800" height="1200" alt="Scene art for Interrogation" loading="lazy" decoding="async"></div>
       <div class="mw-card-body">
         <div class="mw-card-arrow" aria-hidden="true">&rarr;</div>
         <div class="mw-card-tag">FEEDBACK</div>
@@ -5299,7 +5305,7 @@
       </div>
     </div>
     <div class="mw-card ms-anim d3">
-      <div class="mw-card-img"><img src="/static/daily-take.webp" width="1200" height="750" alt="Mirror Daily Take showing today&rsquo;s line, weak words and streak" loading="lazy" decoding="async"></div>
+      <div class="mw-card-img"><img src="/static/scenes/art/the_storm.webp" width="800" height="1200" alt="Scene art for The Storm" loading="lazy" decoding="async"></div>
       <div class="mw-card-body">
         <div class="mw-card-arrow" aria-hidden="true">&rarr;</div>
         <div class="mw-card-tag">HABIT</div>
@@ -5354,48 +5360,52 @@
   <h2 class="actI-head act-anim" data-delay="100">YOUR VOICE. <em>YOUR STAGE.</em></h2>
   <p class="actI-sub act-anim" data-delay="200">The greatest actors in history once stood exactly where you are.</p>
   <div class="actI-triptych act-anim" data-delay="300">
-    <div class="actI-poster"><picture><source srcset="/static/posters/godfather.webp" type="image/webp"><img src="/static/posters/godfather.jpg" alt="The Godfather" loading="lazy" decoding="async"></picture></div>
-    <div class="actI-poster"><picture><source srcset="/static/posters/dead_poets.webp" type="image/webp"><img src="/static/posters/dead_poets.jpg" alt="Dead Poets Society" loading="lazy" decoding="async"></picture></div>
-    <div class="actI-poster"><picture><source srcset="/static/posters/forrest_gump.webp" type="image/webp"><img src="/static/posters/forrest_gump.jpg" alt="Forrest Gump" loading="lazy" decoding="async"></picture></div>
+    <div class="actI-poster"><img src="/static/scenes/art/last_train.webp" alt="Last Train" loading="lazy" decoding="async"></div>
+    <div class="actI-poster"><img src="/static/scenes/art/rooftop.webp" alt="Rooftop" loading="lazy" decoding="async"></div>
+    <div class="actI-poster"><img src="/static/scenes/art/countdown.webp" alt="Countdown" loading="lazy" decoding="async"></div>
   </div>
   <div class="actI-ticker act-anim" data-delay="400">
     <div class="actI-ticker-track">
       <span class="actI-ticker-item">WORD BREAKDOWN</span><span class="actI-ticker-dot">•</span>
       <span class="actI-ticker-item">SYNC SCORE</span><span class="actI-ticker-dot">•</span>
       <span class="actI-ticker-item">FLUENCY RANK</span><span class="actI-ticker-dot">•</span>
-      <span class="actI-ticker-item">47+ SCENES</span><span class="actI-ticker-dot">•</span>
+      <span class="actI-ticker-item">47 SCENES</span><span class="actI-ticker-dot">•</span>
       <span class="actI-ticker-item">WORD BREAKDOWN</span><span class="actI-ticker-dot">•</span>
       <span class="actI-ticker-item">SYNC SCORE</span><span class="actI-ticker-dot">•</span>
       <span class="actI-ticker-item">FLUENCY RANK</span><span class="actI-ticker-dot">•</span>
-      <span class="actI-ticker-item">47+ SCENES</span><span class="actI-ticker-dot">•</span>
+      <span class="actI-ticker-item">47 SCENES</span><span class="actI-ticker-dot">•</span>
     </div>
   </div>
 </section>
 
-<!-- ─── ACT II — WORDS THAT CHANGED CINEMA ─── -->
+<!-- ─── ACT II — LINES WORTH SAYING OUT LOUD ─── -->
+<!-- Five famous film lines, each credited to the actor who delivered it,
+     were the most quotable thing on this page and the least defensible.
+     These five are ours: the scene name instead of an actor, and the line
+     a learner will actually be asked to perform. -->
 <section class="act-section" id="actII">
   <div class="act-vlabel">ACT <em>II</em></div>
-  <h2 class="actII-head act-anim">WORDS THAT CHANGED <em>CINEMA</em></h2>
+  <h2 class="actII-head act-anim">LINES WORTH SAYING <em>OUT LOUD</em></h2>
   <div class="actII-quotes" id="actIIQuotes">
     <div class="actII-quote" data-stagger="0">
-      <div class="actII-speaker">MARLON BRANDO · THE GODFATHER</div>
-      <div class="actII-text">"I'm gonna make him an offer he can't refuse."</div>
+      <div class="actII-speaker">LAST TRAIN · HURT BUT FIRM</div>
+      <div class="actII-text">"If you get on that train, don't come back."</div>
     </div>
     <div class="actII-quote" data-stagger="1">
-      <div class="actII-speaker">ROBIN WILLIAMS · DEAD POETS SOCIETY</div>
-      <div class="actII-text">"Carpe diem. Seize the day, boys."</div>
+      <div class="actII-speaker">ROOFTOP · NERVOUS, SINCERE</div>
+      <div class="actII-text">"I almost said it a hundred times. I love you."</div>
     </div>
     <div class="actII-quote" data-stagger="2">
-      <div class="actII-speaker">TOM HANKS · FORREST GUMP</div>
-      <div class="actII-text">"Life is like a box of chocolates."</div>
+      <div class="actII-speaker">CHAMPION · TRIUMPHANT</div>
+      <div class="actII-text">"Nobody believed in us. Look at us now!"</div>
     </div>
     <div class="actII-quote" data-stagger="3">
-      <div class="actII-speaker">RUSSELL CROWE · GLADIATOR</div>
-      <div class="actII-text">"Are you not entertained?"</div>
+      <div class="actII-speaker">COUNTDOWN · URGENT</div>
+      <div class="actII-text">"We have ninety seconds. Grab the bag and run!"</div>
     </div>
     <div class="actII-quote" data-stagger="4">
-      <div class="actII-speaker">HEATH LEDGER · THE DARK KNIGHT</div>
-      <div class="actII-text">"Why so serious?"</div>
+      <div class="actII-speaker">THE DEAL · CONFIDENT</div>
+      <div class="actII-text">"Ten thousand. Final offer. Take it or leave it."</div>
     </div>
   </div>
   <div class="actII-cta act-anim" data-delay="500">MIRROR SCORES YOUR DELIVERY</div>
@@ -5432,41 +5442,41 @@
   </div>
 </section>
 
-<!-- ─── ACT IV — 47+ ICONIC MOMENTS. ─── -->
+<!-- ─── ACT IV — 47 ORIGINAL SCENES. ─── -->
 <section class="act-section" id="actV">
   <div class="act-vlabel">ACT <em>IV</em></div>
-  <h2 class="actV-head act-anim">47+ <em>ICONIC</em> MOMENTS.</h2>
+  <h2 class="actV-head act-anim">47 <em>ORIGINAL</em> SCENES.</h2>
   <p class="actV-sub act-anim" data-delay="100">From whispered confessions to roared battle cries.</p>
   <div class="actV-grid">
     <div class="actV-card" data-stagger="0">
-      <picture><source srcset="/static/posters/godfather.webp" type="image/webp"><img src="/static/posters/godfather.jpg" alt="The Godfather" loading="lazy" decoding="async"></picture>
+      <img src="/static/scenes/art/last_train.webp" alt="Last Train" loading="lazy" decoding="async">
       <span class="actV-card-badge">LVL 1</span>
-      <div class="actV-card-title">THE GODFATHER</div>
+      <div class="actV-card-title">LAST TRAIN</div>
     </div>
     <div class="actV-card" data-stagger="1">
-      <picture><source srcset="/static/posters/fight_club.webp" type="image/webp"><img src="/static/posters/fight_club.jpg" alt="Fight Club" loading="lazy" decoding="async"></picture>
-      <span class="actV-card-badge">LVL 2</span>
-      <div class="actV-card-title">FIGHT CLUB</div>
+      <img src="/static/scenes/art/interrogation.webp" alt="Interrogation" loading="lazy" decoding="async">
+      <span class="actV-card-badge">LVL 1</span>
+      <div class="actV-card-title">INTERROGATION</div>
     </div>
     <div class="actV-card" data-stagger="2">
-      <picture><source srcset="/static/posters/dead_poets.webp" type="image/webp"><img src="/static/posters/dead_poets.jpg" alt="Dead Poets Society" loading="lazy" decoding="async"></picture>
+      <img src="/static/scenes/art/the_letter.webp" alt="The Letter" loading="lazy" decoding="async">
       <span class="actV-card-badge">LVL 1</span>
-      <div class="actV-card-title">DEAD POETS</div>
+      <div class="actV-card-title">THE LETTER</div>
     </div>
     <div class="actV-card" data-stagger="3">
-      <picture><source srcset="/static/posters/gladiator.webp" type="image/webp"><img src="/static/posters/gladiator.jpg" alt="Gladiator" loading="lazy" decoding="async"></picture>
-      <span class="actV-card-badge">LVL 3</span>
-      <div class="actV-card-title">GLADIATOR</div>
+      <img src="/static/scenes/art/champion.webp" alt="Champion" loading="lazy" decoding="async">
+      <span class="actV-card-badge">LVL 1</span>
+      <div class="actV-card-title">CHAMPION</div>
     </div>
     <div class="actV-card" data-stagger="4">
-      <picture><source srcset="/static/posters/dark_knight.webp" type="image/webp"><img src="/static/posters/dark_knight.jpg" alt="The Dark Knight" loading="lazy" decoding="async"></picture>
-      <span class="actV-card-badge">LVL 3</span>
-      <div class="actV-card-title">DARK KNIGHT</div>
+      <img src="/static/scenes/art/midnight_call.webp" alt="Midnight Call" loading="lazy" decoding="async">
+      <span class="actV-card-badge">LVL 1</span>
+      <div class="actV-card-title">MIDNIGHT CALL</div>
     </div>
     <div class="actV-card" data-stagger="5">
-      <picture><source srcset="/static/posters/forrest_gump.webp" type="image/webp"><img src="/static/posters/forrest_gump.jpg" alt="Forrest Gump" loading="lazy" decoding="async"></picture>
+      <img src="/static/scenes/art/the_storm.webp" alt="The Storm" loading="lazy" decoding="async">
       <span class="actV-card-badge">LVL 1</span>
-      <div class="actV-card-title">FORREST GUMP</div>
+      <div class="actV-card-title">THE STORM</div>
     </div>
   </div>
 </section>
@@ -5613,7 +5623,7 @@
               <div class="what-card-num">i.</div>
               <h3 class="what-card-title">Choose a scene</h3>
               <p class="what-card-body">
-                Iconic moments from films you love — Titanic, The Godfather, Whiplash. Real lines from real cinema.
+                Scenes written for Mirror and performed by a voice that acts them — hurt, urgent, triumphant.
               </p>
             </div>
             <div class="what-card">
@@ -5681,7 +5691,7 @@
 <section class="pricing-section" id="pricingSection">
   <div class="editorial-eyebrow what-eyebrow">The Deal</div>
   <h2 class="what-title">Pick your <em>billing</em>.</h2>
-  <p class="pricing-tagline-edt">Less than a movie ticket. Endless rewatches.</p>
+  <p class="pricing-tagline-edt">Less than a coffee. Endless retakes.</p>
 
   <div class="mc-pill-group" id="pricingPill">
     <button class="mc-pill" data-billing="monthly">Monthly</button>
@@ -5804,7 +5814,7 @@
     <div class="hero-text">
       <div class="hero-badge">
         <span class="hero-badge-dot"></span>
-        <span class="hero-badge-text">AI-Powered Movie English</span>
+        <span class="hero-badge-text">AI-Scored Cinematic English</span>
       </div>
 
       <h1 class="hero-title">
@@ -5840,7 +5850,7 @@
     <div class="stats-inner">
       <div class="stat-item">
         <span class="stat-val">47+</span>
-        <span class="stat-lbl">Movie Scenes</span>
+        <span class="stat-lbl">Original Scenes</span>
       </div>
       <div class="stat-item">
         <span class="stat-val">3</span>
@@ -5869,8 +5879,8 @@
           <div class="hiw-icon">
             <svg width="26" height="26" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
           </div>
-          <h3 class="hiw-title">Watch the Scene</h3>
-          <p class="hiw-desc">Pick a movie moment, watch the clip, and absorb the rhythm, accent and emotion behind every word.</p>
+          <h3 class="hiw-title">Hear it</h3>
+          <p class="hiw-desc">Pick a scene and hear it performed — the rhythm, the stress and the emotion behind every word.</p>
         </div>
 
         <div class="hiw-card">
@@ -5882,8 +5892,8 @@
               <line x1="12" y1="19" x2="12" y2="22"/>
             </svg>
           </div>
-          <h3 class="hiw-title">Speak the Line</h3>
-          <p class="hiw-desc">Hit record and deliver the line exactly like the actor. Our AI transcribes your audio and scores how closely you match.</p>
+          <h3 class="hiw-title">Say it</h3>
+          <p class="hiw-desc">Hit record and perform it. Your take is transcribed automatically, in your own voice.</p>
         </div>
 
         <div class="hiw-card">
@@ -5894,8 +5904,8 @@
               <path d="M7 11V7a5 5 0 0 1 9.9-1"/>
             </svg>
           </div>
-          <h3 class="hiw-title">Unlock New Levels</h3>
-          <p class="hiw-desc">Score above the threshold to unlock harder scenes, more complex delivery, and tougher acting challenges.</p>
+          <h3 class="hiw-title">Get scored</h3>
+          <p class="hiw-desc">See how close you got, word by word. Score above the threshold to unlock harder scenes.</p>
         </div>
 
       </div>
@@ -6288,7 +6298,7 @@
     <div class="onboard-logo">MIR<em>RO</em>R</div>
     <p class="onboard-tagline">
       Act the scene. Speak the lines.<br>
-      Learn real English from real movie moments.
+      Learn real English from scenes made to be spoken.
     </p>
 
     <div class="onboard-steps">
@@ -6298,8 +6308,8 @@
         </div>
         <div>
           <div class="step-num">Step 01</div>
-          <div class="step-title">Watch the Scene</div>
-          <div class="step-desc">Pick a movie moment and hear how it sounds</div>
+          <div class="step-title">Hear it</div>
+          <div class="step-desc">Pick a scene and hear how it sounds</div>
         </div>
       </div>
       <div class="onboard-step">
@@ -6312,8 +6322,8 @@
         </div>
         <div>
           <div class="step-num">Step 02</div>
-          <div class="step-title">Record Your Line</div>
-          <div class="step-desc">Say it out loud exactly like the actor</div>
+          <div class="step-title">Say it</div>
+          <div class="step-desc">Record your take, in your own voice</div>
         </div>
       </div>
       <div class="onboard-step">
@@ -6325,8 +6335,8 @@
         </div>
         <div>
           <div class="step-num">Step 03</div>
-          <div class="step-title">Unlock New Levels</div>
-          <div class="step-desc">Score high enough to access harder scenes</div>
+          <div class="step-title">Get scored</div>
+          <div class="step-desc">See how close you got, word by word</div>
         </div>
       </div>
     </div>
@@ -6958,7 +6968,7 @@
     </div>
 
     <div id="ranksRewards" class="ranks-section">
-      <div id="ranksRewardsIntro">Earn XP by practicing scenes. Redeem for real cinema rewards.</div>
+      <div id="ranksRewardsIntro">Earn XP by practicing scenes. Redeem for rewards.</div>
       <div id="ranksRewardsList"></div>
       <div id="ranksRewardsBeta">Rewards are in early beta. Cinema partnerships coming soon.</div>
     </div>
@@ -8629,14 +8639,16 @@ function boot(){
     } catch(e){ return false; }
   }
 
-  // POSTERS: index-aligned with the three swatch buttons (godfather / fight_club / gladiator).
-  // Procedural canvas data here is the silent fallback if /static/posters/{id}.jpg fails to load.
+  // POSTERS: index-aligned with the three swatch buttons, one scene per level.
+  // Procedural canvas data here is the silent fallback if the scene art fails
+  // to load; the tints are the genre colours those scenes carry in
+  // scene_config, so the fallback and the image agree.
   var POSTERS = [
-    { id:'godfather',  title:['THE','GODFATHER'], level:'LEVEL I · BEGINNER',     tint:'#2a1410' },
-    { id:'fight_club', title:['FIGHT','CLUB'],    level:'LEVEL II · INTERMEDIATE', tint:'#10202a' },
-    { id:'gladiator',  title:['GLADIATOR',''],    level:'LEVEL III · ADVANCED',   tint:'#241c0c' }
+    { id:'last_train',  title:['LAST','TRAIN'],  level:'LEVEL I · BEGINNER',      tint:'#8a5a1a' },
+    { id:'night_shift', title:['NIGHT','SHIFT'], level:'LEVEL II · INTERMEDIATE', tint:'#c75050' },
+    { id:'the_bluff',   title:['THE','BLUFF'],   level:'LEVEL III · ADVANCED',    tint:'#3a2a4a' }
   ];
-  var POSTER_INDEX = { godfather:0, fight_club:1, gladiator:2 };
+  var POSTER_INDEX = { last_train:0, night_shift:1, the_bluff:2 };
 
   var canvas   = document.getElementById('mlsCanvas');
   var fallback = document.getElementById('mlsCardFallback');
@@ -8678,7 +8690,7 @@ function boot(){
     if (canvas) canvas.style.display = 'none';
     if (fallback) {
       fallback.style.display = 'block';
-      fallback.style.backgroundImage = "url('/static/posters/godfather.jpg')";
+      fallback.style.backgroundImage = "url('/static/scenes/art/last_train.webp')";
     }
     document.querySelectorAll('.mls-sw').forEach(function(btn){
       btn.addEventListener('click', function(){
@@ -8686,7 +8698,7 @@ function boot(){
         if (active) active.classList.remove('active');
         btn.classList.add('active');
         if (fallback) {
-          fallback.style.backgroundImage = "url('/static/posters/" + btn.dataset.poster + ".jpg')";
+          fallback.style.backgroundImage = "url('/static/scenes/art/" + btn.dataset.poster + ".webp')";
         }
         var q = document.getElementById('mlsQuote');
         if (q) q.innerHTML = btn.dataset.quote;
@@ -8759,12 +8771,12 @@ function boot(){
 
     resize();
 
-    // Load real posters from /static/posters/{id}.jpg, replace procedural on success.
+    // Load the real scene art, replacing the procedural card on success.
     // Silent fallback on error — procedural canvas already in place.
     var loader = new THREE.TextureLoader();
     POSTERS.forEach(function(p, idx){
       loader.load(
-        '/static/posters/' + p.id + '.jpg',
+        '/static/scenes/art/' + p.id + '.webp',
         function(tex){
           if (THREE.SRGBColorSpace) tex.colorSpace = THREE.SRGBColorSpace;
           tex.anisotropy = 4;
@@ -8829,7 +8841,7 @@ function boot(){
     renderer.setAnimationLoop(null);
   }
 
-  // setPoster accepts either string id ('godfather') or numeric index (0).
+  // setPoster accepts either string id ('last_train') or numeric index (0).
   // Prototype script uses indices; our HTML uses string IDs (spec §3) so we bridge.
   function setPoster(idOrIdx){
     var idx = typeof idOrIdx === 'number' ? idOrIdx : POSTER_INDEX[idOrIdx];
