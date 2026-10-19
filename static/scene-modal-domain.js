@@ -2,7 +2,7 @@
   function renderSceneModalDisplay(options) {
     const scene = options.scene || {};
     const color = options.color || '';
-    const hasVideo = !!options.hasVideo;
+    const hasAudio = !!options.hasAudio;
     const isDaily = !!options.isDaily;
     const refs = options.refs || {};
 
@@ -15,8 +15,8 @@
     if (refs.quoteEl) refs.quoteEl.textContent = scene.line ? `\u201c${scene.line}\u201d` : '';
     if (refs.targetQuoteEl) refs.targetQuoteEl.style.borderLeftColor = color;
     if (refs.analyzeBtn) refs.analyzeBtn.style.background = color;
-    if (refs.videoFrameEl) refs.videoFrameEl.style.display = hasVideo ? '' : 'none';
-    if (refs.videoPlaceholderEl) refs.videoPlaceholderEl.style.display = hasVideo ? 'none' : 'flex';
+    if (refs.videoFrameEl) refs.videoFrameEl.style.display = hasAudio ? '' : 'none';
+    if (refs.videoPlaceholderEl) refs.videoPlaceholderEl.style.display = hasAudio ? 'none' : 'flex';
     if (refs.badgeEl) refs.badgeEl.classList.toggle('on', isDaily);
   }
 

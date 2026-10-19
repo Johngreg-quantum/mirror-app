@@ -12,17 +12,25 @@ and the two files cannot drift because one is generated from the other.
 not match, which is what the regression suite calls. Without it the file is
 rewritten in place.
 
-Stage 1 deliberately writes no media paths. Scene audio (stage 2) and scene art
-(stage 3) are added to `ui` by their own stages, once the files actually exist,
-so the config never points at something that is not there.
+Media is written only when the file is actually on disk, so the config never
+points at something that is not there. `ui.audio` and `ui.audio_seconds` appear
+once scripts/generate-scene-audio.py has produced the mp3; `ui.art` follows in
+stage 3. The duration is measured here rather than guessed, because the daily
+pool filter reads it to decide what is short enough to be one of three lines in
+an evening.
 """
 import json
 import sys
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from mp3_duration import mp3_duration_seconds   # noqa: E402
+
 ROOT = Path(__file__).resolve().parent.parent
 SOURCE = ROOT / "docs" / "original-scenes.json"
 TARGET = ROOT / "scene_config.json"
+AUDIO_DIR = ROOT / "static" / "scenes" / "audio"
+AUDIO_URL = "/static/scenes/audio/%s.mp3"
 
 # Unlock thresholds are a product decision, not something the scene list knows,
 # and they are unchanged from the film version: level 1 is open, level 2 wants
@@ -73,6 +81,12 @@ def build() -> dict:
             "starter":     bool(s.get("starter")),
             "ui": {"card_color": GENRE_COLOR[s["genre"]]},
         }
+
+        mp3 = AUDIO_DIR / ("%s.mp3" % s["id"])
+        if mp3.exists():
+            entry["ui"]["audio"] = AUDIO_URL % s["id"]
+            entry["ui"]["audio_seconds"] = mp3_duration_seconds(mp3)
+
         if s.get("idioms"):
             entry["idioms"] = list(s["idioms"])
 
@@ -111,8 +125,10 @@ def main() -> int:
         TARGET.write_text(text, encoding="utf-8", newline="")
         print("wrote %s" % TARGET.name)
 
+    with_audio = sum(1 for sc in config["scenes"].values() if sc["ui"].get("audio"))
     print("  scenes %d   levels %s   starter pack %d: %s"
           % (len(config["scenes"]), counts, len(starters), ", ".join(starters)))
+    print("  audio %d/%d" % (with_audio, len(config["scenes"])))
     return 0
 
 

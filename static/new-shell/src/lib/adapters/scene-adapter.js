@@ -17,16 +17,16 @@ function buildLevelMap(levels = []) {
 }
 
 function formatRuntime(scene) {
-  // Was the YouTube clip's length. Stage 2 reads the generated audio's duration
-  // here; until the mp3 exists there is nothing to measure, so the card shows
-  // the genre slot instead of a runtime.
+  // The generated audio's measured length, written into scene_config by
+  // scripts/build-scene-config.py. Rounded, because a card reading "4.06s"
+  // looks like a measurement rather than a runtime.
   const seconds = Number(scene?.ui?.audio_seconds || 0);
 
   if (!seconds) {
     return 'Scene';
   }
 
-  return `${seconds}s`;
+  return `${Math.round(seconds)}s`;
 }
 
 // WebP variants; the .jpg originals remain on disk as a manual fallback.
@@ -84,6 +84,8 @@ export function adaptSceneConfig(rawConfig, { progress = null, daily = null } = 
       isDaily: dailyIds.has(id),
       tags: [scene.genre, scene.difficulty].filter(Boolean),
       imageUrl: scene?.ui?.art || posterFallback(level),
+      audioUrl: scene?.ui?.audio || '',
+      audioSeconds: Number(scene?.ui?.audio_seconds || 0),
       source: scene,
     };
   });

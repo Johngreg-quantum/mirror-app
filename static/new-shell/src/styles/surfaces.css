@@ -1687,3 +1687,84 @@ button[class*="record"][class*="is-recording"] {
   .ns-consent__actions { flex-direction: column-reverse; align-items: stretch; }
   .ns-consent__legal { padding: 4px 0 2px; text-align: center; }
 }
+
+/* ─── Scene audio player ────────────────────────────
+   Replaces the YouTube embed. The art is the backdrop and the player sits on
+   it, so the panel shows what the scene looks like and what it sounds like at
+   the same time. */
+
+.ns-scene-detail__media {
+  position: relative;
+  aspect-ratio: 16 / 9;
+  border-radius: 12px;
+  overflow: hidden;
+  background: #0b0b0b;
+}
+
+.ns-scene-detail__media .ns-scene-detail__image {
+  position: absolute;
+  inset: 0;
+}
+
+.ns-sa {
+  position: absolute;
+  inset: auto 0 0 0;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  background: linear-gradient(to top, rgba(8, 8, 8, 0.92), rgba(8, 8, 8, 0.2) 70%, transparent);
+}
+
+.ns-sa__play {
+  flex-shrink: 0;
+  min-width: 72px;
+  padding: 7px 14px;
+  border-radius: 100px;
+  background: rgba(200, 169, 110, 0.16);
+  border: 0.5px solid rgba(200, 169, 110, 0.55);
+  color: #c8a96e;
+  font: inherit;
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  cursor: pointer;
+  transition: background 200ms ease;
+}
+
+.ns-sa__play:hover:not([disabled]) { background: rgba(200, 169, 110, 0.26); }
+.ns-sa__play[disabled] { opacity: 0.45; cursor: default; }
+
+.ns-sa__wave {
+  flex: 1;
+  min-width: 0;
+  height: 34px;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  cursor: pointer;
+}
+
+.ns-sa__bar {
+  flex: 1 1 0;
+  min-width: 2px;
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.22);
+  transition: background 120ms linear;
+}
+
+.ns-sa__bar.is-played { background: #c8a96e; }
+
+.ns-sa__time {
+  flex-shrink: 0;
+  min-width: 34px;
+  text-align: right;
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+@media (max-width: 480px) {
+  .ns-sa { gap: 8px; padding: 10px 12px; }
+  .ns-sa__play { min-width: 60px; padding: 6px 10px; }
+  .ns-sa__wave { height: 26px; }
+}

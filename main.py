@@ -545,11 +545,19 @@ def _build_daily_pool() -> list:
         line = (scene.get("line") or "").strip()
         if not line or len(line.split()) > DAILY_MAX_WORDS:
             continue
-        # The second filter used to be the YouTube clip's length. Scene audio
-        # replaces it in stage 2 and the duration check comes back then, read
-        # from the generated mp3. Until the audio exists there is nothing to
-        # measure, so word count alone decides the pool -- which for level 1,
-        # where every line is ten words or fewer, is the same answer.
+        # Measured from the generated mp3 by scripts/build-scene-config.py, not
+        # guessed from the text: a six-word line read slowly with a pause in it
+        # runs longer than a ten-word line read fast, and the promise the daily
+        # makes is about the minutes it costs, not the words it contains.
+        #
+        # A scene with no audio yet is excluded rather than admitted. The daily
+        # is the one surface a user is told to come back to every evening, so a
+        # silent line there is worse than a shorter rotation.
+        seconds = (scene.get("ui") or {}).get("audio_seconds")
+        if not isinstance(seconds, (int, float)) or seconds <= 0:
+            continue
+        if seconds > DAILY_MAX_AUDIO_SECONDS:
+            continue
         pool.append(sid)
     # A config change that emptied the pool would otherwise take the daily down
     # with it. Falling back to every scene makes that a worse daily, not a
@@ -2667,11 +2675,17 @@ def can_play_scene(cur, user_id: int, scene_id: str, challenge_id: str = "",
       challenge  the scene named by an existing challenge row, looked up, not
                  taken from the request.
 
-    The daily hole is three scenes wide now rather than one, and 11 of the 23
-    scenes it can draw from are Level 2 -- so on some days it opens paid-tier
-    scenes. That is the hook working as intended, but it is a wider hole than
-    the single daily was and it should not be discovered later by reading the
-    pool filter.
+    The daily hole is three scenes wide rather than one. With the original
+    scenes it draws from 20 ids, all of them Level 1: every Level 2 and 3 line
+    is longer than DAILY_MAX_WORDS, so they filter themselves out. That is
+    narrower than it was with the film catalogue, where 11 of 23 pooled scenes
+    were Level 2 and the daily handed out paid-tier material on some days.
+
+    Worth knowing because it is now the ONLY free content there is -- the free
+    tier is gone, and the five scenes that used to be free are what the $1 pack
+    sells. If the daily ever feels too thin as a hook, widening it is a change
+    to DAILY_MAX_WORDS or to the pool filter, and it should be made on purpose
+    rather than by adding a long line and not noticing.
 
     Neither hole grants anything: nothing is written, and the next request is
     gated again. A free user who wants a scene of their own choosing still has

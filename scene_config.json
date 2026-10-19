@@ -11,7 +11,9 @@
       "direction": "A woman on a train platform, voice shaking with hurt but completely firm. Slow, deliberate, a short pause after 'train'.",
       "starter": true,
       "ui": {
-        "card_color": "#8a5a1a"
+        "card_color": "#8a5a1a",
+        "audio": "/static/scenes/audio/last_train.mp3",
+        "audio_seconds": 4.06
       }
     },
     "fashionably_late": {
@@ -25,7 +27,9 @@
       "direction": "A charming man walking into a party late, totally unbothered, smiling as he talks. Light, playful rhythm.",
       "starter": true,
       "ui": {
-        "card_color": "#d4a843"
+        "card_color": "#d4a843",
+        "audio": "/static/scenes/audio/fashionably_late.mp3",
+        "audio_seconds": 3.86
       }
     },
     "rooftop": {
@@ -39,7 +43,9 @@
       "direction": "Quiet, nervous and sincere, as if finally admitting something. Small breath before 'I love you', said softly.",
       "starter": true,
       "ui": {
-        "card_color": "#c75050"
+        "card_color": "#c75050",
+        "audio": "/static/scenes/audio/rooftop.mp3",
+        "audio_seconds": 5.45
       }
     },
     "countdown": {
@@ -53,7 +59,9 @@
       "direction": "Urgent and commanding, a leader in a crisis. Fast pace, sharp consonants, rising energy on 'run'.",
       "starter": true,
       "ui": {
-        "card_color": "#cc2233"
+        "card_color": "#cc2233",
+        "audio": "/static/scenes/audio/countdown.mp3",
+        "audio_seconds": 3.5
       }
     },
     "locked_door": {
@@ -67,7 +75,9 @@
       "direction": "A frightened whisper in a dark house. Slow, hushed, a pause between the two sentences.",
       "starter": true,
       "ui": {
-        "card_color": "#2a3a5a"
+        "card_color": "#2a3a5a",
+        "audio": "/static/scenes/audio/locked_door.mp3",
+        "audio_seconds": 5.57
       }
     },
     "first_day": {
@@ -81,7 +91,9 @@
       "direction": "Cheerful but a little nervous, someone on their first day at a busy job. Friendly, slightly fast.",
       "starter": false,
       "ui": {
-        "card_color": "#d4a843"
+        "card_color": "#d4a843",
+        "audio": "/static/scenes/audio/first_day.mp3",
+        "audio_seconds": 3.6
       }
     },
     "the_promise": {
@@ -95,7 +107,9 @@
       "direction": "Tender and steady, a parent saying goodbye. Warm, low, unhurried.",
       "starter": false,
       "ui": {
-        "card_color": "#8a5a1a"
+        "card_color": "#8a5a1a",
+        "audio": "/static/scenes/audio/the_promise.mp3",
+        "audio_seconds": 4.42
       }
     },
     "no_signal": {
@@ -109,7 +123,9 @@
       "direction": "Tense and controlled, a driver lost at night trying not to panic. Clipped phrases, worry growing on the last part.",
       "starter": false,
       "ui": {
-        "card_color": "#1a2a4a"
+        "card_color": "#1a2a4a",
+        "audio": "/static/scenes/audio/no_signal.mp3",
+        "audio_seconds": 4.92
       }
     },
     "champion": {
@@ -123,7 +139,9 @@
       "direction": "Triumphant and emotional, a team captain after a win. Loud, proud, almost laughing on 'now'.",
       "starter": false,
       "ui": {
-        "card_color": "#e07b39"
+        "card_color": "#e07b39",
+        "audio": "/static/scenes/audio/champion.mp3",
+        "audio_seconds": 5.02
       }
     },
     "wrong_number": {
@@ -137,7 +155,9 @@
       "direction": "Confused and increasingly alarmed on a phone call. Polite at first, then rising disbelief on 'my dog'.",
       "starter": false,
       "ui": {
-        "card_color": "#d4a843"
+        "card_color": "#d4a843",
+        "audio": "/static/scenes/audio/wrong_number.mp3",
+        "audio_seconds": 5.21
       }
     },
     "the_storm": {
@@ -151,7 +171,9 @@
       "direction": "Shouting over a storm to someone in danger. Loud, strong, urgent but encouraging.",
       "starter": false,
       "ui": {
-        "card_color": "#4a7c8c"
+        "card_color": "#4a7c8c",
+        "audio": "/static/scenes/audio/the_storm.mp3",
+        "audio_seconds": 3.22
       }
     },
     "the_letter": {
@@ -165,7 +187,9 @@
       "direction": "Quiet and sad, holding back tears. Slow, with pauses between each short sentence.",
       "starter": false,
       "ui": {
-        "card_color": "#8a5a1a"
+        "card_color": "#8a5a1a",
+        "audio": "/static/scenes/audio/the_letter.mp3",
+        "audio_seconds": 5.21
       }
     },
     "interrogation": {
@@ -179,7 +203,9 @@
       "direction": "A detective, cold and intense, leaning in. Low voice, very controlled, hard stress on 'lying'.",
       "starter": false,
       "ui": {
-        "card_color": "#3a2a4a"
+        "card_color": "#3a2a4a",
+        "audio": "/static/scenes/audio/interrogation.mp3",
+        "audio_seconds": 3.96
       }
     },
     "surprise": {
@@ -193,7 +219,9 @@
       "direction": "Excited and playful, about to reveal a surprise. Hushed first sentence, a pause, then a burst of joy.",
       "starter": false,
       "ui": {
-        "card_color": "#5a7d8c"
+        "card_color": "#5a7d8c",
+        "audio": "/static/scenes/audio/surprise.mp3",
+        "audio_seconds": 3.26
       }
     },
     "the_deal": {
@@ -207,7 +235,9 @@
       "direction": "A calm, confident negotiator. Slow and certain, each phrase landing like a decision.",
       "starter": false,
       "ui": {
-        "card_color": "#8a5a1a"
+        "card_color": "#8a5a1a",
+        "audio": "/static/scenes/audio/the_deal.mp3",
+        "audio_seconds": 5.45
       }
     },
     "lost_city": {
@@ -221,7 +251,9 @@
       "direction": "Breathless wonder, an explorer seeing something incredible. Soft at first, building to amazement.",
       "starter": false,
       "ui": {
-        "card_color": "#4a7c8c"
+        "card_color": "#4a7c8c",
+        "audio": "/static/scenes/audio/lost_city.mp3",
+        "audio_seconds": 5.62
       }
     },
     "the_apology": {
@@ -235,7 +267,9 @@
       "direction": "Regretful and vulnerable, pleading gently. Quiet, a catch in the voice on 'please'.",
       "starter": false,
       "ui": {
-        "card_color": "#c75050"
+        "card_color": "#c75050",
+        "audio": "/static/scenes/audio/the_apology.mp3",
+        "audio_seconds": 5.3
       }
     },
     "midnight_call": {
@@ -249,7 +283,9 @@
       "direction": "Urgent and afraid on a late-night phone call. Hushed but intense, stressing 'don't'.",
       "starter": false,
       "ui": {
-        "card_color": "#2a3a5a"
+        "card_color": "#2a3a5a",
+        "audio": "/static/scenes/audio/midnight_call.mp3",
+        "audio_seconds": 4.42
       }
     },
     "stand_up": {
@@ -263,7 +299,9 @@
       "direction": "An inspiring speech to a crowd. Strong, rising energy, a pause between the two sentences.",
       "starter": false,
       "ui": {
-        "card_color": "#8a5a1a"
+        "card_color": "#8a5a1a",
+        "audio": "/static/scenes/audio/stand_up.mp3",
+        "audio_seconds": 5.71
       }
     },
     "coffee_shop": {
@@ -277,7 +315,9 @@
       "direction": "Flirty and relaxed, smiling in a coffee shop. Easy, warm, a little teasing.",
       "starter": false,
       "ui": {
-        "card_color": "#c75050"
+        "card_color": "#c75050",
+        "audio": "/static/scenes/audio/coffee_shop.mp3",
+        "audio_seconds": 3.36
       }
     },
     "job_offer": {
@@ -291,7 +331,9 @@
       "direction": "Excited and overwhelmed at the same time, telling a close friend. Fast at first, slowing down and unsure at the end.",
       "starter": false,
       "ui": {
-        "card_color": "#8a5a1a"
+        "card_color": "#8a5a1a",
+        "audio": "/static/scenes/audio/job_offer.mp3",
+        "audio_seconds": 6.0
       }
     },
     "the_heist": {
@@ -305,7 +347,9 @@
       "direction": "A calm crew leader giving final instructions. Low, steady, every sentence clipped and certain.",
       "starter": false,
       "ui": {
-        "card_color": "#3a2a4a"
+        "card_color": "#3a2a4a",
+        "audio": "/static/scenes/audio/the_heist.mp3",
+        "audio_seconds": 5.86
       }
     },
     "old_friends": {
@@ -319,7 +363,9 @@
       "direction": "Two old friends reunited. Warm, laughing, affectionate teasing; a big smile you can hear.",
       "starter": false,
       "ui": {
-        "card_color": "#d4a843"
+        "card_color": "#d4a843",
+        "audio": "/static/scenes/audio/old_friends.mp3",
+        "audio_seconds": 5.45
       }
     },
     "good_news": {
@@ -333,7 +379,9 @@
       "direction": "Overwhelming relief after a long, scary night. Shaky at first, then a long exhale and a soft laugh.",
       "starter": false,
       "ui": {
-        "card_color": "#8a5a1a"
+        "card_color": "#8a5a1a",
+        "audio": "/static/scenes/audio/good_news.mp3",
+        "audio_seconds": 4.2
       }
     },
     "blind_date": {
@@ -347,7 +395,9 @@
       "direction": "Shy and honest on a first date. A little awkward at the start, warm and sincere at the end.",
       "starter": false,
       "ui": {
-        "card_color": "#c75050"
+        "card_color": "#c75050",
+        "audio": "/static/scenes/audio/blind_date.mp3",
+        "audio_seconds": 5.71
       }
     },
     "final_round": {
@@ -361,7 +411,9 @@
       "direction": "A coach in the corner before the last round. Intense, close, building energy to 'not done yet'.",
       "starter": false,
       "ui": {
-        "card_color": "#e07b39"
+        "card_color": "#e07b39",
+        "audio": "/static/scenes/audio/final_round.mp3",
+        "audio_seconds": 5.3
       }
     },
     "the_secret": {
@@ -375,7 +427,9 @@
       "direction": "Hushed and serious, looking around before speaking. Slow, careful, low volume.",
       "starter": false,
       "ui": {
-        "card_color": "#2a3a5a"
+        "card_color": "#2a3a5a",
+        "audio": "/static/scenes/audio/the_secret.mp3",
+        "audio_seconds": 5.76
       }
     },
     "moving_out": {
@@ -389,7 +443,9 @@
       "direction": "Nostalgic, standing in an empty apartment. Amused at first, then soft and emotional on the last phrase.",
       "starter": false,
       "ui": {
-        "card_color": "#8a5a1a"
+        "card_color": "#8a5a1a",
+        "audio": "/static/scenes/audio/moving_out.mp3",
+        "audio_seconds": 6.86
       }
     },
     "lost_luggage": {
@@ -403,7 +459,9 @@
       "direction": "Frustrated but trying to laugh about it at an airport desk. Dry, tired, comic timing on the last sentence.",
       "starter": false,
       "ui": {
-        "card_color": "#d4a843"
+        "card_color": "#d4a843",
+        "audio": "/static/scenes/audio/lost_luggage.mp3",
+        "audio_seconds": 5.81
       }
     },
     "the_pilot": {
@@ -417,7 +475,9 @@
       "direction": "A pilot in an emergency, impossibly calm and clear. Even pace, reassuring, firm on 'hold on'.",
       "starter": false,
       "ui": {
-        "card_color": "#cc2233"
+        "card_color": "#cc2233",
+        "audio": "/static/scenes/audio/the_pilot.mp3",
+        "audio_seconds": 5.16
       }
     },
     "missed_games": {
@@ -431,7 +491,9 @@
       "direction": "A father apologizing to his grown son. Slow, heavy with regret, hopeful at the end.",
       "starter": false,
       "ui": {
-        "card_color": "#5a7d8c"
+        "card_color": "#5a7d8c",
+        "audio": "/static/scenes/audio/missed_games.mp3",
+        "audio_seconds": 5.16
       }
     },
     "the_window": {
@@ -445,7 +507,9 @@
       "direction": "A detective figuring it out in real time. Thoughtful, then a chill of realization on the second sentence.",
       "starter": false,
       "ui": {
-        "card_color": "#3a2a4a"
+        "card_color": "#3a2a4a",
+        "audio": "/static/scenes/audio/the_window.mp3",
+        "audio_seconds": 6.22
       }
     },
     "wedding_toast": {
@@ -459,7 +523,9 @@
       "direction": "A best friend giving a wedding toast. Warm and confident, pausing for the laugh after 'half right'.",
       "starter": false,
       "ui": {
-        "card_color": "#d4a843"
+        "card_color": "#d4a843",
+        "audio": "/static/scenes/audio/wedding_toast.mp3",
+        "audio_seconds": 5.45
       }
     },
     "night_shift": {
@@ -473,7 +539,9 @@
       "direction": "A tired mother speaking to her teenager, quietly but with deep intensity. No shouting, every word meant.",
       "starter": false,
       "ui": {
-        "card_color": "#8a5a1a"
+        "card_color": "#8a5a1a",
+        "audio": "/static/scenes/audio/night_shift.mp3",
+        "audio_seconds": 5.66
       }
     },
     "the_audition": {
@@ -487,7 +555,9 @@
       "direction": "Desperate but dignified, asking for one more chance. Voice slightly trembling, strong on 'one chance'.",
       "starter": false,
       "ui": {
-        "card_color": "#8a5a1a"
+        "card_color": "#8a5a1a",
+        "audio": "/static/scenes/audio/the_audition.mp3",
+        "audio_seconds": 5.4
       }
     },
     "oxygen_low": {
@@ -501,7 +571,9 @@
       "direction": "An astronaut in a failing station, tense but focused. Quick, clear, controlled fear.",
       "starter": false,
       "ui": {
-        "card_color": "#2a5a8a"
+        "card_color": "#2a5a8a",
+        "audio": "/static/scenes/audio/oxygen_low.mp3",
+        "audio_seconds": 6.41
       }
     },
     "first_dance": {
@@ -515,7 +587,9 @@
       "direction": "Playful and a little embarrassed, inviting someone to dance. Light, smiling, gentle laugh at the end.",
       "starter": false,
       "ui": {
-        "card_color": "#c75050"
+        "card_color": "#c75050",
+        "audio": "/static/scenes/audio/first_dance.mp3",
+        "audio_seconds": 5.52
       }
     },
     "the_rival": {
@@ -529,7 +603,9 @@
       "direction": "Face to face with a rival before the match. Calm, confident, a quiet threat in the second sentence.",
       "starter": false,
       "ui": {
-        "card_color": "#e07b39"
+        "card_color": "#e07b39",
+        "audio": "/static/scenes/audio/the_rival.mp3",
+        "audio_seconds": 5.62
       }
     },
     "runaway": {
@@ -543,7 +619,9 @@
       "direction": "An urgent whisper, helping someone escape. Fast, low, each instruction separated.",
       "starter": false,
       "ui": {
-        "card_color": "#1a2a4a"
+        "card_color": "#1a2a4a",
+        "audio": "/static/scenes/audio/runaway.mp3",
+        "audio_seconds": 6.96
       }
     },
     "grandmas_kitchen": {
@@ -557,7 +635,9 @@
       "direction": "Warm and loving, remembering a grandmother. Soft smile in the voice, slower on the last sentence.",
       "starter": false,
       "ui": {
-        "card_color": "#5a7d8c"
+        "card_color": "#5a7d8c",
+        "audio": "/static/scenes/audio/grandmas_kitchen.mp3",
+        "audio_seconds": 6.0
       }
     },
     "boardroom": {
@@ -571,7 +651,9 @@
       "direction": "A blunt executive in a tense meeting. Direct, fast, no warmth; stress on 'dropped the ball'.",
       "starter": false,
       "ui": {
-        "card_color": "#8a5a1a"
+        "card_color": "#8a5a1a",
+        "audio": "/static/scenes/audio/boardroom.mp3",
+        "audio_seconds": 4.92
       },
       "idioms": [
         "beat around the bush",
@@ -589,7 +671,9 @@
       "direction": "Heavy, dry sarcasm. Fake cheerful tone that clearly means the opposite; slow on 'truly'.",
       "starter": false,
       "ui": {
-        "card_color": "#d4a843"
+        "card_color": "#d4a843",
+        "audio": "/static/scenes/audio/roommate.mp3",
+        "audio_seconds": 6.41
       },
       "idioms": [
         "sarcasm"
@@ -606,7 +690,9 @@
       "direction": "Cool, quiet confidence after proving everyone wrong. Relaxed pace, a small smile on 'funny thing is'.",
       "starter": false,
       "ui": {
-        "card_color": "#e07b39"
+        "card_color": "#e07b39",
+        "audio": "/static/scenes/audio/the_comeback.mp3",
+        "audio_seconds": 5.57
       },
       "idioms": [
         "write someone off"
@@ -623,7 +709,9 @@
       "direction": "Nervous groom or bride rambling before the ceremony. Fast, breathless, comic pause before 'reconsidering'.",
       "starter": false,
       "ui": {
-        "card_color": "#d4a843"
+        "card_color": "#d4a843",
+        "audio": "/static/scenes/audio/cold_feet.mp3",
+        "audio_seconds": 5.06
       },
       "idioms": [
         "get cold feet"
@@ -640,7 +728,9 @@
       "direction": "Smug and amused at a card table. Slow, enjoying every word, a slight laugh on 'very short'.",
       "starter": false,
       "ui": {
-        "card_color": "#3a2a4a"
+        "card_color": "#3a2a4a",
+        "audio": "/static/scenes/audio/the_bluff.mp3",
+        "audio_seconds": 5.21
       },
       "idioms": [
         "read someone like a book",
@@ -658,7 +748,9 @@
       "direction": "Controlled anger finally released in an office. Firm, rising, sharp on 'done'.",
       "starter": false,
       "ui": {
-        "card_color": "#8a5a1a"
+        "card_color": "#8a5a1a",
+        "audio": "/static/scenes/audio/done_waiting.mp3",
+        "audio_seconds": 5.71
       },
       "idioms": [
         "bend over backwards",
@@ -676,7 +768,9 @@
       "direction": "Cool and cutting, a quiet put-down to a rival. Low, unhurried, a hint of a smile.",
       "starter": false,
       "ui": {
-        "card_color": "#1a2a4a"
+        "card_color": "#1a2a4a",
+        "audio": "/static/scenes/audio/lucky.mp3",
+        "audio_seconds": 4.8
       },
       "idioms": [
         "if it helps you sleep at night"

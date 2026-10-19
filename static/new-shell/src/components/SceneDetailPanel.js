@@ -1,6 +1,7 @@
 import { createRecordingControls } from './RecordingControls.js';
 import { createRecordingStatus } from './RecordingStatus.js';
 import { createWaveformShell } from './WaveformShell.js';
+import { renderSceneAudioPlayer } from './SceneAudioPlayer.js';
 import { h } from '../lib/helpers/dom.js';
 import { createAppHref } from '../lib/routing/navigation.js';
 import { buttonLink, card, statusPill } from './primitives.js';
@@ -213,16 +214,18 @@ export function createSceneDetailPanel({
   const mediaSlot = h('div');
 
   function renderMedia(s) {
-    // The film version embedded a YouTube player here. Stage 2 puts the scene's
-    // generated audio and its waveform in this slot; until the mp3 exists the
-    // scene art stands alone, which is also the fallback whenever audio fails
-    // to load.
+    // Was a YouTube embed. The scene art sits behind the player rather than
+    // replacing it: the art is the identity of the scene, the audio is the
+    // scene itself, and a panel with only one of them is missing half of it.
     mediaSlot.replaceChildren(
-      h('img', {
-        className: 'ns-scene-detail__image',
-        src: s.imageUrl,
-        alt: `${s.title} scene art`,
-      }),
+      h('div', { className: 'ns-scene-detail__media' }, [
+        h('img', {
+          className: 'ns-scene-detail__image',
+          src: s.imageUrl,
+          alt: `${s.title} scene art`,
+        }),
+        renderSceneAudioPlayer(s, onCleanup),
+      ]),
     );
   }
   const detailBody = h('div', { className: 'ns-scene-detail__body' });

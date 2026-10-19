@@ -33,13 +33,11 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Playfair+Display:ital,wght@0,700;1,700&family=DM+Sans:wght@300;400;500;600;700&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,300;1,400;1,500&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
-  <!-- YouTube IFrame API — deferred to after the load event (see the loader
-       before the closing body tag). It was a synchronous script tag here,
-       blocking the parser
-       for ~240ms on cellular plus a second ~870ms for www-widgetapi.js, to
-       power a player that only exists once a signed-in user opens a scene
-       modal. openModal() already polls `ytApiReady` before calling
-       initYTPlayer(), so arriving late costs nothing. -->
+  <!-- The YouTube IFrame API used to be loaded here, then deferred to after
+       the load event because it cost ~240ms of parser time plus ~870ms for
+       www-widgetapi.js. Scenes are our own mp3s now, played by an <audio>
+       element, so the third-party script is gone entirely rather than
+       merely moved off the critical path. -->
   <link rel="stylesheet" href="/static/app.css" />
   <style>
     @property --ripple-offset {
@@ -6114,14 +6112,25 @@
       </div>
     </div>
 
+    <!-- Scene audio. The id stays #videoFrame: it is referenced by the modal
+         layout CSS and by the close-button verification script, and the thing
+         it holds is still "the scene, played back". -->
     <div class="video-wrap">
-      <!-- YT IFrame API renders the player iframe inside this div -->
-      <div id="videoFrame"></div>
+      <div id="videoFrame">
+        <div class="sa-player" id="sceneAudioPlayer">
+          <button class="sa-play" id="btnSceneAudio" aria-label="Play the scene">
+            <svg class="sa-icon-play" width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>
+            <svg class="sa-icon-pause" width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" hidden><path d="M6 5h4v14H6zM14 5h4v14h-4z"/></svg>
+          </button>
+          <div class="sa-wave" id="sceneAudioWave" aria-hidden="true"></div>
+          <span class="sa-time" id="sceneAudioTime">0:00</span>
+        </div>
+      </div>
       <div class="video-placeholder" id="videoPlaceholder" style="display:none">
         <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2">
-          <rect x="2" y="4" width="20" height="16" rx="3"/><path d="M10 9l5 3-5 3V9z"/>
+          <path d="M11 5 6 9H3v6h3l5 4V5z"/><path d="M19 5 5 19"/>
         </svg>
-        <span>No clip available for this scene</span>
+        <span>No audio available for this scene</span>
       </div>
     </div>
     <div class="replay-line-wrap" id="replayLineWrap" style="display:none">
@@ -8993,28 +9002,6 @@ function boot(){
   io.observe(stage);
 })();
 
-// ── YouTube IFrame API, deferred off the critical path ─────────────────────
-// Only needed once a signed-in user opens a scene modal, and openModal()
-// already polls `ytApiReady` before calling initYTPlayer(), so loading after
-// first paint costs nothing. As a synchronous <head> script it blocked the
-// parser for ~240ms plus ~870ms for its www-widgetapi.js follow-up.
-(function(){
-  var loaded = false;
-  function loadYT(){
-    if (loaded) return;
-    loaded = true;
-    var s = document.createElement('script');
-    s.src = 'https://www.youtube.com/iframe_api';
-    s.async = true;
-    document.head.appendChild(s);
-  }
-  function schedule(){
-    if (window.requestIdleCallback) requestIdleCallback(loadYT, { timeout: 3000 });
-    else setTimeout(loadYT, 1200);
-  }
-  if (document.readyState === 'complete') schedule();
-  else window.addEventListener('load', schedule);
-})();
 </script>
 </body>
 </html>

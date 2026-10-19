@@ -931,9 +931,54 @@ header {
   margin: 20px 28px; border-radius: 10px; overflow: hidden;
   aspect-ratio: 16/9; background: #000; position: relative;
 }
-/* YT IFrame API creates an <iframe> inside #videoFrame div */
+/* #videoFrame now holds the scene audio player rather than a YouTube iframe. */
 #videoFrame { width: 100%; height: 100%; }
-.video-wrap iframe { width: 100%; height: 100%; border: none; }
+
+/* ─── SCENE AUDIO PLAYER ─── */
+.sa-player {
+  width: 100%; height: 100%;
+  display: flex; align-items: center; gap: 14px;
+  padding: 0 20px;
+  background:
+    radial-gradient(120% 140% at 50% 0%, rgba(200,169,110,0.10), transparent 60%),
+    var(--mc, #141414);
+}
+.sa-play {
+  flex-shrink: 0;
+  width: 46px; height: 46px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  background: rgba(200,169,110,0.14);
+  border: 0.5px solid rgba(200,169,110,0.55);
+  color: var(--gold); cursor: pointer;
+  transition: transform .15s, background .2s;
+}
+.sa-play:hover  { background: rgba(200,169,110,0.24); transform: scale(1.05); }
+.sa-play:active { transform: scale(0.97); }
+.sa-play:disabled { opacity: .4; cursor: default; transform: none; }
+
+/* Bars are laid out by CSS and their heights set once from the scene id, so the
+   same scene always draws the same shape. Playback only moves --sa-progress. */
+.sa-wave {
+  flex: 1; height: 44px; min-width: 0;
+  display: flex; align-items: center; gap: 2px;
+  cursor: pointer;
+}
+.sa-wave-bar {
+  flex: 1 1 0; min-width: 2px; border-radius: 2px;
+  background: rgba(255,255,255,0.16);
+  transition: background .12s linear;
+}
+.sa-wave-bar.played { background: var(--gold); }
+.sa-time {
+  flex-shrink: 0; min-width: 34px; text-align: right;
+  font-family: 'DM Sans', sans-serif; font-size: 11px;
+  font-variant-numeric: tabular-nums; color: var(--muted);
+}
+@media (max-width: 520px) {
+  .sa-player { gap: 10px; padding: 0 14px; }
+  .sa-play { width: 40px; height: 40px; }
+  .sa-wave { height: 36px; }
+}
 /* Replay Line button — appears below the video after auto-pause */
 .replay-line-wrap {
   margin: -8px 28px 10px; display: flex; justify-content: center;

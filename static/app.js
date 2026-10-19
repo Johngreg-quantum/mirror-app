@@ -17,7 +17,7 @@
 // Recording / playback display helpers are loaded from /static/recording-playback-domain.js.
 // Auth modal display helpers are loaded from /static/auth-modal-domain.js.
 // Daily challenge display helpers are loaded from /static/daily-challenge-domain.js.
-// Runtime timer / cleanup / YouTube utility helpers are loaded from /static/app-runtime-utils.js.
+// Runtime timer / cleanup / waveform helpers are loaded from /static/app-runtime-utils.js.
 // Progress refresh orchestration helpers are loaded from /static/app-progress-orchestration.js.
 // Post-score refresh orchestration helpers are loaded from /static/app-post-score-orchestration.js.
 // Leaderboard orchestration helpers are loaded from /static/app-leaderboard-orchestration.js.
@@ -128,9 +128,7 @@ const {
   cleanupRecordingRuntime,
   getSupportedMimeType: getSupportedMimeTypeRuntime,
   renderWaveformBars,
-  startYouTubeEndCheck,
   stopWaveformRuntime,
-  stopYouTubeEndCheck,
 } = APP_RUNTIME_UTILS;
 const {
   refreshLevelBarSurface,
@@ -471,7 +469,7 @@ function getScenePlaybackMeta(sceneId) {
 // - `dailyChallenge`: daily card, scene cards, modal badge, challenge-style UI copy
 // - `activeScene`: modal, recording/playback, analyze/score, replay controls
 // - `challengeCtx` / `activeChallenge`: challenge page entry + post-score result rendering
-// - `ytPlayer` / `ytApiReady`: modal playback, replay line, hear-actor controls
+// - `sceneAudio`: modal playback, replay line, hear-actor controls
 // Remaining core ownership points:
 // - session entry owns auth/challenge routing and the first app data fan-out
 // - scene entry owns gating between app scenes, auth signup, and modal opening
@@ -502,14 +500,14 @@ let userProfile = { streak: 0, total_points: 0 };
 let dailyChallenge    = null;
 let countdownInterval = null;
 
-let ytPlayer      = null;
-let ytApiReady    = false;
-let ytEndInterval = null;
+// The scene audio element. One per page, reused across scenes: a modal that
+// opened a new Audio() each time left the previous one decoding in the
+// background on mobile Safari.
+let sceneAudio    = null;
 
 let challengeCtx    = null;  // { score_to_beat } when scoring for a challenge
 let activeChallenge = null;  // full challenge object when on challenge screen
 
-window.onYouTubeIframeAPIReady = function() { ytApiReady = true; };
 
 let mediaRecorder  = null;
 let audioChunks    = [];
@@ -1314,7 +1312,7 @@ function nextDailySceneId() {
 }
 
 // ══════════════════════════════════════════════
-// TIMER / YOUTUBE / CLEANUP UTILITIES — daily reset timer
+// TIMER / MEDIA / CLEANUP UTILITIES — daily reset timer
 // ══════════════════════════════════════════════
 // Countdown ownership stays in app.js because reset triggers daily and streak reloads.
 // Ownership point: do not extract casually; this timer initiates app data reloads.
@@ -1409,7 +1407,7 @@ function showLevelUp(newLevel) {
 // ══════════════════════════════════════════════
 // SCENE MODAL ORCHESTRATION
 // ══════════════════════════════════════════════
-// Cross-domain coupling: opening a modal primes recording, YouTube playback,
+// Cross-domain coupling: opening a modal primes recording, scene audio,
 // daily badge display, and score state; closing it performs recording/media cleanup.
 // Ownership point: do not extract casually; this owns activeScene and starts the
 // recording/playback/analyze lifecycle for every scene-entry path.
@@ -1421,7 +1419,7 @@ function openModal(id, s) {
 
   renderSceneModalDisplay({
     color: color,
-    hasVideo: !!playback.ytRaw,
+    hasAudio: !!playback.audioUrl,
     isDaily: !!(dailyChallenge && dailyLines(dailyChallenge).ids.includes(id)),
     refs: {
       analyzeBtn: el('btnAnalyze'),
@@ -1437,21 +1435,8 @@ function openModal(id, s) {
     scene: s,
   });
 
-  stopEndCheck();
   hideReplayLine();
-  if (playback.ytRaw) {
-    if (ytApiReady) {
-      initYTPlayer(playback.videoId, playback.startSec);
-    } else {
-      const waitId = setInterval(() => {
-        if (!ytApiReady) return;
-        clearInterval(waitId);
-        initYTPlayer(playback.videoId, playback.startSec);
-      }, 100);
-    }
-  } else {
-    if (ytPlayer) ytPlayer.stopVideo();
-  }
+  loadSceneAudio(id, playback.audioUrl);
 
   resetRec();
   setOverlayActive('overlay', true);
@@ -1459,12 +1444,11 @@ function openModal(id, s) {
 
 function closeModal() {
   // Ownership point: modal teardown order protects media handles, replay UI,
-  // YouTube state, body scroll, and activeScene reset.
+  // audio state, body scroll, and activeScene reset.
   setOverlayActive('overlay', false);
   stopRecordingCleanup();
-  stopEndCheck();
   hideReplayLine();
-  if (ytPlayer) ytPlayer.stopVideo();
+  stopSceneAudio();
   activeScene = null;
   setTimeout(() => { window.scrollTo(0, window._savedScrollY || 0); }, 50);
 }
@@ -1526,7 +1510,7 @@ function resetRec() {
 }
 
 // ══════════════════════════════════════════════
-// TIMER / YOUTUBE / CLEANUP UTILITIES — recording cleanup
+// TIMER / MEDIA / CLEANUP UTILITIES — recording cleanup
 // ══════════════════════════════════════════════
 // Shared by modal close, recording reset, and failed/finished recording paths.
 function stopRecordingCleanup() {
@@ -1888,7 +1872,7 @@ function showScore(data) {
   const pct = data.sync_score;
   renderScoreDisplay({
     data: data,
-    hasYt: !!getSceneAudioUrl(activeScene),
+    hasSceneAudio: !!getSceneAudioUrl(activeScene),
     helpers: {
       animateNum: animateNum,
     },
@@ -2610,7 +2594,7 @@ function switchLeaderboardTab(sid) {
 }
 
 // ══════════════════════════════════════════════
-// TIMER / YOUTUBE / CLEANUP UTILITIES — media helpers
+// TIMER / MEDIA / CLEANUP UTILITIES — media helpers
 // ══════════════════════════════════════════════
 // Mixed helper bucket:
 // - media capability helpers
@@ -2714,7 +2698,7 @@ const fadeObserver = new IntersectionObserver(entries => {
 document.querySelectorAll('.fade-up').forEach(el => fadeObserver.observe(el));
 
 // ══════════════════════════════════════════════
-// TIMER / YOUTUBE / CLEANUP UTILITIES — waveform visualization
+// TIMER / MEDIA / CLEANUP UTILITIES — waveform visualization
 // ══════════════════════════════════════════════
 // Recording-only display helper domain.
 function startWaveform() {
@@ -2870,17 +2854,8 @@ onClick('btnTryAgain', () => {
 });
 
 function hearActor() {
-  const playback = getScenePlaybackMeta(activeScene);
-  if (!playback.ytRaw) return;
   hideReplayLine();
-  if (ytPlayer) {
-    ytPlayer.seekTo(playback.startSec, true);
-    ytPlayer.playVideo();
-  } else {
-    show('videoFrame');
-    hide('videoPlaceholder');
-    initYTPlayer(playback.videoId, playback.startSec);
-  }
+  playSceneAudio(0);
   el('modal').scrollTo({ top: 0, behavior: 'smooth' });
 }
 
@@ -2891,45 +2866,157 @@ function hearSelf() {
 }
 
 // ══════════════════════════════════════════════
-// TIMER / YOUTUBE / CLEANUP UTILITIES — YouTube player
+// SCENE AUDIO PLAYER
 // ══════════════════════════════════════════════
-// Scene modal + playback shared infrastructure.
-function initYTPlayer(videoId, startSec) {
-  if (ytPlayer) {
-    ytPlayer.loadVideoById({ videoId, startSeconds: startSec });
+// Replaces the YouTube IFrame API. A scene is an mp3 we generated and serve
+// ourselves, so playback is an <audio> element: no third-party script to wait
+// on, no `ytApiReady` race on modal open, and `ended` is an event rather than a
+// 250ms poll comparing currentTime against a clip end.
+//
+// The waveform is drawn, not analysed. Decoding each mp3 through the Web Audio
+// API to read real peaks costs a fetch and a decode per scene and fails behind
+// strict CSP; bar heights come from a hash of the scene id instead, so a given
+// scene always draws the same shape and playback only has to move the fill.
+
+const SA_BARS = 48;
+
+function saWaveEl()  { return document.getElementById('sceneAudioWave'); }
+function saPlayBtn() { return document.getElementById('btnSceneAudio'); }
+
+function renderSceneWave(sceneId) {
+  const wrap = saWaveEl();
+  if (!wrap) return;
+  // xorshift seeded from the id: deterministic, and no dependency on Math.random
+  // so the shape survives a reload.
+  let seed = 0;
+  for (let i = 0; i < String(sceneId).length; i++) {
+    seed = (seed * 31 + String(sceneId).charCodeAt(i)) >>> 0;
+  }
+  seed = seed || 1;
+  const next = function () {
+    seed ^= seed << 13; seed >>>= 0;
+    seed ^= seed >> 17;
+    seed ^= seed << 5;  seed >>>= 0;
+    return seed / 4294967296;
+  };
+  const bars = [];
+  for (let i = 0; i < SA_BARS; i++) {
+    // Taper the ends so it reads as a spoken phrase rather than a block.
+    const edge = Math.sin((i + 0.5) / SA_BARS * Math.PI);
+    const h = Math.round((0.22 + next() * 0.78) * edge * 100);
+    bars.push('<div class="sa-wave-bar" style="height:' + Math.max(8, h) + '%"></div>');
+  }
+  wrap.innerHTML = bars.join('');
+}
+
+function saPaint(ratio) {
+  const wrap = saWaveEl();
+  if (!wrap) return;
+  const bars = wrap.children;
+  const upto = Math.round(ratio * bars.length);
+  for (let i = 0; i < bars.length; i++) {
+    bars[i].classList.toggle('played', i < upto);
+  }
+}
+
+function saSetPlaying(isPlaying) {
+  const btn = saPlayBtn();
+  if (!btn) return;
+  const play  = btn.querySelector('.sa-icon-play');
+  const pause = btn.querySelector('.sa-icon-pause');
+  if (play)  play.hidden  = isPlaying;
+  if (pause) pause.hidden = !isPlaying;
+  btn.setAttribute('aria-label', isPlaying ? 'Pause the scene' : 'Play the scene');
+}
+
+function saSetTime(seconds) {
+  const elTime = document.getElementById('sceneAudioTime');
+  if (!elTime) return;
+  const s = Math.max(0, Math.round(seconds || 0));
+  elTime.textContent = Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0');
+}
+
+function loadSceneAudio(sceneId, url) {
+  stopSceneAudio();
+  renderSceneWave(sceneId);
+  saPaint(0);
+  saSetPlaying(false);
+
+  const btn = saPlayBtn();
+  if (btn) btn.disabled = !url;
+  if (!url) {
+    // The placeholder is shown by the modal display helper; nothing to load.
+    saSetTime(0);
     return;
   }
-  ytPlayer = new YT.Player('videoFrame', {
-    videoId,
-    playerVars: { autoplay: 1, start: startSec, rel: 0, modestbranding: 1 },
-    events: { onStateChange: onYTStateChange },
+
+  sceneAudio = new Audio(url);
+  sceneAudio.preload = 'metadata';
+  saSetTime(getSceneUiMeta(sceneId).audio_seconds || 0);
+
+  sceneAudio.addEventListener('loadedmetadata', function () {
+    if (isFinite(sceneAudio.duration)) saSetTime(sceneAudio.duration);
+  });
+  sceneAudio.addEventListener('timeupdate', function () {
+    const d = sceneAudio.duration;
+    if (isFinite(d) && d > 0) {
+      saPaint(sceneAudio.currentTime / d);
+      saSetTime(d - sceneAudio.currentTime);
+    }
+  });
+  sceneAudio.addEventListener('play',  function () { saSetPlaying(true); });
+  sceneAudio.addEventListener('pause', function () { saSetPlaying(false); });
+  sceneAudio.addEventListener('ended', function () {
+    saSetPlaying(false);
+    saPaint(1);
+    // Same affordance the YouTube end-check used to drive, now from an event.
+    showReplayLine();
+  });
+  sceneAudio.addEventListener('error', function () {
+    if (btn) btn.disabled = true;
+    saSetPlaying(false);
   });
 }
 
-function onYTStateChange(e) {
-  if (e.data === YT.PlayerState.PLAYING) {
-    startEndCheck();
+function playSceneAudio(fromSeconds) {
+  if (!sceneAudio) return;
+  if (typeof fromSeconds === 'number') sceneAudio.currentTime = fromSeconds;
+  const p = sceneAudio.play();
+  // Autoplay rejection is normal on mobile until the user gesture lands; the
+  // button stays usable rather than the modal looking broken.
+  if (p && typeof p.catch === 'function') p.catch(function () { saSetPlaying(false); });
+}
+
+function toggleSceneAudio() {
+  if (!sceneAudio) return;
+  if (sceneAudio.paused) {
+    hideReplayLine();
+    playSceneAudio();
   } else {
-    stopEndCheck();
+    sceneAudio.pause();
   }
 }
 
-function startEndCheck() {
-  ytEndInterval = startYouTubeEndCheck({
-    getPlayer: function() { return ytPlayer; },
-    getTimes: function() { return null; },
-    onEnded: showReplayLine,
-    setIntervalFn: setInterval,
-    stopCurrent: stopEndCheck,
-  });
+function stopSceneAudio() {
+  if (!sceneAudio) return;
+  sceneAudio.pause();
+  sceneAudio.removeAttribute('src');
+  sceneAudio.load();
+  sceneAudio = null;
 }
 
-function stopEndCheck() {
-  ytEndInterval = stopYouTubeEndCheck({
-    intervalId: ytEndInterval,
-    clearIntervalFn: clearInterval,
-  });
-}
+onClick('btnSceneAudio', toggleSceneAudio);
+
+// Click the waveform to seek.
+on('sceneAudioWave', 'click', function (e) {
+  if (!sceneAudio || !isFinite(sceneAudio.duration)) return;
+  const wrap = saWaveEl();
+  const box = wrap.getBoundingClientRect();
+  if (!box.width) return;
+  const ratio = Math.min(1, Math.max(0, (e.clientX - box.left) / box.width));
+  sceneAudio.currentTime = ratio * sceneAudio.duration;
+  saPaint(ratio);
+});
 
 function showReplayLine() {
   renderReplayLineDisplay({
@@ -2946,9 +3033,8 @@ function hideReplayLine() {
 }
 
 onClick('btnReplayLine', () => {
-  const playback = getScenePlaybackMeta(activeScene);
   hideReplayLine();
-  if (ytPlayer) { ytPlayer.seekTo(playback.startSec, true); ytPlayer.playVideo(); }
+  playSceneAudio(0);
 });
 
 // ══════════════════════════════════════════════

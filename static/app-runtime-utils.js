@@ -26,36 +26,6 @@
     stopWaveform();
   }
 
-  function startYouTubeEndCheck(options) {
-    const getPlayer = options.getPlayer;
-    const getTimes = options.getTimes;
-    const onEnded = options.onEnded;
-    const setIntervalFn = options.setIntervalFn;
-    const stopCurrent = options.stopCurrent;
-
-    stopCurrent();
-    const times = getTimes();
-    const player = getPlayer();
-    if (!times || !player) return null;
-
-    return setIntervalFn(function() {
-      const currentPlayer = getPlayer();
-      if (!currentPlayer) return stopCurrent();
-      if (currentPlayer.getCurrentTime() >= times.end - 1) {
-        currentPlayer.pauseVideo();
-        stopCurrent();
-        onEnded();
-      }
-    }, 250);
-  }
-
-  function stopYouTubeEndCheck(options) {
-    const intervalId = options.intervalId;
-    const clearIntervalFn = options.clearIntervalFn;
-    if (intervalId) clearIntervalFn(intervalId);
-    return null;
-  }
-
   function renderWaveformBars(options) {
     const wrap = options.wrap;
     const barCount = options.barCount;
@@ -96,8 +66,6 @@
     cleanupRecordingRuntime,
     getSupportedMimeType,
     renderWaveformBars,
-    startYouTubeEndCheck,
     stopWaveformRuntime,
-    stopYouTubeEndCheck,
   };
 })();

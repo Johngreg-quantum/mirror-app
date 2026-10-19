@@ -18,7 +18,7 @@
     if (refs.cmpOrigEl) refs.cmpOrigEl.textContent = `\u201c${data.expected}\u201d`;
     if (refs.panelEl) refs.panelEl.classList.toggle('on', true);
     if (refs.pbCompareEl) refs.pbCompareEl.classList.toggle('on', true);
-    if (refs.hearActorBtn) refs.hearActorBtn.disabled = !options.hasYt;
+    if (refs.hearActorBtn) refs.hearActorBtn.disabled = !options.hasSceneAudio;
 
     if (helpers.animateNum && refs.scoreValEl) {
       helpers.animateNum(refs.scoreValEl, 0, data.sync_score || 0, 900);
