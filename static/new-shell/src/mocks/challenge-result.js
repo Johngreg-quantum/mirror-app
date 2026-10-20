@@ -1,9 +1,9 @@
 export const mockChallengeEntry = {
   id: 'sample-challenge',
   challengerName: 'Jonah',
-  sceneId: 'fight_club',
-  sceneTitle: 'Fight Club',
-  film: 'Fight Club',
+  sceneId: 'interrogation',
+  sceneTitle: 'Interrogation',
+  genre: 'Crime',
   targetScore: 86,
   expiresLabel: 'Expires tomorrow',
 };

@@ -61,7 +61,7 @@ const SURFACES = {
     open: () => {
       document.getElementById('overlay').classList.add('open');
       document.body.style.position = 'fixed'; document.body.style.width = '100%';
-      document.getElementById('mTitle').textContent = 'The Dark Knight';
+      document.getElementById('mTitle').textContent = 'Interrogation';
       document.getElementById('mYear').textContent  = '2008';
       document.getElementById('scoreVal').textContent = '96';
       document.getElementById('cmpYou').textContent   = 'Why so serious?';
@@ -160,7 +160,7 @@ const SURFACES = {
       // Poster: 160px, shown by the controller whenever the scene has one.
       const wrap = document.getElementById('quizPosterWrap');
       if (wrap) wrap.style.background = '#222';
-      set('quizPosterMovie', 'THE DARK KNIGHT');
+      set('quizPosterMovie', 'INTERROGATION');
 
       // Mid-quiz, with a streak running.
       set('quizQuestionNum', 'PREGUNTA 7 / 10');

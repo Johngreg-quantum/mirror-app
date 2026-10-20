@@ -5706,18 +5706,21 @@
 
   <div class="pricing-cards-edt">
     <div class="price-card-edt">
-      <div class="price-card-tier">Free</div>
-      <div class="price-card-amount">$0<span>/mo</span></div>
-      <div class="price-card-sub">forever</div>
+      <div class="price-card-tier">Starter</div>
+      <div class="price-card-amount">$1</div>
+      <div class="price-card-sub">one time, yours to keep</div>
       <ul class="price-card-features">
-        <!-- Count from /api/scene-config's free_scene_ids -- the same set the
-             server's gate lets through, so the card cannot promise more than
-             can_access_scene() allows. -->
-        <li id="pricingFreeCount">5 Beginner scenes</li>
-        <li>Daily practice</li>
-        <li>Vocabulary tracking</li>
+        <!-- This card used to be the free tier and promised "5 Beginner
+             scenes". Those five scenes ARE the Starter Pack now -- selling
+             exactly what was free was the reason FREE_SCENE_COUNT went to 0 --
+             so the card had to stop offering them for nothing.
+             The Daily Take and a shared challenge link are still free and
+             still need no purchase, which is what the last two lines say. -->
+        <li id="pricingFreeCount">5 starter scenes</li>
+        <li>The Daily Take, free every day</li>
+        <li>Challenge links from friends</li>
       </ul>
-      <button class="price-card-cta" id="pricingFreeBtn" onclick="mlOpenAuth()">Start free</button>
+      <button class="price-card-cta" id="pricingFreeBtn" onclick="mlOpenAuth()">Create an account</button>
       <!-- The $1 one-time unlock. The plan existed server-side and was served
            by /api/billing/plans, but no button anywhere could request it, so
            it was unbuyable. Hidden until /api/billing/plans confirms the plan
@@ -5726,7 +5729,7 @@
       <div class="price-card-alt" id="pricingLevel1Wrap" hidden>
         <button class="price-card-alt-btn" id="pricingLevel1Btn">Starter Pack · $1</button>
         <p class="price-card-alt-note">
-          One-time. All 20 Level 1 scenes, yours to keep. No subscription.
+          One-time. The five starter scenes, yours to keep. No subscription.
         </p>
       </div>
     </div>

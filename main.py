@@ -692,57 +692,17 @@ def _next_sunday_midnight_utc_str(tz_name=None) -> str:
     return end_local.astimezone(timezone.utc).strftime("%Y-%m-%d %H:%M:%S")
 
 
+# scene id -> genre, for the genre missions below. Was a hand-written map of
+# 47 film ids, which stopped matching anything the moment the catalogue was
+# replaced: every lookup returned "" and no genre mission could ever complete.
+#
+# Derived from scene_config now, lowercased because the mission ids are
+# lowercase ("genre_drama", "weekly_thriller"). A new scene joins the missions
+# by existing, which is the behaviour the hand-written version only appeared
+# to have.
 SCENE_GENRES = {
-    # Drama
-    "forrest_gump":          "drama",
-    "shawshank":             "drama",
-    "good_will_hunting":     "drama",
-    "dead_poets":            "drama",
-    "the_blind_side":        "drama",
-    "pursuit_of_happyness":  "drama",
-    "rain_man":              "drama",
-    "as_good_as_it_gets":    "drama",
-    "rocky":                 "drama",
-    "whiplash":              "drama",
-    "wall_street":           "drama",
-    "social_network":        "drama",
-    "jerry_maguire":         "drama",
-    "cast_away":             "drama",
-    "apollo_13":             "drama",
-    "mystic_river":          "drama",
-    "titanic":               "drama",
-    "a_few_good_men":        "drama",
-    "wolf_of_wall_street":   "drama",
-    "interstellar":          "drama",
-    "the_truman_show":       "drama",
-    "braveheart":            "drama",
-    "godfather":             "drama",
-    "gladiator":             "drama",
-    "breakfast_club":        "drama",
-    # Thriller
-    "seven":                 "thriller",
-    "dark_knight":           "thriller",
-    "fight_club":            "thriller",
-    "the_matrix":            "thriller",
-    "basic_instinct":        "thriller",
-    "sixth_sense":           "thriller",
-    "terminator":            "thriller",
-    "taken":                 "thriller",
-    "heat":                  "thriller",
-    # Other (won't match drama/thriller missions)
-    "home_alone":            "family",
-    "back_to_the_future":    "scifi",
-    "avengers":              "action",
-    "men_in_black":          "scifi",
-    "mrs_doubtfire":         "comedy",
-    "fifth_element":         "scifi",
-    "top_gun":               "action",
-    "clueless":              "comedy",
-    "the_intern":            "comedy",
-    "devil_wears_prada":     "comedy",
-    "ferris_bueller":        "comedy",
-    "legally_blonde":        "comedy",
-    "notting_hill":          "romance",
+    sid: str(scene.get("genre", "")).lower()
+    for sid, scene in SCENES.items()
 }
 
 MISSION_XP = {
@@ -4035,6 +3995,10 @@ async def get_scene_config():
     return {
         **_PUBLIC_SCENE_CONFIG,
         "free_scene_ids": _free_scene_ids(),
+        # The Starter Pack, served for the same reason free_scene_ids is:
+        # so the pricing card states the size of what it sells from the one
+        # place that decides it, rather than carrying a number in markup.
+        "starter_scene_ids": _starter_scene_ids(),
         "enforce_entitlements": ENFORCE_ENTITLEMENTS,
     }
 
@@ -4136,6 +4100,7 @@ async def get_progress(user: dict = Depends(current_user)):
         # no second flag on that side to keep in step.
         "entitlements":         held,
         "free_scene_ids":       _free_scene_ids(),
+        "starter_scene_ids":    _starter_scene_ids(),
         "enforce_entitlements": ENFORCE_ENTITLEMENTS,
         **({"accessible_scenes": accessible} if ENFORCE_ENTITLEMENTS else {}),
     }

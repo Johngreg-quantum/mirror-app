@@ -153,6 +153,9 @@ let DEFAULT_UNLOCKED_SCENES = [];
 // /api/scene-config. Served as ids rather than a count so this file never
 // reproduces the server's "first N of level 1" rule.
 let FREE_SCENE_IDS = [];
+// The Starter Pack, from /api/scene-config. Only the pricing card reads it,
+// and only to say how many scenes a dollar buys.
+let STARTER_SCENE_IDS = [];
 // Mirrors ENFORCE_ENTITLEMENTS on the server. While it is false nothing is
 // refused, so this file must not show a restriction or advertise one -- a lock
 // the server does not enforce is worse than no lock, because it turns people
@@ -327,6 +330,8 @@ function applySceneConfig(config) {
   });
   FREE_SCENE_IDS = Array.isArray(config && config.free_scene_ids)
     ? config.free_scene_ids.slice() : [];
+  STARTER_SCENE_IDS = Array.isArray(config && config.starter_scene_ids)
+    ? config.starter_scene_ids.slice() : [];
   ENTITLEMENTS_ENFORCED = !!(config && config.enforce_entitlements);
   // What to show as unlocked before /api/progress answers. This was all of
   // level 1, which is what the server grants only to the grandfathered users;
@@ -370,6 +375,7 @@ function renderSceneCounts() {
   const scenesWord = function (n) { return n + (n === 1 ? ' Scene' : ' Scenes'); };
   const total = CLV_LEVELS.reduce(function (n, lv) { return n + lv.scenes.length; }, 0);
   const free  = FREE_SCENE_IDS.length;
+  const starter = STARTER_SCENE_IDS.length;
 
   const l1 = CLV_LEVELS[0];
   if (l1) {
@@ -389,7 +395,11 @@ function renderSceneCounts() {
         scenesWord(lv.scenes.length) + ' · Score ' + lv.unlock + '% to unlock');
   });
 
-  if (free) set('pricingFreeCount', free + ' Beginner scenes');
+  // The Starter Pack's size, from /api/scene-config's starter_scene_ids, so
+  // the card never promises more than can_access_scene() grants. `free` is the
+  // free tier and is empty now; the element kept its id because renaming a DOM
+  // id to match a renamed product is churn the markup does not need.
+  if (starter) set('pricingFreeCount', starter + ' starter scenes');
   set('pricingProCount',  'All ' + total + ' scenes');
   set('proUpgradeCount',  total + ' scenes');
 }
