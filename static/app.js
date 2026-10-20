@@ -786,7 +786,7 @@ bindBackdropDismiss('authModalOverlay', closeAuthModal);
 // load, which matters on a landing page that was just cut from 9065ms to
 // 4739ms.
 const BillingPlans = {
-  plans: null, pricesLive: false, promise: null,
+  plans: null, pricesLive: false, billingOpen: false, promise: null,
 
   load() {
     if (this.promise) return this.promise;
@@ -796,11 +796,13 @@ const BillingPlans = {
       .then(function (d) {
         self.plans = Array.isArray(d.plans) ? d.plans : [];
         self.pricesLive = !!d.prices_live;
+        self.billingOpen = !!d.billing_open;
         self.render();
         return self.plans;
       })
       .catch(function () {
-        self.plans = []; self.pricesLive = false; self.render(); return [];
+        self.plans = []; self.pricesLive = false; self.billingOpen = false;
+        self.render(); return [];
       });
     return this.promise;
   },
@@ -911,17 +913,34 @@ const BillingPlans = {
             : ('Upgrade \u2014 ' + total));
     }
 
-    // No configured plans means billing is not set up. Better a disabled button
-    // than one that opens a checkout which cannot succeed. Only once the
-    // catalogue has actually resolved, though -- disabling it while the fetch
-    // is still in flight would tell visitors billing is unavailable during the
-    // window it is merely unanswered.
+    // Two different reasons a button cannot be pressed, and they say
+    // different things.
+    //
+    // `none`  -- no configured plans, so billing is not set up at all.
+    //            Only once the catalogue has resolved: disabling during the
+    //            fetch would tell visitors billing is unavailable during the
+    //            window it is merely unanswered.
+    // `shut`  -- BILLING_OPEN is off. The prices stay on the card, because
+    //            that is what the card is for and Polar's review has to see
+    //            them; only the button changes. The server refuses too, so
+    //            this is the label, not the lock.
     const none = !loading && !this.plans.length;
+    const shut = !loading && !this.billingOpen;
     ['pricingProBtn', 'proUpgradeBtn'].forEach(function (id) {
       const b = document.getElementById(id);
       if (!b) return;
-      b.disabled = none;
-      b.title = none ? 'Pricing is unavailable right now' : '';
+      b.disabled = none || shut;
+      if (shut) {
+        if (!b.dataset.openLabel) b.dataset.openLabel = b.textContent;
+        b.textContent = 'Coming soon';
+        b.title = 'Payments are not open yet';
+      } else {
+        if (b.dataset.openLabel) {
+          b.textContent = b.dataset.openLabel;
+          delete b.dataset.openLabel;
+        }
+        b.title = none ? 'Pricing is unavailable right now' : '';
+      }
     });
 
     // The Starter Pack is shown only when the server has that plan configured.
@@ -936,9 +955,11 @@ const BillingPlans = {
       // The amount comes from the provider like every other price, so a $1
       // product repriced in the dashboard does not leave a stale "$1" here.
       const amount = this.money(lvl1.price_cents);
-      lvl1Btn.textContent = amount
-        ? ('Starter Pack · ' + amount)
-        : 'Starter Pack';
+      lvl1Btn.textContent = shut
+        ? 'Coming soon'
+        : (amount ? ('Starter Pack · ' + amount) : 'Starter Pack');
+      lvl1Btn.disabled = shut;
+      lvl1Btn.title = shut ? 'Payments are not open yet' : '';
     }
   },
 };

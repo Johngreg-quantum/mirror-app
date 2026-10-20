@@ -54,6 +54,10 @@ os.environ["POLAR_MONTHLY_PRODUCT_ID"] = "39ce5af3-a866-49fa-beb6-6bcafdcf94b6"
 os.environ["POLAR_YEARLY_PRODUCT_ID"] = "4b015299-dacc-441a-8790-a1ebb417914e"
 os.environ["POLAR_STARTER_PRODUCT_ID"] = "8970ad64-ec03-494a-b18f-7a5547f48d14"
 os.environ["ENFORCE_ENTITLEMENTS"] = "true"
+# Open, so the checkout cases below exercise the checkout rather than the
+# shut-for-now refusal. Section 4g closes it again and asserts the other
+# state.
+os.environ["BILLING_OPEN"] = "true"
 
 import main as app   # noqa: E402
 
@@ -494,6 +498,60 @@ def main():
     r = client.post("/api/billing/checkout", headers=tok, json={"plan_key": "starter"})
     check("a user who owns nothing is NOT blocked (checkout reaches Polar)",
           r.status_code in (200, 502), str(r.status_code))
+
+    # ── 4g. BILLING_OPEN — THE TWO STATES ─────────────────────────────────────
+    # The switch that decides whether a checkout can be opened at all, separate
+    # from ENFORCE_ENTITLEMENTS, which decides whether a scene is refused.
+    #
+    # Patched on the module rather than re-imported: the endpoint reads the
+    # global at request time, which is the behaviour that matters, and a second
+    # import would give this file two `main` modules with two databases.
+    print("\nBILLING_OPEN")
+    uid, name = make_user("billclosed")
+    tok = {"Authorization": "Bearer %s" % app.make_token(uid, name)}
+
+    was_open = app.BILLING_OPEN
+    try:
+        app.BILLING_OPEN = False
+
+        r = client.post("/api/billing/checkout", headers=tok,
+                        json={"plan_key": "starter"})
+        check("CLOSED: checkout is refused with 503", r.status_code == 503,
+              "%s %s" % (r.status_code, r.text[:60]))
+        check("CLOSED: and says so in words a buyer can read",
+              "coming soon" in r.text.lower(), r.text[:70])
+
+        # Before the plan is even looked at. A caller probing with nonsense must
+        # not be able to tell a configured plan from an unconfigured one while
+        # the shop is shut.
+        r = client.post("/api/billing/checkout", headers=tok,
+                        json={"plan_key": "no-such-plan"})
+        check("CLOSED: refuses BEFORE validating the plan (503, not 400)",
+              r.status_code == 503, str(r.status_code))
+        r = client.post("/api/billing/checkout", headers=tok, json={})
+        check("CLOSED: a missing plan_key is 503 too, not 400",
+              r.status_code == 503, str(r.status_code))
+
+        # The prices are the whole point of the card and Polar's review has to
+        # see them, so the catalogue is served exactly as when open.
+        body = client.get("/api/billing/plans").json()
+        check("CLOSED: the plans are still served",
+              len(body.get("plans", [])) == 3, str(len(body.get("plans", []))))
+        check("CLOSED: billing_open is false so the client can label the button",
+              body.get("billing_open") is False, repr(body.get("billing_open")))
+
+        app.BILLING_OPEN = True
+        r = client.post("/api/billing/checkout", headers=tok,
+                        json={"plan_key": "starter"})
+        check("OPEN: the same request is no longer refused",
+              r.status_code in (200, 502), str(r.status_code))
+        body = client.get("/api/billing/plans").json()
+        check("OPEN: billing_open is true",
+              body.get("billing_open") is True, repr(body.get("billing_open")))
+        check("OPEN: the catalogue is unchanged by the switch",
+              len(body.get("plans", [])) == 3, str(len(body.get("plans", []))))
+    finally:
+        app.BILLING_OPEN = was_open
 
     # ── 4f. A FAILED HANDLER MUST NOT BURN THE DELIVERY ───────────────────────
     # The worst shape of bug this integration can have: the buyer pays, the

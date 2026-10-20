@@ -275,6 +275,23 @@ LS_STORE_ID       = os.getenv("LEMONSQUEEZY_STORE_ID", "396208")
 # provider paid for a row.
 BILLING_PROVIDER = os.getenv("BILLING_PROVIDER", "lemonsqueezy").strip().lower()
 
+# Whether Mirror will actually take a payment. OFF by default, so a deploy that
+# forgets to set it sells nothing rather than selling something it cannot
+# deliver.
+#
+# This is not the same switch as ENFORCE_ENTITLEMENTS, and the two are off for
+# opposite reasons: that one decides whether a scene is ever refused, this one
+# decides whether a checkout can be opened. Off here means the prices are still
+# on the page -- Polar's review needs to see what is being sold -- but the
+# buttons say "Coming soon" and the endpoint behind them refuses.
+#
+# The refusal is server-side and first, because the buttons are a client-side
+# courtesy: a second tab, a stale bundle or a direct POST walks straight past
+# them.
+BILLING_OPEN = os.getenv("BILLING_OPEN", "").strip().lower() in (
+    "1", "true", "yes", "on",
+)
+
 # ─── Polar billing ──────────────────────────────────────────────────────────
 POLAR_ACCESS_TOKEN   = os.getenv("POLAR_ACCESS_TOKEN", "")
 POLAR_WEBHOOK_SECRET = os.getenv("POLAR_WEBHOOK_SECRET", "")
@@ -2934,7 +2951,13 @@ async def billing_plans():
     `prices_live` tells the client whether the amounts are real. When it is
     false the ids are still correct, so the button must stay usable and only
     the amount degrades -- showing a stale hardcoded price is the failure this
-    endpoint exists to prevent."""
+    endpoint exists to prevent.
+
+    `billing_open` is the other half: the plans and their prices are served
+    either way, because Polar's review has to see what is for sale, but when it
+    is false the client renders the buttons as "Coming soon" and disabled. The
+    prices are the point of the card; the button is the part that cannot
+    work."""
     prices = await _plan_prices()
     out = []
     for p in _configured_plans():
@@ -2953,12 +2976,22 @@ async def billing_plans():
         })
     # `grants` is deliberately not serialised: what a purchase confers is the
     # server's business, and a client that believed it could be trusted.
-    return {"plans": out, "prices_live": bool(prices)}
+    return {
+        "plans": out,
+        "prices_live": bool(prices),
+        "billing_open": BILLING_OPEN,
+    }
 
 
 @app.post("/api/billing/checkout")
 async def create_checkout(request: Request, user: dict = Depends(current_user)):
     """Create a Lemon Squeezy checkout session and return the checkout URL."""
+    # Before anything else is read, including the plan. The buttons that reach
+    # here are disabled while BILLING_OPEN is off, but a disabled button is a
+    # courtesy and this is the control.
+    if not BILLING_OPEN:
+        raise HTTPException(status_code=503, detail="Payments coming soon")
+
     try:
         body = await request.json()
     except Exception:
