@@ -78,9 +78,12 @@ def build() -> dict:
             "genre":       s["genre"],
             "emotion":     s["emotion"],
             "difficulty":  DIFFICULTY[level],
-            # Read by the stage 2 audio generator, not by the app.
+            # Production notes, read by the generators and never by the app:
+            # voice and direction steer the text-to-speech, visual steers the
+            # image. main.py strips all three before scenes reach a client.
             "voice":       s["voice"],
             "direction":   s["direction"],
+            "visual":      s.get("visual", ""),
             "starter":     bool(s.get("starter")),
             "ui": {"card_color": GENRE_COLOR[s["genre"]]},
         }

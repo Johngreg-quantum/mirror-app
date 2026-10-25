@@ -1,5 +1,5 @@
 {
- "_about": "Mirror original scenes v1 -- 47 scenes, all written for Mirror; no film, character, actor or quote is referenced. Level 1 (20): beginner, every line <= 10 words, all eligible for the Daily Take pool; the 5 with starter=true are the $1 pack. Level 2 (20): intermediate, longer lines and connected sentences. Level 3 (7): advanced, idioms, sarcasm and fast rhythm. voice = OpenAI gpt-4o-mini-tts voice; direction = the 'instructions' text for that voice.",
+ "_about": "Mirror original scenes v1 -- 47 scenes, all written for Mirror; no film, character, actor or quote is referenced. Level 1 (20): beginner, every line <= 10 words, all eligible for the Daily Take pool; the 5 with starter=true are the $1 pack. Level 2 (20): intermediate, longer lines and connected sentences. Level 3 (7): advanced, idioms, sarcasm and fast rhythm. voice = OpenAI gpt-4o-mini-tts voice; direction = the 'instructions' text for that voice; visual = one concrete sentence of what the frame literally shows, for the image generator.",
  "scenes": [
   {
    "id": "last_train",
@@ -11,6 +11,7 @@
    "translation": "Si te subes a ese tren, no regreses.",
    "voice": "coral",
    "direction": "A woman on a train platform, voice shaking with hurt but completely firm. Slow, deliberate, a short pause after 'train'.",
+   "visual": "a woman standing on a wet station platform facing a man who is about to board a waiting train, his back half turned to her",
    "starter": true
   },
   {
@@ -23,6 +24,7 @@
    "translation": "No llegué tarde. Los demás llegaron temprano.",
    "voice": "ash",
    "direction": "A charming man walking into a party late, totally unbothered, smiling as he talks. Light, playful rhythm.",
+   "visual": "a man in a coat stepping in through the doorway of a crowded living room party, the other guests already seated with drinks",
    "starter": true
   },
   {
@@ -35,6 +37,7 @@
    "translation": "Casi te lo dije cien veces. Te quiero.",
    "voice": "verse",
    "direction": "Quiet, nervous and sincere, as if finally admitting something. Small breath before 'I love you', said softly.",
+   "visual": "two people sitting close together on a flat rooftop at dusk, city rooftops behind them, one turned towards the other",
    "starter": true
   },
   {
@@ -47,6 +50,7 @@
    "translation": "Tenemos noventa segundos. ¡Agarra la bolsa y corre!",
    "voice": "onyx",
    "direction": "Urgent and commanding, a leader in a crisis. Fast pace, sharp consonants, rising energy on 'run'.",
+   "visual": "a man sprinting down a dim service corridor clutching a black duffel bag, an emergency light flashing on the wall behind him",
    "starter": true
   },
   {
@@ -59,6 +63,7 @@
    "translation": "Alguien estuvo en esta casa. La puerta estaba cerrada.",
    "voice": "sage",
    "direction": "A frightened whisper in a dark house. Slow, hushed, a pause between the two sentences.",
+   "visual": "a woman standing just inside a dim hallway at night with her coat still on, looking back at the front door she has left open",
    "starter": true
   },
   {
@@ -70,7 +75,8 @@
    "line": "Hi! I'm new. Is it always this loud in here?",
    "translation": "¡Hola! Soy nuevo. ¿Siempre hay tanto ruido aquí?",
    "voice": "nova",
-   "direction": "Cheerful but a little nervous, someone on their first day at a busy job. Friendly, slightly fast."
+   "direction": "Cheerful but a little nervous, someone on their first day at a busy job. Friendly, slightly fast.",
+   "visual": "a young man standing just inside the door of a busy open plan office with a bag on his shoulder, people working at desks around him"
   },
   {
    "id": "the_promise",
@@ -81,7 +87,8 @@
    "line": "I'll come back for you. I promise.",
    "translation": "Volveré por ti. Te lo prometo.",
    "voice": "ballad",
-   "direction": "Tender and steady, a parent saying goodbye. Warm, low, unhurried."
+   "direction": "Tender and steady, a parent saying goodbye. Warm, low, unhurried.",
+   "visual": "a man crouching down to speak to a child on a front doorstep while a car waits at the kerb behind him"
   },
   {
    "id": "no_signal",
@@ -92,7 +99,8 @@
    "line": "No signal. No road. And the gas is almost gone.",
    "translation": "Sin señal. Sin camino. Y casi no queda gasolina.",
    "voice": "echo",
-   "direction": "Tense and controlled, a driver lost at night trying not to panic. Clipped phrases, worry growing on the last part."
+   "direction": "Tense and controlled, a driver lost at night trying not to panic. Clipped phrases, worry growing on the last part.",
+   "visual": "a woman standing beside a parked car on an empty gravel road at dusk, holding a phone up at arm's length"
   },
   {
    "id": "champion",
@@ -103,7 +111,8 @@
    "line": "Nobody believed in us. Look at us now!",
    "translation": "Nadie creyó en nosotros. ¡Míranos ahora!",
    "voice": "ash",
-   "direction": "Triumphant and emotional, a team captain after a win. Loud, proud, almost laughing on 'now'."
+   "direction": "Triumphant and emotional, a team captain after a win. Loud, proud, almost laughing on 'now'.",
+   "visual": "a team in muddy kit celebrating on a small town pitch, one player with both arms raised, half empty stands behind them"
   },
   {
    "id": "wrong_number",
@@ -114,7 +123,8 @@
    "line": "Sorry, who is this? Why do you have my dog?",
    "translation": "Perdón, ¿quién habla? ¿Por qué tiene a mi perro?",
    "voice": "fable",
-   "direction": "Confused and increasingly alarmed on a phone call. Polite at first, then rising disbelief on 'my dog'."
+   "direction": "Confused and increasingly alarmed on a phone call. Polite at first, then rising disbelief on 'my dog'.",
+   "visual": "a woman standing in her kitchen with a phone held to her ear, an empty dog bed and bowl on the floor beside her"
   },
   {
    "id": "the_storm",
@@ -125,7 +135,8 @@
    "line": "Hold on to the rope! Don't look down!",
    "translation": "¡Agárrate de la cuerda! ¡No mires abajo!",
    "voice": "onyx",
-   "direction": "Shouting over a storm to someone in danger. Loud, strong, urgent but encouraging."
+   "direction": "Shouting over a storm to someone in danger. Loud, strong, urgent but encouraging.",
+   "visual": "two climbers on a wet rock face in heavy weather, one gripping a rope and leaning out, the other below"
   },
   {
    "id": "the_letter",
@@ -136,7 +147,8 @@
    "line": "I read your letter. Every word. Twice.",
    "translation": "Leí tu carta. Cada palabra. Dos veces.",
    "voice": "shimmer",
-   "direction": "Quiet and sad, holding back tears. Slow, with pauses between each short sentence."
+   "direction": "Quiet and sad, holding back tears. Slow, with pauses between each short sentence.",
+   "visual": "a woman sitting alone at a kitchen table in early morning light with an opened letter and its envelope in front of her"
   },
   {
    "id": "interrogation",
@@ -147,7 +159,8 @@
    "line": "You were there that night. Stop lying to me.",
    "translation": "Estabas ahí esa noche. Deja de mentirme.",
    "voice": "onyx",
-   "direction": "A detective, cold and intense, leaning in. Low voice, very controlled, hard stress on 'lying'."
+   "direction": "A detective, cold and intense, leaning in. Low voice, very controlled, hard stress on 'lying'.",
+   "visual": "two people seated across a bare table in a small room under a hard overhead light, one leaning in across the table"
   },
   {
    "id": "surprise",
@@ -158,7 +171,8 @@
    "line": "Close your eyes. Okay... now open them!",
    "translation": "Cierra los ojos. Bien... ¡ahora ábrelos!",
    "voice": "nova",
-   "direction": "Excited and playful, about to reveal a surprise. Hushed first sentence, a pause, then a burst of joy."
+   "direction": "Excited and playful, about to reveal a surprise. Hushed first sentence, a pause, then a burst of joy.",
+   "visual": "a family gathered in a living room around a child who has both hands over their eyes, a wrapped box on the table in front of them"
   },
   {
    "id": "the_deal",
@@ -169,7 +183,8 @@
    "line": "Ten thousand. Final offer. Take it or leave it.",
    "translation": "Diez mil. Última oferta. Lo tomas o lo dejas.",
    "voice": "echo",
-   "direction": "A calm, confident negotiator. Slow and certain, each phrase landing like a decision."
+   "direction": "A calm, confident negotiator. Slow and certain, each phrase landing like a decision.",
+   "visual": "two men facing each other across a desk in a small back office, loose papers and a mug between them"
   },
   {
    "id": "lost_city",
@@ -180,7 +195,8 @@
    "line": "Do you see that? It's real. It's actually real.",
    "translation": "¿Ves eso? Es real. Es de verdad real.",
    "voice": "verse",
-   "direction": "Breathless wonder, an explorer seeing something incredible. Soft at first, building to amazement."
+   "direction": "Breathless wonder, an explorer seeing something incredible. Soft at first, building to amazement.",
+   "visual": "two hikers standing at the edge of a ridge looking down into a valley at overgrown stone ruins half covered in trees"
   },
   {
    "id": "the_apology",
@@ -191,7 +207,8 @@
    "line": "I was wrong. I'm sorry. Please don't go.",
    "translation": "Me equivoqué. Lo siento. Por favor, no te vayas.",
    "voice": "coral",
-   "direction": "Regretful and vulnerable, pleading gently. Quiet, a catch in the voice on 'please'."
+   "direction": "Regretful and vulnerable, pleading gently. Quiet, a catch in the voice on 'please'.",
+   "visual": "a man standing in a narrow hallway as a woman picks up a bag by the open front door, her back to him"
   },
   {
    "id": "midnight_call",
@@ -202,7 +219,8 @@
    "line": "Don't open the door. Whatever you hear, don't open it.",
    "translation": "No abras la puerta. Oigas lo que oigas, no la abras.",
    "voice": "sage",
-   "direction": "Urgent and afraid on a late-night phone call. Hushed but intense, stressing 'don't'."
+   "direction": "Urgent and afraid on a late-night phone call. Hushed but intense, stressing 'don't'.",
+   "visual": "a woman sitting on the floor of a dark bedroom with her back against the bed and a phone to her ear, a closed door ahead of her"
   },
   {
    "id": "stand_up",
@@ -213,7 +231,8 @@
    "line": "Tonight, we don't run. Tonight, we fight back.",
    "translation": "Esta noche no huimos. Esta noche respondemos.",
    "voice": "ash",
-   "direction": "An inspiring speech to a crowd. Strong, rising energy, a pause between the two sentences."
+   "direction": "An inspiring speech to a crowd. Strong, rising energy, a pause between the two sentences.",
+   "visual": "a woman standing on a low stage addressing a packed community hall, people on their feet among the rows of chairs"
   },
   {
    "id": "coffee_shop",
@@ -224,7 +243,8 @@
    "line": "Is this seat taken, or saved for me?",
    "translation": "¿Este asiento está ocupado, o lo guardas para mí?",
    "voice": "verse",
-   "direction": "Flirty and relaxed, smiling in a coffee shop. Easy, warm, a little teasing."
+   "direction": "Flirty and relaxed, smiling in a coffee shop. Easy, warm, a little teasing.",
+   "visual": "two people at a window table in a busy cafe, one resting a cheek on a hand and smiling across at the other"
   },
   {
    "id": "job_offer",
@@ -235,7 +255,8 @@
    "line": "They offered me the job in New York. I asked for one night to think.",
    "translation": "Me ofrecieron el trabajo en Nueva York. Pedí una noche para pensarlo.",
    "voice": "nova",
-   "direction": "Excited and overwhelmed at the same time, telling a close friend. Fast at first, slowing down and unsure at the end."
+   "direction": "Excited and overwhelmed at the same time, telling a close friend. Fast at first, slowing down and unsure at the end.",
+   "visual": "a woman sitting up on a kitchen counter talking to a friend, an opened letter lying on the worktop beside her"
   },
   {
    "id": "the_heist",
@@ -246,7 +267,8 @@
    "line": "Nobody touches the alarm. Nobody uses real names. We're in and out in four minutes.",
    "translation": "Nadie toca la alarma. Nadie usa nombres reales. Entramos y salimos en cuatro minutos.",
    "voice": "onyx",
-   "direction": "A calm crew leader giving final instructions. Low, steady, every sentence clipped and certain."
+   "direction": "A calm crew leader giving final instructions. Low, steady, every sentence clipped and certain.",
+   "visual": "four people gathered around the open back doors of a van in a night car park, one of them pointing down at a sketch on the floor"
   },
   {
    "id": "old_friends",
@@ -257,7 +279,8 @@
    "line": "You haven't changed at all. You're still the worst driver I have ever met.",
    "translation": "No has cambiado nada. Sigues siendo el peor conductor que he conocido.",
    "voice": "ash",
-   "direction": "Two old friends reunited. Warm, laughing, affectionate teasing; a big smile you can hear."
+   "direction": "Two old friends reunited. Warm, laughing, affectionate teasing; a big smile you can hear.",
+   "visual": "two men laughing in a parked car, one in the driver's seat with a hand still on the wheel"
   },
   {
    "id": "good_news",
@@ -268,7 +291,8 @@
    "line": "The doctor says she's going to be fine. I can finally breathe again.",
    "translation": "El doctor dice que ella va a estar bien. Por fin puedo respirar otra vez.",
    "voice": "shimmer",
-   "direction": "Overwhelming relief after a long, scary night. Shaky at first, then a long exhale and a soft laugh."
+   "direction": "Overwhelming relief after a long, scary night. Shaky at first, then a long exhale and a soft laugh.",
+   "visual": "a woman sitting in a hospital corridor with her head tipped back against the wall and her eyes closed, another person beside her"
   },
   {
    "id": "blind_date",
@@ -279,7 +303,8 @@
    "line": "I'll be honest, I almost cancelled tonight. But I'm really glad I didn't.",
    "translation": "Te seré honesto, casi cancelo esta noche. Pero me alegra mucho no haberlo hecho.",
    "voice": "verse",
-   "direction": "Shy and honest on a first date. A little awkward at the start, warm and sincere at the end."
+   "direction": "Shy and honest on a first date. A little awkward at the start, warm and sincere at the end.",
+   "visual": "two people at a restaurant table, one of them just sitting down with their coat still half on"
   },
   {
    "id": "final_round",
@@ -290,7 +315,8 @@
    "line": "Your legs are tired and your lungs are burning, but you are not done yet.",
    "translation": "Tus piernas están cansadas y tus pulmones arden, pero todavía no has terminado.",
    "voice": "onyx",
-   "direction": "A coach in the corner before the last round. Intense, close, building energy to 'not done yet'."
+   "direction": "A coach in the corner before the last round. Intense, close, building energy to 'not done yet'.",
+   "visual": "a boxer sitting on a stool in the corner of a ring with a towel round the neck, a coach crouched in front holding the ropes"
   },
   {
    "id": "the_secret",
@@ -301,7 +327,8 @@
    "line": "If I tell you what I saw, you have to promise you'll never repeat it.",
    "translation": "Si te digo lo que vi, tienes que prometer que nunca lo repetirás.",
    "voice": "sage",
-   "direction": "Hushed and serious, looking around before speaking. Slow, careful, low volume."
+   "direction": "Hushed and serious, looking around before speaking. Slow, careful, low volume.",
+   "visual": "two people sitting close on a park bench with their heads together, one of them glancing back over a shoulder"
   },
   {
    "id": "moving_out",
@@ -312,7 +339,8 @@
    "line": "This apartment was too small, too loud, and the best home I ever had.",
    "translation": "Este apartamento era muy pequeño, muy ruidoso, y el mejor hogar que he tenido.",
    "voice": "coral",
-   "direction": "Nostalgic, standing in an empty apartment. Amused at first, then soft and emotional on the last phrase."
+   "direction": "Nostalgic, standing in an empty apartment. Amused at first, then soft and emotional on the last phrase.",
+   "visual": "a woman standing alone in the middle of an empty flat with cardboard boxes stacked by the door and bare hooks on the wall"
   },
   {
    "id": "lost_luggage",
@@ -323,7 +351,8 @@
    "line": "So my suitcase went to Paris, and I went to Chicago. Great start to my vacation.",
    "translation": "Así que mi maleta se fue a París, y yo a Chicago. Gran comienzo de mis vacaciones.",
    "voice": "fable",
-   "direction": "Frustrated but trying to laugh about it at an airport desk. Dry, tired, comic timing on the last sentence."
+   "direction": "Frustrated but trying to laugh about it at an airport desk. Dry, tired, comic timing on the last sentence.",
+   "visual": "a man leaning on the counter of an airport baggage desk with a form in his hand, an empty carousel turning behind him"
   },
   {
    "id": "the_pilot",
@@ -334,7 +363,8 @@
    "line": "We lost engine two. I'm going to land this plane, so everybody hold on.",
    "translation": "Perdimos el motor dos. Voy a aterrizar este avión, así que todos agárrense.",
    "voice": "echo",
-   "direction": "A pilot in an emergency, impossibly calm and clear. Even pace, reassuring, firm on 'hold on'."
+   "direction": "A pilot in an emergency, impossibly calm and clear. Even pace, reassuring, firm on 'hold on'.",
+   "visual": "a pilot in a cockpit with both hands on the controls, the instrument panel lit and heavy rain running across the windscreen"
   },
   {
    "id": "missed_games",
@@ -345,7 +375,8 @@
    "line": "I wasn't there for your games, and I'm sorry. Let me be there now.",
    "translation": "No estuve en tus partidos, y lo siento. Déjame estar ahora.",
    "voice": "ballad",
-   "direction": "A father apologizing to his grown son. Slow, heavy with regret, hopeful at the end."
+   "direction": "A father apologizing to his grown son. Slow, heavy with regret, hopeful at the end.",
+   "visual": "an older man and his grown son standing a little apart by a chain link fence beside an empty sports field"
   },
   {
    "id": "the_window",
@@ -356,7 +387,8 @@
    "line": "The window was broken from the inside. Whoever did this never left the house.",
    "translation": "La ventana se rompió desde adentro. Quien hizo esto nunca salió de la casa.",
    "voice": "echo",
-   "direction": "A detective figuring it out in real time. Thoughtful, then a chill of realization on the second sentence."
+   "direction": "A detective figuring it out in real time. Thoughtful, then a chill of realization on the second sentence.",
+   "visual": "two detectives standing in a living room looking at a broken window, the glass scattered across the carpet on the inside"
   },
   {
    "id": "wedding_toast",
@@ -367,7 +399,8 @@
    "line": "When they first met, she said he was annoying. Clearly, she was half right.",
    "translation": "Cuando se conocieron, ella dijo que él era molesto. Claramente, tenía media razón.",
    "voice": "nova",
-   "direction": "A best friend giving a wedding toast. Warm and confident, pausing for the laugh after 'half right'."
+   "direction": "A best friend giving a wedding toast. Warm and confident, pausing for the laugh after 'half right'.",
+   "visual": "a man standing with a raised glass at a long wedding table, the seated guests turned towards him"
   },
   {
    "id": "night_shift",
@@ -378,7 +411,8 @@
    "line": "I work two jobs so you can have the chances I never had.",
    "translation": "Trabajo en dos empleos para que tengas las oportunidades que yo nunca tuve.",
    "voice": "coral",
-   "direction": "A tired mother speaking to her teenager, quietly but with deep intensity. No shouting, every word meant."
+   "direction": "A tired mother speaking to her teenager, quietly but with deep intensity. No shouting, every word meant.",
+   "visual": "a tired woman still in work uniform sitting across a kitchen table from a teenager late at night, one lamp on"
   },
   {
    "id": "the_audition",
@@ -389,7 +423,8 @@
    "line": "I've practiced this every night for a year. Please, just give me one chance.",
    "translation": "Lo he practicado cada noche durante un año. Por favor, solo dame una oportunidad.",
    "voice": "shimmer",
-   "direction": "Desperate but dignified, asking for one more chance. Voice slightly trembling, strong on 'one chance'."
+   "direction": "Desperate but dignified, asking for one more chance. Voice slightly trembling, strong on 'one chance'.",
+   "visual": "a young woman standing alone in the middle of a bare stage facing an empty auditorium with a single desk and lamp in the stalls"
   },
   {
    "id": "oxygen_low",
@@ -400,7 +435,8 @@
    "line": "Oxygen is at forty percent. If we don't fix this now, we won't get another try.",
    "translation": "El oxígeno está al cuarenta por ciento. Si no arreglamos esto ahora, no habrá otro intento.",
    "voice": "sage",
-   "direction": "An astronaut in a failing station, tense but focused. Quick, clear, controlled fear."
+   "direction": "An astronaut in a failing station, tense but focused. Quick, clear, controlled fear.",
+   "visual": "two people in work overalls in a cramped equipment room full of pipes, one at a control panel, warning lamps turning"
   },
   {
    "id": "first_dance",
@@ -411,7 +447,8 @@
    "line": "I don't know how to dance. Teach me, and I promise not to step on you.",
    "translation": "No sé bailar. Enséñame, y prometo no pisarte.",
    "voice": "verse",
-   "direction": "Playful and a little embarrassed, inviting someone to dance. Light, smiling, gentle laugh at the end."
+   "direction": "Playful and a little embarrassed, inviting someone to dance. Light, smiling, gentle laugh at the end.",
+   "visual": "two people at the edge of a dance floor, one holding out a hand to the other, couples already dancing behind them"
   },
   {
    "id": "the_rival",
@@ -422,7 +459,8 @@
    "line": "You beat me last year. This year, I came here ready for you.",
    "translation": "Me ganaste el año pasado. Este año vine preparado para ti.",
    "voice": "ash",
-   "direction": "Face to face with a rival before the match. Calm, confident, a quiet threat in the second sentence."
+   "direction": "Face to face with a rival before the match. Calm, confident, a quiet threat in the second sentence.",
+   "visual": "two runners standing face to face at the start of a running track, the stands half full behind them"
   },
   {
    "id": "runaway",
@@ -433,7 +471,8 @@
    "line": "Leave your phone, take only cash, and don't tell anyone where you're going.",
    "translation": "Deja tu teléfono, lleva solo efectivo y no le digas a nadie a dónde vas.",
    "voice": "sage",
-   "direction": "An urgent whisper, helping someone escape. Fast, low, each instruction separated."
+   "direction": "An urgent whisper, helping someone escape. Fast, low, each instruction separated.",
+   "visual": "a woman pressing a roll of cash and a small bag into someone's hands in a dim concrete stairwell"
   },
   {
    "id": "grandmas_kitchen",
@@ -444,7 +483,8 @@
    "line": "She taught me to cook without a recipe. Just taste it, and trust yourself.",
    "translation": "Ella me enseñó a cocinar sin receta. Solo pruébalo, y confía en ti.",
    "voice": "ballad",
-   "direction": "Warm and loving, remembering a grandmother. Soft smile in the voice, slower on the last sentence."
+   "direction": "Warm and loving, remembering a grandmother. Soft smile in the voice, slower on the last sentence.",
+   "visual": "an older woman and a young woman cooking side by side at a stove in a small kitchen, pans and open jars on the counter"
   },
   {
    "id": "boardroom",
@@ -456,6 +496,7 @@
    "translation": "No demos rodeos. Los números son malos y alguien cometió un error grave.",
    "voice": "echo",
    "direction": "A blunt executive in a tense meeting. Direct, fast, no warmth; stress on 'dropped the ball'.",
+   "visual": "a man standing at the head of a long meeting table with printed charts spread out in front of him, several people seated and silent",
    "idioms": [
     "beat around the bush",
     "drop the ball"
@@ -471,6 +512,7 @@
    "translation": "Ah, genial, otra vez te acabaste la leche. De verdad, eres un regalo para este apartamento.",
    "voice": "fable",
    "direction": "Heavy, dry sarcasm. Fake cheerful tone that clearly means the opposite; slow on 'truly'.",
+   "visual": "a man standing at an open fridge holding up an empty milk carton, his flatmate on the sofa behind him not looking up",
    "idioms": [
     "sarcasm"
    ]
@@ -485,6 +527,7 @@
    "translation": "Todos me dieron por acabado. Lo curioso es que apenas estaba empezando.",
    "voice": "ash",
    "direction": "Cool, quiet confidence after proving everyone wrong. Relaxed pace, a small smile on 'funny thing is'.",
+   "visual": "an athlete walking alone off a running track past a row of photographers, a towel over one shoulder",
    "idioms": [
     "write someone off"
    ]
@@ -499,6 +542,7 @@
    "translation": "No me estoy arrepintiendo. Solo estoy... reconsiderando cada decisión que he tomado.",
    "voice": "nova",
    "direction": "Nervous groom or bride rambling before the ceremony. Fast, breathless, comic pause before 'reconsidering'.",
+   "visual": "a man in a suit pacing in a small side room with his jacket half on, a single chair and a mirror against the wall",
    "idioms": [
     "get cold feet"
    ]
@@ -513,6 +557,7 @@
    "translation": "Estás fanfarroneando. Te leo como un libro, y es un libro muy corto.",
    "voice": "onyx",
    "direction": "Smug and amused at a card table. Slow, enjoying every word, a slight laugh on 'very short'.",
+   "visual": "four people around a card table in a dim back room, one of them leaning back in the chair holding cards low",
    "idioms": [
     "read someone like a book",
     "bluff"
@@ -528,6 +573,7 @@
    "translation": "Me he esforzado al máximo por esta empresa, y ya no me voy a quedar callado.",
    "voice": "coral",
    "direction": "Controlled anger finally released in an office. Firm, rising, sharp on 'done'.",
+   "visual": "a woman standing up from her desk in an open plan office with a folder in her hand, colleagues looking up from their screens",
    "idioms": [
     "bend over backwards",
     "bite your tongue"
@@ -543,6 +589,7 @@
    "translation": "Adelante, llámalo suerte, si eso te ayuda a dormir por las noches.",
    "voice": "verse",
    "direction": "Cool and cutting, a quiet put-down to a rival. Low, unhurried, a hint of a smile.",
+   "visual": "two people at a bar, one turned away with a drink in hand, the other watching them from a stool along the counter",
    "idioms": [
     "if it helps you sleep at night"
    ]

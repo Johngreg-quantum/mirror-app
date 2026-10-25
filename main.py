@@ -409,10 +409,11 @@ def _load_scene_config() -> dict:
 
 
 # `voice` and `direction` steer the text-to-speech generator that produces the
-# scene audio; they are production notes, not something a learner reads, so
-# they never reach the client. `translation` is withheld for its own reason --
-# it unlocks after 3 attempts at 70%.
-_PRIVATE_SCENE_FIELDS = ("translation", "voice", "direction")
+# scene audio, and `visual` steers the image generator that produces the still.
+# All three are production notes, not something a learner reads, so they never
+# reach the client. `translation` is withheld for its own reason -- it unlocks
+# after 3 attempts at 70%.
+_PRIVATE_SCENE_FIELDS = ("translation", "voice", "direction", "visual")
 
 
 def _build_public_scene_config(config: dict) -> dict:

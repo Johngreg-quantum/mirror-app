@@ -9,6 +9,7 @@
       "difficulty": "Beginner",
       "voice": "coral",
       "direction": "A woman on a train platform, voice shaking with hurt but completely firm. Slow, deliberate, a short pause after 'train'.",
+      "visual": "a woman standing on a wet station platform facing a man who is about to board a waiting train, his back half turned to her",
       "starter": true,
       "ui": {
         "card_color": "#8a5a1a",
@@ -27,6 +28,7 @@
       "difficulty": "Beginner",
       "voice": "ash",
       "direction": "A charming man walking into a party late, totally unbothered, smiling as he talks. Light, playful rhythm.",
+      "visual": "a man in a coat stepping in through the doorway of a crowded living room party, the other guests already seated with drinks",
       "starter": true,
       "ui": {
         "card_color": "#d4a843",
@@ -45,6 +47,7 @@
       "difficulty": "Beginner",
       "voice": "verse",
       "direction": "Quiet, nervous and sincere, as if finally admitting something. Small breath before 'I love you', said softly.",
+      "visual": "two people sitting close together on a flat rooftop at dusk, city rooftops behind them, one turned towards the other",
       "starter": true,
       "ui": {
         "card_color": "#c75050",
@@ -63,6 +66,7 @@
       "difficulty": "Beginner",
       "voice": "onyx",
       "direction": "Urgent and commanding, a leader in a crisis. Fast pace, sharp consonants, rising energy on 'run'.",
+      "visual": "a man sprinting down a dim service corridor clutching a black duffel bag, an emergency light flashing on the wall behind him",
       "starter": true,
       "ui": {
         "card_color": "#cc2233",
@@ -81,6 +85,7 @@
       "difficulty": "Beginner",
       "voice": "sage",
       "direction": "A frightened whisper in a dark house. Slow, hushed, a pause between the two sentences.",
+      "visual": "a woman standing just inside a dim hallway at night with her coat still on, looking back at the front door she has left open",
       "starter": true,
       "ui": {
         "card_color": "#2a3a5a",
@@ -99,6 +104,7 @@
       "difficulty": "Beginner",
       "voice": "nova",
       "direction": "Cheerful but a little nervous, someone on their first day at a busy job. Friendly, slightly fast.",
+      "visual": "a young man standing just inside the door of a busy open plan office with a bag on his shoulder, people working at desks around him",
       "starter": false,
       "ui": {
         "card_color": "#d4a843",
@@ -117,6 +123,7 @@
       "difficulty": "Beginner",
       "voice": "ballad",
       "direction": "Tender and steady, a parent saying goodbye. Warm, low, unhurried.",
+      "visual": "a man crouching down to speak to a child on a front doorstep while a car waits at the kerb behind him",
       "starter": false,
       "ui": {
         "card_color": "#8a5a1a",
@@ -135,6 +142,7 @@
       "difficulty": "Beginner",
       "voice": "echo",
       "direction": "Tense and controlled, a driver lost at night trying not to panic. Clipped phrases, worry growing on the last part.",
+      "visual": "a woman standing beside a parked car on an empty gravel road at dusk, holding a phone up at arm's length",
       "starter": false,
       "ui": {
         "card_color": "#1a2a4a",
@@ -153,6 +161,7 @@
       "difficulty": "Beginner",
       "voice": "ash",
       "direction": "Triumphant and emotional, a team captain after a win. Loud, proud, almost laughing on 'now'.",
+      "visual": "a team in muddy kit celebrating on a small town pitch, one player with both arms raised, half empty stands behind them",
       "starter": false,
       "ui": {
         "card_color": "#e07b39",
@@ -171,6 +180,7 @@
       "difficulty": "Beginner",
       "voice": "fable",
       "direction": "Confused and increasingly alarmed on a phone call. Polite at first, then rising disbelief on 'my dog'.",
+      "visual": "a woman standing in her kitchen with a phone held to her ear, an empty dog bed and bowl on the floor beside her",
       "starter": false,
       "ui": {
         "card_color": "#d4a843",
@@ -189,6 +199,7 @@
       "difficulty": "Beginner",
       "voice": "onyx",
       "direction": "Shouting over a storm to someone in danger. Loud, strong, urgent but encouraging.",
+      "visual": "two climbers on a wet rock face in heavy weather, one gripping a rope and leaning out, the other below",
       "starter": false,
       "ui": {
         "card_color": "#4a7c8c",
@@ -207,6 +218,7 @@
       "difficulty": "Beginner",
       "voice": "shimmer",
       "direction": "Quiet and sad, holding back tears. Slow, with pauses between each short sentence.",
+      "visual": "a woman sitting alone at a kitchen table in early morning light with an opened letter and its envelope in front of her",
       "starter": false,
       "ui": {
         "card_color": "#8a5a1a",
@@ -225,6 +237,7 @@
       "difficulty": "Beginner",
       "voice": "onyx",
       "direction": "A detective, cold and intense, leaning in. Low voice, very controlled, hard stress on 'lying'.",
+      "visual": "two people seated across a bare table in a small room under a hard overhead light, one leaning in across the table",
       "starter": false,
       "ui": {
         "card_color": "#3a2a4a",
@@ -243,6 +256,7 @@
       "difficulty": "Beginner",
       "voice": "nova",
       "direction": "Excited and playful, about to reveal a surprise. Hushed first sentence, a pause, then a burst of joy.",
+      "visual": "a family gathered in a living room around a child who has both hands over their eyes, a wrapped box on the table in front of them",
       "starter": false,
       "ui": {
         "card_color": "#5a7d8c",
@@ -261,6 +275,7 @@
       "difficulty": "Beginner",
       "voice": "echo",
       "direction": "A calm, confident negotiator. Slow and certain, each phrase landing like a decision.",
+      "visual": "two men facing each other across a desk in a small back office, loose papers and a mug between them",
       "starter": false,
       "ui": {
         "card_color": "#8a5a1a",
@@ -279,6 +294,7 @@
       "difficulty": "Beginner",
       "voice": "verse",
       "direction": "Breathless wonder, an explorer seeing something incredible. Soft at first, building to amazement.",
+      "visual": "two hikers standing at the edge of a ridge looking down into a valley at overgrown stone ruins half covered in trees",
       "starter": false,
       "ui": {
         "card_color": "#4a7c8c",
@@ -297,6 +313,7 @@
       "difficulty": "Beginner",
       "voice": "coral",
       "direction": "Regretful and vulnerable, pleading gently. Quiet, a catch in the voice on 'please'.",
+      "visual": "a man standing in a narrow hallway as a woman picks up a bag by the open front door, her back to him",
       "starter": false,
       "ui": {
         "card_color": "#c75050",
@@ -315,6 +332,7 @@
       "difficulty": "Beginner",
       "voice": "sage",
       "direction": "Urgent and afraid on a late-night phone call. Hushed but intense, stressing 'don't'.",
+      "visual": "a woman sitting on the floor of a dark bedroom with her back against the bed and a phone to her ear, a closed door ahead of her",
       "starter": false,
       "ui": {
         "card_color": "#2a3a5a",
@@ -333,6 +351,7 @@
       "difficulty": "Beginner",
       "voice": "ash",
       "direction": "An inspiring speech to a crowd. Strong, rising energy, a pause between the two sentences.",
+      "visual": "a woman standing on a low stage addressing a packed community hall, people on their feet among the rows of chairs",
       "starter": false,
       "ui": {
         "card_color": "#8a5a1a",
@@ -351,6 +370,7 @@
       "difficulty": "Beginner",
       "voice": "verse",
       "direction": "Flirty and relaxed, smiling in a coffee shop. Easy, warm, a little teasing.",
+      "visual": "two people at a window table in a busy cafe, one resting a cheek on a hand and smiling across at the other",
       "starter": false,
       "ui": {
         "card_color": "#c75050",
@@ -369,6 +389,7 @@
       "difficulty": "Intermediate",
       "voice": "nova",
       "direction": "Excited and overwhelmed at the same time, telling a close friend. Fast at first, slowing down and unsure at the end.",
+      "visual": "a woman sitting up on a kitchen counter talking to a friend, an opened letter lying on the worktop beside her",
       "starter": false,
       "ui": {
         "card_color": "#8a5a1a",
@@ -387,6 +408,7 @@
       "difficulty": "Intermediate",
       "voice": "onyx",
       "direction": "A calm crew leader giving final instructions. Low, steady, every sentence clipped and certain.",
+      "visual": "four people gathered around the open back doors of a van in a night car park, one of them pointing down at a sketch on the floor",
       "starter": false,
       "ui": {
         "card_color": "#3a2a4a",
@@ -405,6 +427,7 @@
       "difficulty": "Intermediate",
       "voice": "ash",
       "direction": "Two old friends reunited. Warm, laughing, affectionate teasing; a big smile you can hear.",
+      "visual": "two men laughing in a parked car, one in the driver's seat with a hand still on the wheel",
       "starter": false,
       "ui": {
         "card_color": "#d4a843",
@@ -423,6 +446,7 @@
       "difficulty": "Intermediate",
       "voice": "shimmer",
       "direction": "Overwhelming relief after a long, scary night. Shaky at first, then a long exhale and a soft laugh.",
+      "visual": "a woman sitting in a hospital corridor with her head tipped back against the wall and her eyes closed, another person beside her",
       "starter": false,
       "ui": {
         "card_color": "#8a5a1a",
@@ -441,6 +465,7 @@
       "difficulty": "Intermediate",
       "voice": "verse",
       "direction": "Shy and honest on a first date. A little awkward at the start, warm and sincere at the end.",
+      "visual": "two people at a restaurant table, one of them just sitting down with their coat still half on",
       "starter": false,
       "ui": {
         "card_color": "#c75050",
@@ -459,6 +484,7 @@
       "difficulty": "Intermediate",
       "voice": "onyx",
       "direction": "A coach in the corner before the last round. Intense, close, building energy to 'not done yet'.",
+      "visual": "a boxer sitting on a stool in the corner of a ring with a towel round the neck, a coach crouched in front holding the ropes",
       "starter": false,
       "ui": {
         "card_color": "#e07b39",
@@ -477,6 +503,7 @@
       "difficulty": "Intermediate",
       "voice": "sage",
       "direction": "Hushed and serious, looking around before speaking. Slow, careful, low volume.",
+      "visual": "two people sitting close on a park bench with their heads together, one of them glancing back over a shoulder",
       "starter": false,
       "ui": {
         "card_color": "#2a3a5a",
@@ -495,6 +522,7 @@
       "difficulty": "Intermediate",
       "voice": "coral",
       "direction": "Nostalgic, standing in an empty apartment. Amused at first, then soft and emotional on the last phrase.",
+      "visual": "a woman standing alone in the middle of an empty flat with cardboard boxes stacked by the door and bare hooks on the wall",
       "starter": false,
       "ui": {
         "card_color": "#8a5a1a",
@@ -513,6 +541,7 @@
       "difficulty": "Intermediate",
       "voice": "fable",
       "direction": "Frustrated but trying to laugh about it at an airport desk. Dry, tired, comic timing on the last sentence.",
+      "visual": "a man leaning on the counter of an airport baggage desk with a form in his hand, an empty carousel turning behind him",
       "starter": false,
       "ui": {
         "card_color": "#d4a843",
@@ -531,6 +560,7 @@
       "difficulty": "Intermediate",
       "voice": "echo",
       "direction": "A pilot in an emergency, impossibly calm and clear. Even pace, reassuring, firm on 'hold on'.",
+      "visual": "a pilot in a cockpit with both hands on the controls, the instrument panel lit and heavy rain running across the windscreen",
       "starter": false,
       "ui": {
         "card_color": "#cc2233",
@@ -549,6 +579,7 @@
       "difficulty": "Intermediate",
       "voice": "ballad",
       "direction": "A father apologizing to his grown son. Slow, heavy with regret, hopeful at the end.",
+      "visual": "an older man and his grown son standing a little apart by a chain link fence beside an empty sports field",
       "starter": false,
       "ui": {
         "card_color": "#5a7d8c",
@@ -567,6 +598,7 @@
       "difficulty": "Intermediate",
       "voice": "echo",
       "direction": "A detective figuring it out in real time. Thoughtful, then a chill of realization on the second sentence.",
+      "visual": "two detectives standing in a living room looking at a broken window, the glass scattered across the carpet on the inside",
       "starter": false,
       "ui": {
         "card_color": "#3a2a4a",
@@ -585,6 +617,7 @@
       "difficulty": "Intermediate",
       "voice": "nova",
       "direction": "A best friend giving a wedding toast. Warm and confident, pausing for the laugh after 'half right'.",
+      "visual": "a man standing with a raised glass at a long wedding table, the seated guests turned towards him",
       "starter": false,
       "ui": {
         "card_color": "#d4a843",
@@ -603,6 +636,7 @@
       "difficulty": "Intermediate",
       "voice": "coral",
       "direction": "A tired mother speaking to her teenager, quietly but with deep intensity. No shouting, every word meant.",
+      "visual": "a tired woman still in work uniform sitting across a kitchen table from a teenager late at night, one lamp on",
       "starter": false,
       "ui": {
         "card_color": "#8a5a1a",
@@ -621,6 +655,7 @@
       "difficulty": "Intermediate",
       "voice": "shimmer",
       "direction": "Desperate but dignified, asking for one more chance. Voice slightly trembling, strong on 'one chance'.",
+      "visual": "a young woman standing alone in the middle of a bare stage facing an empty auditorium with a single desk and lamp in the stalls",
       "starter": false,
       "ui": {
         "card_color": "#8a5a1a",
@@ -639,6 +674,7 @@
       "difficulty": "Intermediate",
       "voice": "sage",
       "direction": "An astronaut in a failing station, tense but focused. Quick, clear, controlled fear.",
+      "visual": "two people in work overalls in a cramped equipment room full of pipes, one at a control panel, warning lamps turning",
       "starter": false,
       "ui": {
         "card_color": "#2a5a8a",
@@ -657,6 +693,7 @@
       "difficulty": "Intermediate",
       "voice": "verse",
       "direction": "Playful and a little embarrassed, inviting someone to dance. Light, smiling, gentle laugh at the end.",
+      "visual": "two people at the edge of a dance floor, one holding out a hand to the other, couples already dancing behind them",
       "starter": false,
       "ui": {
         "card_color": "#c75050",
@@ -675,6 +712,7 @@
       "difficulty": "Intermediate",
       "voice": "ash",
       "direction": "Face to face with a rival before the match. Calm, confident, a quiet threat in the second sentence.",
+      "visual": "two runners standing face to face at the start of a running track, the stands half full behind them",
       "starter": false,
       "ui": {
         "card_color": "#e07b39",
@@ -693,6 +731,7 @@
       "difficulty": "Intermediate",
       "voice": "sage",
       "direction": "An urgent whisper, helping someone escape. Fast, low, each instruction separated.",
+      "visual": "a woman pressing a roll of cash and a small bag into someone's hands in a dim concrete stairwell",
       "starter": false,
       "ui": {
         "card_color": "#1a2a4a",
@@ -711,6 +750,7 @@
       "difficulty": "Intermediate",
       "voice": "ballad",
       "direction": "Warm and loving, remembering a grandmother. Soft smile in the voice, slower on the last sentence.",
+      "visual": "an older woman and a young woman cooking side by side at a stove in a small kitchen, pans and open jars on the counter",
       "starter": false,
       "ui": {
         "card_color": "#5a7d8c",
@@ -729,6 +769,7 @@
       "difficulty": "Advanced",
       "voice": "echo",
       "direction": "A blunt executive in a tense meeting. Direct, fast, no warmth; stress on 'dropped the ball'.",
+      "visual": "a man standing at the head of a long meeting table with printed charts spread out in front of him, several people seated and silent",
       "starter": false,
       "ui": {
         "card_color": "#8a5a1a",
@@ -751,6 +792,7 @@
       "difficulty": "Advanced",
       "voice": "fable",
       "direction": "Heavy, dry sarcasm. Fake cheerful tone that clearly means the opposite; slow on 'truly'.",
+      "visual": "a man standing at an open fridge holding up an empty milk carton, his flatmate on the sofa behind him not looking up",
       "starter": false,
       "ui": {
         "card_color": "#d4a843",
@@ -772,6 +814,7 @@
       "difficulty": "Advanced",
       "voice": "ash",
       "direction": "Cool, quiet confidence after proving everyone wrong. Relaxed pace, a small smile on 'funny thing is'.",
+      "visual": "an athlete walking alone off a running track past a row of photographers, a towel over one shoulder",
       "starter": false,
       "ui": {
         "card_color": "#e07b39",
@@ -793,6 +836,7 @@
       "difficulty": "Advanced",
       "voice": "nova",
       "direction": "Nervous groom or bride rambling before the ceremony. Fast, breathless, comic pause before 'reconsidering'.",
+      "visual": "a man in a suit pacing in a small side room with his jacket half on, a single chair and a mirror against the wall",
       "starter": false,
       "ui": {
         "card_color": "#d4a843",
@@ -814,6 +858,7 @@
       "difficulty": "Advanced",
       "voice": "onyx",
       "direction": "Smug and amused at a card table. Slow, enjoying every word, a slight laugh on 'very short'.",
+      "visual": "four people around a card table in a dim back room, one of them leaning back in the chair holding cards low",
       "starter": false,
       "ui": {
         "card_color": "#3a2a4a",
@@ -836,6 +881,7 @@
       "difficulty": "Advanced",
       "voice": "coral",
       "direction": "Controlled anger finally released in an office. Firm, rising, sharp on 'done'.",
+      "visual": "a woman standing up from her desk in an open plan office with a folder in her hand, colleagues looking up from their screens",
       "starter": false,
       "ui": {
         "card_color": "#8a5a1a",
@@ -858,6 +904,7 @@
       "difficulty": "Advanced",
       "voice": "verse",
       "direction": "Cool and cutting, a quiet put-down to a rival. Low, unhurried, a hint of a smile.",
+      "visual": "two people at a bar, one turned away with a drink in hand, the other watching them from a stool along the counter",
       "starter": false,
       "ui": {
         "card_color": "#1a2a4a",

@@ -56,7 +56,6 @@ from PIL import Image
 ROOT = Path(__file__).resolve().parent.parent
 CONFIG = ROOT / "scene_config.json"
 ART_DIR = ROOT / "static" / "scenes" / "art"
-RAW_DIR = ART_DIR / "_raw"
 
 MODEL = "gpt-image-2.5-sunburst"
 SIZE = "1024x1536"
@@ -69,12 +68,50 @@ USD_PER_TEXT_TOKEN = 5.00 / 1_000_000
 USD_PER_IMAGE_OUT_TOKEN = 30.00 / 1_000_000
 OUTPUT_TOKENS = {"low": 408, "medium": 1584, "high": 6240}
 
-PROMPT = (
-    "Original cinematic movie poster still, no text, no logos. {escena}. "
-    "Moody film lighting, deep blacks, warm gold and amber highlights, shallow "
-    "depth of field, 35mm film grain, anamorphic lens flare, dramatic "
-    "composition with empty space at the top for a title. Photorealistic, "
-    "original characters, not resembling any real actor or existing film."
+# Two looks, selected with --style.
+#
+# `poster` is what the shipped 47 were generated with. It reads as a poster:
+# gold, backlit, dramatic, everyone facing camera -- and that is exactly what
+# makes it read as generated rather than photographed.
+#
+# `documentary` is the answer to that. Available light instead of rim light,
+# muted instead of graded, people turned away or small in frame instead of
+# posed, and an explicit list of the things that signal "AI image" -- flare,
+# glow, HDR, orange-and-teal, bokeh balls. Negatives matter more here than
+# positives: the model's default for "cinematic" is the first look.
+PROMPTS = {
+    "poster": (
+        "Original cinematic movie poster still, no text, no logos. {escena}. "
+        "Moody film lighting, deep blacks, warm gold and amber highlights, shallow "
+        "depth of field, 35mm film grain, anamorphic lens flare, dramatic "
+        "composition with empty space at the top for a title. Photorealistic, "
+        "original characters, not resembling any real actor or existing film."
+    ),
+    "documentary": (
+        "Film still from a quiet independent film, shot on 35mm Kodak Portra 400. "
+        "Natural available light only, muted desaturated colors, soft low contrast, "
+        "subtle film grain. {escena}. {tension}Show the moment from a distance or from "
+        "behind or the side; faces partly turned away or small in frame. Ordinary "
+        "everyday clothes and real locations. Candid, unposed, slightly off-center "
+        "imperfect framing with empty space at the top. Realistic, understated, "
+        "documentary feel. No lens flare, no glow, no HDR, no orange-and-teal "
+        "grading, no bokeh balls, no dramatic rim light, no text, no logos. Original "
+        "people, not resembling any real actor or existing film."
+    ),
+}
+DEFAULT_STYLE = "poster"
+
+# Genres where "quiet independent film" is the wrong instruction on its own: a
+# man sprinting down a corridor is not a still life. This buys movement and
+# hard light WITHOUT buying the look the documentary style exists to avoid --
+# it adds practical sources and motion blur, and says nothing about flare,
+# glow or grading, which the template still forbids further down.
+TENSION_GENRES = {"Action", "Thriller", "Crime", "Suspense"}
+TENSION_CLAUSE = (
+    "Charged and kinetic: visible motion blur from real movement, deep shadow, "
+    "and hard practical light sources already in the scene such as an emergency "
+    "lamp, a torch or headlights. Still the same 35mm film stock, still "
+    "handheld and unglamorous. "
 )
 
 
@@ -96,13 +133,21 @@ DESCRIPTION_OVERRIDES = {
 
 
 def scene_description(scene: dict) -> str:
-    """The {escena} slot: what the frame shows, from the scene's own fields.
+    """The {escena} slot: what the frame literally shows.
 
-    `direction` opens with the visual setup and then turns into vocal notes for
-    the text-to-speech ("slow, deliberate, a short pause after 'train'"), which
-    mean nothing to an image model. Only the first sentence is used, with the
-    genre and emotion added so the grade and the face have something to follow.
+    The scene's own `visual` field, which exists for exactly this. It used to
+    be assembled from `direction` plus the genre and emotion, and `direction`
+    opens with a mood rather than a frame -- "urgent and commanding, a leader
+    in a crisis" let the model pick any crisis it liked, and `countdown`, a man
+    running with a bag, came back as a flood evacuation. A sentence that says
+    what is in shot cannot drift like that.
+
+    Falls back to the old assembly for a scene with no `visual` yet, so this
+    degrades to the previous behaviour rather than to an empty prompt.
     """
+    visual = (scene.get("visual") or "").strip()
+    if visual:
+        return visual
     override = DESCRIPTION_OVERRIDES.get(scene.get("_id"))
     if override:
         return override
@@ -117,19 +162,20 @@ def scene_description(scene: dict) -> str:
     return ", ".join(b for b in bits if b)
 
 
-def write_cuts(png_bytes: bytes, scene_id: str) -> tuple:
-    RAW_DIR.mkdir(parents=True, exist_ok=True)
-    raw = RAW_DIR / ("%s.png" % scene_id)
+def write_cuts(png_bytes: bytes, scene_id: str, out_dir: Path) -> tuple:
+    raw_dir = out_dir / "_raw"
+    raw_dir.mkdir(parents=True, exist_ok=True)
+    raw = raw_dir / ("%s.png" % scene_id)
     raw.write_bytes(png_bytes)
 
     with Image.open(raw) as im:
         im = im.convert("RGB")
         for size, suffix in ((LARGE, ""), (SMALL, "-sm")):
-            out = ART_DIR / ("%s%s.webp" % (scene_id, suffix))
+            out = out_dir / ("%s%s.webp" % (scene_id, suffix))
             im.resize(size, Image.LANCZOS).save(
                 out, "WEBP", quality=WEBP_QUALITY, method=6)
-    large = ART_DIR / ("%s.webp" % scene_id)
-    small = ART_DIR / ("%s-sm.webp" % scene_id)
+    large = out_dir / ("%s.webp" % scene_id)
+    small = out_dir / ("%s-sm.webp" % scene_id)
     return large.stat().st_size, small.stat().st_size
 
 
@@ -140,7 +186,17 @@ def main() -> int:
     ap.add_argument("--dry-run", action="store_true")
     ap.add_argument("--force", action="store_true")
     ap.add_argument("--quality", default=QUALITY, choices=sorted(OUTPUT_TOKENS))
+    ap.add_argument("--style", default=DEFAULT_STYLE, choices=sorted(PROMPTS),
+                    help="which look to generate (default: %s)" % DEFAULT_STYLE)
+    ap.add_argument("--out-dir", default=None,
+                    help="write somewhere other than static/scenes/art, to try a "
+                         "style without overwriting what is shipped")
     args = ap.parse_args()
+
+    # Resolved against the repo root, so a relative --out-dir works from
+    # anywhere and the line printed below is always repo-relative.
+    out_dir = (ROOT / args.out_dir).resolve() if args.out_dir else ART_DIR
+    prompt_template = PROMPTS[args.style]
 
     scenes = json.loads(CONFIG.read_text(encoding="utf-8"))["scenes"]
     if args.all:
@@ -154,19 +210,24 @@ def main() -> int:
     else:
         ap.error("name at least one scene id, or pass --all")
 
-    ART_DIR.mkdir(parents=True, exist_ok=True)
+    out_dir.mkdir(parents=True, exist_ok=True)
 
     pending, skipped = [], []
     for sid in targets:
-        done = ((ART_DIR / ("%s.webp" % sid)).exists()
-                and (ART_DIR / ("%s-sm.webp" % sid)).exists())
+        done = ((out_dir / ("%s.webp" % sid)).exists()
+                and (out_dir / ("%s-sm.webp" % sid)).exists())
         (skipped if done and not args.force else pending).append(sid)
 
     out_tokens = OUTPUT_TOKENS[args.quality]
     # Text is ~130 tokens a prompt; nothing is sent as image input.
     est = (len(pending) * out_tokens * USD_PER_IMAGE_OUT_TOKEN
            + len(pending) * 130 * USD_PER_TEXT_TOKEN)
-    print("model %s   %s   quality %s" % (MODEL, SIZE, args.quality))
+    print("model %s   %s   quality %s   style %s" % (MODEL, SIZE, args.quality, args.style))
+    try:
+        where = out_dir.relative_to(ROOT)
+    except ValueError:
+        where = out_dir
+    print("writing to %s" % where)
     print("to generate %d   already present %d   estimated $%.2f"
           % (len(pending), len(skipped), est))
     if args.dry_run:
@@ -186,7 +247,11 @@ def main() -> int:
     spent, made = 0.0, []
     for sid in pending:
         scene = scenes[sid]
-        prompt = PROMPT.format(escena=scene_description(dict(scene, _id=sid)))
+        tension = TENSION_CLAUSE if scene.get("genre") in TENSION_GENRES else ""
+        prompt = prompt_template.format(
+            escena=scene_description(dict(scene, _id=sid)),
+            tension=tension,
+        )
         try:
             resp = client.images.generate(
                 model=MODEL, prompt=prompt, size=SIZE, quality=args.quality)
@@ -195,7 +260,7 @@ def main() -> int:
             continue
 
         png = base64.b64decode(resp.data[0].b64_json)
-        big, small = write_cuts(png, sid)
+        big, small = write_cuts(png, sid, out_dir)
 
         usage = getattr(resp, "usage", None)
         if usage is not None:
