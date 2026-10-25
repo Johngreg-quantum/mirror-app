@@ -32,6 +32,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse, JSONResponse, Response
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from fastapi.staticfiles import StaticFiles
+from mimetypes import guess_type
+from starlette.datastructures import Headers
 from pydantic import BaseModel, Field
 import markdown
 import openai
@@ -115,9 +117,84 @@ class _RevalidatingStaticFiles(StaticFiles):
     async def get_response(self, path: str, scope) -> Response:
         # Overridden here rather than in file_response() so the header lands on
         # the 304s too, not only the 200s.
+        range_header = Headers(scope=scope).get("range")
+        if range_header:
+            partial = self._range_response(path, range_header)
+            if partial is not None:
+                partial.headers["Cache-Control"] = "no-cache"
+                return partial
+
         response = await super().get_response(path, scope)
         response.headers["Cache-Control"] = "no-cache"
+        # Advertise it on ordinary responses too. Safari decides whether a
+        # media file is seekable from this header before it asks for a range.
+        response.headers.setdefault("Accept-Ranges", "bytes")
         return response
+
+    def _range_response(self, path: str, range_header: str):
+        """Answer a byte-range request with 206, or None to fall through.
+
+        Starlette 0.38.6 -- the version fastapi 0.115.0 pins -- has no range
+        support in FileResponse at all, so every file came back 200 with the
+        whole body. Chromium tolerates that for <audio>. Safari on iOS does
+        not: it probes with `Range: bytes=0-1`, sees a 200 carrying 64 KB, and
+        refuses to play the file. Scene audio was silent on iPhone for exactly
+        this reason, with a 200 in the Render log to say the bytes had been
+        delivered.
+
+        Upgrading Starlette under a pinned FastAPI to fix a media bug is a
+        bigger change than the bug. This is the smaller one.
+
+        Deliberately narrow: single range, bytes only, no multipart. Anything
+        else returns None and takes the ordinary 200 path, which is what every
+        caller got before this existed.
+        """
+        full = os.path.realpath(os.path.join(self.directory, path))
+        root = os.path.realpath(self.directory)
+        # The traversal guard StaticFiles applies to its own path handling. It
+        # has to be repeated because this bypasses lookup_path().
+        if not full.startswith(root + os.sep) or not os.path.isfile(full):
+            return None
+
+        unit, _, spec = range_header.partition("=")
+        if unit.strip().lower() != "bytes" or "," in spec:
+            return None
+
+        size = os.path.getsize(full)
+        start_s, _, end_s = spec.strip().partition("-")
+        try:
+            if start_s:
+                start = int(start_s)
+                end = int(end_s) if end_s else size - 1
+            elif end_s:
+                # "bytes=-500" is the LAST 500 bytes, not the first.
+                start = max(0, size - int(end_s))
+                end = size - 1
+            else:
+                return None
+        except ValueError:
+            return None
+
+        end = min(end, size - 1)
+        if start > end or start >= size:
+            # 416 has to carry the real size or the client cannot correct.
+            return Response(status_code=416,
+                            headers={"Content-Range": "bytes */%d" % size,
+                                     "Accept-Ranges": "bytes"})
+
+        with open(full, "rb") as fh:
+            fh.seek(start)
+            body = fh.read(end - start + 1)
+
+        return Response(
+            content=body,
+            status_code=206,
+            media_type=guess_type(full)[0] or "application/octet-stream",
+            headers={
+                "Content-Range": "bytes %d-%d/%d" % (start, end, size),
+                "Accept-Ranges": "bytes",
+            },
+        )
 
 
 if os.path.isdir(_STATIC_DIR):

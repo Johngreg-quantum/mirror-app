@@ -3039,7 +3039,12 @@ function loadSceneAudio(sceneId, url) {
 
 function playSceneAudio(fromSeconds) {
   if (!sceneAudio) return;
-  if (typeof fromSeconds === 'number') sceneAudio.currentTime = fromSeconds;
+  // Seeking before metadata has arrived throws InvalidStateError in Safari,
+  // and the throw would take play() with it -- the same silence, from a
+  // different cause. "Hear the Actor" is the caller that seeks.
+  if (typeof fromSeconds === 'number') {
+    try { sceneAudio.currentTime = fromSeconds; } catch (err) { /* seek later */ }
+  }
   const p = sceneAudio.play();
   // Autoplay rejection is normal on mobile until the user gesture lands; the
   // button stays usable rather than the modal looking broken.
