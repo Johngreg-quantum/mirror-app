@@ -2528,19 +2528,23 @@ header {
   object-fit: cover; object-position: center 20%;
   display: block;
 }
+/* The top half is left clean so the photograph is actually visible, and the
+   darkening is concentrated in the lower third where the title and the quote
+   sit. The previous ramp started at 15% opacity on the very first pixel and
+   reached 75% by 60%, which was tuned for the old gold backlit stills; the
+   documentary stills average 76/255 luminance on their own, and under that
+   ramp 88% of the rendered hero was below 40/255 -- the art was gone.
+
+   The left-to-right pass is gone with it. It existed to seat text that now
+   sits on the bottom band like everything else. */
 .hero-featured-gradient {
   position: absolute; inset: 0;
   background:
     linear-gradient(to bottom,
-      rgba(8,8,8,0.15) 0%,
-      rgba(8,8,8,0.35) 30%,
-      rgba(8,8,8,0.75) 60%,
-      rgba(8,8,8,0.96) 85%,
-      #080808 100%
-    ),
-    linear-gradient(to right,
-      rgba(8,8,8,0.7) 0%,
-      transparent 50%
+      transparent 0%,
+      transparent 45%,
+      rgba(8,8,8,0.55) 70%,
+      rgba(8,8,8,0.85) 100%
     );
 }
 

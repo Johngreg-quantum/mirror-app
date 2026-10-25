@@ -162,21 +162,70 @@ def scene_description(scene: dict) -> str:
     return ", ".join(b for b in bits if b)
 
 
+# A still darker than this disappears under the card gradient. 80 is where a
+# face in shadow is still readable at 180px wide, measured against the ones
+# that already worked.
+LIFT_BELOW = 70
+LIFT_TARGET = 80
+
+
+def _mean_luma(im: Image.Image) -> float:
+    small = im.convert("L").resize((64, 96), Image.LANCZOS)
+    data = list(small.getdata())
+    return sum(data) / len(data)
+
+
+def lift_exposure(im: Image.Image) -> tuple:
+    """Brighten a too-dark still towards LIFT_TARGET without clipping.
+
+    Gamma, not a multiply or a brightness offset: out = 255*(in/255)**g maps
+    255 to 255 whatever g is, so the highlights cannot blow -- a lamp stays a
+    lamp instead of becoming a white disc. It lifts the shadows and midtones,
+    which is the part that was lost.
+
+    The gamma is solved by bisection rather than derived, because the mean of a
+    gamma-mapped image has no closed form. Twenty passes gets within a
+    fraction of a level, and is instant on a 64x96 thumbnail.
+    """
+    before = _mean_luma(im)
+    if before >= LIFT_BELOW:
+        return im, before, before, 1.0
+
+    probe = im.convert("L").resize((64, 96), Image.LANCZOS)
+    lo, hi = 0.30, 1.0
+    for _ in range(20):
+        g = (lo + hi) / 2
+        lut = [round(255 * ((i / 255) ** g)) for i in range(256)]
+        mean = sum(probe.point(lut).getdata()) / (64 * 96)
+        if mean < LIFT_TARGET:
+            hi = g
+        else:
+            lo = g
+    g = (lo + hi) / 2
+    lut = [round(255 * ((i / 255) ** g)) for i in range(256)]
+    lifted = im.point(lut * len(im.getbands()))
+    return lifted, before, _mean_luma(lifted), g
+
+
 def write_cuts(png_bytes: bytes, scene_id: str, out_dir: Path) -> tuple:
     raw_dir = out_dir / "_raw"
     raw_dir.mkdir(parents=True, exist_ok=True)
     raw = raw_dir / ("%s.png" % scene_id)
-    raw.write_bytes(png_bytes)
+    # On a recut the bytes came FROM this file; rewriting it would be a no-op
+    # that risks truncating the only copy of something the API charged for.
+    if not (raw.exists() and raw.read_bytes() == png_bytes):
+        raw.write_bytes(png_bytes)
 
-    with Image.open(raw) as im:
-        im = im.convert("RGB")
+    with Image.open(raw) as src:
+        im = src.convert("RGB")
+        im, before, after, gamma = lift_exposure(im)
         for size, suffix in ((LARGE, ""), (SMALL, "-sm")):
             out = out_dir / ("%s%s.webp" % (scene_id, suffix))
             im.resize(size, Image.LANCZOS).save(
                 out, "WEBP", quality=WEBP_QUALITY, method=6)
     large = out_dir / ("%s.webp" % scene_id)
     small = out_dir / ("%s-sm.webp" % scene_id)
-    return large.stat().st_size, small.stat().st_size
+    return large.stat().st_size, small.stat().st_size, before, after, gamma
 
 
 def main() -> int:
@@ -188,6 +237,9 @@ def main() -> int:
     ap.add_argument("--quality", default=QUALITY, choices=sorted(OUTPUT_TOKENS))
     ap.add_argument("--style", default=DEFAULT_STYLE, choices=sorted(PROMPTS),
                     help="which look to generate (default: %s)" % DEFAULT_STYLE)
+    ap.add_argument("--recut", action="store_true",
+                    help="re-encode the webp cuts from the PNGs already in "
+                         "_raw/, calling nothing and costing nothing")
     ap.add_argument("--out-dir", default=None,
                     help="write somewhere other than static/scenes/art, to try a "
                          "style without overwriting what is shipped")
@@ -217,6 +269,30 @@ def main() -> int:
         done = ((out_dir / ("%s.webp" % sid)).exists()
                 and (out_dir / ("%s-sm.webp" % sid)).exists())
         (skipped if done and not args.force else pending).append(sid)
+
+    # ── Recut: no network, no spend. The PNG in _raw/ is the thing the API
+    # was paid for; the webp cuts are derived and can be rebuilt whenever the
+    # derivation changes, which is what an exposure lift is.
+    if args.recut:
+        raw_dir = out_dir / "_raw"
+        print("recutting from %s   (no API calls)" % raw_dir.name)
+        done, lifted, missing = 0, 0, []
+        for sid in targets:
+            raw = raw_dir / ("%s.png" % sid)
+            if not raw.exists():
+                missing.append(sid)
+                continue
+            big, small, before, after, gamma = write_cuts(
+                raw.read_bytes(), sid, out_dir)
+            done += 1
+            if gamma < 1:
+                lifted += 1
+                print("  %-18s %6dB / %5dB   lift %.0f -> %.0f  (gamma %.2f)"
+                      % (sid, big, small, before, after, gamma))
+        print("\nrecut %d   lifted %d   left alone %d" % (done, lifted, done - lifted))
+        if missing:
+            print("no raw PNG for: %s" % ", ".join(missing))
+        return 0 if not missing else 1
 
     out_tokens = OUTPUT_TOKENS[args.quality]
     # Text is ~130 tokens a prompt; nothing is sent as image input.
@@ -260,7 +336,7 @@ def main() -> int:
             continue
 
         png = base64.b64decode(resp.data[0].b64_json)
-        big, small = write_cuts(png, sid, out_dir)
+        big, small, before, after, gamma = write_cuts(png, sid, out_dir)
 
         usage = getattr(resp, "usage", None)
         if usage is not None:
@@ -270,8 +346,9 @@ def main() -> int:
             cost = out_tokens * USD_PER_IMAGE_OUT_TOKEN
         spent += cost
         made.append(sid)
-        print("  %-18s %6dB / %5dB  ~$%.4f"
-              % (sid, big, small, cost))
+        lift = ("  lift %.0f->%.0f g%.2f" % (before, after, gamma)) if gamma < 1 else ""
+        print("  %-18s %6dB / %5dB  ~$%.4f%s"
+              % (sid, big, small, cost, lift))
 
     print("\n%d image(s)   ~$%.3f total" % (len(made), spent))
     if made and len(made) < len(scenes):

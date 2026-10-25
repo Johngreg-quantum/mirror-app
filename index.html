@@ -952,10 +952,17 @@
       object-position: center top !important;
       display: block !important;
     }
+    /* Clean through the top half, darkening only the band the caption sits
+       on. The gold wash that used to be here was a tint for the old backlit
+       stills and only muddied the documentary ones. */
     .carousel-poster::after {
       content: '';
       position: absolute; inset: 0;
-      background: linear-gradient(150deg, rgba(200,169,110,0.06) 0%, transparent 50%);
+      background: linear-gradient(to bottom,
+        transparent 0%,
+        transparent 45%,
+        rgba(0,0,0,0.55) 70%,
+        rgba(0,0,0,0.85) 100%);
       pointer-events: none;
     }
     .carousel-reflection {
@@ -1238,6 +1245,19 @@
       width: 100%; height: 100%;
       object-fit: cover; object-position: center 30%;
       display: block;
+    }
+    /* Same band as the hero and the coverflow: the top of the circle stays as
+       photographed, the bottom carries the label. */
+    .lp-node-img::after {
+      content: '';
+      position: absolute; inset: 0;
+      border-radius: 50%;
+      background: linear-gradient(to bottom,
+        transparent 0%,
+        transparent 45%,
+        rgba(0,0,0,0.55) 70%,
+        rgba(0,0,0,0.85) 100%);
+      pointer-events: none;
     }
     .lp-node-fallback { position: absolute; inset: 0; border-radius: 50%; }
 
