@@ -3498,7 +3498,6 @@
     .actI-poster img {
       width: 100%; height: 100%;
       object-fit: cover;
-      filter: brightness(0.85) saturate(0.85);
     }
     .actI-poster::after {
       content: '';
@@ -3752,9 +3751,11 @@
       object-fit: cover;
       animation: actVBreathe 6s ease-in-out infinite;
     }
+    /* Breathes by scale, never by darkening: the art always shows at full
+       brightness and colour. The card's overflow:hidden crops the zoom. */
     @keyframes actVBreathe {
-      0%, 100% { filter: brightness(0.78) saturate(0.85); }
-      50%      { filter: brightness(0.92) saturate(1.0);  }
+      0%, 100% { transform: scale(1); }
+      50%      { transform: scale(1.04); }
     }
     .actV-card::after {
       content: '';
@@ -3983,7 +3984,6 @@
     .mm-frame-img {
       position: absolute; inset: 0;
       background: url('/static/scenes/art/no_signal.webp') center/cover no-repeat;
-      filter: brightness(0.78) saturate(0.9);
     }
     .mm-frame-overlay {
       position: absolute; inset: 0;
@@ -4621,12 +4621,14 @@
   overflow: hidden;
   position: relative;
   cursor: pointer;
-  filter: brightness(0.82) saturate(0.75);
-  transition: filter 0.3s ease, transform 0.25s ease;
+  transition: transform 0.25s ease, scale 0.25s ease, box-shadow 0.25s ease;
 }
+/* The marquee curve writes an inline `transform` on every card, which would
+   override a hover transform. The standalone `scale` property composes with
+   it instead, so the lift survives. Colour is never touched on hover. */
 .ml-card:hover {
-  transform: scale(1.04);
-  filter: brightness(1) saturate(1);
+  scale: 1.04;
+  box-shadow: 0 14px 32px rgba(0,0,0,0.55);
 }
 .ml-card img {
   width: 100%; height: 100%; object-fit: cover; display: block;
@@ -8829,8 +8831,10 @@ function boot(){
     card.position.y = -0.15;
     scene.add(card);
 
-    scene.add(new THREE.AmbientLight(0xffffff, 0.35));
-    var key = new THREE.PointLight(0xc8a96e, 1.6, 30);
+    // Neutral light, bright enough that the poster reads at its own exposure
+    // and colour. A gold key with low ambient tinted and darkened the art.
+    scene.add(new THREE.AmbientLight(0xffffff, 0.8));
+    var key = new THREE.PointLight(0xffffff, 1.6, 30);
     key.position.set(0, 4, 5); scene.add(key);
     var fill = new THREE.DirectionalLight(0xffffff, 0.35);
     fill.position.set(-4, 1, 6); scene.add(fill);
