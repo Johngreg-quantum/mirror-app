@@ -343,9 +343,8 @@ def main():
     check("...copied onto the payment intent too",
           form["payment_intent_data[metadata][user_id]"] == str(uid))
     check("...on the user's own customer", form["customer"] == "cus_abc")
-    check("...card only, which is what carries Apple Pay and Google Pay",
-          form["payment_method_types[0]"] == "card"
-          and not any(k.startswith("payment_method_types[1") for k in form))
+    check("...with no payment_method_types (Stripe rejects it; the dashboard sets methods)",
+          not any(k.startswith("payment_method_types") for k in form))
     check("...and tells the buyer all sales are final, before they pay",
           "final" in form["custom_text[submit][message]"].lower()
           and "non-refundable" in form["custom_text[submit][message]"].lower())
@@ -355,6 +354,8 @@ def main():
     check("...with the user id on the subscription, so its events attribute",
           form["subscription_data[metadata][user_id]"] == str(uid)
           and "payment_intent_data[metadata][user_id]" not in form)
+    check("...and no payment_method_types on Pro either",
+          not any(k.startswith("payment_method_types") for k in form))
 
     tok = {"Authorization": "Bearer %s" % app.make_token(uid, name)}
     FAKE.calls.clear()
@@ -377,6 +378,8 @@ def main():
     sess = [c for c in FAKE.calls if c[:2] == ("POST", "/v1/checkout/sessions")]
     check("a second checkout REUSES the customer", not made and
           sess and sess[0][2]["customer"] == stored, str(made))
+    check("the session actually POSTed carries no payment_method_types",
+          sess and not any(k.startswith("payment_method_types") for k in sess[0][2]))
 
     # Test-mode customers do not exist under a live key.
     tries = {"n": 0}

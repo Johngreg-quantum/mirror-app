@@ -3453,11 +3453,12 @@ def _stripe_checkout_form(plan: dict, user: dict, customer_id: str) -> dict:
                             the subscription.* events can be attributed without
                             a customer lookup
 
-    payment_method_types=card is what keeps Apple Pay and Google Pay on: in
-    Checkout both wallets ride on the card method and appear wherever the
-    browser supports them, as long as they are switched on in the dashboard.
-    Naming card explicitly also keeps out the delayed-notification methods
-    (bank debits) a dynamic list could add, which would grant days late."""
+    No payment_method_types: this account rejects it with a 400 ("Payment
+    methods are now managed from your Dashboard settings"), so which methods
+    Checkout offers -- cards, Apple Pay, Google Pay -- is set in the dashboard
+    alone. If a delayed-notification method (a bank debit) is ever switched
+    on there, the session completes unpaid and the grant waits for
+    checkout.session.async_payment_succeeded, which the webhook handles."""
     is_sub = plan["grants"][0] == "pro"
     meta = {"user_id": str(user["id"]), "username": str(user["username"]),
             "plan_key": plan["key"]}
@@ -3467,7 +3468,6 @@ def _stripe_checkout_form(plan: dict, user: dict, customer_id: str) -> dict:
         "client_reference_id":        str(user["id"]),
         "line_items[0][price]":       plan["product_id"],
         "line_items[0][quantity]":    "1",
-        "payment_method_types[0]":    "card",
         "success_url":                f"{CANONICAL_BASE_URL}/?checkout=success",
         "cancel_url":                 f"{CANONICAL_BASE_URL}/?checkout=cancel",
         "custom_text[submit][message]": _STRIPE_FINAL_SALE_TEXT,
