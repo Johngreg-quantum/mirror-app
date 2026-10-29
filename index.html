@@ -1404,6 +1404,19 @@
       transition: color 0.2s ease;
     }
     .pp-delete:hover { color: rgba(214,92,92,0.85); }
+    /* Subscribers only. Louder than delete, quieter than any call to action:
+       it is the way out of a charge, so it has to be easy to find. */
+    .pp-manage {
+      display: block; margin: 22px auto 0; padding: 10px 20px;
+      background: none; border: 0.5px solid rgba(200,169,110,0.35);
+      border-radius: 999px; cursor: pointer;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 12px; letter-spacing: 0.1em;
+      color: rgba(200,169,110,0.85);
+      transition: border-color 0.2s ease, color 0.2s ease;
+    }
+    .pp-manage:hover { border-color: rgba(200,169,110,0.7); color: #c8a96e; }
+    .pp-manage:disabled { opacity: 0.5; cursor: default; }
 
     .da-overlay {
       position: fixed; inset: 0;
@@ -7935,6 +7948,9 @@ function checkLevel2Unlock() {
       '</div>' +
       '<div class="pp-section-hd">FILMOGRAPHY</div>' +
       filmHtml +
+      (window.mirrorIsPro === true
+        ? '<button type="button" class="pp-manage" id="ppManageBtn">Manage subscription</button>'
+        : '') +
       // Only in-app surface that links to the policy — the landing footer is
       // hidden by the landing-cleanup rules, so the corner link covers logged-out
       // visitors and this covers signed-in ones.
@@ -7945,6 +7961,33 @@ function checkLevel2Unlock() {
 
     var delBtn = document.getElementById('ppDeleteBtn');
     if (delBtn) delBtn.addEventListener('click', openDeleteModal);
+    var manageBtn = document.getElementById('ppManageBtn');
+    if (manageBtn) manageBtn.addEventListener('click', openBillingPortal);
+  }
+
+  /* ── Billing portal ─────────────────────────────────────────────────────
+     The link is minted per click: provider portal sessions expire within
+     minutes, so there is nothing worth caching. */
+  function openBillingPortal(){
+    var btn = document.getElementById('ppManageBtn');
+    var token = (typeof authToken !== 'undefined' && authToken)
+      ? authToken : localStorage.getItem('mirror_token');
+    if (!token) return;
+    if (btn) { btn.disabled = true; btn.textContent = 'Opening…'; }
+    fetch(API + '/api/billing/portal', {
+      method: 'POST',
+      headers: { 'Authorization': 'Bearer ' + token }
+    }).then(function(r){
+      return r.json().catch(function(){ return {}; });
+    }).then(function(data){
+      if (data && data.url) { window.location.href = data.url; return; }
+      throw new Error((data && data.detail) || 'no url');
+    }).catch(function(e){
+      if (btn) { btn.disabled = false; btn.textContent = 'Manage subscription'; }
+      var msg = (e && e.message && e.message !== 'no url')
+        ? e.message : 'Could not open billing. Please try again.';
+      if (typeof showToast === 'function') showToast(msg, 3500);
+    });
   }
 
   /* ── Delete account ─────────────────────────────────────────────────────

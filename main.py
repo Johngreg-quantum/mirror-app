@@ -405,6 +405,26 @@ POLAR_YEARLY_ID      = os.getenv("POLAR_YEARLY_PRODUCT_ID", "")
 POLAR_STARTER_ID     = _getenv_renamed("POLAR_STARTER_PRODUCT_ID",
                                        "POLAR_LEVEL1_PRODUCT_ID")
 
+# ─── Stripe billing ─────────────────────────────────────────────────────────
+# Selected by BILLING_PROVIDER=stripe. Test and live are separated by the key
+# alone (sk_test_ / sk_live_): the host is the same, and so is every path. What
+# does NOT carry over between the two is every id -- prices, customers,
+# subscriptions and the webhook secret are all per-mode, so going live means
+# replacing all five of these together.
+#
+# Called over plain httpx like the other two providers rather than through the
+# stripe SDK: three endpoints and a signature check do not justify a dependency
+# whose version would then also have to be pinned against the webhook's.
+STRIPE_SECRET_KEY        = os.getenv("STRIPE_SECRET_KEY", "")
+STRIPE_WEBHOOK_SECRET    = os.getenv("STRIPE_WEBHOOK_SECRET", "")
+STRIPE_MONTHLY_ID        = os.getenv("STRIPE_MONTHLY_PRICE_ID", "")
+STRIPE_YEARLY_ID         = os.getenv("STRIPE_YEARLY_PRICE_ID", "")
+STRIPE_STARTER_ID        = os.getenv("STRIPE_STARTER_PRICE_ID", "")
+# Optional. Unset means the account's default portal configuration, which in
+# live mode has to be saved once in the dashboard before any portal link works.
+STRIPE_PORTAL_CONFIG_ID  = os.getenv("STRIPE_PORTAL_CONFIGURATION_ID", "")
+STRIPE_API_BASE          = "https://api.stripe.com"
+
 
 def build_app_url(path: str) -> str:
     """Return an app URL using APP_BASE_URL when configured, else a relative path."""
@@ -1016,6 +1036,12 @@ _USERS_MIGRATION_COLUMNS = [
     # The customer id is what we keep, and the link is made on demand from it.
     ("polar_subscription_id",      "TEXT"),
     ("polar_customer_id",          "TEXT"),
+    # Stripe identifiers. The customer is created by us, once per user, before
+    # the first checkout -- so unlike the other two it exists before anything
+    # is bought, and it is what the portal and the charge/dispute webhooks key
+    # on. The portal link is minted per click, like Polar's.
+    ("stripe_customer_id",         "TEXT"),
+    ("stripe_subscription_id",     "TEXT"),
 ]
 
 
@@ -2296,7 +2322,8 @@ async def delete_account(req: DeleteAccountRequest, user: dict = Depends(current
     try:
         cur.execute(
             f"SELECT username, password_hash, is_pro, ls_subscription_id, "
-            f"ls_customer_portal_url, polar_subscription_id, polar_customer_id "
+            f"ls_customer_portal_url, polar_subscription_id, polar_customer_id, "
+            f"stripe_subscription_id, stripe_customer_id "
             f"FROM users WHERE id = {PH}",
             (user["id"],),
         )
@@ -2305,6 +2332,7 @@ async def delete_account(req: DeleteAccountRequest, user: dict = Depends(current
             raise HTTPException(401, "Account no longer exists")
         db_username, password_hash, is_pro = row[0], row[1], row[2]
         polar_customer_id = row[6]
+        stripe_customer_id = row[8]
         # Whichever provider is live owns the id we are about to cancel with.
         # Reading the other one would send a Polar uuid to Lemon Squeezy, or a
         # numeric LS id to Polar, and the cancel would fail on an account we
@@ -2312,6 +2340,8 @@ async def delete_account(req: DeleteAccountRequest, user: dict = Depends(current
         # prevent.
         if BILLING_PROVIDER == "polar":
             subscription_id, portal_url = row[5], None
+        elif BILLING_PROVIDER == "stripe":
+            subscription_id, portal_url = row[7], None
         else:
             subscription_id, portal_url = row[3], row[4]
     finally:
@@ -2368,6 +2398,8 @@ async def delete_account(req: DeleteAccountRequest, user: dict = Depends(current
         # back on, by design.
         if BILLING_PROVIDER == "polar":
             portal_url = await _polar_portal_url(polar_customer_id)
+        elif BILLING_PROVIDER == "stripe":
+            portal_url = await _stripe_portal_url(stripe_customer_id)
         raise HTTPException(409, _subscription_blocked_message(portal_url))
 
     # ── Phase 3: erase. Only reached once nothing can still bill them. ───────
@@ -2804,6 +2836,13 @@ def _provider_product_ids() -> dict:
         return {"monthly": POLAR_MONTHLY_ID,
                 "yearly":  POLAR_YEARLY_ID,
                 "starter": POLAR_STARTER_ID}
+    if BILLING_PROVIDER == "stripe":
+        # Price ids, not product ids: a Stripe product can carry several
+        # prices, and the price is what a checkout line item names and what
+        # the webhook's line items report back.
+        return {"monthly": STRIPE_MONTHLY_ID,
+                "yearly":  STRIPE_YEARLY_ID,
+                "starter": STRIPE_STARTER_ID}
     return {"monthly": LS_MONTHLY_ID,
             "yearly":  LS_YEARLY_ID,
             "starter": LS_STARTER_ID}
@@ -3013,10 +3052,77 @@ async def _polar_product_prices() -> dict:
     return _POLAR_PRICE_CACHE["variants"]
 
 
+_STRIPE_PRICE_CACHE = {"at": 0.0, "variants": {}}
+
+
+def _stripe_headers() -> dict:
+    return {"Authorization": f"Bearer {STRIPE_SECRET_KEY}"}
+
+
+def _stripe_error_code(resp) -> str:
+    """Stripe's error.code, or "" when the body has none."""
+    try:
+        return str(((resp.json() or {}).get("error") or {}).get("code") or "")
+    except Exception:
+        return ""
+
+
+async def _stripe_price_info() -> dict:
+    """price_id -> price attributes, in the shape the other two fetchers
+    return. Same contract: never raises, 600s cache, last good copy on failure.
+
+    Each configured price is fetched by id rather than by listing the account:
+    a list is paginated and mixes in every other product the account sells,
+    and three ids are three small requests made once every ten minutes."""
+    now = time.time()
+    if _STRIPE_PRICE_CACHE["variants"] and now - _STRIPE_PRICE_CACHE["at"] < _LS_PRICE_TTL:
+        return _STRIPE_PRICE_CACHE["variants"]
+    ids = [i for i in _provider_product_ids().values() if i]
+    if not STRIPE_SECRET_KEY or not ids:
+        return _STRIPE_PRICE_CACHE["variants"]
+
+    out = {}
+    try:
+        async with httpx.AsyncClient() as client:
+            for price_id in ids:
+                resp = await client.get(
+                    f"{STRIPE_API_BASE}/v1/prices/{price_id}",
+                    params={"expand[]": "product"},
+                    headers=_stripe_headers(),
+                    timeout=10,
+                )
+                if resp.status_code != 200:
+                    logger.warning("[billing] stripe price %s got HTTP %s",
+                                   price_id, resp.status_code)
+                    continue
+                p = resp.json()
+                recurring = p.get("recurring") or {}
+                product = p.get("product") if isinstance(p.get("product"), dict) else {}
+                out[str(p.get("id"))] = {
+                    "name":            product.get("name") or p.get("nickname"),
+                    "price_cents":     p.get("unit_amount"),
+                    "interval":        recurring.get("interval"),
+                    "interval_count":  recurring.get("interval_count") or (1 if recurring else None),
+                    "is_subscription": p.get("type") == "recurring",
+                    "status":          "published" if p.get("active") else "archived",
+                    "test_mode":       not p.get("livemode", False),
+                }
+    except Exception as exc:
+        logger.warning("[billing] stripe price fetch failed: %s", exc)
+        return _STRIPE_PRICE_CACHE["variants"]
+
+    if out:
+        _STRIPE_PRICE_CACHE["variants"] = out
+        _STRIPE_PRICE_CACHE["at"] = now
+    return _STRIPE_PRICE_CACHE["variants"]
+
+
 async def _plan_prices() -> dict:
     """Prices from whichever provider is live, keyed by that provider's id."""
     if BILLING_PROVIDER == "polar":
         return await _polar_product_prices()
+    if BILLING_PROVIDER == "stripe":
+        return await _stripe_price_info()
     return await _ls_variant_prices()
 
 
@@ -3116,6 +3222,8 @@ async def create_checkout(request: Request, user: dict = Depends(current_user)):
 
     if BILLING_PROVIDER == "polar":
         return await _polar_create_checkout(plan, user)
+    if BILLING_PROVIDER == "stripe":
+        return await _stripe_create_checkout(plan, user)
 
     variant_id = plan["product_id"]
 
@@ -3265,6 +3373,212 @@ async def _polar_portal_url(customer_id: Optional[str]) -> Optional[str]:
     return None
 
 
+def _stripe_id(value) -> Optional[str]:
+    """An id from a Stripe field that may be a bare id or an expanded object."""
+    if isinstance(value, dict):
+        value = value.get("id")
+    return str(value) if value else None
+
+
+async def _stripe_create_customer(client, user_id: int) -> str:
+    """Create the Stripe customer for a user and store its id.
+
+    No idempotency key. Keys live for 24 hours and are scoped to the account,
+    not to our database, so a local database that was reset and handed out the
+    same user id again would get back somebody else's customer. Two checkouts
+    racing can at worst leave one orphaned customer with nothing on it, and the
+    conditional UPDATE below keeps the first one written."""
+    conn = get_conn()
+    try:
+        cur = conn.cursor()
+        cur.execute(f"SELECT username, email FROM users WHERE id = {PH}", (user_id,))
+        row = cur.fetchone()
+    finally:
+        conn.close()
+    if row is None:
+        raise HTTPException(status_code=401, detail="Account no longer exists")
+    data = {"metadata[user_id]": str(user_id), "metadata[username]": str(row[0])}
+    if row[1]:
+        data["email"] = str(row[1])
+
+    resp = await client.post(f"{STRIPE_API_BASE}/v1/customers",
+                             headers=_stripe_headers(), data=data, timeout=15)
+    if resp.status_code != 200:
+        logger.warning("[billing] stripe customer create HTTP %s: %s",
+                       resp.status_code, resp.text[:300])
+        raise HTTPException(status_code=502, detail="Checkout creation failed")
+    customer_id = str(resp.json().get("id"))
+
+    conn = get_conn()
+    try:
+        cur = conn.cursor()
+        cur.execute(f"UPDATE users SET stripe_customer_id = {PH} WHERE id = {PH}",
+                    (customer_id, user_id))
+        conn.commit()
+    finally:
+        conn.close()
+    return customer_id
+
+
+def _stripe_stored_customer(user_id: int) -> Optional[str]:
+    conn = get_conn()
+    try:
+        cur = conn.cursor()
+        cur.execute(f"SELECT stripe_customer_id FROM users WHERE id = {PH}", (user_id,))
+        row = cur.fetchone()
+    finally:
+        conn.close()
+    return str(row[0]) if row and row[0] else None
+
+
+# Shown above the pay button on Stripe's hosted page. The policy is final
+# sales, and the buyer should read that before paying rather than after.
+_STRIPE_FINAL_SALE_TEXT = (
+    "All sales are final — Mirror purchases are non-refundable. "
+    "You can cancel a subscription at any time and it will not renew."
+)
+
+
+def _stripe_checkout_form(plan: dict, user: dict, customer_id: str) -> dict:
+    """The form sent to POST /v1/checkout/sessions.
+
+    Split out so a test can assert on exactly what ships. The user id travels
+    three ways, each for a different reader:
+
+      client_reference_id   on the Checkout Session, read by
+                            checkout.session.completed
+      metadata.user_id      on the session too, the same answer by a second
+                            route
+      *_data.metadata       copied onto the subscription or payment intent, so
+                            the subscription.* events can be attributed without
+                            a customer lookup
+
+    payment_method_types=card is what keeps Apple Pay and Google Pay on: in
+    Checkout both wallets ride on the card method and appear wherever the
+    browser supports them, as long as they are switched on in the dashboard.
+    Naming card explicitly also keeps out the delayed-notification methods
+    (bank debits) a dynamic list could add, which would grant days late."""
+    is_sub = plan["grants"][0] == "pro"
+    meta = {"user_id": str(user["id"]), "username": str(user["username"]),
+            "plan_key": plan["key"]}
+    form = {
+        "mode":                       "subscription" if is_sub else "payment",
+        "customer":                   customer_id,
+        "client_reference_id":        str(user["id"]),
+        "line_items[0][price]":       plan["product_id"],
+        "line_items[0][quantity]":    "1",
+        "payment_method_types[0]":    "card",
+        "success_url":                f"{CANONICAL_BASE_URL}/?checkout=success",
+        "cancel_url":                 f"{CANONICAL_BASE_URL}/?checkout=cancel",
+        "custom_text[submit][message]": _STRIPE_FINAL_SALE_TEXT,
+    }
+    holder = "subscription_data" if is_sub else "payment_intent_data"
+    for k, v in meta.items():
+        form[f"metadata[{k}]"] = v
+        form[f"{holder}[metadata][{k}]"] = v
+    return form
+
+
+async def _stripe_create_checkout(plan: dict, user: dict) -> dict:
+    """Create a hosted Stripe Checkout session and return {checkout_url}.
+
+    A stored customer id that Stripe does not recognise is replaced, once.
+    That is the test-to-live switch: every customer created under sk_test_ is
+    invisible to sk_live_, and without this every returning user would be
+    unable to buy on the day billing goes live."""
+    if not STRIPE_SECRET_KEY:
+        raise HTTPException(status_code=500, detail="Payment not configured")
+
+    try:
+        async with httpx.AsyncClient() as client:
+            customer_id = _stripe_stored_customer(user["id"])
+            if not customer_id:
+                customer_id = await _stripe_create_customer(client, user["id"])
+            for attempt in (1, 2):
+                resp = await client.post(
+                    f"{STRIPE_API_BASE}/v1/checkout/sessions",
+                    headers=_stripe_headers(),
+                    data=_stripe_checkout_form(plan, user, customer_id),
+                    timeout=15,
+                )
+                if (attempt == 1 and resp.status_code in (400, 404)
+                        and _stripe_error_code(resp) == "resource_missing"
+                        and "customer" in resp.text):
+                    logger.warning(
+                        "[billing] stripe customer %s unknown to this key; "
+                        "creating a new one for user_id=%s", customer_id, user["id"])
+                    customer_id = await _stripe_create_customer(client, user["id"])
+                    continue
+                break
+    except HTTPException:
+        raise
+    except Exception as exc:
+        logger.warning("[billing] stripe checkout unreachable: %s", exc)
+        raise HTTPException(status_code=502, detail="Checkout creation failed")
+
+    if resp.status_code != 200:
+        logger.warning("[billing] stripe checkout failed HTTP %s: %s",
+                       resp.status_code, resp.text[:300])
+        raise HTTPException(status_code=502, detail="Checkout creation failed")
+    url = (resp.json() or {}).get("url")
+    if not url:
+        raise HTTPException(status_code=502, detail="Checkout creation failed")
+    return {"checkout_url": url}
+
+
+async def _stripe_portal_url(customer_id: Optional[str]) -> Optional[str]:
+    """A Customer Portal session, minted now. Sessions are short-lived, so
+    like Polar's they are never stored."""
+    if not (customer_id and STRIPE_SECRET_KEY):
+        return None
+    data = {"customer": str(customer_id), "return_url": f"{CANONICAL_BASE_URL}/"}
+    if STRIPE_PORTAL_CONFIG_ID:
+        data["configuration"] = STRIPE_PORTAL_CONFIG_ID
+    try:
+        async with httpx.AsyncClient() as client:
+            resp = await client.post(f"{STRIPE_API_BASE}/v1/billing_portal/sessions",
+                                     headers=_stripe_headers(), data=data, timeout=10)
+        if resp.status_code == 200:
+            return (resp.json() or {}).get("url")
+        logger.warning("[billing] stripe portal session HTTP %s: %s",
+                       resp.status_code, resp.text[:300])
+    except Exception as exc:
+        logger.warning("[billing] stripe portal session failed: %s", exc)
+    return None
+
+
+@app.post("/api/billing/portal")
+async def billing_portal(user: dict = Depends(current_user)):
+    """A link to the live provider's self-service portal: cancel, change card,
+    download invoices. Deliberately not gated on BILLING_OPEN -- closing the
+    shop must never close the way out for someone who already pays."""
+    conn = get_conn()
+    try:
+        cur = conn.cursor()
+        cur.execute(
+            f"SELECT stripe_customer_id, polar_customer_id, ls_customer_portal_url "
+            f"FROM users WHERE id = {PH}", (user["id"],))
+        row = cur.fetchone() or (None, None, None)
+    finally:
+        conn.close()
+
+    if BILLING_PROVIDER == "stripe":
+        if not row[0]:
+            raise HTTPException(status_code=404, detail="No billing account to manage yet.")
+        url = await _stripe_portal_url(row[0])
+    elif BILLING_PROVIDER == "polar":
+        url = await _polar_portal_url(row[1])
+    else:
+        url = row[2]
+    if not url:
+        raise HTTPException(
+            status_code=502,
+            detail="Could not open the billing portal. Please try again, or "
+                   "email contact@mirrorspeak.app.",
+        )
+    return {"url": url}
+
+
 def _subscription_blocked_message(portal_url: Optional[str]) -> str:
     """Message for a subscriber whose subscription we cannot cancel ourselves.
 
@@ -3404,10 +3718,55 @@ async def _cancel_polar_subscription(subscription_id: str) -> None:
         raise SubscriptionCancelError(f"Polar returned {resp.status_code}")
 
 
+async def _cancel_stripe_subscription(subscription_id: str) -> None:
+    """Cancel a Stripe subscription immediately, or raise SubscriptionCancelError.
+
+    Immediate rather than at period end, for the reason Polar's is: the account
+    is being erased, so a remaining paid period is worth nothing to anyone.
+
+    Only two answers count as success without a cancel landing: a 404 whose
+    structured code is resource_missing, and a subscription that a follow-up
+    read shows is already canceled. Anything else -- a 401 from a rotated key,
+    a 403 from a restricted key lacking write access, a 5xx -- aborts the
+    deletion, because reading those as "nothing to cancel" would erase the
+    account while the card kept being charged."""
+    if not STRIPE_SECRET_KEY:
+        raise SubscriptionCancelError("Stripe secret key is not configured")
+
+    url = f"{STRIPE_API_BASE}/v1/subscriptions/{subscription_id}"
+    try:
+        async with httpx.AsyncClient() as client:
+            resp = await client.delete(url, headers=_stripe_headers(), timeout=15)
+            if resp.status_code == 200:
+                return
+            if resp.status_code == 404 and _stripe_error_code(resp) == "resource_missing":
+                logger.info("[billing] stripe subscription %s does not exist "
+                            "-- nothing to cancel", subscription_id)
+                return
+            if resp.status_code == 400:
+                # Cancelling one that is already canceled is a 400, not a
+                # 200. Ask what state it is in rather than parse the message.
+                check = await client.get(url, headers=_stripe_headers(), timeout=15)
+                if check.status_code == 200 and (check.json() or {}).get("status") in (
+                        "canceled", "incomplete_expired"):
+                    logger.info("[billing] stripe subscription %s already ended",
+                                subscription_id)
+                    return
+    except Exception as exc:
+        raise SubscriptionCancelError(f"could not reach Stripe: {exc}") from exc
+
+    raise SubscriptionCancelError(
+        f"Stripe returned {resp.status_code} with code="
+        f"{_stripe_error_code(resp) or 'none'} -- refusing to treat as cancelled"
+    )
+
+
 async def _cancel_subscription(subscription_id: str) -> None:
     """Cancel through whichever provider sold the subscription."""
     if BILLING_PROVIDER == "polar":
         await _cancel_polar_subscription(subscription_id)
+    elif BILLING_PROVIDER == "stripe":
+        await _cancel_stripe_subscription(subscription_id)
     else:
         await _cancel_ls_subscription(subscription_id)
 
@@ -3470,6 +3829,8 @@ async def billing_webhook(request: Request):
     an env change."""
     if BILLING_PROVIDER == "polar":
         return await _polar_webhook(request)
+    if BILLING_PROVIDER == "stripe":
+        return await _stripe_webhook(request)
     return await _lemonsqueezy_webhook(request)
 
 
@@ -4067,6 +4428,417 @@ async def _polar_webhook(request: Request):
     except Exception:
         conn.rollback()
         logger.exception("[billing] polar webhook %s failed for user_id=%s", event, user_id)
+        conn.close()
+        raise HTTPException(status_code=500, detail="Webhook processing failed")
+    finally:
+        try:
+            conn.close()
+        except Exception:
+            pass
+
+    return {"ok": True}
+
+
+# ─── Stripe webhook ─────────────────────────────────────────────────────────
+
+def _verify_stripe_signature(sig_header: str, raw_body: bytes) -> bool:
+    """Stripe-Signature: `t=<unix>,v1=<hex>[,v1=<hex>...]`.
+
+    HMAC-SHA256 over `{t}.{body}`, keyed with the whole whsec_ string as-is --
+    unlike Standard Webhooks, the secret is NOT base64-decoded, and decoding
+    it would reject every genuine delivery. Several v1 entries appear while a
+    secret is being rolled, and any one matching is enough."""
+    secret = STRIPE_WEBHOOK_SECRET
+    if not (secret and sig_header):
+        return False
+    timestamp, sigs = "", []
+    for part in sig_header.split(","):
+        key, _, value = part.strip().partition("=")
+        if key == "t":
+            timestamp = value
+        elif key == "v1":
+            sigs.append(value)
+    if not (timestamp and sigs):
+        return False
+    try:
+        age = abs(time.time() - int(timestamp))
+    except (TypeError, ValueError):
+        return False
+    if age > 300:
+        logger.warning("[billing] stripe webhook timestamp out of tolerance (%ss)", int(age))
+        return False
+    expected = hmac.new(secret.encode("utf-8"),
+                        timestamp.encode("utf-8") + b"." + raw_body,
+                        hashlib.sha256).hexdigest()
+    return any(hmac.compare_digest(expected, s) for s in sigs)
+
+
+def _stripe_ts(value) -> Optional[str]:
+    """A Stripe unix timestamp in the format our own columns use."""
+    try:
+        return datetime.fromtimestamp(int(value), tz=timezone.utc).strftime(
+            "%Y-%m-%dT%H:%M:%SZ")
+    except (TypeError, ValueError, OverflowError, OSError):
+        return None
+
+
+def _stripe_period_end(sub: dict):
+    """current_period_end, wherever this API version keeps it. It moved from
+    the subscription onto each subscription item in 2025-03-31.basil, and the
+    webhook delivers in whatever version its endpoint was created with."""
+    if sub.get("current_period_end"):
+        return sub["current_period_end"]
+    ends = [i.get("current_period_end") for i in
+            ((sub.get("items") or {}).get("data") or []) if i.get("current_period_end")]
+    return max(ends) if ends else None
+
+
+def _stripe_sub_price_id(sub: dict) -> str:
+    for item in ((sub.get("items") or {}).get("data") or []):
+        pid = _stripe_id(item.get("price"))
+        if pid:
+            return pid
+    return ""
+
+
+def _stripe_user_by_customer(cur, customer_id: Optional[str]) -> int:
+    if not customer_id:
+        return 0
+    cur.execute(f"SELECT id FROM users WHERE stripe_customer_id = {PH}", (customer_id,))
+    row = cur.fetchone()
+    return int(row[0]) if row else 0
+
+
+def _stripe_user_id(cur, obj: dict) -> int:
+    """Whose event this is: what we set at checkout first, then the customer.
+
+    The customer lookup is the fallback, not the rule, for the same reason
+    Polar's external id is: metadata is the thing we wrote for exactly this.
+    But every Stripe customer is one we created for one user, so for charges
+    and disputes -- which carry no checkout metadata -- it is a sound answer."""
+    for raw in (obj.get("client_reference_id"),
+                (obj.get("metadata") or {}).get("user_id")):
+        if raw:
+            try:
+                return int(raw)
+            except (TypeError, ValueError):
+                pass
+    return _stripe_user_by_customer(cur, _stripe_id(obj.get("customer")))
+
+
+async def _stripe_get(client, path: str, params=None) -> Optional[dict]:
+    """GET, with "does not exist" as None and everything else as an error.
+
+    400 counts as absent too: it is what an endpoint or parameter this API
+    version does not know returns, and retrying that forever would only stall
+    the queue. The caller logs what it could not resolve."""
+    resp = await client.get(f"{STRIPE_API_BASE}{path}", params=params,
+                            headers=_stripe_headers(), timeout=10)
+    if resp.status_code == 200:
+        return resp.json()
+    if resp.status_code in (400, 404):
+        logger.warning("[billing] stripe GET %s -> %s: %s",
+                       path, resp.status_code, resp.text[:200])
+        return None
+    raise RuntimeError(f"Stripe GET {path} returned {resp.status_code}")
+
+
+async def _stripe_session_price_id(session: dict) -> str:
+    """The price a completed Checkout Session actually charged for.
+
+    Read from the session's line items rather than from our metadata.plan_key:
+    the line items are what was paid for, and they are not in the event body,
+    so they are fetched. A failure raises, and the 500 makes Stripe retry --
+    a paid order is not something to drop because one GET timed out."""
+    items = (session.get("line_items") or {}).get("data")
+    if not items:
+        async with httpx.AsyncClient() as client:
+            body = await _stripe_get(
+                client, f"/v1/checkout/sessions/{session.get('id')}/line_items")
+        items = (body or {}).get("data") or []
+    for item in items:
+        pid = _stripe_id(item.get("price"))
+        if pid:
+            return pid
+    return ""
+
+
+def _stripe_invoice_subscription(inv: dict) -> Optional[str]:
+    """invoice.subscription before basil, parent.subscription_details after."""
+    return (_stripe_id(inv.get("subscription"))
+            or _stripe_id(((inv.get("parent") or {}).get("subscription_details")
+                           or {}).get("subscription")))
+
+
+async def _stripe_charge_subscription(client, charge: dict) -> Optional[str]:
+    """The subscription a charge paid for, or None for a one-time payment.
+
+    A charge does not say. Before basil it carried an invoice id; from basil on
+    the link runs through Invoice Payments, keyed by payment intent. Both are
+    tried, so the answer does not depend on which version the endpoint uses."""
+    inv = charge.get("invoice")
+    if isinstance(inv, dict):
+        return _stripe_invoice_subscription(inv)
+    if inv:
+        body = await _stripe_get(client, f"/v1/invoices/{inv}")
+        return _stripe_invoice_subscription(body) if body else None
+    pi = _stripe_id(charge.get("payment_intent"))
+    if not pi:
+        return None
+    body = await _stripe_get(client, "/v1/invoice_payments", {
+        "payment[type]": "payment_intent", "payment[payment_intent]": pi})
+    for ip in ((body or {}).get("data") or []):
+        inv_id = _stripe_id(ip.get("invoice"))
+        if inv_id:
+            inv_body = await _stripe_get(client, f"/v1/invoices/{inv_id}")
+            if inv_body:
+                return _stripe_invoice_subscription(inv_body)
+    return None
+
+
+_STRIPE_PAID = ("paid", "no_payment_required")
+
+
+async def _stripe_webhook(request: Request):
+    """Receive Stripe webhook events and update entitlements.
+
+    Same helpers, same source types as the other two, so a row is
+    indistinguishable afterwards:
+
+      one-time purchase   source ("order", payment_intent id) -- what a charge
+                          or dispute names, so a refund can find it
+      subscription        source ("subscription", subscription id)
+
+    Anything that needs the API (line items, the invoice behind a charge) is
+    fetched BEFORE the delivery is claimed. The claim holds a write lock until
+    commit, and on SQLite that lock is the whole database."""
+    raw_body = await request.body()
+
+    if not STRIPE_WEBHOOK_SECRET:
+        logger.error(
+            "SECURITY: /api/billing/webhook received a Stripe request but "
+            "STRIPE_WEBHOOK_SECRET is not set — rejecting."
+        )
+        raise HTTPException(status_code=503, detail="Webhook verification unavailable")
+
+    if not _verify_stripe_signature(request.headers.get("Stripe-Signature", ""), raw_body):
+        raise HTTPException(status_code=401, detail="Invalid signature")
+
+    try:
+        payload = json.loads(raw_body)
+    except Exception:
+        raise HTTPException(status_code=400, detail="Invalid JSON")
+
+    event = str(payload.get("type") or "")
+    event_id = str(payload.get("id") or "")
+    obj = (payload.get("data") or {}).get("object") or {}
+    # When the event HAPPENED. A retry carries the same event, so the same
+    # `created`, which is what makes it recognisable as old.
+    event_at = _stripe_ts(payload.get("created"))
+
+    # ── Network work, before any lock is taken ───────────────────────────
+    prep = {}
+    try:
+        if event in ("checkout.session.completed",
+                     "checkout.session.async_payment_succeeded"):
+            if obj.get("payment_status") in _STRIPE_PAID:
+                prep["price_id"] = await _stripe_session_price_id(obj)
+        elif event == "charge.refunded":
+            async with httpx.AsyncClient() as client:
+                prep["subscription_id"] = await _stripe_charge_subscription(client, obj)
+        elif event == "charge.dispute.created":
+            charge = obj.get("charge")
+            async with httpx.AsyncClient() as client:
+                if not isinstance(charge, dict):
+                    charge = (await _stripe_get(client, f"/v1/charges/{charge}")
+                              if charge else None) or {}
+                prep["subscription_id"] = (
+                    await _stripe_charge_subscription(client, charge) if charge else None)
+    except Exception:
+        logger.exception("[billing] stripe %s %s: lookup failed; asking for a retry",
+                         event, event_id)
+        raise HTTPException(status_code=500, detail="Webhook processing failed")
+
+    conn = get_conn()
+    cur = conn.cursor()
+
+    # Stripe retries for up to three days with the same event id. An event
+    # with no id is not deduped at all rather than all sharing "stripe:".
+    if not mark_webhook_seen(conn, cur, "stripe",
+                             f"stripe:{event_id}" if event_id else "", event):
+        logger.info("[billing] stripe %s %s already handled", event, event_id)
+        conn.close()
+        return {"ok": True}
+
+    user_id = 0
+    try:
+        if event in ("checkout.session.completed",
+                     "checkout.session.async_payment_succeeded"):
+            session_id = _stripe_id(obj.get("id"))
+            if obj.get("payment_status") not in _STRIPE_PAID:
+                # A delayed method: the money has not moved yet, and
+                # async_payment_succeeded will arrive when it does.
+                logger.info("[billing] stripe checkout %s completed unpaid (%s) "
+                            "-- waiting", session_id, obj.get("payment_status"))
+                conn.commit()
+                return {"ok": True}
+
+            user_id = _stripe_user_id(cur, obj)
+            price_id = prep.get("price_id") or ""
+            grant = _grant_for_variant(price_id) if price_id else None
+            customer_id = _stripe_id(obj.get("customer"))
+            sub_id = _stripe_id(obj.get("subscription"))
+            if not grant or not user_id or (grant[0] == "pro" and not sub_id):
+                logger.error(
+                    "[billing] STRIPE PAID CHECKOUT NOT GRANTED: session=%r price=%r "
+                    "user_id=%s subscription=%r -- price is not one of ours, or the "
+                    "buyer cannot be identified. Investigate this payment manually.",
+                    session_id, price_id, user_id, sub_id,
+                )
+                conn.commit()
+                return {"ok": True}
+
+            kind, ref = grant
+            if kind == "pro":
+                granted = grant_entitlement_guarded(
+                    cur, user_id, "pro", "", "subscription", sub_id, event_at)
+                if granted:
+                    cur.execute(
+                        f"UPDATE users SET is_pro = {PH}, "
+                        f"stripe_subscription_id = {PH}, "
+                        f"stripe_customer_id = COALESCE({PH}, stripe_customer_id) "
+                        f"WHERE id = {PH}",
+                        (True, sub_id, customer_id, user_id),
+                    )
+            else:
+                source_id = _stripe_id(obj.get("payment_intent")) or session_id
+                granted = grant_entitlement_guarded(
+                    cur, user_id, kind, ref, "order", source_id, event_at)
+                if customer_id:
+                    cur.execute(
+                        f"UPDATE users SET stripe_customer_id = "
+                        f"COALESCE(stripe_customer_id, {PH}) WHERE id = {PH}",
+                        (customer_id, user_id),
+                    )
+            conn.commit()
+            logger.info(
+                "[billing] stripe %s %s:%s for user_id=%s from session %s",
+                "granted" if granted else "REFUSED (revoked row, older event)",
+                kind, ref, user_id, session_id,
+            )
+
+        elif event == "customer.subscription.updated":
+            sub_id = _stripe_id(obj.get("id"))
+            status = str(obj.get("status") or "").lower()
+            user_id = _stripe_user_id(cur, obj)
+            grant = _grant_for_variant(_stripe_sub_price_id(obj))
+            if not user_id or not grant or grant[0] != "pro":
+                logger.warning("[billing] stripe subscription.updated %s not ours "
+                               "or unattributable (user_id=%s)", sub_id, user_id)
+                conn.commit()
+                return {"ok": True}
+
+            if status in ("active", "trialing"):
+                # Set to cancel is still active, and paid up to the end of the
+                # period. Cut access off now and we take back days the user
+                # bought; date the row and the gate stops honouring it then.
+                ends = obj.get("cancel_at") or (
+                    _stripe_period_end(obj) if obj.get("cancel_at_period_end") else None)
+                if ends:
+                    expire_entitlement(cur, user_id, "pro", "", _stripe_ts(ends))
+                    logger.info("[billing] stripe subscription %s set to end %s "
+                                "-- access continues until then", sub_id, _stripe_ts(ends))
+                else:
+                    # A renewal, or a cancellation withdrawn: clear any end date.
+                    granted = grant_entitlement_guarded(
+                        cur, user_id, "pro", "", "subscription", sub_id, event_at)
+                    if granted:
+                        cur.execute(
+                            f"UPDATE users SET is_pro = {PH}, "
+                            f"stripe_subscription_id = {PH}, "
+                            f"stripe_customer_id = COALESCE({PH}, stripe_customer_id) "
+                            f"WHERE id = {PH}",
+                            (True, sub_id, _stripe_id(obj.get("customer")), user_id),
+                        )
+            elif status == "past_due":
+                # Not revoked: Stripe retries the card, and pulling access on
+                # one failed charge punishes an expired card. If the retries
+                # run out the subscription is deleted or goes unpaid.
+                logger.warning("[billing] stripe subscription %s past_due for "
+                               "user_id=%s -- not revoking", sub_id, user_id)
+            elif status in ("unpaid", "incomplete_expired"):
+                expire_entitlement(cur, user_id, "pro", "", _now_iso())
+                cur.execute(f"UPDATE users SET is_pro = {PH} WHERE id = {PH}",
+                            (False, user_id))
+                logger.info("[billing] stripe subscription %s is %s -- access ended",
+                            sub_id, status)
+            conn.commit()
+
+        elif event == "customer.subscription.deleted":
+            # The real end. Revoked rather than dated, for the reason Polar's
+            # subscription.revoked is: a revoked row cannot be resurrected by an
+            # older subscription.updated still in flight.
+            sub_id = _stripe_id(obj.get("id"))
+            n = revoke_entitlements_by_source(cur, "subscription", sub_id, "revoked")
+            # Matched on the subscription id, so a late deletion of an OLD
+            # subscription cannot clear a user who has since resubscribed.
+            cur.execute(
+                f"UPDATE users SET is_pro = {PH}, stripe_subscription_id = NULL "
+                f"WHERE stripe_subscription_id = {PH}",
+                (False, sub_id),
+            )
+            conn.commit()
+            logger.info("[billing] stripe subscription.deleted %s revoked %s row(s)",
+                        sub_id, n)
+
+        elif event in ("charge.refunded", "charge.dispute.created"):
+            reason = "refund" if event == "charge.refunded" else "dispute"
+            if event == "charge.refunded":
+                amount, refunded = obj.get("amount"), obj.get("amount_refunded")
+                # Partial needs POSITIVE evidence, the same rule as the other
+                # two: `refunded` false with a smaller amount refunded.
+                if (obj.get("refunded") is False and isinstance(amount, int)
+                        and isinstance(refunded, int) and 0 < refunded < amount):
+                    logger.info("[billing] stripe PARTIAL refund on charge %s "
+                                "(%s of %s) -- access kept",
+                                obj.get("id"), refunded, amount)
+                    conn.commit()
+                    return {"ok": True}
+            # Revoked BY ORIGIN, never by user: the payment intent for a
+            # one-time purchase, the subscription for a Pro charge. A refunded
+            # $1 pack must not touch the same user's subscription.
+            pi = _stripe_id(obj.get("payment_intent"))
+            sub_id = prep.get("subscription_id")
+            n = revoke_entitlements_by_source(cur, "order", pi, reason) if pi else 0
+            if sub_id:
+                n += revoke_entitlements_by_source(cur, "subscription", sub_id, reason)
+                cur.execute(
+                    f"UPDATE users SET is_pro = {PH} WHERE stripe_subscription_id = {PH}",
+                    (False, sub_id),
+                )
+            conn.commit()
+            log = logger.info if n else logger.warning
+            log("[billing] stripe %s payment_intent=%s subscription=%s revoked %s row(s)",
+                event, pi, sub_id, n)
+
+        elif event == "invoice.payment_failed":
+            # Log only. Stripe's own retries decide whether this becomes
+            # past_due, unpaid or deleted, and each of those is handled above.
+            sub_id = _stripe_invoice_subscription(obj)
+            logger.warning(
+                "[billing] stripe invoice.payment_failed invoice=%s subscription=%s "
+                "customer=%s attempt=%s -- not revoking",
+                obj.get("id"), sub_id, _stripe_id(obj.get("customer")),
+                obj.get("attempt_count"),
+            )
+            conn.commit()
+
+        else:
+            conn.commit()
+
+    except Exception:
+        conn.rollback()
+        logger.exception("[billing] stripe webhook %s failed for user_id=%s", event, user_id)
         conn.close()
         raise HTTPException(status_code=500, detail="Webhook processing failed")
     finally:
