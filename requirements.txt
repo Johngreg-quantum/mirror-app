@@ -34,6 +34,14 @@ uvicorn==0.32.0
 watchfiles==1.1.1
 websockets==16.0
 pg8000==1.31.2
+# pg8000's own dependencies, pinned because it asks only for a floor
+# (scramp>=1.4.5, python-dateutil>=2.8.2). scramp 1.5.0 removed
+# make_channel_binding, which pg8000 1.31.2 calls on every SSL connect, so an
+# unpinned install crashed init_db() at startup on Render. Upgrade these
+# together with pg8000, never on their own.
+scramp==1.4.18
+asn1crypto==1.5.1
+python-dateutil==2.9.0.post0
 aiofiles==23.2.1
 # Ships the IANA tz database for zoneinfo. Streak days are the user's local
 # calendar day, so ZoneInfo("America/New_York") has to resolve on every machine
