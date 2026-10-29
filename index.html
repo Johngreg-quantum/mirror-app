@@ -4635,7 +4635,9 @@
 }
 .ml-card-grad {
   position: absolute; inset: 0;
-  background: linear-gradient(to top, rgba(0,0,0,0.45), transparent 55%);
+  /* Light: no marquee card carries text, so this only adds depth. The
+     blockbuster art is already dark at the top and needs no extra shade. */
+  background: linear-gradient(to top, rgba(0,0,0,0.18), transparent 45%);
   pointer-events: none;
 }
 .ml-vignette {
@@ -4790,8 +4792,8 @@
        z-index:7;pointer-events:none;"></div>
 
   <!-- Bottom edge -->
-  <div style="position:absolute;bottom:0;left:0;right:0;height:30%;
-       background:linear-gradient(to top, rgba(0,0,0,0.92), rgba(0,0,0,0.3) 60%, transparent);
+  <div style="position:absolute;bottom:0;left:0;right:0;height:22%;
+       background:linear-gradient(to top, rgba(0,0,0,0.85), rgba(0,0,0,0.15) 55%, transparent);
        z-index:7;pointer-events:none;"></div>
 
   <div id="mlTopBar">
@@ -4918,7 +4920,8 @@
       {dir:'left',  spd:'95s'},
     ];
 
-    const ROW_OPACITIES = ['1', '1', '0.9', '0.45', '0.12'];
+    // Keep in step with the rows[n].style.opacity block after the rows are built.
+    const ROW_OPACITIES = ['1', '1', '1', '0.8', '0.45'];
     ML_ROWS.forEach((cfg, rowIndex) => {
       const row = document.createElement('div');
       row.className = 'ml-mrow ml-' + cfg.dir;
@@ -4989,9 +4992,9 @@
     const rows = container.querySelectorAll('.ml-mrow');
     rows[0].style.opacity = '1';
     rows[1].style.opacity = '1';
-    rows[2].style.opacity = '0.9';
-    rows[3].style.opacity = '0.45';
-    rows[4].style.opacity = '0.12';
+    rows[2].style.opacity = '1';
+    rows[3].style.opacity = '0.8';
+    rows[4].style.opacity = '0.45';
   }
 
   window.mlPill = function(btn){

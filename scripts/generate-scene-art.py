@@ -39,8 +39,9 @@ a specific film should be regenerated rather than shipped.
 Pricing (checked 19 Oct 2026, developers.openai.com/api/docs/pricing):
   gpt-image-2.5-sunburst   text in $5/1M   image in $8/1M   image out $30/1M
 A 1024x1536 portrait costs 408 output tokens at low, 1584 at medium and 6240 at
-high. Medium is what this ships: low loses the grain and the falloff that make
-the still look like a frame rather than a render.
+high. The blockbuster set ships at high, so that is the default: a single scene
+regenerated later should match the other 46. In practice the API has billed
+about $0.042 per high still, well under the table above.
 """
 import argparse
 import base64
@@ -59,7 +60,7 @@ ART_DIR = ROOT / "static" / "scenes" / "art"
 
 MODEL = "gpt-image-2.5-sunburst"
 SIZE = "1024x1536"
-QUALITY = "medium"
+QUALITY = "high"
 LARGE = (800, 1200)
 SMALL = (400, 600)
 WEBP_QUALITY = 82
@@ -70,7 +71,10 @@ OUTPUT_TOKENS = {"low": 408, "medium": 1584, "high": 6240}
 
 # Two looks, selected with --style.
 #
-# `poster` is what the shipped 47 were generated with. It reads as a poster:
+# `blockbuster` (below) is what the shipped 47 are generated with today; the
+# documentary set it replaced is kept, out of git, in _documentary-backup/.
+#
+# `poster` was the first batch. It reads as a poster:
 # gold, backlit, dramatic, everyone facing camera -- and that is exactly what
 # makes it read as generated rather than photographed.
 #
@@ -98,8 +102,28 @@ PROMPTS = {
         "grading, no bokeh balls, no dramatic rim light, no text, no logos. Original "
         "people, not resembling any real actor or existing film."
     ),
+    # `blockbuster` is the look of static/victory.mp4: theatrical key art,
+    # colourful and epic. The documentary stills read as hazy and sad on the
+    # cards; this one comes back bright on its own, which is why it is in
+    # NO_LIFT_STYLES below.
+    "blockbuster": (
+        "Original cinematic movie poster key art, absolutely no text, no letters, "
+        "no logos. {escena}. The main character is the hero of the frame, "
+        "centered, full or three-quarter body, facing the camera or in a strong "
+        "pose. Dramatic rim lighting outlining the figure, volumetric light rays "
+        "and atmospheric haze, deep navy-blue and teal atmosphere with warm "
+        "golden-amber highlights, rich saturated colors, high contrast, deep "
+        "blacks, polished blockbuster poster look, epic scale. Large empty dark "
+        "space at the top for a title. Original characters, not resembling any "
+        "real actor or existing film."
+    ),
 }
-DEFAULT_STYLE = "poster"
+DEFAULT_STYLE = "blockbuster"
+
+# Styles whose stills are graded bright by the prompt itself. The exposure lift
+# below exists for the muted documentary look; run on key art it would flatten
+# the deep blacks the prompt asks for.
+NO_LIFT_STYLES = {"blockbuster"}
 
 # Genres where "quiet independent film" is the wrong instruction on its own: a
 # man sprinting down a corridor is not a still life. This buys movement and
@@ -207,7 +231,8 @@ def lift_exposure(im: Image.Image) -> tuple:
     return lifted, before, _mean_luma(lifted), g
 
 
-def write_cuts(png_bytes: bytes, scene_id: str, out_dir: Path) -> tuple:
+def write_cuts(png_bytes: bytes, scene_id: str, out_dir: Path,
+               lift: bool = True) -> tuple:
     raw_dir = out_dir / "_raw"
     raw_dir.mkdir(parents=True, exist_ok=True)
     raw = raw_dir / ("%s.png" % scene_id)
@@ -218,7 +243,11 @@ def write_cuts(png_bytes: bytes, scene_id: str, out_dir: Path) -> tuple:
 
     with Image.open(raw) as src:
         im = src.convert("RGB")
-        im, before, after, gamma = lift_exposure(im)
+        if lift:
+            im, before, after, gamma = lift_exposure(im)
+        else:
+            before = after = _mean_luma(im)
+            gamma = 1.0
         for size, suffix in ((LARGE, ""), (SMALL, "-sm")):
             out = out_dir / ("%s%s.webp" % (scene_id, suffix))
             im.resize(size, Image.LANCZOS).save(
@@ -249,6 +278,7 @@ def main() -> int:
     # anywhere and the line printed below is always repo-relative.
     out_dir = (ROOT / args.out_dir).resolve() if args.out_dir else ART_DIR
     prompt_template = PROMPTS[args.style]
+    lift = args.style not in NO_LIFT_STYLES
 
     scenes = json.loads(CONFIG.read_text(encoding="utf-8"))["scenes"]
     if args.all:
@@ -283,7 +313,7 @@ def main() -> int:
                 missing.append(sid)
                 continue
             big, small, before, after, gamma = write_cuts(
-                raw.read_bytes(), sid, out_dir)
+                raw.read_bytes(), sid, out_dir, lift=lift)
             done += 1
             if gamma < 1:
                 lifted += 1
@@ -336,7 +366,7 @@ def main() -> int:
             continue
 
         png = base64.b64decode(resp.data[0].b64_json)
-        big, small, before, after, gamma = write_cuts(png, sid, out_dir)
+        big, small, before, after, gamma = write_cuts(png, sid, out_dir, lift=lift)
 
         usage = getattr(resp, "usage", None)
         if usage is not None:
