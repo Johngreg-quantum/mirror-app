@@ -1,6 +1,6 @@
 # MIRROR — Refund Policy
 
-**Effective date:** October 19, 2026
+**Effective date:** October 29, 2026
 **Provider:** John Greg (sole trader), 14610 Bull Run Road, Miami Lakes,
 FL 33014, USA, contact contact@mirrorspeak.app.
 
@@ -19,19 +19,18 @@ This policy forms part of our [Terms of Service](/terms).
 The one exception, for both, is **technical failure**: if what you paid for does
 not work, that is our fault and we will fix it or refund it (§4).
 
-## 2. Who processes your refund
+## 2. Who decides your refund
 
-Payments for MIRROR are processed by **Polar, which acts as merchant of
-record**. Your contract of sale is with them, they hold the payment
-relationship, and **they carry out and have final discretion over any refund.**
+**You buy MIRROR from us.** The seller is John Greg (sole trader), trading as
+MIRROR, at the address above. Your contract of sale is with us, and **we decide
+and issue any refund** under this policy.
 
-This policy sets out the circumstances in which *we* will support and request a
-refund on your behalf. It does not and cannot oblige Polar to issue
-one, and it does not replace their terms — which also let them refund, delay or
-reverse a payment independently of us, for example where they detect fraud.
+Payments are processed by **Stripe**, our payment processor. Stripe moves the
+money; it is not the seller and does not decide refunds. A refund we approve is
+returned through Stripe to the card or wallet you paid with. We never see or
+store your card details.
 
-In practice, when a request meets this policy, we approve it and it is
-processed. We tell you either way.
+We tell you the outcome of every request, either way.
 
 ## 3. Mirror Pro
 
@@ -56,8 +55,8 @@ someone who does not want the product.
 leaves you with access until the end of the period you have already paid for.
 Asking for a refund asks for money back and ends access now. If you only want
 to stop being charged, cancel — you do not need this policy. You can cancel
-from the Polar customer portal, linked in your receipt, or by emailing
-us.
+from **Manage subscription** in the Profile tab of the app, which opens our
+secure billing portal (provided by Stripe), or by emailing us.
 
 **Partial periods are not pro-rated.** If you cancel mid-period you keep access
 to the end of it rather than receiving part of the payment back.
@@ -88,9 +87,10 @@ Either path works, and you do not need to try both:
   Your MIRROR username or the email you bought with is enough to find the
   order. This is the better route if something is broken, because we can fix
   it as well as refund it.
-- **Use your Polar receipt.** Every purchase receipt links to a
-  customer portal where you can manage or cancel the subscription and contact
-  support. Polar handles order support as merchant of record.
+- **Use the billing portal.** **Manage subscription**, in the Profile tab of
+  the app, opens a portal where you can cancel your subscription, update your
+  card and download invoices. Refund requests themselves go to the email
+  above.
 
 We aim to reply within 3 business days. We will tell you the outcome either
 way, and if we decline a request we will say why.

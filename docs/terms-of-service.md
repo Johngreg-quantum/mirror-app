@@ -1,6 +1,6 @@
 # MIRROR — Terms of Service
 
-**Effective date:** October 19, 2026
+**Effective date:** October 29, 2026
 **Provider:** John Greg (sole trader), 14610 Bull Run Road, Miami Lakes,
 FL 33014, USA, contact contact@mirrorspeak.app.
 
@@ -57,16 +57,18 @@ The price shown at checkout is the price you pay.
 
 ## 4. Payments, and who you are buying from
 
-**Payments are processed by Polar, which acts as merchant of record.**
-That means your contract of sale — and the receipt, the tax handling, and the
-payment relationship — is with Polar, not with us. Your use of the
-MIRROR service is governed by these terms.
+**You buy from us.** The seller of Mirror Pro and the Starter Pack is John
+Greg (sole trader), trading as MIRROR, at the address above. Your contract of
+sale is with us, and both the purchase and your use of the service are
+governed by these terms.
 
-Polar's own terms and privacy policy apply to the payment. We never
-receive or store your card details.
+**Payments are processed by Stripe**, our payment processor. You enter your
+payment details on Stripe's secure checkout page, and Stripe's own privacy
+policy applies to the data you give it there. Stripe is not the seller. We
+never receive or store your card details.
 
-Sales tax or VAT is handled by Polar and may be added at checkout
-depending on where you are.
+Where we are required to collect sales tax or VAT, it is shown at checkout
+before you pay. The receipt for each payment is sent to you by email.
 
 ## 5. Subscriptions, auto-renewal and cancellation
 
@@ -76,8 +78,8 @@ chose — and the payment method you used is charged again at the then-current
 price for that plan. You are agreeing to this recurring charge when you
 subscribe.
 
-You can cancel at any time, through the Polar customer portal — linked from
-your receipt, and reachable by entering your purchase email — or by emailing
+You can cancel at any time from **Manage subscription** in the Profile tab of
+the app, which opens our billing portal (provided by Stripe), or by emailing
 contact@mirrorspeak.app.
 
 **Cancelling stops future charges. It does not end your current period.** You
@@ -85,7 +87,7 @@ keep Pro access until the end of the period you have already paid for, and then
 keep only what you bought outright. Cancelling is not the same as requesting a refund —
 see the [Refund Policy](/refunds).
 
-If a renewal payment fails, Polar may retry it. If it ultimately fails,
+If a renewal payment fails, we may retry it through Stripe. If it ultimately fails,
 your Pro access ends and you keep only what you bought outright.
 
 The Starter Pack does not renew and cannot be cancelled, because there is no
@@ -104,8 +106,8 @@ you paid for does not work, we will fix it or refund it.
 Cancelling a subscription before its renewal date always prevents that charge,
 and you keep access until the end of the period you have already paid for.
 
-As merchant of record, Polar has final discretion over any refund, and nothing
-here reduces a statutory right of withdrawal you may have as a consumer.
+Refunds are decided and issued by us, as the seller. Nothing here reduces a
+statutory right of withdrawal you may have as a consumer.
 
 ## 7. Acceptable use
 

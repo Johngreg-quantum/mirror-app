@@ -1,6 +1,6 @@
 # MIRROR — Privacy Policy
 
-**Effective date:** October 19, 2026
+**Effective date:** October 29, 2026
 **Data controller:** John Greg (sole trader), 14610 Bull Run Road, Miami Lakes,
 FL 33014, USA, contact contact@mirrorspeak.app.
 
@@ -84,7 +84,7 @@ your day streak and mission progress, your vocabulary mastery, and any
 challenge links you created. It cannot be undone, and because we do not retain
 your voice recordings there is no backup to restore from.
 
-Two things worth knowing. If you have an active MIRROR Pro subscription, we
+A few things worth knowing. If you have an active MIRROR Pro subscription, we
 cancel it for you as part of the deletion — you will not be billed again. The
 cancellation happens before anything is erased, so if it fails for any reason
 your account is left untouched rather than deleted with a subscription still
@@ -94,7 +94,9 @@ period early. In the rare case where we cannot cancel automatically, the app
 tells you so and gives you a link to cancel it yourself; nothing is deleted
 until that is done. And once your account is deleted your username becomes
 available for anyone to register again; a new account using it inherits nothing
-from yours.
+from yours. Finally, if you ever paid for MIRROR, Stripe keeps its own record
+of those payments after your account is deleted, because payment and tax law
+requires it to.
 
 If you would rather not use the in-app path, or you cannot sign in, email
 contact@mirrorspeak.app and we will action the deletion for you.
@@ -108,7 +110,7 @@ by a data-processing agreement:
 |---|---|---|---|
 | **OpenAI** | Your voice recording (audio) | Speech-to-text transcription | Not used for training: "As of March 1, 2023, data sent to the OpenAI API is not used to train or improve OpenAI models (unless you explicitly opt in to share data with us)." Abuse-monitoring logs are retained "for up to 30 days, unless longer retention is required by law", then deleted. Source: [OpenAI — data controls in the OpenAI platform](https://developers.openai.com/api/docs/guides/your-data) (checked 22 August 2026). |
 | **Anthropic** | The scene title and its line only (no audio, no personal data) | Generating study vocabulary for a scene | Called once per scene, on a cache miss only; the request contains our own scene text and nothing else, and the result is stored and reused for all users. No user personal data is sent. |
-| **Polar** | Name, email, payment details you enter with them | Processing payments and subscriptions as merchant of record | They act as controller for payment data under their own policy: [Privacy](https://polar.sh/legal/privacy) · [Terms](https://polar.sh/legal/terms). We never receive or store card details. |
+| **Stripe** | From us: your email, username and MIRROR account number, when you start a purchase. From you: the payment details you enter on Stripe's checkout page | Processing payments and subscriptions, and the billing portal | Stripe processes payments on our behalf, and acts as an independent controller for some purposes, such as fraud prevention and its own legal obligations, under its own policy: [Stripe Privacy Policy](https://stripe.com/privacy). We never receive or store card details. We keep only the Stripe customer and subscription references needed to link a payment to your account. |
 | **Render** | All data above, at rest and in transit | Application and database hosting | Region: Oregon, USA (US West). |
 
 If we add a new provider that processes your voice (for example, a
@@ -164,7 +166,8 @@ from them.
 ## 9. International transfers
 
 Your data may be processed outside your country: we are based in the USA, our
-hosting is in Oregon, USA, and OpenAI processes your audio in the US. Where
+hosting is in Oregon, USA, OpenAI processes your audio in the US, and Stripe
+processes payments in the US. Where
 required — for example for users in the UK or EEA — these transfers rely on
 Standard Contractual Clauses.
 
