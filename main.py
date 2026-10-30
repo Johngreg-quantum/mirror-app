@@ -2118,6 +2118,44 @@ async def terms_of_service(request: Request):
 
 
 # ---------------------------------------------------------------------------
+# Routes — short share links (mirrorspeak.app/x, /ig, /tt, ...)
+# ---------------------------------------------------------------------------
+# One short link per network for bios and posts. Each redirects to the landing
+# tagged with utm_source, so a visit can be traced back to the network it came
+# from: every hit also writes a "[share] source=..." line to the Render log.
+# 302 rather than 301 so a destination can change later without browsers
+# holding on to a cached permanent redirect.
+_SHARE_LINKS = {
+    "x":  "x",
+    "ig": "instagram",
+    "tt": "tiktok",
+    "yt": "youtube",
+    "fb": "facebook",
+    "r":  "reddit",
+    "dc": "discord",
+    "wa": "whatsapp",
+}
+
+
+def _make_share_redirect(source: str):
+    async def _share_redirect(request: Request):
+        logger.info("[share] source=%s", source)
+        target = f"/?utm_source={source}&utm_medium=social&utm_campaign=share_link"
+        return Response(status_code=302, headers={"Location": target, "Cache-Control": "no-store"})
+    return _share_redirect
+
+
+for _code, _source in _SHARE_LINKS.items():
+    app.add_api_route(
+        f"/{_code}",
+        _make_share_redirect(_source),
+        methods=["GET", "HEAD"],
+        include_in_schema=False,
+        name=f"share_{_code}",
+    )
+
+
+# ---------------------------------------------------------------------------
 # Routes — auth
 # ---------------------------------------------------------------------------
 
