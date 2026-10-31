@@ -98,6 +98,66 @@ _TERMS_MD_PATH   = os.path.join(_APP_DIR, "docs", "terms-of-service.md")
 _REFUNDS_MD_PATH = os.path.join(_APP_DIR, "docs", "refund-policy.md")
 
 
+# ---------------------------------------------------------------------------
+# Scene art: real photographs from Unsplash (no AI-generated images)
+# ---------------------------------------------------------------------------
+# static/scenes/photo-art.json maps scene id -> a free photo under the Unsplash
+# License (verified per photo; Unsplash+ excluded), with photographer credit.
+# Requests for /static/scenes/art/<id>.webp and <id>-sm.webp are redirected to
+# that photo on images.unsplash.com, cropped to the 2:3 card by Unsplash's own
+# image service. Every existing reference in the HTML, the scene config and the
+# new shell keeps working unchanged. A scene missing from the file falls back
+# to the local webp. Delete the file (or an entry) to go back.
+_PHOTO_ART_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "static", "scenes", "photo-art.json")
+_PHOTO_ART_RE = re.compile(r"^scenes/art/([a-z0-9_]+?)(-sm)?\.webp$")
+try:
+    with open(_PHOTO_ART_PATH, encoding="utf-8") as _f:
+        _PHOTO_ART = {
+            k: v for k, v in json.load(_f).items()
+            if isinstance(v, dict) and str(v.get("image_url", "")).startswith("https://images.unsplash.com/")
+        }
+except (OSError, ValueError):
+    _PHOTO_ART = {}
+
+
+_PHOTO_PREVIEW_COOKIE = "mirror_photo_preview"
+
+
+def _photo_art_live() -> bool:
+    return os.getenv("PHOTO_ART_LIVE", "").strip().lower() in ("1", "true", "yes", "on")
+
+
+def _photo_art_redirect(path: str, scope=None):
+    """Redirect scene art to its Unsplash photo when photo art is switched on.
+
+    On for everyone when PHOTO_ART_LIVE=true. Before that, only for a browser
+    that has visited /photos-preview (which sets a cookie), so the owner can
+    review the real photos on the live site without anyone else seeing them.
+    """
+    m = _PHOTO_ART_RE.match(path.lstrip("/"))
+    if not m:
+        return None
+    entry = _PHOTO_ART.get(m.group(1))
+    if not entry:
+        return None
+    live = _photo_art_live()
+    if not live:
+        cookies = Headers(scope=scope).get("cookie", "") if scope else ""
+        if f"{_PHOTO_PREVIEW_COOKIE}=1" not in cookies:
+            return None
+    w, h = (400, 600) if m.group(2) else (800, 1200)
+    focus = entry.get("crop", "faces,entropy")
+    url = f"{entry['image_url']}?w={w}&h={h}&fit=crop&crop={focus}&fm=webp&q=80"
+    headers = {"Location": url}
+    if live:
+        headers["Cache-Control"] = "public, max-age=3600"
+    else:
+        # Preview depends on a cookie: never let a shared cache keep it.
+        headers["Cache-Control"] = "private, no-cache"
+        headers["Vary"] = "Cookie"
+    return Response(status_code=302, headers=headers)
+
+
 class _RevalidatingStaticFiles(StaticFiles):
     """Serve /static with "no-cache" so a deploy is picked up on the next load.
 
@@ -115,6 +175,13 @@ class _RevalidatingStaticFiles(StaticFiles):
     """
 
     async def get_response(self, path: str, scope) -> Response:
+        # Scene art is real photography hosted by Unsplash (see
+        # _photo_art_redirect). Every existing reference to
+        # /static/scenes/art/<id>.webp keeps working and lands on the photo.
+        photo = _photo_art_redirect(path, scope)
+        if photo is not None:
+            return photo
+
         # Overridden here rather than in file_response() so the header lands on
         # the 304s too, not only the 200s.
         range_header = Headers(scope=scope).get("range")
@@ -2143,6 +2210,21 @@ def _make_share_redirect(source: str):
         target = f"/?utm_source={source}&utm_medium=social&utm_campaign=share_link"
         return Response(status_code=302, headers={"Location": target, "Cache-Control": "no-store"})
     return _share_redirect
+
+
+@app.get("/photos-preview", include_in_schema=False)
+async def photos_preview_on():
+    """Turn on the real-photo scene art for this browser only (owner review)."""
+    resp = Response(status_code=302, headers={"Location": "/", "Cache-Control": "no-store"})
+    resp.set_cookie(_PHOTO_PREVIEW_COOKIE, "1", max_age=7 * 24 * 3600, samesite="lax", secure=True)
+    return resp
+
+
+@app.get("/photos-preview/off", include_in_schema=False)
+async def photos_preview_off():
+    resp = Response(status_code=302, headers={"Location": "/", "Cache-Control": "no-store"})
+    resp.delete_cookie(_PHOTO_PREVIEW_COOKIE)
+    return resp
 
 
 for _code, _source in _SHARE_LINKS.items():
