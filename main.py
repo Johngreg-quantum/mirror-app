@@ -103,13 +103,16 @@ _REFUNDS_MD_PATH = os.path.join(_APP_DIR, "docs", "refund-policy.md")
 # ---------------------------------------------------------------------------
 # static/scenes/photo-art.json maps scene id -> a free photo under the Unsplash
 # License (verified per photo; Unsplash+ excluded), with photographer credit.
-# Requests for /static/scenes/art/<id>.webp and <id>-sm.webp are redirected to
+# Requests for /static/scenes/art/<id>.webp, <id>-sm.webp and <id>-wide.webp
+# (landscape crop for the landing marquee) are redirected to
 # that photo on images.unsplash.com, cropped to the 2:3 card by Unsplash's own
 # image service. Every existing reference in the HTML, the scene config and the
 # new shell keeps working unchanged. A scene missing from the file falls back
 # to the local webp. Delete the file (or an entry) to go back.
 _PHOTO_ART_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "static", "scenes", "photo-art.json")
-_PHOTO_ART_RE = re.compile(r"^scenes/art/([a-z0-9_]+?)(-sm)?\.webp$")
+_PHOTO_ART_RE = re.compile(r"^scenes/art/([a-z0-9_]+?)(-sm|-wide)?\.webp$")
+# Crop sizes per variant: full 2:3 card, small 2:3 card, landscape marquee card.
+_PHOTO_ART_SIZES = {None: (800, 1200), "-sm": (400, 600), "-wide": (640, 372)}
 try:
     with open(_PHOTO_ART_PATH, encoding="utf-8") as _f:
         _PHOTO_ART = {
@@ -137,15 +140,21 @@ def _photo_art_redirect(path: str, scope=None):
     m = _PHOTO_ART_RE.match(path.lstrip("/"))
     if not m:
         return None
-    entry = _PHOTO_ART.get(m.group(1))
-    if not entry:
-        return None
+    scene_id, variant = m.group(1), m.group(2)
+    entry = _PHOTO_ART.get(scene_id)
     live = _photo_art_live()
-    if not live:
+    if entry and not live:
         cookies = Headers(scope=scope).get("cookie", "") if scope else ""
         if f"{_PHOTO_PREVIEW_COOKIE}=1" not in cookies:
-            return None
-    w, h = (400, 600) if m.group(2) else (800, 1200)
+            entry = None
+    if not entry:
+        # "-wide" only exists as a photo crop; without one, use the local small art.
+        if variant == "-wide":
+            return Response(status_code=302, headers={
+                "Location": f"/static/scenes/art/{scene_id}-sm.webp",
+                "Cache-Control": "private, no-cache", "Vary": "Cookie"})
+        return None
+    w, h = _PHOTO_ART_SIZES[variant]
     focus = entry.get("crop", "faces,entropy")
     url = f"{entry['image_url']}?w={w}&h={h}&fit=crop&crop={focus}&fm=webp&q=80"
     headers = {"Location": url}
