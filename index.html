@@ -4854,7 +4854,6 @@
   // for the instant before the image decodes and as the whole card if it
   // never does.
   const ML_SCENES = [
-    {id:'last_train',       bg:'#8a5a1a'},
     {id:'fashionably_late', bg:'#d4a843'},
     {id:'rooftop',          bg:'#c75050'},
     {id:'countdown',        bg:'#cc2233'},
@@ -5215,7 +5214,7 @@
   <div class="mls-beat" id="mlsBeat2">
     <p class="mls-kicker">SCREEN TEST &middot; 02</p>
     <h2 class="mls-h">SPEAK THE <em>LINE</em></h2>
-    <p class="mls-quote" id="mlsQuote">&ldquo;I&rsquo;m gonna make him an offer he can&rsquo;t refuse.&rdquo;</p>
+    <p class="mls-quote" id="mlsQuote">&ldquo;Ten thousand. Final offer. Take it or leave it.&rdquo;</p>
     <div class="mls-wave" aria-hidden="true">
       <span></span><span></span><span></span><span></span><span></span>
       <span></span><span></span><span></span><span></span><span></span>
@@ -5240,7 +5239,7 @@
 
   <!-- Level swatches -->
   <div class="mls-swatches" role="tablist" aria-label="Choose a level">
-    <button class="mls-sw active" data-poster="last_train" data-quote="&ldquo;If you get on that train, don&rsquo;t come back.&rdquo;">I</button>
+    <button class="mls-sw active" data-poster="the_deal" data-quote="&ldquo;Ten thousand. Final offer. Take it or leave it.&rdquo;">I</button>
     <button class="mls-sw"        data-poster="night_shift" data-quote="&ldquo;I work two jobs so you can have the chances I never had.&rdquo;">II</button>
     <button class="mls-sw"        data-poster="the_bluff"  data-quote="&ldquo;I can read you like a book, and it&rsquo;s a very short book.&rdquo;">III</button>
     <p class="mls-sw-label">CHOOSE YOUR LEVEL</p>
@@ -5400,7 +5399,7 @@
   <h2 class="actI-head act-anim" data-delay="100">YOUR VOICE. <em>YOUR STAGE.</em></h2>
   <p class="actI-sub act-anim" data-delay="200">The greatest actors in history once stood exactly where you are.</p>
   <div class="actI-triptych act-anim" data-delay="300">
-    <div class="actI-poster"><img src="/static/scenes/art/last_train.webp" alt="Last Train" loading="lazy" decoding="async"></div>
+    <div class="actI-poster"><img src="/static/scenes/art/the_secret.webp" alt="The Secret" loading="lazy" decoding="async"></div>
     <div class="actI-poster"><img src="/static/scenes/art/rooftop.webp" alt="Rooftop" loading="lazy" decoding="async"></div>
     <div class="actI-poster"><img src="/static/scenes/art/countdown.webp" alt="Countdown" loading="lazy" decoding="async"></div>
   </div>
@@ -5489,9 +5488,9 @@
   <p class="actV-sub act-anim" data-delay="100">From whispered confessions to roared battle cries.</p>
   <div class="actV-grid">
     <div class="actV-card" data-stagger="0">
-      <img src="/static/scenes/art/last_train.webp" alt="Last Train" loading="lazy" decoding="async">
+      <img src="/static/scenes/art/the_deal.webp" alt="The Deal" loading="lazy" decoding="async">
       <span class="actV-card-badge">LVL 1</span>
-      <div class="actV-card-title">LAST TRAIN</div>
+      <div class="actV-card-title">THE DEAL</div>
     </div>
     <div class="actV-card" data-stagger="1">
       <img src="/static/scenes/art/interrogation.webp" alt="Interrogation" loading="lazy" decoding="async">
@@ -8717,11 +8716,11 @@ function boot(){
   // to load; the tints are the genre colours those scenes carry in
   // scene_config, so the fallback and the image agree.
   var POSTERS = [
-    { id:'last_train',  title:['LAST','TRAIN'],  level:'LEVEL I · BEGINNER',      tint:'#8a5a1a' },
+    { id:'the_deal',    title:['THE','DEAL'],    level:'LEVEL I · BEGINNER',      tint:'#8a5a1a' },
     { id:'night_shift', title:['NIGHT','SHIFT'], level:'LEVEL II · INTERMEDIATE', tint:'#c75050' },
     { id:'the_bluff',   title:['THE','BLUFF'],   level:'LEVEL III · ADVANCED',    tint:'#3a2a4a' }
   ];
-  var POSTER_INDEX = { last_train:0, night_shift:1, the_bluff:2 };
+  var POSTER_INDEX = { the_deal:0, night_shift:1, the_bluff:2 };
 
   var canvas   = document.getElementById('mlsCanvas');
   var fallback = document.getElementById('mlsCardFallback');
@@ -8763,7 +8762,7 @@ function boot(){
     if (canvas) canvas.style.display = 'none';
     if (fallback) {
       fallback.style.display = 'block';
-      fallback.style.backgroundImage = "url('/static/scenes/art/last_train.webp')";
+      fallback.style.backgroundImage = "url('/static/scenes/art/the_deal.webp')";
     }
     document.querySelectorAll('.mls-sw').forEach(function(btn){
       btn.addEventListener('click', function(){
