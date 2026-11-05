@@ -5104,13 +5104,63 @@
                radial-gradient(ellipse 85% 55% at 50% 112%,rgba(200,169,110,.06),transparent 70%)}
   #mlsCanvas{position:absolute;inset:0;width:100%;height:100%;z-index:1;display:block}
 
-  .mls-beat{position:absolute;left:50%;top:7%;transform:translateX(-50%);text-align:center;z-index:2;opacity:0;width:min(92vw,760px);pointer-events:none}
-  /* The beats sit over the top of the 3D card. Real photos are bright up there,
-     so shade the top of the stage (like a poster's top grade) and give the text
-     a shadow; the headline and the line stay readable on any photo. */
-  #mlStage::after{content:'';position:absolute;left:0;right:0;top:0;height:42%;z-index:1;pointer-events:none;
-    background:linear-gradient(180deg,rgba(8,8,8,.92) 0%,rgba(8,8,8,.6) 55%,rgba(8,8,8,0) 100%)}
-  .mls-beat{text-shadow:0 2px 16px rgba(0,0,0,.9),0 0 2px rgba(0,0,0,.6)}
+  .mls-beat{position:absolute;left:50%;top:30%;transform:translateX(-50%);text-align:center;z-index:2;opacity:0;width:min(92vw,760px);pointer-events:none}
+  /* No poster card in the Screen Test: John rejected the photo there. The
+     stage is text only -- the three beats, the line and the level buttons.
+     !important beats the static-layout rule and the JS fallback's inline style. */
+  #mlsCanvas, #mlsCardFallback{ display:none !important; }
+  /* Live demo phone: the app itself, looping Hear it -> Say it -> Score.
+     No photos, no generated art: plain HTML/CSS. Desktop: text left, phone right. */
+  .mls-beat{left:7%;transform:none;text-align:left;width:min(46vw,540px)}
+  .mls-beat .mls-wave{justify-content:flex-start}
+  .mls-beat .mls-subscores{justify-content:flex-start}
+  #mlsPhone{position:absolute;right:9%;top:50%;transform:translateY(-50%);z-index:2;
+    height:min(640px,84vh);aspect-ratio:9/18.6;border-radius:46px;padding:10px;box-sizing:border-box;
+    background:linear-gradient(145deg,#2a2622,#0e0d0c 40%,#1b1916);
+    box-shadow:0 0 0 1px rgba(200,169,110,.35),0 50px 120px rgba(0,0,0,.8),0 0 90px rgba(200,169,110,.16)}
+  .mp2-screen{position:relative;height:100%;border-radius:37px;overflow:hidden;background:
+    radial-gradient(120% 60% at 50% 0%,rgba(200,169,110,.20),transparent 60%),#0a0a0b;
+    color:#f2ede4;font-family:'DM Sans',system-ui,sans-serif;display:flex;flex-direction:column;padding:34px 20px 20px;box-sizing:border-box}
+  .mp2-notch{position:absolute;top:10px;left:50%;transform:translateX(-50%);width:34%;height:22px;border-radius:0 0 14px 14px;background:#0e0d0c;z-index:2}
+  .mp2-top{display:flex;justify-content:space-between;align-items:center;font-family:'Space Mono',monospace;font-size:9.5px;letter-spacing:.14em;color:#c8a96e}
+  .mp2-live{color:#ef4444;display:none}
+  .mp2-screen[data-state="1"] .mp2-live{display:inline}
+  .mp2-genre{margin-top:18px;font-family:'Space Mono',monospace;font-size:9.5px;letter-spacing:.18em;color:#a59c8b}
+  .mp2-title{font-family:'Bebas Neue',sans-serif;font-size:46px;line-height:.9;color:#fff;margin-top:4px;letter-spacing:.01em}
+  .mp2-line{margin:16px 0 0;font-size:19px;line-height:1.32;font-weight:600}
+  .mp2-line span{transition:color .25s ease,text-shadow .25s ease;color:#f2ede4}
+  .mp2-screen[data-state="1"] .mp2-line span{color:#5a554d}
+  .mp2-screen[data-state="1"] .mp2-line span.on{color:#fff;text-shadow:0 0 14px rgba(255,255,255,.35)}
+  .mp2-screen[data-state="2"] .mp2-line span{color:#4ade80}
+  .mp2-screen[data-state="2"] .mp2-line span.close{color:#facc15}
+  .mp2-es{margin:8px 0 0;font-family:'Playfair Display',serif;font-style:italic;font-size:13px;color:#8f887c}
+  .mp2-stage{flex:1;margin-top:12px;position:relative;min-height:190px}
+  .mp2-panel{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;
+    opacity:0;transform:translateY(10px);transition:opacity .45s ease,transform .45s ease}
+  .mp2-screen[data-state="0"] .mp2-hear,.mp2-screen[data-state="1"] .mp2-say,.mp2-screen[data-state="2"] .mp2-score{opacity:1;transform:none}
+  .mp2-step{font-family:'Space Mono',monospace;font-size:10px;letter-spacing:.2em;color:#c8a96e}
+  .mp2-hear-row{display:flex;align-items:center;gap:12px;width:100%;padding:12px;box-sizing:border-box;border:1px solid rgba(200,169,110,.25);border-radius:16px;background:rgba(255,255,255,.02)}
+  .mp2-play{flex:0 0 auto;width:44px;height:44px;border-radius:50%;background:#c8a96e;display:flex;align-items:center;justify-content:center;box-shadow:0 0 24px rgba(200,169,110,.45)}
+  .mp2-bars{flex:1;display:flex;align-items:center;gap:3px;height:40px}
+  .mp2-bars i{flex:1;border-radius:2px;background:#c8a96e;height:20%;opacity:.9}
+  .mp2-screen[data-state="0"] .mp2-bars i{animation:mp2Bar 1s ease-in-out infinite}
+  @keyframes mp2Bar{0%,100%{height:18%}50%{height:95%}}
+  .mp2-mic{position:relative;width:78px;height:78px;border-radius:50%;background:#ef4444;display:flex;align-items:center;justify-content:center;box-shadow:0 0 40px rgba(239,68,68,.55)}
+  .mp2-mic::before,.mp2-mic::after{content:'';position:absolute;inset:0;border-radius:50%;border:2px solid rgba(239,68,68,.6);animation:mp2Ring 1.6s ease-out infinite}
+  .mp2-mic::after{animation-delay:.8s}
+  @keyframes mp2Ring{from{transform:scale(1);opacity:.9}to{transform:scale(1.9);opacity:0}}
+  .mp2-listen{font-size:12px;color:#a59c8b}
+  .mp2-ring{width:118px;height:118px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+    background:conic-gradient(#4ade80 calc(var(--p,0)*1%),rgba(255,255,255,.08) 0);box-shadow:0 0 50px rgba(74,222,128,.35)}
+  .mp2-ring b{width:96px;height:96px;border-radius:50%;background:#0a0a0b;display:flex;flex-direction:column;align-items:center;justify-content:center;
+    font-family:'Bebas Neue',sans-serif;font-size:46px;line-height:.9;color:#fff;font-weight:400}
+  .mp2-ring b small{font-family:'Space Mono',monospace;font-size:8px;letter-spacing:.18em;color:#a59c8b;margin-top:2px}
+  .mp2-chips{display:flex;gap:6px;flex-wrap:wrap;justify-content:center}
+  .mp2-chips span{font-family:'Space Mono',monospace;font-size:9px;letter-spacing:.08em;padding:4px 8px;border-radius:999px;background:rgba(255,255,255,.06);color:#d8d2c6}
+  .mp2-chips .xp{background:rgba(200,169,110,.18);color:#f1d9a6}
+  .mp2-dots{display:flex;gap:6px;justify-content:center;margin-top:14px}
+  .mp2-dots i{width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,.18);transition:background .3s,width .3s}
+  .mp2-screen[data-state="0"] .mp2-dots i:nth-child(1),.mp2-screen[data-state="1"] .mp2-dots i:nth-child(2),.mp2-screen[data-state="2"] .mp2-dots i:nth-child(3){background:#c8a96e;width:18px;border-radius:3px}
   .mls-kicker{font-family:'Space Mono',monospace;font-size:.62rem;letter-spacing:.4em;color:#c8a96e;opacity:.85}
   .mls-h{font-family:'Bebas Neue',sans-serif;font-size:clamp(2.4rem,6.5vw,4.8rem);line-height:.95;margin:.3em 0;letter-spacing:.02em}
   .mls-h em{font-family:'Playfair Display',serif;font-style:italic;color:#c8a96e;letter-spacing:0}
@@ -5169,6 +5219,8 @@
       display:flex; flex-direction:column;
     }
     #mlsCardFallback{ order:1; }
+    #mlsPhone{ order:1; position:relative; right:auto; top:auto; transform:none;
+      height:auto; width:min(78vw,300px); aspect-ratio:9/18.6; margin:0 auto 18px; }
     .mls-swatches{ order:2; }
     .mls-beat{ order:3; }
 
@@ -5192,14 +5244,14 @@
     .mls-beat{
       position:relative; left:auto; top:auto; transform:none; opacity:1;
       margin:56px auto 0; pointer-events:auto;
+      text-align:center; width:min(92vw,760px);
     }
+    .mls-beat .mls-wave, .mls-beat .mls-subscores{ justify-content:center; }
     .mls-beat:first-of-type{ margin-top:40px; }
 
     /* The spotlight wash is decorative and sized for a 100vh stage; letting it
        stretch over a tall stacked section washes the whole thing out. */
     .mls-spot{ display:none; }
-    /* Text sits below the card here, so the top shade is not needed. */
-    #mlStage::after{ display:none; }
   }
   @media (max-width:768px){ #mlAudioToggle{left:5px} }
 </style>
@@ -5209,6 +5261,37 @@
 
   <canvas id="mlsCanvas"></canvas>
   <div id="mlsCardFallback"></div>
+
+  <!-- Live demo of the app (HTML/CSS only); the loop script is at the end of the page. -->
+  <div id="mlsPhone" aria-hidden="true">
+    <div class="mp2-notch"></div>
+    <div class="mp2-screen" data-state="0">
+      <div class="mp2-top"><span id="mp2Level">LEVEL 1 &middot; SCENE 15</span><span class="mp2-live">&#9679; REC</span></div>
+      <div class="mp2-genre" id="mp2Genre">DRAMA &middot; CONFIDENT</div>
+      <div class="mp2-title" id="mp2Title">THE DEAL</div>
+      <p class="mp2-line" id="mp2Line"></p>
+      <p class="mp2-es" id="mp2Es"></p>
+      <div class="mp2-stage">
+        <div class="mp2-panel mp2-hear">
+          <div class="mp2-step">01 &middot; HEAR IT</div>
+          <div class="mp2-hear-row">
+            <div class="mp2-play"><svg width="18" height="18" viewBox="0 0 24 24" fill="#080808"><path d="M8 5v14l11-7z"/></svg></div>
+            <div class="mp2-bars" id="mp2Bars"></div>
+          </div>
+        </div>
+        <div class="mp2-panel mp2-say">
+          <div class="mp2-step">02 &middot; SAY IT</div>
+          <div class="mp2-mic"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0"/><path d="M12 18v3"/></svg></div>
+          <div class="mp2-listen">Listening&hellip;</div>
+        </div>
+        <div class="mp2-panel mp2-score">
+          <div class="mp2-ring" id="mp2Ring"><b><span id="mp2Num">0</span><small>SYNC SCORE</small></b></div>
+          <div class="mp2-chips"><span id="mp2Matched">8 MATCHED</span><span>1 CLOSE</span><span class="xp">+120 XP</span></div>
+        </div>
+      </div>
+      <div class="mp2-dots"><i></i><i></i><i></i></div>
+    </div>
+  </div>
 
   <!-- BEAT 1 -->
   <div class="mls-beat" id="mlsBeat1">
@@ -9026,7 +9109,8 @@ function boot(){
   // competes for bandwidth with the marquee posters still streaming in. The
   // stage's own `typeof THREE === 'undefined'` guard already degrades to the
   // 2D fallback card, so nothing breaks — the section just costs nothing.
-  var THREE_ON_MOBILE = !matchMedia('(max-width: 768px), (pointer: coarse)').matches;
+  // The stage no longer shows a card at all, so Three.js is never needed.
+  var THREE_ON_MOBILE = false;
 
   var startedThree = false;
   function loadThree(){
@@ -9167,6 +9251,80 @@ function boot(){
   // The hero marquee wall stays photos only (no lettering behind the headline).
   function run(){ document.querySelectorAll('.actI-poster, .actV-card').forEach(dress); }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', run); else run();
+})();
+</script>
+
+<script>
+// Screen Test demo phone: Hear it -> Say it -> Score, on a loop; the level
+// buttons (I / II / III) swap the scene shown. Pauses when off screen.
+(function(){
+  var screen = document.querySelector('#mlsPhone .mp2-screen');
+  if (!screen) return;
+  var LEVELS = {
+    the_deal:    { level:'LEVEL 1 · SCENE 15', genre:'DRAMA · CONFIDENT', title:'THE DEAL',
+                   line:'Ten thousand. Final offer. Take it or leave it.', es:'Diez mil. Oferta final. Tómalo o déjalo.', score:94, close:1 },
+    night_shift: { level:'LEVEL 2 · SCENE 14', genre:'DRAMA · QUIET INTENSITY', title:'NIGHT SHIFT',
+                   line:'I work two jobs so you can have the chances I never had.', es:'Trabajo en dos empleos para que tengas las oportunidades que yo nunca tuve.', score:89, close:8 },
+    the_bluff:   { level:'LEVEL 3 · SCENE 5', genre:'CRIME · SMUG', title:'THE BLUFF',
+                   line:"You're bluffing. I can read you like a book, and it's a very short book.", es:'Estás mintiendo. Te leo como un libro, y es un libro muy corto.', score:91, close:4 }
+  };
+  var bars = document.getElementById('mp2Bars');
+  for (var i = 0; i < 22; i++) { var b = document.createElement('i'); b.style.animationDelay = (i * 0.07 % 1).toFixed(2) + 's'; bars.appendChild(b); }
+  var lineEl = document.getElementById('mp2Line'), numEl = document.getElementById('mp2Num'), ring = document.getElementById('mp2Ring');
+  var cur = LEVELS.the_deal, words = [], timers = [], running = false, visible = false;
+  var reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  function setLevel(key){
+    cur = LEVELS[key] || LEVELS.the_deal;
+    document.getElementById('mp2Level').textContent = cur.level;
+    document.getElementById('mp2Genre').textContent = cur.genre;
+    document.getElementById('mp2Title').textContent = cur.title;
+    document.getElementById('mp2Es').textContent = cur.es;
+    lineEl.innerHTML = '';
+    words = cur.line.split(' ').map(function(w, i){
+      var sp = document.createElement('span'); sp.textContent = w;
+      if (i === cur.close) sp.className = 'close';
+      lineEl.appendChild(sp); lineEl.appendChild(document.createTextNode(' '));
+      return sp;
+    });
+    document.getElementById('mp2Matched').textContent = (words.length - 1) + ' MATCHED';
+  }
+  function clear(){ timers.forEach(clearTimeout); timers = []; }
+  function later(fn, ms){ timers.push(setTimeout(fn, ms)); }
+  function show(state){ screen.setAttribute('data-state', state); }
+  function count(to){
+    var t0 = null;
+    function step(t){ if (!t0) t0 = t; var k = Math.min(1, (t - t0) / 1100), v = Math.round(to * (1 - Math.pow(1 - k, 3)));
+      numEl.textContent = v; ring.style.setProperty('--p', v); if (k < 1 && running) requestAnimationFrame(step); }
+    requestAnimationFrame(step);
+  }
+  function cycle(){
+    clear(); if (!running) return;
+    show(0);
+    later(function(){
+      show(1);
+      words.forEach(function(w){ w.classList.remove('on'); });
+      var gap = Math.min(380, 2600 / words.length);
+      words.forEach(function(w, i){ later(function(){ w.classList.add('on'); }, 250 + i * gap); });
+      later(function(){ show(2); numEl.textContent = '0'; ring.style.setProperty('--p', 0); count(cur.score); }, 500 + words.length * gap);
+      later(cycle, 500 + words.length * gap + 3600);
+    }, 2800);
+  }
+  function start(){ if (running) return; running = true; cycle(); }
+  function stop(){ running = false; clear(); }
+
+  setLevel('the_deal');
+  if (reduced) { show(2); numEl.textContent = cur.score; ring.style.setProperty('--p', cur.score); }
+  else {
+    new IntersectionObserver(function(es){ es.forEach(function(e){ visible = e.isIntersecting; visible ? start() : stop(); }); }, { threshold: 0.2 }).observe(screen);
+  }
+  document.querySelectorAll('.mls-sw').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      setLevel(btn.dataset.poster);
+      if (reduced) { numEl.textContent = cur.score; ring.style.setProperty('--p', cur.score); }
+      else if (visible) { stop(); start(); }
+    });
+  });
 })();
 </script>
 </body>
