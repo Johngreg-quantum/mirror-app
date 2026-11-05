@@ -5226,7 +5226,7 @@
   <div id="mlsCardFallback"></div>
 
   <!-- Poster card (real photo). The level buttons swap it. -->
-  <div id="mlsPoster" aria-hidden="true"><div class="mls-pc"><img id="mlsPosterImg" src="/static/scenes/art/the_secret.webp" alt="" decoding="async"></div></div>
+  <div id="mlsPoster" aria-hidden="true"><div class="mls-pc"><img id="mlsPosterImg" src="/static/scenes/poster-screen-test.webp" alt="" decoding="async"></div></div>
 
   <!-- BEAT 1 -->
   <div class="mls-beat" id="mlsBeat1">
@@ -5239,7 +5239,7 @@
   <div class="mls-beat" id="mlsBeat2">
     <p class="mls-kicker">SCREEN TEST &middot; 02</p>
     <h2 class="mls-h">SPEAK THE <em>LINE</em></h2>
-    <p class="mls-quote" id="mlsQuote">&ldquo;If I tell you what I saw, you have to promise you&rsquo;ll never repeat it.&rdquo;</p>
+    <p class="mls-quote" id="mlsQuote">&ldquo;Oxygen is at forty percent. If we don&rsquo;t fix this now, we won&rsquo;t get another try.&rdquo;</p>
     <div class="mls-wave" aria-hidden="true">
       <span></span><span></span><span></span><span></span><span></span>
       <span></span><span></span><span></span><span></span><span></span>
@@ -5264,7 +5264,7 @@
 
   <!-- Level swatches -->
   <div class="mls-swatches" role="tablist" aria-label="Choose a level">
-    <button class="mls-sw active" data-poster="the_secret" data-quote="&ldquo;If I tell you what I saw, you have to promise you&rsquo;ll never repeat it.&rdquo;">I</button>
+    <button class="mls-sw active" data-poster="oxygen_low" data-img="/static/scenes/poster-screen-test.webp" data-quote="&ldquo;Oxygen is at forty percent. If we don&rsquo;t fix this now, we won&rsquo;t get another try.&rdquo;">I</button>
     <button class="mls-sw"        data-poster="night_shift" data-quote="&ldquo;I work two jobs so you can have the chances I never had.&rdquo;">II</button>
     <button class="mls-sw"        data-poster="the_bluff"  data-quote="&ldquo;I can read you like a book, and it&rsquo;s a very short book.&rdquo;">III</button>
     <p class="mls-sw-label">CHOOSE YOUR LEVEL</p>
@@ -9196,7 +9196,7 @@ function boot(){
   if (!img) return;
   document.querySelectorAll('.mls-sw').forEach(function(btn){
     btn.addEventListener('click', function(){
-      var src = '/static/scenes/art/' + btn.dataset.poster + '.webp';
+      var src = btn.dataset.img || ('/static/scenes/art/' + btn.dataset.poster + '.webp');
       if (img.getAttribute('src') === src) return;
       img.style.opacity = '0';
       setTimeout(function(){ img.onload = img.onerror = function(){ img.style.opacity = '1'; }; img.src = src; }, 250);
