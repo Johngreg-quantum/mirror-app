@@ -4646,8 +4646,7 @@
 }
 .ml-vignette2 {
   position: absolute; inset: 0; z-index: 6; pointer-events: none;
-  /* Darker centre so the poster titles in the wall never compete with the hero headline. */
-  background: radial-gradient(ellipse 42% 40% at 50% 50%, rgba(8,8,8,0.82) 0%, rgba(8,8,8,0.55) 45%, transparent 75%);
+  background: radial-gradient(ellipse 38% 38% at 50% 50%, rgba(8,8,8,0.5) 0%, transparent 70%);
 }
 #mlTopBar {
   position: absolute; top: 0; left: 0; right: 0;
@@ -9119,15 +9118,8 @@ function boot(){
   @container (min-height: 260px) and (max-aspect-ratio: 1/1) { .mp-tag { display:block; } }
   /* Very small posters (the phone triptych): no credits block, it would be unreadable. */
   @container (max-width: 150px) { .mp-bill { display:none; } }
-  /* Landscape marquee cards sit behind the hero headline: title and genre only, kept quiet. */
-  @container (min-aspect-ratio: 1/1) {
-    .mp-in { justify-content:flex-end; padding-bottom: 9cqh; }
-    .mp-pre, .mp-bill, .mp-logo, .mp-tag { display:none; }
-    .mp-foot { margin-top:0; }
-    .mp-title { font-size: clamp(10px, min(17cqh, calc(80cqw / (var(--w, 6) * 0.8))), 34px); }
-  }
   /* The poster layer carries its own grade, title and level line. */
-  .mp-host .ml-card-grad, .mp-host .actV-card-title, .mp-host .actV-card-badge { display:none; }
+  .mp-host .actV-card-title, .mp-host .actV-card-badge { display:none; }
   .mp-host.actV-card::after, .mp-host.actI-poster::after { display:none; }
 </style>
 <script>
@@ -9164,16 +9156,9 @@ function boot(){
       '<div class="mp-logo">MIRROR</div></div></div>';
     el.appendChild(p);
   }
-  function run(){ document.querySelectorAll('.ml-card, .actI-poster, .actV-card').forEach(dress); }
+  // The hero marquee wall stays photos only (no lettering behind the headline).
+  function run(){ document.querySelectorAll('.actI-poster, .actV-card').forEach(dress); }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', run); else run();
-  // The marquee is (re)built by script; dress new cards as they appear.
-  new MutationObserver(function(muts){
-    for (var i=0;i<muts.length;i++) for (var j=0;j<muts[i].addedNodes.length;j++){
-      var n = muts[i].addedNodes[j]; if (n.nodeType!==1) continue;
-      if (n.matches && n.matches('.ml-card, .actI-poster, .actV-card')) dress(n);
-      if (n.querySelectorAll) n.querySelectorAll('.ml-card, .actI-poster, .actV-card').forEach(dress);
-    }
-  }).observe(document.documentElement, {childList:true, subtree:true});
 })();
 </script>
 </body>
