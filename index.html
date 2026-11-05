@@ -4987,9 +4987,15 @@
 
     // Keep in step with the rows[n].style.opacity block after the rows are built.
     const ROW_OPACITIES = ['1', '1', '1', '0.8', '0.45'];
-    // Each scene belongs to exactly one row, so no poster appears twice on screen.
-    const deck = mlShuffle(ML_SCENES);
-    const rowSets = ML_ROWS.map((_, i) => deck.filter((_, k) => k % ML_ROWS.length === i));
+    // Fixed layout, not shuffled: each scene lives in exactly one row, and the
+    // order is chosen so that side-by-side posters (including the loop seam)
+    // never share palette, genre or composition, and neighbouring rows use
+    // disjoint palette families (rows 1/3/5: blue-gold, red-black, neon green;
+    // rows 2/4: cold white, sunset orange, purple-cyan), so no colour stacks
+    // vertically either. Built offline from the poster plan.
+    const ML_LAYOUT = [["first_dance","surprise","last_train","lucky","stand_up","lost_city","no_signal","boardroom"],["cold_feet","lost_luggage","missed_games","the_pilot","the_deal","midnight_call","the_audition","first_day","old_friends","the_window","final_round","champion"],["the_bluff","the_promise","blind_date","done_waiting","the_secret","oxygen_low","wrong_number","coffee_shop"],["job_offer","rooftop","the_apology","fashionably_late","the_comeback","the_letter","the_heist","roommate","locked_door","wedding_toast","the_storm"],["runaway","night_shift","interrogation","good_news","grandmas_kitchen","countdown","moving_out","the_rival"]];
+    const byId = Object.fromEntries(ML_SCENES.map(s => [s.id, s]));
+    const rowSets = ML_LAYOUT.map(r => r.map(id => byId[id]).filter(Boolean));
     ML_ROWS.forEach((cfg, rowIndex) => {
       const row = document.createElement('div');
       row.className = 'ml-mrow ml-' + cfg.dir;
