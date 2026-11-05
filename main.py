@@ -195,13 +195,30 @@ _HF_FAILED: dict = {}  # scene id -> time of last failure; retried after 10 minu
 
 
 def _hf_convert(data: bytes, dest: str) -> None:
+    """Write every size we serve from one Higgsfield PNG.
+
+    <id>.webp       720px landscape, the hero wall card
+    <id>-card.webp  500x750 centre crop (2:3) for portrait scene cards
+    <id>-card-sm.webp 400x600 of the same crop
+    The wall file is written last: its presence means all three exist.
+    """
     import io
     from PIL import Image
     img = Image.open(io.BytesIO(data)).convert("RGB")
-    img.thumbnail((720, 720))
     os.makedirs(_HF_CACHE_DIR, exist_ok=True)
+    base = dest[:-len(".webp")]
+    w, h = img.size
+    cw = min(w, int(round(h * 2 / 3)))
+    left = (w - cw) // 2
+    crop = img.crop((left, 0, left + cw, h))
+    for suffix, size in (("-card", (500, 750)), ("-card-sm", (400, 600))):
+        part = base + suffix + ".webp.part"
+        crop.resize(size, Image.LANCZOS).save(part, "WEBP", quality=82, method=4)
+        os.replace(part, base + suffix + ".webp")
+    wall = img.copy()
+    wall.thumbnail((720, 720))
     tmp = dest + ".part"
-    img.save(tmp, "WEBP", quality=80, method=4)
+    wall.save(tmp, "WEBP", quality=80, method=4)
     os.replace(tmp, dest)
 
 
@@ -245,6 +262,39 @@ async def _hf_poster_response(path: str):
                         headers={"Cache-Control": "public, max-age=86400"})
 
 
+# The first 8 Higgsfield posters have their title painted into the image, so a
+# portrait crop would cut it; for those the portrait cards use the code-drawn
+# poster instead.
+_HF_BAKED_TITLE = {"the_window", "countdown", "oxygen_low", "the_deal",
+                   "interrogation", "the_heist", "the_storm", "no_signal"}
+_POSTERS_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "static", "scenes", "posters")
+
+
+async def _poster_art_response(path: str):
+    """/static/scenes/art/<id>(-sm|-wide).webp -> poster art, never stock photos.
+
+    Every scene card in the app and on the landing asks for these paths.
+    -wide gets the hero-wall art; the 2:3 sizes get a portrait crop of the
+    Higgsfield poster, or the code-drawn poster where there is none.
+    """
+    m = _PHOTO_ART_RE.match(path)
+    if not m:
+        return None
+    from fastapi.responses import FileResponse
+    scene_id, variant = m.group(1), m.group(2)
+    headers = {"Cache-Control": "public, max-age=3600"}
+    if scene_id in _HF_POSTERS and (variant == "-wide" or scene_id not in _HF_BAKED_TITLE):
+        wall = await _hf_poster_file(scene_id)
+        if wall:
+            target = wall if variant == "-wide" else wall[:-len(".webp")] + ("-card-sm" if variant == "-sm" else "-card") + ".webp"
+            if os.path.exists(target):
+                return FileResponse(target, media_type="image/webp", headers=headers)
+    local = os.path.join(_POSTERS_DIR, scene_id + ("-wall" if variant == "-wide" else "") + ".webp")
+    if os.path.exists(local):
+        return FileResponse(local, media_type="image/webp", headers=headers)
+    return None
+
+
 async def _hf_prewarm() -> None:
     """Build every wall poster right after boot so no visitor waits on it."""
     for scene_id in list(_HF_POSTERS):
@@ -272,6 +322,11 @@ class _RevalidatingStaticFiles(StaticFiles):
         # Scene art is real photography hosted by Unsplash (see
         # _photo_art_redirect). Every existing reference to
         # /static/scenes/art/<id>.webp keeps working and lands on the photo.
+        # Scene art: poster art first (see _poster_art_response); the Unsplash
+        # redirect below only answers for a scene that has no poster.
+        poster = await _poster_art_response(path)
+        if poster is not None:
+            return poster
         photo = _photo_art_redirect(path, scope)
         if photo is not None:
             return photo
