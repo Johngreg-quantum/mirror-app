@@ -167,6 +167,91 @@ def _photo_art_redirect(path: str, scope=None):
     return Response(status_code=302, headers=headers)
 
 
+# --- Landing wall posters made with Higgsfield -------------------------------
+# static/scenes/hf-posters.json maps a scene id to the PNG Higgsfield rendered
+# for it. The PNGs are ~1.5 MB, so the first request for
+# /static/scenes/posters/<id>-wall.webp downloads it once, shrinks it to a
+# 720px webp (~60 KB) and keeps that on local disk; every later request is a
+# plain file. Anything that goes wrong falls through to the code-drawn wall
+# art that already lives at that path, so the wall never shows a hole.
+_HF_POSTERS_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "static", "scenes", "hf-posters.json")
+_HF_HOST = "https://d8j0ntlcm91z4.cloudfront.net/"
+_HF_RE = re.compile(r"^scenes/posters/([a-z0-9_]+)-wall\.webp$")
+_HF_CACHE_DIR = os.path.join(tempfile.gettempdir(), "mirror-hf-posters")
+
+
+def _load_hf_posters() -> dict:
+    try:
+        with open(_HF_POSTERS_PATH, encoding="utf-8") as fh:
+            data = json.load(fh)
+    except (OSError, ValueError):
+        return {}
+    return {k: v for k, v in data.items() if isinstance(v, str) and v.startswith(_HF_HOST)}
+
+
+_HF_POSTERS = _load_hf_posters()
+_HF_LOCKS: dict = {}
+_HF_FAILED: dict = {}  # scene id -> time of last failure; retried after 10 minutes
+
+
+def _hf_convert(data: bytes, dest: str) -> None:
+    import io
+    from PIL import Image
+    img = Image.open(io.BytesIO(data)).convert("RGB")
+    img.thumbnail((720, 720))
+    os.makedirs(_HF_CACHE_DIR, exist_ok=True)
+    tmp = dest + ".part"
+    img.save(tmp, "WEBP", quality=80, method=4)
+    os.replace(tmp, dest)
+
+
+async def _hf_poster_file(scene_id: str):
+    """Path of the cached webp for scene_id, building it on first use."""
+    import asyncio
+    import anyio
+    url = _HF_POSTERS.get(scene_id)
+    if not url:
+        return None
+    dest = os.path.join(_HF_CACHE_DIR, scene_id + ".webp")
+    if os.path.exists(dest):
+        return dest
+    if time.time() - _HF_FAILED.get(scene_id, 0) < 600:
+        return None
+    lock = _HF_LOCKS.setdefault(scene_id, asyncio.Lock())
+    async with lock:
+        if os.path.exists(dest):
+            return dest
+        try:
+            async with httpx.AsyncClient(timeout=25, follow_redirects=True) as client:
+                resp = await client.get(url)
+                resp.raise_for_status()
+            await anyio.to_thread.run_sync(_hf_convert, resp.content, dest)
+        except Exception as exc:  # network, decode, disk: fall back to local art
+            logger.warning("[hf-posters] %s failed: %s", scene_id, exc)
+            _HF_FAILED[scene_id] = time.time()
+            return None
+    return dest
+
+
+async def _hf_poster_response(path: str):
+    m = _HF_RE.match(path)
+    if not m or m.group(1) not in _HF_POSTERS:
+        return None
+    dest = await _hf_poster_file(m.group(1))
+    if not dest:
+        return None
+    from fastapi.responses import FileResponse
+    return FileResponse(dest, media_type="image/webp",
+                        headers={"Cache-Control": "public, max-age=86400"})
+
+
+async def _hf_prewarm() -> None:
+    """Build every wall poster right after boot so no visitor waits on it."""
+    for scene_id in list(_HF_POSTERS):
+        await _hf_poster_file(scene_id)
+    logger.info("[hf-posters] %d wall posters ready", len(_HF_POSTERS))
+
+
 class _RevalidatingStaticFiles(StaticFiles):
     """Serve /static with "no-cache" so a deploy is picked up on the next load.
 
@@ -190,6 +275,11 @@ class _RevalidatingStaticFiles(StaticFiles):
         photo = _photo_art_redirect(path, scope)
         if photo is not None:
             return photo
+
+        # Landing wall posters rendered with Higgsfield (see _hf_poster_response).
+        hf = await _hf_poster_response(path)
+        if hf is not None:
+            return hf
 
         # Overridden here rather than in file_response() so the header lands on
         # the 304s too, not only the 200s.
@@ -1634,6 +1724,9 @@ async def startup():
     Errors here appear in the Render log with a full traceback instead of
     killing the process silently during module load."""
     init_db()
+    if _HF_POSTERS:
+        import asyncio
+        asyncio.create_task(_hf_prewarm())
     # Stated on every boot because the flag is invisible from outside: with it
     # off the app behaves exactly as it did before the gate existed, so there is
     # nothing to notice if it was set wrong. This line is the only place the

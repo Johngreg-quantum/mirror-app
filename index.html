@@ -4527,6 +4527,44 @@
        #mlStage, which body.app-mode hides outright, so every logged-in user
        downloaded it for pixels they never see. It is now fetched lazily by the
        IntersectionObserver loader just before the closing body tag. -->
+<style>
+  /* Hero wall posters: typography over the text-free Higgsfield art. */
+  .ml-card.hfp { container-type: inline-size; overflow: hidden; }
+  .ml-card.hfp .ml-card-grad { display: none; }
+  .hfp-ov { position: absolute; inset: 0; z-index: 2; pointer-events: none; display: flex; flex-direction: column;
+    align-items: center; text-align: center; padding: 3.6cqw 5cqw 3cqw; box-sizing: border-box; }
+  .hfp-ov::before { content: ''; position: absolute; inset: 0; z-index: -1;
+    background: linear-gradient(180deg, rgba(0,0,0,.62) 0%, rgba(0,0,0,0) 36%, rgba(0,0,0,0) 58%, rgba(0,0,0,.66) 100%); }
+  .hfp-ov > * { flex-shrink: 0; }
+  .hfp-sp { flex: 1 1 auto; }
+  .hfp-pre { font-family: 'Bebas Neue', sans-serif; font-size: 2.3cqw; letter-spacing: .45em; padding-left: .45em; color: #e8dfcf; opacity: .92; }
+  .hfp-t { margin-top: 1.4cqw; line-height: .98; white-space: nowrap; filter: drop-shadow(0 .5cqw 1.6cqw rgba(0,0,0,.85)); }
+  .hfp-bottom .hfp-t { margin-top: 0; }
+  .hfp-sub { margin-top: 1.4cqw; font-family: 'Bebas Neue', sans-serif; font-size: 2.2cqw; letter-spacing: .32em; padding-left: .32em; }
+  .hfp-tag { font-family: 'Cormorant Garamond', serif; font-style: italic; font-weight: 500; font-size: 3.7cqw; color: #f3ead8;
+    text-shadow: 0 1px 8px rgba(0,0,0,.8); }
+  .hfp-bottom .hfp-tag { margin-top: 1cqw; font-family: 'Bebas Neue', sans-serif; font-style: normal; font-size: 3cqw; letter-spacing: .14em; }
+  .hfp-foot { display: none; margin-top: 1.2cqw; font-family: 'Bebas Neue', sans-serif; font-size: 1.9cqw; letter-spacing: .35em; padding-left: .35em; color: #c8a96e; }
+  @container (min-width: 380px) { .hfp-foot { display: block; } }
+  /* type families */
+  .hfp-f-cinzel .hfp-t { font-family: 'Cinzel', serif; font-weight: 700; letter-spacing: .06em; }
+  .hfp-f-cinzelthin .hfp-t { font-family: 'Cinzel', serif; font-weight: 600; letter-spacing: .1em; }
+  .hfp-f-bebas .hfp-t { font-family: 'Bebas Neue', sans-serif; letter-spacing: .05em; }
+  .hfp-f-corm .hfp-t { font-family: 'Cormorant Garamond', serif; font-weight: 600; letter-spacing: .1em; }
+  /* colours, one per palette */
+  .hfp-c-az .hfp-t { background: linear-gradient(180deg,#fff1d0,#e8b46a 55%,#a06a2e); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .hfp-c-az .hfp-sub { color: #e8b46a; }
+  .hfp-c-rn .hfp-t { color: #fff; text-shadow: 0 0 2.4cqw rgba(255,40,30,.55); }
+  .hfp-c-rn .hfp-sub { color: #ff5a45; }
+  .hfp-c-vn .hfp-t { color: #c8ffd8; text-shadow: 0 0 1.4cqw #2aff7a, 0 0 3.2cqw rgba(42,255,122,.6); }
+  .hfp-c-vn .hfp-sub { color: #6aff9f; }
+  .hfp-c-bf .hfp-t { background: linear-gradient(180deg,#ffffff,#bfe0ff); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .hfp-c-bf .hfp-sub { color: #9fd0ff; }
+  .hfp-c-na .hfp-t { background: linear-gradient(180deg,#fff4e0,#ffb070 60%,#d0703a); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .hfp-c-na .hfp-sub { color: #ffb070; }
+  .hfp-c-mc .hfp-t { color: #efe6ff; text-shadow: 0 0 1.6cqw rgba(127,232,255,.85), 0 0 3.4cqw rgba(160,110,255,.6); }
+  .hfp-c-mc .hfp-sub { color: #7fe8ff; }
+</style>
 </head>
 <body>
 
@@ -4902,6 +4940,33 @@
     {id:'lucky',            bg:'#1a2a4a'},
   ];
 
+  // Poster typography for the Higgsfield wall art (the art itself has no text, so
+  // every title is spelled exactly). f = type family, c = colour, p = top/bottom.
+  // Scenes not listed here carry their own title in the image.
+  const POSTER_T = {"lost_city":{"t":"LOST CITY","sub":"ADVENTURE · AMAZED · LEVEL 1","tag":"IT'S REAL.","f":"bebas","c":"az","p":"bottom"},"midnight_call":{"t":"MIDNIGHT CALL","sub":"SUSPENSE · AFRAID · LEVEL 1","tag":"DON'T OPEN THE DOOR.","f":"cinzelthin","c":"mc","p":"top"},"champion":{"t":"CHAMPION","sub":"SPORTS · TRIUMPHANT · LEVEL 1","tag":"NOBODY BELIEVED IN US.","f":"corm","c":"na","p":"top"},"the_pilot":{"t":"MAYDAY","sub":"ACTION · CALM UNDER PRESSURE · LEVEL 2","tag":"ENGINE TWO IS GONE. SHE'S LANDING ANYWAY.","f":"bebas","c":"bf","p":"top"},"the_secret":{"t":"THE SECRET","sub":"SUSPENSE · HUSHED, SERIOUS · LEVEL 2","tag":"SOME THINGS YOU NEVER REPEAT.","f":"cinzelthin","c":"vn","p":"top"},"rooftop":{"t":"ROOFTOP","sub":"ROMANCE · NERVOUS, SINCERE · LEVEL 1","tag":"SOME WORDS TAKE A HUNDRED TRIES.","f":"corm","c":"mc","p":"top"},"night_shift":{"t":"NIGHT SHIFT","sub":"DRAMA · QUIET INTENSITY · LEVEL 2","tag":"TWO JOBS. ONE PROMISE.","f":"cinzel","c":"rn","p":"bottom"},"the_bluff":{"t":"THE BLUFF","sub":"CRIME · SMUG · LEVEL 3","tag":"READ THE PLAYER. NOT THE CARDS.","f":"cinzelthin","c":"az","p":"top"},"runaway":{"t":"RUNAWAY","sub":"THRILLER · URGENT WHISPER · LEVEL 2","tag":"TAKE ONLY CASH. TELL NO ONE.","f":"bebas","c":"vn","p":"bottom"},"the_letter":{"t":"THE LETTER","sub":"DRAMA · SAD, QUIET · LEVEL 1","tag":"EVERY WORD. TWICE.","f":"corm","c":"bf","p":"top"},"locked_door":{"t":"THE LOCKED DOOR","sub":"SUSPENSE · WHISPERED FEAR · LEVEL 1","tag":"SOMEONE WAS IN THIS HOUSE.","f":"cinzelthin","c":"na","p":"top"},"final_round":{"t":"FINAL ROUND","sub":"SPORTS · INTENSE, MOTIVATING · LEVEL 2","tag":"YOU ARE NOT DONE YET.","f":"bebas","c":"mc","p":"bottom"},"stand_up":{"t":"STAND UP","sub":"DRAMA · INSPIRING · LEVEL 1","tag":"TONIGHT, WE FIGHT BACK.","f":"corm","c":"rn","p":"bottom"},"the_rival":{"t":"THE RIVAL","sub":"SPORTS · COMPETITIVE · LEVEL 2","tag":"THIS YEAR, I CAME READY.","f":"cinzel","c":"az","p":"top"},"last_train":{"t":"LAST TRAIN","sub":"DRAMA · HURT BUT FIRM · LEVEL 1","tag":"DON'T COME BACK.","f":"cinzelthin","c":"vn","p":"top"},"the_audition":{"t":"THE AUDITION","sub":"DRAMA · PLEADING · LEVEL 2","tag":"ONE CHANCE. ONE TAKE.","f":"corm","c":"bf","p":"top"},"first_day":{"t":"FIRST DAY","sub":"COMEDY · NERVOUS, FRIENDLY · LEVEL 1","tag":"NEW PLACE. NEW RULES.","f":"bebas","c":"na","p":"top"},"fashionably_late":{"t":"FASHIONABLY LATE","sub":"COMEDY · CONFIDENT, PLAYFUL · LEVEL 1","tag":"EVERYONE ELSE IS JUST EARLY.","f":"corm","c":"mc","p":"top"},"wrong_number":{"t":"WRONG NUMBER","sub":"COMEDY · CONFUSED · LEVEL 1","tag":"WHY DO YOU HAVE MY DOG?","f":"cinzelthin","c":"rn","p":"bottom"},"surprise":{"t":"SURPRISE","sub":"FAMILY · EXCITED · LEVEL 1","tag":"CLOSE YOUR EYES.","f":"cinzel","c":"az","p":"top"},"the_promise":{"t":"THE PROMISE","sub":"DRAMA · TENDER · LEVEL 1","tag":"I'LL COME BACK FOR YOU.","f":"corm","c":"vn","p":"bottom"},"the_apology":{"t":"THE APOLOGY","sub":"ROMANCE · REGRETFUL · LEVEL 1","tag":"PLEASE DON'T GO.","f":"cinzelthin","c":"bf","p":"top"},"job_offer":{"t":"THE OFFER","sub":"DRAMA · EXCITED BUT UNSURE · LEVEL 2","tag":"ONE NIGHT TO THINK.","f":"bebas","c":"na","p":"top"},"old_friends":{"t":"OLD FRIENDS","sub":"COMEDY · TEASING, WARM · LEVEL 2","tag":"STILL THE WORST DRIVER EVER.","f":"corm","c":"mc","p":"bottom"},"good_news":{"t":"GOOD NEWS","sub":"DRAMA · RELIEF · LEVEL 2","tag":"FINALLY, WE CAN BREATHE.","f":"cinzel","c":"rn","p":"bottom"},"blind_date":{"t":"BLIND DATE","sub":"ROMANCE · SHY, HONEST · LEVEL 2","tag":"ONE TABLE. TWO STRANGERS.","f":"cinzelthin","c":"az","p":"top"},"moving_out":{"t":"MOVING OUT","sub":"DRAMA · NOSTALGIC · LEVEL 2","tag":"THE BEST HOME I EVER HAD.","f":"corm","c":"vn","p":"top"},"lost_luggage":{"t":"LOST LUGGAGE","sub":"COMEDY · FRUSTRATED, FUNNY · LEVEL 2","tag":"MY SUITCASE WENT TO PARIS.","f":"bebas","c":"bf","p":"top"},"missed_games":{"t":"MISSED GAMES","sub":"FAMILY · REGRETFUL, WARM · LEVEL 2","tag":"LET ME BE THERE NOW.","f":"corm","c":"na","p":"top"},"wedding_toast":{"t":"THE TOAST","sub":"COMEDY · WARM, JOKING · LEVEL 2","tag":"SHE WAS HALF RIGHT.","f":"cinzel","c":"mc","p":"top"},"first_dance":{"t":"FIRST DANCE","sub":"ROMANCE · PLAYFUL · LEVEL 2","tag":"DON'T STEP ON ME.","f":"cinzelthin","c":"rn","p":"bottom"},"grandmas_kitchen":{"t":"GRANDMA'S KITCHEN","sub":"FAMILY · WARM, LOVING · LEVEL 2","tag":"JUST TASTE IT. TRUST YOURSELF.","f":"corm","c":"az","p":"top"},"boardroom":{"t":"THE BOARDROOM","sub":"DRAMA · BLUNT · LEVEL 3","tag":"THE NUMBERS ARE BAD.","f":"bebas","c":"vn","p":"bottom"},"roommate":{"t":"THE ROOMMATE","sub":"COMEDY · SARCASTIC · LEVEL 3","tag":"YOU FINISHED THE MILK. AGAIN.","f":"corm","c":"bf","p":"top"},"the_comeback":{"t":"THE COMEBACK","sub":"SPORTS · CONFIDENT, COOL · LEVEL 3","tag":"I WAS JUST GETTING STARTED.","f":"cinzel","c":"na","p":"top"},"cold_feet":{"t":"COLD FEET","sub":"COMEDY · NERVOUS, RAMBLING · LEVEL 3","tag":"JUST RECONSIDERING EVERYTHING.","f":"cinzelthin","c":"mc","p":"bottom"},"done_waiting":{"t":"DONE WAITING","sub":"DRAMA · CONTROLLED ANGER · LEVEL 3","tag":"DONE BITING MY TONGUE.","f":"corm","c":"rn","p":"bottom"},"lucky":{"t":"LUCKY","sub":"THRILLER · COOL, CUTTING · LEVEL 3","tag":"CALL IT LUCK.","f":"bebas","c":"az","p":"top"},"coffee_shop":{"t":"COFFEE SHOP","sub":"ROMANCE · FLIRTY · LEVEL 1","tag":"IS THIS SEAT TAKEN?","f":"corm","c":"vn","p":"top"}};
+  function mlPosterType(id){
+    const d = POSTER_T[id]; if (!d) return null;
+    const K = {cinzel:.9, cinzelthin:.88, bebas:.47, corm:.7}[d.f] || .8;
+    const longest = Math.max.apply(null, d.t.split(' ').map(w => w.length));
+    const lines = d.t.length > 13 && d.t.indexOf(' ') > 0 ? (() => { const w = d.t.split(' '), h = Math.ceil(w.length/2); return [w.slice(0,h).join(' '), w.slice(h).join(' ')]; })() : [d.t];
+    const len = Math.max.apply(null, lines.map(l => l.length));
+    const base = {cinzel:9, cinzelthin:8.5, bebas:13, corm:10}[d.f] || 9;
+    const size = Math.min(base, 86 / (len * K)).toFixed(2);
+    const esc = t => String(t).replace(/[&<>"]/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[ch]));
+    const ov = document.createElement('div');
+    ov.className = 'hfp-ov hfp-' + d.p + ' hfp-f-' + d.f + ' hfp-c-' + d.c;
+    ov.setAttribute('aria-hidden', 'true');
+    const title = '<div class="hfp-t" style="font-size:' + size + 'cqw">' + lines.map(esc).join('<br>') + '</div>';
+    const sub = '<div class="hfp-sub">' + esc(d.sub) + '</div>';
+    const tag = '<div class="hfp-tag">\u201C' + esc(d.tag.charAt(0) + d.tag.slice(1).toLowerCase()) + '\u201D</div>';
+    const pre = '<div class="hfp-pre">MIRROR PRESENTS</div>';
+    const foot = '<div class="hfp-foot">NOW PLAYING \u00B7 MIRRORSPEAK.APP</div>';
+    ov.innerHTML = d.p === 'bottom'
+      ? pre + tag + '<div class="hfp-sp"></div>' + title + sub + foot
+      : pre + title + sub + '<div class="hfp-sp"></div>' + tag + foot;
+    return ov;
+  }
+
   function mlShuffle(a){return [...a].sort(()=>Math.random()-.5);}
 
   function mlBuildWall(){
@@ -4990,6 +5055,8 @@
 
         card.appendChild(picture);
         card.appendChild(grad);
+        const ov = mlPosterType(s.id);
+        if (ov) { card.classList.add('hfp'); card.appendChild(ov); }
         track.appendChild(card);
       });
 

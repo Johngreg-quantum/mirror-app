@@ -49,3 +49,4 @@ aiofiles==23.2.1
 # have at all and a slim Linux image may omit. Pinning it here makes the day
 # boundary deterministic rather than dependent on the host.
 tzdata==2026.3
+Pillow==12.0.0
