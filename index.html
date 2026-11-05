@@ -5105,6 +5105,12 @@
   #mlsCanvas{position:absolute;inset:0;width:100%;height:100%;z-index:1;display:block}
 
   .mls-beat{position:absolute;left:50%;top:7%;transform:translateX(-50%);text-align:center;z-index:2;opacity:0;width:min(92vw,760px);pointer-events:none}
+  /* The beats sit over the top of the 3D card. Real photos are bright up there,
+     so shade the top of the stage (like a poster's top grade) and give the text
+     a shadow; the headline and the line stay readable on any photo. */
+  #mlStage::after{content:'';position:absolute;left:0;right:0;top:0;height:42%;z-index:1;pointer-events:none;
+    background:linear-gradient(180deg,rgba(8,8,8,.92) 0%,rgba(8,8,8,.6) 55%,rgba(8,8,8,0) 100%)}
+  .mls-beat{text-shadow:0 2px 16px rgba(0,0,0,.9),0 0 2px rgba(0,0,0,.6)}
   .mls-kicker{font-family:'Space Mono',monospace;font-size:.62rem;letter-spacing:.4em;color:#c8a96e;opacity:.85}
   .mls-h{font-family:'Bebas Neue',sans-serif;font-size:clamp(2.4rem,6.5vw,4.8rem);line-height:.95;margin:.3em 0;letter-spacing:.02em}
   .mls-h em{font-family:'Playfair Display',serif;font-style:italic;color:#c8a96e;letter-spacing:0}
@@ -5192,6 +5198,8 @@
     /* The spotlight wash is decorative and sized for a 100vh stage; letting it
        stretch over a tall stacked section washes the whole thing out. */
     .mls-spot{ display:none; }
+    /* Text sits below the card here, so the top shade is not needed. */
+    #mlStage::after{ display:none; }
   }
   @media (max-width:768px){ #mlAudioToggle{left:5px} }
 </style>
