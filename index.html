@@ -4853,6 +4853,7 @@
   // for the instant before the image decodes and as the whole card if it
   // never does.
   const ML_SCENES = [
+    {id:'last_train',       bg:'#8a5a1a'},
     {id:'fashionably_late', bg:'#d4a843'},
     {id:'rooftop',          bg:'#c75050'},
     {id:'countdown',        bg:'#cc2233'},
@@ -4921,6 +4922,9 @@
 
     // Keep in step with the rows[n].style.opacity block after the rows are built.
     const ROW_OPACITIES = ['1', '1', '1', '0.8', '0.45'];
+    // Each scene belongs to exactly one row, so no poster appears twice on screen.
+    const deck = mlShuffle(ML_SCENES);
+    const rowSets = ML_ROWS.map((_, i) => deck.filter((_, k) => k % ML_ROWS.length === i));
     ML_ROWS.forEach((cfg, rowIndex) => {
       const row = document.createElement('div');
       row.className = 'ml-mrow ml-' + cfg.dir;
@@ -4944,7 +4948,7 @@
       const halfCount = Math.ceil((window.innerWidth / cardW) * 1.5) + 2;
       const half = [];
       while (half.length < halfCount) {
-        half.push(...mlShuffle([...ML_SCENES]));
+        half.push(...rowSets[rowIndex]);
       }
       const finalPool = [...half.slice(0, halfCount), ...half.slice(0, halfCount)];
 
@@ -4962,7 +4966,8 @@
         const picture = document.createElement('picture');
         picture.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;display:block;';
         const img = document.createElement('img');
-        img.src = '/static/scenes/art/' + s.id + '-wide.webp';
+        // Illustrated poster art (text-free landscape cut), static/scenes/posters.
+        img.src = '/static/scenes/posters/' + s.id + '-wall.webp';
         img.alt = '';
         img.loading = 'lazy';
         img.decoding = 'async';
