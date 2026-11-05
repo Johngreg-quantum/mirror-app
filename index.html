@@ -3983,7 +3983,7 @@
     }
     .mm-frame-img {
       position: absolute; inset: 0;
-      background: url('/static/scenes/art/no_signal.webp') center/cover no-repeat;
+      background: url('/static/scenes/art/no_signal.webp?v=poster2') center/cover no-repeat;
     }
     .mm-frame-overlay {
       position: absolute; inset: 0;
@@ -5365,7 +5365,7 @@
         playback-id="r1BCbuq01pu4L6Q71btkOiBb01i01KEEWEO7Bfl745dhpI"
         metadata-video-title="Mirror — Scene Preview"
         stream-type="on-demand"
-        poster="/static/scenes/art/no_signal.webp"
+        poster="/static/scenes/art/no_signal.webp?v=poster2"
         preload="none"
         playsinline
         loop
@@ -8868,7 +8868,7 @@ function boot(){
     if (canvas) canvas.style.display = 'none';
     if (fallback) {
       fallback.style.display = 'block';
-      fallback.style.backgroundImage = "url('/static/scenes/art/the_secret.webp')";
+      fallback.style.backgroundImage = "url('/static/scenes/art/the_secret.webp?v=poster2')";
     }
     document.querySelectorAll('.mls-sw').forEach(function(btn){
       btn.addEventListener('click', function(){
@@ -8876,7 +8876,7 @@ function boot(){
         if (active) active.classList.remove('active');
         btn.classList.add('active');
         if (fallback) {
-          fallback.style.backgroundImage = "url('/static/scenes/art/" + btn.dataset.poster + ".webp')";
+          fallback.style.backgroundImage = "url('/static/scenes/art/" + btn.dataset.poster + ".webp?v=poster2')";
         }
         var q = document.getElementById('mlsQuote');
         if (q) q.innerHTML = btn.dataset.quote;
@@ -8956,7 +8956,7 @@ function boot(){
     var loader = new THREE.TextureLoader();
     POSTERS.forEach(function(p, idx){
       loader.load(
-        '/static/scenes/art/' + p.id + '.webp',
+        '/static/scenes/art/' + p.id + '.webp?v=poster2',
         function(tex){
           if (THREE.SRGBColorSpace) tex.colorSpace = THREE.SRGBColorSpace;
           tex.anisotropy = 4;
@@ -9280,7 +9280,7 @@ function boot(){
   if (!img) return;
   document.querySelectorAll('.mls-sw').forEach(function(btn){
     btn.addEventListener('click', function(){
-      var src = btn.dataset.img || ('/static/scenes/art/' + btn.dataset.poster + '.webp');
+      var src = btn.dataset.img || ('/static/scenes/art/' + btn.dataset.poster + '.webp?v=poster2');
       if (img.getAttribute('src') === src) return;
       img.style.opacity = '0';
       setTimeout(function(){ img.onload = img.onerror = function(){ img.style.opacity = '1'; }; img.src = src; }, 250);

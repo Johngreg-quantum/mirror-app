@@ -15,8 +15,8 @@
         "card_color": "#8a5a1a",
         "audio": "/static/scenes/audio/last_train.mp3",
         "audio_seconds": 4.06,
-        "art": "/static/scenes/art/last_train.webp",
-        "art_sm": "/static/scenes/art/last_train-sm.webp"
+        "art": "/static/scenes/art/last_train.webp?v=poster2",
+        "art_sm": "/static/scenes/art/last_train-sm.webp?v=poster2"
       }
     },
     "fashionably_late": {
@@ -34,8 +34,8 @@
         "card_color": "#d4a843",
         "audio": "/static/scenes/audio/fashionably_late.mp3",
         "audio_seconds": 3.86,
-        "art": "/static/scenes/art/fashionably_late.webp",
-        "art_sm": "/static/scenes/art/fashionably_late-sm.webp"
+        "art": "/static/scenes/art/fashionably_late.webp?v=poster2",
+        "art_sm": "/static/scenes/art/fashionably_late-sm.webp?v=poster2"
       }
     },
     "rooftop": {
@@ -53,8 +53,8 @@
         "card_color": "#c75050",
         "audio": "/static/scenes/audio/rooftop.mp3",
         "audio_seconds": 5.45,
-        "art": "/static/scenes/art/rooftop.webp",
-        "art_sm": "/static/scenes/art/rooftop-sm.webp"
+        "art": "/static/scenes/art/rooftop.webp?v=poster2",
+        "art_sm": "/static/scenes/art/rooftop-sm.webp?v=poster2"
       }
     },
     "countdown": {
@@ -72,8 +72,8 @@
         "card_color": "#cc2233",
         "audio": "/static/scenes/audio/countdown.mp3",
         "audio_seconds": 3.5,
-        "art": "/static/scenes/art/countdown.webp",
-        "art_sm": "/static/scenes/art/countdown-sm.webp"
+        "art": "/static/scenes/art/countdown.webp?v=poster2",
+        "art_sm": "/static/scenes/art/countdown-sm.webp?v=poster2"
       }
     },
     "locked_door": {
@@ -91,8 +91,8 @@
         "card_color": "#2a3a5a",
         "audio": "/static/scenes/audio/locked_door.mp3",
         "audio_seconds": 5.57,
-        "art": "/static/scenes/art/locked_door.webp",
-        "art_sm": "/static/scenes/art/locked_door-sm.webp"
+        "art": "/static/scenes/art/locked_door.webp?v=poster2",
+        "art_sm": "/static/scenes/art/locked_door-sm.webp?v=poster2"
       }
     },
     "first_day": {
@@ -110,8 +110,8 @@
         "card_color": "#d4a843",
         "audio": "/static/scenes/audio/first_day.mp3",
         "audio_seconds": 3.6,
-        "art": "/static/scenes/art/first_day.webp",
-        "art_sm": "/static/scenes/art/first_day-sm.webp"
+        "art": "/static/scenes/art/first_day.webp?v=poster2",
+        "art_sm": "/static/scenes/art/first_day-sm.webp?v=poster2"
       }
     },
     "the_promise": {
@@ -129,8 +129,8 @@
         "card_color": "#8a5a1a",
         "audio": "/static/scenes/audio/the_promise.mp3",
         "audio_seconds": 4.42,
-        "art": "/static/scenes/art/the_promise.webp",
-        "art_sm": "/static/scenes/art/the_promise-sm.webp"
+        "art": "/static/scenes/art/the_promise.webp?v=poster2",
+        "art_sm": "/static/scenes/art/the_promise-sm.webp?v=poster2"
       }
     },
     "no_signal": {
@@ -148,8 +148,8 @@
         "card_color": "#1a2a4a",
         "audio": "/static/scenes/audio/no_signal.mp3",
         "audio_seconds": 4.92,
-        "art": "/static/scenes/art/no_signal.webp",
-        "art_sm": "/static/scenes/art/no_signal-sm.webp"
+        "art": "/static/scenes/art/no_signal.webp?v=poster2",
+        "art_sm": "/static/scenes/art/no_signal-sm.webp?v=poster2"
       }
     },
     "champion": {
@@ -167,8 +167,8 @@
         "card_color": "#e07b39",
         "audio": "/static/scenes/audio/champion.mp3",
         "audio_seconds": 5.02,
-        "art": "/static/scenes/art/champion.webp",
-        "art_sm": "/static/scenes/art/champion-sm.webp"
+        "art": "/static/scenes/art/champion.webp?v=poster2",
+        "art_sm": "/static/scenes/art/champion-sm.webp?v=poster2"
       }
     },
     "wrong_number": {
@@ -186,8 +186,8 @@
         "card_color": "#d4a843",
         "audio": "/static/scenes/audio/wrong_number.mp3",
         "audio_seconds": 5.21,
-        "art": "/static/scenes/art/wrong_number.webp",
-        "art_sm": "/static/scenes/art/wrong_number-sm.webp"
+        "art": "/static/scenes/art/wrong_number.webp?v=poster2",
+        "art_sm": "/static/scenes/art/wrong_number-sm.webp?v=poster2"
       }
     },
     "the_storm": {
@@ -205,8 +205,8 @@
         "card_color": "#4a7c8c",
         "audio": "/static/scenes/audio/the_storm.mp3",
         "audio_seconds": 3.22,
-        "art": "/static/scenes/art/the_storm.webp",
-        "art_sm": "/static/scenes/art/the_storm-sm.webp"
+        "art": "/static/scenes/art/the_storm.webp?v=poster2",
+        "art_sm": "/static/scenes/art/the_storm-sm.webp?v=poster2"
       }
     },
     "the_letter": {
@@ -224,8 +224,8 @@
         "card_color": "#8a5a1a",
         "audio": "/static/scenes/audio/the_letter.mp3",
         "audio_seconds": 5.21,
-        "art": "/static/scenes/art/the_letter.webp",
-        "art_sm": "/static/scenes/art/the_letter-sm.webp"
+        "art": "/static/scenes/art/the_letter.webp?v=poster2",
+        "art_sm": "/static/scenes/art/the_letter-sm.webp?v=poster2"
       }
     },
     "interrogation": {
@@ -243,8 +243,8 @@
         "card_color": "#3a2a4a",
         "audio": "/static/scenes/audio/interrogation.mp3",
         "audio_seconds": 3.96,
-        "art": "/static/scenes/art/interrogation.webp",
-        "art_sm": "/static/scenes/art/interrogation-sm.webp"
+        "art": "/static/scenes/art/interrogation.webp?v=poster2",
+        "art_sm": "/static/scenes/art/interrogation-sm.webp?v=poster2"
       }
     },
     "surprise": {
@@ -262,8 +262,8 @@
         "card_color": "#5a7d8c",
         "audio": "/static/scenes/audio/surprise.mp3",
         "audio_seconds": 3.26,
-        "art": "/static/scenes/art/surprise.webp",
-        "art_sm": "/static/scenes/art/surprise-sm.webp"
+        "art": "/static/scenes/art/surprise.webp?v=poster2",
+        "art_sm": "/static/scenes/art/surprise-sm.webp?v=poster2"
       }
     },
     "the_deal": {
@@ -281,8 +281,8 @@
         "card_color": "#8a5a1a",
         "audio": "/static/scenes/audio/the_deal.mp3",
         "audio_seconds": 5.45,
-        "art": "/static/scenes/art/the_deal.webp",
-        "art_sm": "/static/scenes/art/the_deal-sm.webp"
+        "art": "/static/scenes/art/the_deal.webp?v=poster2",
+        "art_sm": "/static/scenes/art/the_deal-sm.webp?v=poster2"
       }
     },
     "lost_city": {
@@ -300,8 +300,8 @@
         "card_color": "#4a7c8c",
         "audio": "/static/scenes/audio/lost_city.mp3",
         "audio_seconds": 5.62,
-        "art": "/static/scenes/art/lost_city.webp",
-        "art_sm": "/static/scenes/art/lost_city-sm.webp"
+        "art": "/static/scenes/art/lost_city.webp?v=poster2",
+        "art_sm": "/static/scenes/art/lost_city-sm.webp?v=poster2"
       }
     },
     "the_apology": {
@@ -319,8 +319,8 @@
         "card_color": "#c75050",
         "audio": "/static/scenes/audio/the_apology.mp3",
         "audio_seconds": 5.3,
-        "art": "/static/scenes/art/the_apology.webp",
-        "art_sm": "/static/scenes/art/the_apology-sm.webp"
+        "art": "/static/scenes/art/the_apology.webp?v=poster2",
+        "art_sm": "/static/scenes/art/the_apology-sm.webp?v=poster2"
       }
     },
     "midnight_call": {
@@ -338,8 +338,8 @@
         "card_color": "#2a3a5a",
         "audio": "/static/scenes/audio/midnight_call.mp3",
         "audio_seconds": 4.42,
-        "art": "/static/scenes/art/midnight_call.webp",
-        "art_sm": "/static/scenes/art/midnight_call-sm.webp"
+        "art": "/static/scenes/art/midnight_call.webp?v=poster2",
+        "art_sm": "/static/scenes/art/midnight_call-sm.webp?v=poster2"
       }
     },
     "stand_up": {
@@ -357,8 +357,8 @@
         "card_color": "#8a5a1a",
         "audio": "/static/scenes/audio/stand_up.mp3",
         "audio_seconds": 5.71,
-        "art": "/static/scenes/art/stand_up.webp",
-        "art_sm": "/static/scenes/art/stand_up-sm.webp"
+        "art": "/static/scenes/art/stand_up.webp?v=poster2",
+        "art_sm": "/static/scenes/art/stand_up-sm.webp?v=poster2"
       }
     },
     "coffee_shop": {
@@ -376,8 +376,8 @@
         "card_color": "#c75050",
         "audio": "/static/scenes/audio/coffee_shop.mp3",
         "audio_seconds": 3.36,
-        "art": "/static/scenes/art/coffee_shop.webp",
-        "art_sm": "/static/scenes/art/coffee_shop-sm.webp"
+        "art": "/static/scenes/art/coffee_shop.webp?v=poster2",
+        "art_sm": "/static/scenes/art/coffee_shop-sm.webp?v=poster2"
       }
     },
     "job_offer": {
@@ -395,8 +395,8 @@
         "card_color": "#8a5a1a",
         "audio": "/static/scenes/audio/job_offer.mp3",
         "audio_seconds": 6.0,
-        "art": "/static/scenes/art/job_offer.webp",
-        "art_sm": "/static/scenes/art/job_offer-sm.webp"
+        "art": "/static/scenes/art/job_offer.webp?v=poster2",
+        "art_sm": "/static/scenes/art/job_offer-sm.webp?v=poster2"
       }
     },
     "the_heist": {
@@ -414,8 +414,8 @@
         "card_color": "#3a2a4a",
         "audio": "/static/scenes/audio/the_heist.mp3",
         "audio_seconds": 5.86,
-        "art": "/static/scenes/art/the_heist.webp",
-        "art_sm": "/static/scenes/art/the_heist-sm.webp"
+        "art": "/static/scenes/art/the_heist.webp?v=poster2",
+        "art_sm": "/static/scenes/art/the_heist-sm.webp?v=poster2"
       }
     },
     "old_friends": {
@@ -433,8 +433,8 @@
         "card_color": "#d4a843",
         "audio": "/static/scenes/audio/old_friends.mp3",
         "audio_seconds": 5.45,
-        "art": "/static/scenes/art/old_friends.webp",
-        "art_sm": "/static/scenes/art/old_friends-sm.webp"
+        "art": "/static/scenes/art/old_friends.webp?v=poster2",
+        "art_sm": "/static/scenes/art/old_friends-sm.webp?v=poster2"
       }
     },
     "good_news": {
@@ -452,8 +452,8 @@
         "card_color": "#8a5a1a",
         "audio": "/static/scenes/audio/good_news.mp3",
         "audio_seconds": 4.2,
-        "art": "/static/scenes/art/good_news.webp",
-        "art_sm": "/static/scenes/art/good_news-sm.webp"
+        "art": "/static/scenes/art/good_news.webp?v=poster2",
+        "art_sm": "/static/scenes/art/good_news-sm.webp?v=poster2"
       }
     },
     "blind_date": {
@@ -471,8 +471,8 @@
         "card_color": "#c75050",
         "audio": "/static/scenes/audio/blind_date.mp3",
         "audio_seconds": 5.71,
-        "art": "/static/scenes/art/blind_date.webp",
-        "art_sm": "/static/scenes/art/blind_date-sm.webp"
+        "art": "/static/scenes/art/blind_date.webp?v=poster2",
+        "art_sm": "/static/scenes/art/blind_date-sm.webp?v=poster2"
       }
     },
     "final_round": {
@@ -490,8 +490,8 @@
         "card_color": "#e07b39",
         "audio": "/static/scenes/audio/final_round.mp3",
         "audio_seconds": 5.3,
-        "art": "/static/scenes/art/final_round.webp",
-        "art_sm": "/static/scenes/art/final_round-sm.webp"
+        "art": "/static/scenes/art/final_round.webp?v=poster2",
+        "art_sm": "/static/scenes/art/final_round-sm.webp?v=poster2"
       }
     },
     "the_secret": {
@@ -509,8 +509,8 @@
         "card_color": "#2a3a5a",
         "audio": "/static/scenes/audio/the_secret.mp3",
         "audio_seconds": 5.76,
-        "art": "/static/scenes/art/the_secret.webp",
-        "art_sm": "/static/scenes/art/the_secret-sm.webp"
+        "art": "/static/scenes/art/the_secret.webp?v=poster2",
+        "art_sm": "/static/scenes/art/the_secret-sm.webp?v=poster2"
       }
     },
     "moving_out": {
@@ -528,8 +528,8 @@
         "card_color": "#8a5a1a",
         "audio": "/static/scenes/audio/moving_out.mp3",
         "audio_seconds": 6.86,
-        "art": "/static/scenes/art/moving_out.webp",
-        "art_sm": "/static/scenes/art/moving_out-sm.webp"
+        "art": "/static/scenes/art/moving_out.webp?v=poster2",
+        "art_sm": "/static/scenes/art/moving_out-sm.webp?v=poster2"
       }
     },
     "lost_luggage": {
@@ -547,8 +547,8 @@
         "card_color": "#d4a843",
         "audio": "/static/scenes/audio/lost_luggage.mp3",
         "audio_seconds": 5.81,
-        "art": "/static/scenes/art/lost_luggage.webp",
-        "art_sm": "/static/scenes/art/lost_luggage-sm.webp"
+        "art": "/static/scenes/art/lost_luggage.webp?v=poster2",
+        "art_sm": "/static/scenes/art/lost_luggage-sm.webp?v=poster2"
       }
     },
     "the_pilot": {
@@ -566,8 +566,8 @@
         "card_color": "#cc2233",
         "audio": "/static/scenes/audio/the_pilot.mp3",
         "audio_seconds": 5.16,
-        "art": "/static/scenes/art/the_pilot.webp",
-        "art_sm": "/static/scenes/art/the_pilot-sm.webp"
+        "art": "/static/scenes/art/the_pilot.webp?v=poster2",
+        "art_sm": "/static/scenes/art/the_pilot-sm.webp?v=poster2"
       }
     },
     "missed_games": {
@@ -585,8 +585,8 @@
         "card_color": "#5a7d8c",
         "audio": "/static/scenes/audio/missed_games.mp3",
         "audio_seconds": 5.16,
-        "art": "/static/scenes/art/missed_games.webp",
-        "art_sm": "/static/scenes/art/missed_games-sm.webp"
+        "art": "/static/scenes/art/missed_games.webp?v=poster2",
+        "art_sm": "/static/scenes/art/missed_games-sm.webp?v=poster2"
       }
     },
     "the_window": {
@@ -604,8 +604,8 @@
         "card_color": "#3a2a4a",
         "audio": "/static/scenes/audio/the_window.mp3",
         "audio_seconds": 6.22,
-        "art": "/static/scenes/art/the_window.webp",
-        "art_sm": "/static/scenes/art/the_window-sm.webp"
+        "art": "/static/scenes/art/the_window.webp?v=poster2",
+        "art_sm": "/static/scenes/art/the_window-sm.webp?v=poster2"
       }
     },
     "wedding_toast": {
@@ -623,8 +623,8 @@
         "card_color": "#d4a843",
         "audio": "/static/scenes/audio/wedding_toast.mp3",
         "audio_seconds": 5.45,
-        "art": "/static/scenes/art/wedding_toast.webp",
-        "art_sm": "/static/scenes/art/wedding_toast-sm.webp"
+        "art": "/static/scenes/art/wedding_toast.webp?v=poster2",
+        "art_sm": "/static/scenes/art/wedding_toast-sm.webp?v=poster2"
       }
     },
     "night_shift": {
@@ -642,8 +642,8 @@
         "card_color": "#8a5a1a",
         "audio": "/static/scenes/audio/night_shift.mp3",
         "audio_seconds": 5.66,
-        "art": "/static/scenes/art/night_shift.webp",
-        "art_sm": "/static/scenes/art/night_shift-sm.webp"
+        "art": "/static/scenes/art/night_shift.webp?v=poster2",
+        "art_sm": "/static/scenes/art/night_shift-sm.webp?v=poster2"
       }
     },
     "the_audition": {
@@ -661,8 +661,8 @@
         "card_color": "#8a5a1a",
         "audio": "/static/scenes/audio/the_audition.mp3",
         "audio_seconds": 5.4,
-        "art": "/static/scenes/art/the_audition.webp",
-        "art_sm": "/static/scenes/art/the_audition-sm.webp"
+        "art": "/static/scenes/art/the_audition.webp?v=poster2",
+        "art_sm": "/static/scenes/art/the_audition-sm.webp?v=poster2"
       }
     },
     "oxygen_low": {
@@ -680,8 +680,8 @@
         "card_color": "#2a5a8a",
         "audio": "/static/scenes/audio/oxygen_low.mp3",
         "audio_seconds": 6.41,
-        "art": "/static/scenes/art/oxygen_low.webp",
-        "art_sm": "/static/scenes/art/oxygen_low-sm.webp"
+        "art": "/static/scenes/art/oxygen_low.webp?v=poster2",
+        "art_sm": "/static/scenes/art/oxygen_low-sm.webp?v=poster2"
       }
     },
     "first_dance": {
@@ -699,8 +699,8 @@
         "card_color": "#c75050",
         "audio": "/static/scenes/audio/first_dance.mp3",
         "audio_seconds": 5.52,
-        "art": "/static/scenes/art/first_dance.webp",
-        "art_sm": "/static/scenes/art/first_dance-sm.webp"
+        "art": "/static/scenes/art/first_dance.webp?v=poster2",
+        "art_sm": "/static/scenes/art/first_dance-sm.webp?v=poster2"
       }
     },
     "the_rival": {
@@ -718,8 +718,8 @@
         "card_color": "#e07b39",
         "audio": "/static/scenes/audio/the_rival.mp3",
         "audio_seconds": 5.62,
-        "art": "/static/scenes/art/the_rival.webp",
-        "art_sm": "/static/scenes/art/the_rival-sm.webp"
+        "art": "/static/scenes/art/the_rival.webp?v=poster2",
+        "art_sm": "/static/scenes/art/the_rival-sm.webp?v=poster2"
       }
     },
     "runaway": {
@@ -737,8 +737,8 @@
         "card_color": "#1a2a4a",
         "audio": "/static/scenes/audio/runaway.mp3",
         "audio_seconds": 6.96,
-        "art": "/static/scenes/art/runaway.webp",
-        "art_sm": "/static/scenes/art/runaway-sm.webp"
+        "art": "/static/scenes/art/runaway.webp?v=poster2",
+        "art_sm": "/static/scenes/art/runaway-sm.webp?v=poster2"
       }
     },
     "grandmas_kitchen": {
@@ -756,8 +756,8 @@
         "card_color": "#5a7d8c",
         "audio": "/static/scenes/audio/grandmas_kitchen.mp3",
         "audio_seconds": 6.0,
-        "art": "/static/scenes/art/grandmas_kitchen.webp",
-        "art_sm": "/static/scenes/art/grandmas_kitchen-sm.webp"
+        "art": "/static/scenes/art/grandmas_kitchen.webp?v=poster2",
+        "art_sm": "/static/scenes/art/grandmas_kitchen-sm.webp?v=poster2"
       }
     },
     "boardroom": {
@@ -775,8 +775,8 @@
         "card_color": "#8a5a1a",
         "audio": "/static/scenes/audio/boardroom.mp3",
         "audio_seconds": 4.92,
-        "art": "/static/scenes/art/boardroom.webp",
-        "art_sm": "/static/scenes/art/boardroom-sm.webp"
+        "art": "/static/scenes/art/boardroom.webp?v=poster2",
+        "art_sm": "/static/scenes/art/boardroom-sm.webp?v=poster2"
       },
       "idioms": [
         "beat around the bush",
@@ -798,8 +798,8 @@
         "card_color": "#d4a843",
         "audio": "/static/scenes/audio/roommate.mp3",
         "audio_seconds": 6.41,
-        "art": "/static/scenes/art/roommate.webp",
-        "art_sm": "/static/scenes/art/roommate-sm.webp"
+        "art": "/static/scenes/art/roommate.webp?v=poster2",
+        "art_sm": "/static/scenes/art/roommate-sm.webp?v=poster2"
       },
       "idioms": [
         "sarcasm"
@@ -820,8 +820,8 @@
         "card_color": "#e07b39",
         "audio": "/static/scenes/audio/the_comeback.mp3",
         "audio_seconds": 5.57,
-        "art": "/static/scenes/art/the_comeback.webp",
-        "art_sm": "/static/scenes/art/the_comeback-sm.webp"
+        "art": "/static/scenes/art/the_comeback.webp?v=poster2",
+        "art_sm": "/static/scenes/art/the_comeback-sm.webp?v=poster2"
       },
       "idioms": [
         "write someone off"
@@ -842,8 +842,8 @@
         "card_color": "#d4a843",
         "audio": "/static/scenes/audio/cold_feet.mp3",
         "audio_seconds": 5.06,
-        "art": "/static/scenes/art/cold_feet.webp",
-        "art_sm": "/static/scenes/art/cold_feet-sm.webp"
+        "art": "/static/scenes/art/cold_feet.webp?v=poster2",
+        "art_sm": "/static/scenes/art/cold_feet-sm.webp?v=poster2"
       },
       "idioms": [
         "get cold feet"
@@ -864,8 +864,8 @@
         "card_color": "#3a2a4a",
         "audio": "/static/scenes/audio/the_bluff.mp3",
         "audio_seconds": 5.21,
-        "art": "/static/scenes/art/the_bluff.webp",
-        "art_sm": "/static/scenes/art/the_bluff-sm.webp"
+        "art": "/static/scenes/art/the_bluff.webp?v=poster2",
+        "art_sm": "/static/scenes/art/the_bluff-sm.webp?v=poster2"
       },
       "idioms": [
         "read someone like a book",
@@ -887,8 +887,8 @@
         "card_color": "#8a5a1a",
         "audio": "/static/scenes/audio/done_waiting.mp3",
         "audio_seconds": 5.71,
-        "art": "/static/scenes/art/done_waiting.webp",
-        "art_sm": "/static/scenes/art/done_waiting-sm.webp"
+        "art": "/static/scenes/art/done_waiting.webp?v=poster2",
+        "art_sm": "/static/scenes/art/done_waiting-sm.webp?v=poster2"
       },
       "idioms": [
         "bend over backwards",
@@ -910,8 +910,8 @@
         "card_color": "#1a2a4a",
         "audio": "/static/scenes/audio/lucky.mp3",
         "audio_seconds": 4.8,
-        "art": "/static/scenes/art/lucky.webp",
-        "art_sm": "/static/scenes/art/lucky-sm.webp"
+        "art": "/static/scenes/art/lucky.webp?v=poster2",
+        "art_sm": "/static/scenes/art/lucky-sm.webp?v=poster2"
       },
       "idioms": [
         "if it helps you sleep at night"
