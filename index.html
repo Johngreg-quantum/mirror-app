@@ -4945,7 +4945,10 @@
 
       // Seamless marquee loop: build halfCount cards, then duplicate so
       // translateX(-50%) snaps back to an identical visual state.
-      const halfCount = Math.ceil((window.innerWidth / cardW) * 1.5) + 2;
+      // A whole number of row sets, so the loop is strictly periodic: a scene
+      // only comes back after every other scene in its row (no doubles at the seam).
+      const setLen = rowSets[rowIndex].length;
+      const halfCount = Math.ceil((Math.ceil((window.innerWidth / cardW) * 1.5) + 2) / setLen) * setLen;
       const half = [];
       while (half.length < halfCount) {
         half.push(...rowSets[rowIndex]);
