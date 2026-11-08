@@ -530,13 +530,15 @@ def _check_submit_rate(user_id: int, conn) -> None:
     if USE_PG:
         cur.execute(
             "SELECT COUNT(*) FROM scores "
-            "WHERE user_id = %s AND created_at > NOW() - INTERVAL '1 hour'",
+            "WHERE user_id = %s AND created_at > NOW() - INTERVAL '1 hour' "
+            "AND COALESCE(transcription, '') <> '[quiz pass]'",
             (user_id,),
         )
     else:
         cur.execute(
             "SELECT COUNT(*) FROM scores "
-            "WHERE user_id = ? AND created_at > datetime('now', '-1 hour')",
+            "WHERE user_id = ? AND created_at > datetime('now', '-1 hour') "
+            "AND COALESCE(transcription, '') <> '[quiz pass]'",
             (user_id,),
         )
     count = cur.fetchone()[0]
@@ -619,9 +621,11 @@ LS_STORE_ID       = os.getenv("LEMONSQUEEZY_STORE_ID", "396208")
 
 # ─── Which payment provider is live ─────────────────────────────────────────
 #
-# Defaults to lemonsqueezy, so a deploy of this change alters nothing: the same
-# code paths run, the same requests go to the same host. Polar is selected by
-# setting BILLING_PROVIDER=polar, which is one env var and a restart.
+# Defaults to stripe, the provider Mirror actually sells through. It defaulted
+# to lemonsqueezy, a store that was never activated, so a deleted or mistyped
+# variable on Render would have switched every checkout to a 500 and every
+# Stripe webhook to a 503 -- silently. An unknown value now also falls back to
+# stripe, loudly. Polar or Lemon Squeezy is one env var and a restart.
 #
 # The Lemon Squeezy code is kept rather than deleted. The store was never
 # activated, so there is no live traffic to protect -- but there are also no
@@ -631,7 +635,11 @@ LS_STORE_ID       = os.getenv("LEMONSQUEEZY_STORE_ID", "396208")
 # Everything below this line is provider-specific. Everything that matters --
 # entitlements, grants, revocations, the gate -- is not, and never learns which
 # provider paid for a row.
-BILLING_PROVIDER = os.getenv("BILLING_PROVIDER", "lemonsqueezy").strip().lower()
+BILLING_PROVIDER = (os.getenv("BILLING_PROVIDER", "stripe").strip().lower() or "stripe")
+if BILLING_PROVIDER not in ("stripe", "polar", "lemonsqueezy"):
+    logging.getLogger("main").error(
+        "[billing] unknown BILLING_PROVIDER=%r -- using stripe", BILLING_PROVIDER)
+    BILLING_PROVIDER = "stripe"
 
 # Whether Mirror will actually take a payment. OFF by default, so a deploy that
 # forgets to set it sells nothing rather than selling something it cannot
@@ -2376,7 +2384,10 @@ async def favicon_ico():
 
 @app.get("/legacy", response_class=HTMLResponse)
 async def legacy_app_entry(request: Request):
-    return _read_html_file(_INDEX_HTML_PATH, "index.html not found", request)
+    # The same page as /, so it must not be indexed as a duplicate of it.
+    resp = _read_html_file(_INDEX_HTML_PATH, "index.html not found", request)
+    resp.headers["X-Robots-Tag"] = "noindex"
+    return resp
 
 
 @app.get("/legacy/challenge/{challenge_id}", response_class=HTMLResponse)
@@ -5482,6 +5493,19 @@ async def _stripe_webhook(request: Request):
             log = logger.info if n else logger.warning
             log("[billing] stripe %s payment_intent=%s subscription=%s revoked %s row(s)",
                 event, pi, sub_id, n)
+            # A dispute also ends the subscription. Revoking access alone left
+            # Stripe charging the disputing card every period -- and the next
+            # renewal's invoice.paid would grant access straight back, inviting
+            # a second dispute ($15 each, and a rising dispute rate). A refund
+            # does not cancel: that is a decision taken in the dashboard.
+            if event == "charge.dispute.created" and sub_id:
+                try:
+                    await _cancel_stripe_subscription(sub_id)
+                    logger.info("[billing] stripe subscription %s cancelled after dispute", sub_id)
+                except Exception:
+                    logger.exception(
+                        "[billing] could not cancel subscription %s after a dispute "
+                        "-- cancel it in the Stripe dashboard", sub_id)
 
         elif event == "invoice.payment_failed":
             # Log only. Stripe's own retries decide whether this becomes
@@ -6104,7 +6128,7 @@ async def create_challenge(req: ChallengeRequest, user: dict = Depends(current_u
             raise HTTPException(403, _LOCKED_DETAIL)
         cur.execute(
             f"SELECT MAX(sync_score) FROM scores WHERE user_id = {PH} AND scene_id = {PH} "
-            f"AND transcription <> '[quiz pass]'",
+            f"AND COALESCE(transcription, '') <> '[quiz pass]'",
             (user["id"], req.scene_id),
         )
         row = cur.fetchone()
@@ -6164,7 +6188,8 @@ async def get_leaderboard():
             f"SELECT s.id, s.scene_id, s.movie, s.quote, s.transcription, s.sync_score, "
             f"s.username, s.created_at, COALESCE(u.points, 0), COALESCE(u.streak, 0) "
             f"FROM scores s LEFT JOIN users u ON s.user_id = u.id "
-            f"WHERE s.scene_id = {PH} ORDER BY s.sync_score DESC LIMIT 10",
+            f"WHERE s.scene_id = {PH} AND COALESCE(s.transcription, '') <> '[quiz pass]' "
+            f"ORDER BY s.sync_score DESC LIMIT 10",
             (sid,),
         )
         rows = cur.fetchall()
@@ -6569,6 +6594,34 @@ async def quiz_pass(payload: dict, user: dict = Depends(current_user)):
     if not scene:
         return {"unlocked": False}
 
+    conn  = get_conn()
+    cur   = conn.cursor()
+    try:
+        cur.execute(
+            f"SELECT scene_id, MAX(sync_score) FROM scores WHERE user_id = {PH} GROUP BY scene_id",
+            (user["id"],),
+        )
+        best = {r[0]: float(r[1] or 0) for r in cur.fetchall()}
+        level = compute_user_level(best)
+        # The score comes from the client, so the server limits what a pass can
+        # do: it cannot skip a level (the Level 2 quiz needs Level 2 reached),
+        # it is a no-op once the level is open, and it is written ONCE. Repeat
+        # calls used to add a synthetic 85% row each time -- onto the
+        # leaderboard, toward the translation unlock and into the weekly XP.
+        if level >= target_level:
+            return {"unlocked": True, "level": target_level, "already": True}
+        if level < target_level - 1:
+            raise HTTPException(403, f"Reach Level {target_level - 1} first")
+        cur.execute(
+            f"SELECT COUNT(*) FROM scores WHERE user_id = {PH} AND scene_id = {PH} "
+            f"AND transcription = '[quiz pass]'",
+            (user["id"], sid),
+        )
+        if (cur.fetchone() or [0])[0] > 0:
+            return {"unlocked": True, "level": target_level, "already": True}
+    finally:
+        conn.close()
+
     # Derived from the threshold this pass has to clear, not a magic number: the
     # old hardcoded 75.0 cleared level 2's threshold of 60 only by being larger,
     # and would have silently stopped unlocking if a threshold were raised past
@@ -6599,8 +6652,11 @@ async def get_translations(user: dict = Depends(current_user)):
     conn = get_conn()
     cur  = conn.cursor()
     cur.execute(
+        # Real takes only: a quiz pass is a synthetic row, and counting it let
+        # three quiz-pass calls unlock a translation nobody had recorded.
         f"SELECT scene_id, COUNT(*), MAX(sync_score) "
-        f"FROM scores WHERE user_id = {PH} GROUP BY scene_id",
+        f"FROM scores WHERE user_id = {PH} "
+        f"AND COALESCE(transcription, '') <> '[quiz pass]' GROUP BY scene_id",
         (user["id"],),
     )
     rows = cur.fetchall()

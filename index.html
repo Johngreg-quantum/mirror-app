@@ -17,6 +17,9 @@
     })();
   </script>
   <title>MIRROR — Learn English Through Cinema</title>
+  <meta name="description" content="Speak English like a movie scene. 47 original cinematic scenes voiced with emotion: hear the line, say it back, and get scored on your delivery. Built for Spanish speakers." />
+  <link rel="canonical" href="https://mirrorspeak.app/" />
+  <meta name="theme-color" content="#08080a" />
   <link rel="icon" href="/static/favicon.svg" type="image/svg+xml" />
 
   <!-- OpenGraph / Twitter — link previews for shared URLs. Crawlers do not run
@@ -33,11 +36,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Cinzel:wght@600;700&family=Playfair+Display:ital,wght@0,700;1,700&family=DM+Sans:wght@300;400;500;600;700&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,300;1,400;1,500&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
-  <!-- The YouTube IFrame API used to be loaded here, then deferred to after
-       the load event because it cost ~240ms of parser time plus ~870ms for
-       www-widgetapi.js. Scenes are our own mp3s now, played by an <audio>
-       element, so the third-party script is gone entirely rather than
-       merely moved off the critical path. -->
+  <!-- No third-party player script: scenes are Mirror's own mp3s, played
+       by an <audio> element. -->
   <link rel="stylesheet" href="/static/app.css" />
   <style>
     @property --ripple-offset {
@@ -4910,8 +4910,8 @@
 
 <script>
 (function(){
-  // The marquee. Was 30 film posters from TMDB; it is our own scene art now,
-  // one card per scene in scene_config order. `bg` is the genre colour, shown
+  // The marquee: Mirror's own scene posters, one card per scene in
+  // scene_config order. `bg` is the genre colour, shown
   // for the instant before the image decodes and as the whole card if it
   // never does.
   const ML_SCENES = [
@@ -4968,6 +4968,15 @@
   // every title is spelled exactly). f = type family, c = colour, p = top/bottom.
   // Scenes not listed here carry their own title in the image.
   const POSTER_T = {"lost_city":{"t":"LOST CITY","sub":"ADVENTURE · AMAZED · LEVEL 1","tag":"IT'S REAL.","f":"bebas","c":"az","p":"bottom"},"midnight_call":{"t":"MIDNIGHT CALL","sub":"SUSPENSE · AFRAID · LEVEL 1","tag":"DON'T OPEN THE DOOR.","f":"cinzelthin","c":"mc","p":"top"},"champion":{"t":"CHAMPION","sub":"SPORTS · TRIUMPHANT · LEVEL 1","tag":"NOBODY BELIEVED IN US.","f":"corm","c":"na","p":"top"},"the_pilot":{"t":"MAYDAY","sub":"ACTION · CALM UNDER PRESSURE · LEVEL 2","tag":"ENGINE TWO IS GONE. SHE'S LANDING ANYWAY.","f":"bebas","c":"bf","p":"top"},"the_secret":{"t":"THE SECRET","sub":"SUSPENSE · HUSHED, SERIOUS · LEVEL 2","tag":"SOME THINGS YOU NEVER REPEAT.","f":"cinzelthin","c":"vn","p":"top"},"rooftop":{"t":"ROOFTOP","sub":"ROMANCE · NERVOUS, SINCERE · LEVEL 1","tag":"SOME WORDS TAKE A HUNDRED TRIES.","f":"corm","c":"mc","p":"top"},"night_shift":{"t":"NIGHT SHIFT","sub":"DRAMA · QUIET INTENSITY · LEVEL 2","tag":"TWO JOBS. ONE PROMISE.","f":"cinzel","c":"rn","p":"bottom"},"the_bluff":{"t":"THE BLUFF","sub":"CRIME · SMUG · LEVEL 3","tag":"READ THE PLAYER. NOT THE CARDS.","f":"cinzelthin","c":"az","p":"top"},"runaway":{"t":"RUNAWAY","sub":"THRILLER · URGENT WHISPER · LEVEL 2","tag":"TAKE ONLY CASH. TELL NO ONE.","f":"bebas","c":"vn","p":"bottom"},"the_letter":{"t":"THE LETTER","sub":"DRAMA · SAD, QUIET · LEVEL 1","tag":"EVERY WORD. TWICE.","f":"corm","c":"bf","p":"top"},"locked_door":{"t":"THE LOCKED DOOR","sub":"SUSPENSE · WHISPERED FEAR · LEVEL 1","tag":"SOMEONE WAS IN THIS HOUSE.","f":"cinzelthin","c":"na","p":"top"},"final_round":{"t":"FINAL ROUND","sub":"SPORTS · INTENSE, MOTIVATING · LEVEL 2","tag":"YOU ARE NOT DONE YET.","f":"bebas","c":"mc","p":"bottom"},"stand_up":{"t":"STAND UP","sub":"DRAMA · INSPIRING · LEVEL 1","tag":"TONIGHT, WE FIGHT BACK.","f":"corm","c":"rn","p":"bottom"},"the_rival":{"t":"THE RIVAL","sub":"SPORTS · COMPETITIVE · LEVEL 2","tag":"THIS YEAR, I CAME READY.","f":"cinzel","c":"az","p":"top"},"last_train":{"t":"LAST TRAIN","sub":"DRAMA · HURT BUT FIRM · LEVEL 1","tag":"DON'T COME BACK.","f":"cinzelthin","c":"vn","p":"top"},"the_audition":{"t":"THE AUDITION","sub":"DRAMA · PLEADING · LEVEL 2","tag":"ONE CHANCE. ONE TAKE.","f":"corm","c":"bf","p":"top"},"first_day":{"t":"FIRST DAY","sub":"COMEDY · NERVOUS, FRIENDLY · LEVEL 1","tag":"NEW PLACE. NEW RULES.","f":"bebas","c":"na","p":"top"},"fashionably_late":{"t":"FASHIONABLY LATE","sub":"COMEDY · CONFIDENT, PLAYFUL · LEVEL 1","tag":"EVERYONE ELSE IS JUST EARLY.","f":"corm","c":"mc","p":"top"},"wrong_number":{"t":"WRONG NUMBER","sub":"COMEDY · CONFUSED · LEVEL 1","tag":"WHY DO YOU HAVE MY DOG?","f":"cinzelthin","c":"rn","p":"bottom"},"surprise":{"t":"SURPRISE","sub":"FAMILY · EXCITED · LEVEL 1","tag":"CLOSE YOUR EYES.","f":"cinzel","c":"az","p":"top"},"the_promise":{"t":"THE PROMISE","sub":"DRAMA · TENDER · LEVEL 1","tag":"I'LL COME BACK FOR YOU.","f":"corm","c":"vn","p":"bottom"},"the_apology":{"t":"THE APOLOGY","sub":"ROMANCE · REGRETFUL · LEVEL 1","tag":"PLEASE DON'T GO.","f":"cinzelthin","c":"bf","p":"top"},"job_offer":{"t":"THE OFFER","sub":"DRAMA · EXCITED BUT UNSURE · LEVEL 2","tag":"ONE NIGHT TO THINK.","f":"bebas","c":"na","p":"top"},"old_friends":{"t":"OLD FRIENDS","sub":"COMEDY · TEASING, WARM · LEVEL 2","tag":"STILL THE WORST DRIVER EVER.","f":"corm","c":"mc","p":"bottom"},"good_news":{"t":"GOOD NEWS","sub":"DRAMA · RELIEF · LEVEL 2","tag":"FINALLY, WE CAN BREATHE.","f":"cinzel","c":"rn","p":"bottom"},"blind_date":{"t":"BLIND DATE","sub":"ROMANCE · SHY, HONEST · LEVEL 2","tag":"ONE TABLE. TWO STRANGERS.","f":"cinzelthin","c":"az","p":"top"},"moving_out":{"t":"MOVING OUT","sub":"DRAMA · NOSTALGIC · LEVEL 2","tag":"THE BEST HOME I EVER HAD.","f":"corm","c":"vn","p":"top"},"lost_luggage":{"t":"LOST LUGGAGE","sub":"COMEDY · FRUSTRATED, FUNNY · LEVEL 2","tag":"MY SUITCASE WENT TO PARIS.","f":"bebas","c":"bf","p":"top"},"missed_games":{"t":"MISSED GAMES","sub":"FAMILY · REGRETFUL, WARM · LEVEL 2","tag":"LET ME BE THERE NOW.","f":"corm","c":"na","p":"top"},"wedding_toast":{"t":"THE TOAST","sub":"COMEDY · WARM, JOKING · LEVEL 2","tag":"SHE WAS HALF RIGHT.","f":"cinzel","c":"mc","p":"top"},"first_dance":{"t":"FIRST DANCE","sub":"ROMANCE · PLAYFUL · LEVEL 2","tag":"DON'T STEP ON ME.","f":"cinzelthin","c":"rn","p":"bottom"},"grandmas_kitchen":{"t":"GRANDMA'S KITCHEN","sub":"FAMILY · WARM, LOVING · LEVEL 2","tag":"JUST TASTE IT. TRUST YOURSELF.","f":"corm","c":"az","p":"top"},"boardroom":{"t":"THE BOARDROOM","sub":"DRAMA · BLUNT · LEVEL 3","tag":"THE NUMBERS ARE BAD.","f":"bebas","c":"vn","p":"bottom"},"roommate":{"t":"THE ROOMMATE","sub":"COMEDY · SARCASTIC · LEVEL 3","tag":"YOU FINISHED THE MILK. AGAIN.","f":"corm","c":"bf","p":"top"},"the_comeback":{"t":"THE COMEBACK","sub":"SPORTS · CONFIDENT, COOL · LEVEL 3","tag":"I WAS JUST GETTING STARTED.","f":"cinzel","c":"na","p":"top"},"cold_feet":{"t":"COLD FEET","sub":"COMEDY · NERVOUS, RAMBLING · LEVEL 3","tag":"JUST RECONSIDERING EVERYTHING.","f":"cinzelthin","c":"mc","p":"bottom"},"done_waiting":{"t":"DONE WAITING","sub":"DRAMA · CONTROLLED ANGER · LEVEL 3","tag":"DONE BITING MY TONGUE.","f":"corm","c":"rn","p":"bottom"},"lucky":{"t":"LUCKY","sub":"THRILLER · COOL, CUTTING · LEVEL 3","tag":"CALL IT LUCK.","f":"bebas","c":"az","p":"top"},"coffee_shop":{"t":"COFFEE SHOP","sub":"ROMANCE · FLIRTY · LEVEL 1","tag":"IS THIS SEAT TAKEN?","f":"corm","c":"vn","p":"top"}};
+  // The taglines are stored in capitals. Lower-casing everything after the
+  // first letter printed "My suitcase went to paris." and "One chance. one
+  // take." -- sentence case needs each sentence, "I" and names.
+  function mlSentenceCase(s){
+    return String(s).toLowerCase()
+      .replace(/(^|[.!?]\s+)([a-z])/g, function(m, p, c){ return p + c.toUpperCase(); })
+      .replace(/\bi\b/g, 'I')
+      .replace(/\bparis\b/g, 'Paris');
+  }
   function mlPosterType(id){
     const d = POSTER_T[id]; if (!d) return null;
     const K = {cinzel:.9, cinzelthin:.88, bebas:.47, corm:.7}[d.f] || .8;
@@ -4982,7 +4991,7 @@
     ov.setAttribute('aria-hidden', 'true');
     const title = '<div class="hfp-t" style="font-size:' + size + 'cqw">' + lines.map(esc).join('<br>') + '</div>';
     const sub = '<div class="hfp-sub">' + esc(d.sub) + '</div>';
-    const tag = '<div class="hfp-tag">\u201C' + esc(d.tag.charAt(0) + d.tag.slice(1).toLowerCase()) + '\u201D</div>';
+    const tag = '<div class="hfp-tag">\u201C' + esc(mlSentenceCase(d.tag)) + '\u201D</div>';
     const pre = '<div class="hfp-pre">MIRROR PRESENTS</div>';
     const foot = '<div class="hfp-foot">NOW PLAYING \u00B7 MIRRORSPEAK.APP</div>';
     ov.innerHTML = d.p === 'bottom'
@@ -5196,7 +5205,7 @@
   <h2 class="mm-head ms-anim d1">See a take<br>come together</h2>
   <div class="mm-card ms-anim d3">
     <p class="mm-card-body">Pick a scene. Hear the line. Speak it back. Our engine transcribes what you actually said and scores it against the script &mdash; word by word, matched, close or missed &mdash; until you can land the whole line clean.</p>
-    <button class="mm-ghost" type="button" id="mmWatchBtn">Watch a scene &rarr;</button>
+    <button class="mm-ghost" type="button" id="mmWatchBtn">Hear a scene &rarr;</button>
   </div>
 </section>
 
@@ -5336,8 +5345,8 @@
   <!-- BEAT 1 -->
   <div class="mls-beat" id="mlsBeat1">
     <p class="mls-kicker">SCREEN TEST &middot; 01</p>
-    <h2 class="mls-h">WATCH THE <em>SCENE</em></h2>
-    <p class="mls-sub">Every take starts with the original.</p>
+    <h2 class="mls-h">HEAR THE <em>SCENE</em></h2>
+    <p class="mls-sub">Every take starts with the original line, voiced with emotion.</p>
   </div>
 
   <!-- BEAT 2 -->
@@ -5405,10 +5414,10 @@
       <div class="mp-glass ms-anim d2">
         <div class="mp-glass-title">Speak the scene. <em>Own the line.</em></div>
         <p class="mp-glass-body">Learn English through scenes written to be performed.
-        Watch a scene, hear the original line, speak it back, and get scored
+        Pick a scene, hear the original line, speak it back, and get scored
         on your delivery until it feels natural, confident, and real.</p>
         <button class="mp-glass-cta" id="mpCta" type="button">
-          Watch a scene <span class="arr">&rarr;</span>
+          Try a scene <span class="arr">&rarr;</span>
         </button>
       </div>
     </div>
@@ -5490,7 +5499,7 @@
   // Skip everything in app-mode (logged in)
   if (document.body.classList.contains('app-mode')) return;
 
-  // Wire "Watch a scene" + play button to the existing register flow
+  // Wire "Try a scene" + play button to the existing register flow
   // (mlOpenAuth is the existing helper; fallback to heroStartBtn.click)
   function openAuthOrHero(){
     if (typeof window.mlOpenAuth === 'function') { window.mlOpenAuth('register'); return; }
@@ -5548,10 +5557,8 @@
 </section>
 
 <!-- ─── ACT II — LINES WORTH SAYING OUT LOUD ─── -->
-<!-- Five famous film lines, each credited to the actor who delivered it,
-     were the most quotable thing on this page and the least defensible.
-     These five are ours: the scene name instead of an actor, and the line
-     a learner will actually be asked to perform. -->
+<!-- Five lines from Mirror's own scenes: the scene name and the line a
+     learner is asked to perform. -->
 <section class="act-section" id="actII">
   <div class="act-vlabel">ACT <em>II</em></div>
   <h2 class="actII-head act-anim">LINES WORTH SAYING <em>OUT LOUD</em></h2>
@@ -7028,7 +7035,7 @@
     <div>
       <div style="font-family:'DM Sans',sans-serif; font-size:9px; letter-spacing:2px; text-transform:uppercase; color:#555; margin-bottom:4px;">Level 2</div>
       <div style="font-family:'Georgia',serif; font-size:17px; color:#fff; margin-bottom:2px;">Intermediate</div>
-      <div style="font-family:'DM Sans',sans-serif; font-size:11px; color:#444;">Pass the Level 1 Quiz to unlock</div>
+      <div style="font-family:'DM Sans',sans-serif; font-size:11px; color:#444;">Score 60% on a Level 1 scene or pass the Level 1 Quiz to unlock</div>
     </div>
     <div style="font-size:28px;">🔒</div>
   </div>
@@ -7086,7 +7093,7 @@
         <div class="gw-quiz-bar" id="gwQuizBar1" onclick="openQuiz()">
           <div class="gw-quiz-inner">
             <div>
-              <div class="gw-ql" id="gwQuizLabel1">Complete all 20 scenes to unlock</div>
+              <div class="gw-ql" id="gwQuizLabel1">Complete all 20 scenes to unlock the quiz</div>
               <div class="gw-qt">Take Level 1 Quiz →</div>
             </div>
             <div style="font-size:20px;">📋</div>
@@ -7120,7 +7127,7 @@
         <div class="gw-quiz-bar qb-gated" id="gwQuizBar2" onclick="openQuiz('L2')">
           <div class="gw-quiz-inner">
             <div>
-              <div class="gw-ql" id="gwQuizLabel2">Complete all 20 scenes to unlock Level 3</div>
+              <div class="gw-ql" id="gwQuizLabel2">Complete all 20 scenes to unlock the quiz</div>
               <div class="gw-qt">Take Level 2 Quiz →</div>
             </div>
             <div style="font-size:20px;">📋</div>
@@ -7135,7 +7142,7 @@
     <div>
       <div class="glc-num">Level 2 · 20 scenes</div>
       <div class="glc-title">Intermediate</div>
-      <div class="glc-sub">Pass the Level 1 Quiz to unlock · Past tense · Conflict · Storytelling</div>
+      <div class="glc-sub">Score 60% on a Level 1 scene or pass the Level 1 Quiz · Past tense · Conflict · Storytelling</div>
     </div>
   </div>
 
@@ -7362,12 +7369,10 @@ function switchTab(tab) {
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 function enterAppMode() {
-  console.log('[TRACE] enterAppMode:start');
   var landing = document.getElementById('mirrorLanding');
   if (landing) { landing.style.display = 'none'; }
   document.body.classList.add('app-mode');
   document.getElementById('bottomNav').classList.add('visible');
-  console.log('[TRACE] enterAppMode:bottomNav-shown');
   document.getElementById('appShell').style.display = 'block';
   document.getElementById('siteNav').style.display = 'none';
   document.querySelectorAll('.lb-section').forEach(el => el.style.display = 'none');
@@ -7516,14 +7521,11 @@ function enterAppMode() {
     window.scrollTo(0, 0);
   }, 300);
 
-  console.log('[TRACE] enterAppMode:before-preload-remove');
   var preload = document.getElementById('preloadHide');
   if (preload) preload.remove();
   document.getElementById('appShell').style.opacity = '1';
   document.body.style.overflow = '';
   var _appShellEl = document.getElementById('appShell');
-  console.log('[TRACE] enterAppMode:preload-removed appShell.display=' + (_appShellEl && _appShellEl.style.display) + ' opacity=' + (_appShellEl && _appShellEl.style.opacity) + ' computedDisplay=' + (_appShellEl && getComputedStyle(_appShellEl).display));
-  console.log('[TRACE] enterAppMode:end');
 }
 
 // Level 1 quiz logic moved to static/app.js — see QuizController.
@@ -7773,7 +7775,7 @@ function checkLevel2Unlock() {
     var groups = CLV_LEVELS.map(function(lv){
       var label = LEVEL_LABELS[lv.level] || ('LEVEL ' + lv.level);
       if (lv.level === 2 && l2Locked) {
-        return { label: label, sceneIds: [], locked: { title: 'LEVEL 2 · Locked', sub: 'Pass the Level 1 Quiz to unlock' } };
+        return { label: label, sceneIds: [], locked: { title: 'LEVEL 2 · Locked', sub: 'Score 60% on a Level 1 scene or pass the Level 1 Quiz' } };
       }
       if (lv.level >= 3 && !isLevelUnlocked(lv.level)) {
         // Unlock copy derived from the level's own threshold rather than

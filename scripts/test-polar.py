@@ -729,12 +729,12 @@ def main():
               app.can_access_scene(cur, uid, lvl2) is False, lvl2)
     con.close()
 
-    # ── 7. THE DEFAULT IS STILL LEMON SQUEEZY ─────────────────────────────────
+    # ── 7. THE DEFAULT IS STRIPE ──────────────────────────────────────────────
     print("\nthe default provider")
     src = open(os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
                             "main.py"), encoding="utf-8").read()
-    check("BILLING_PROVIDER defaults to lemonsqueezy when unset",
-          'os.getenv("BILLING_PROVIDER", "lemonsqueezy")' in src)
+    check("BILLING_PROVIDER defaults to stripe when unset",
+          'os.getenv("BILLING_PROVIDER", "stripe")' in src)
     check("the Lemon Squeezy handler is kept, not deleted",
           "_lemonsqueezy_webhook" in src and "_cancel_ls_subscription" in src)
     check("the products path has the trailing slash Polar redirects to",

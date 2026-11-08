@@ -8,15 +8,15 @@ export const mockProgressSummary = {
 };
 
 export const mockPersonalBests = [
-  { sceneTitle: 'Platform Confession', film: 'Before Sunrise', score: 91, date: 'Apr 10' },
-  { sceneTitle: 'Live Broadcast', film: 'Network', score: 86, date: 'Apr 9' },
-  { sceneTitle: 'First Contact', film: 'Arrival', score: 82, date: 'Apr 6' },
+  { sceneTitle: 'Last Train', film: 'Drama', score: 91, date: 'Apr 10' },
+  { sceneTitle: 'Rooftop', film: 'Romance', score: 86, date: 'Apr 9' },
+  { sceneTitle: 'Oxygen Low', film: 'Sci-Fi', score: 82, date: 'Apr 6' },
 ];
 
 export const mockRecentHistory = [
-  { sceneTitle: 'Live Broadcast', score: 86, delta: '+4', result: 'Personal best' },
-  { sceneTitle: 'Platform Confession', score: 89, delta: '+1', result: 'Strong pacing' },
-  { sceneTitle: 'First Contact', score: 82, delta: '-2', result: 'Needs breath work' },
+  { sceneTitle: 'Rooftop', score: 86, delta: '+4', result: 'Personal best' },
+  { sceneTitle: 'Last Train', score: 89, delta: '+1', result: 'Strong pacing' },
+  { sceneTitle: 'Oxygen Low', score: 82, delta: '-2', result: 'Needs breath work' },
 ];
 
 export const mockFocusAreas = [

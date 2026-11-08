@@ -1,6 +1,6 @@
 export const mockLeaderboard = {
-  activeSceneId: 'network-monologue',
-  title: 'Live Broadcast',
+  activeSceneId: 'rooftop',
+  title: 'Rooftop',
   tabs: ['Scene', 'Friends', 'Global'],
   rows: [
     { rank: 1, name: 'Ari', score: 95, note: 'weekly best' },

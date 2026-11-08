@@ -8,7 +8,7 @@ export const mockLevels = [
     unlockedScenes: 5,
     totalScenes: 5,
     requiredScore: 0,
-    firstUnlockedSceneId: 'before-sunrise-platform',
+    firstUnlockedSceneId: 'last_train',
   },
   {
     id: 'level-3',
@@ -19,7 +19,7 @@ export const mockLevels = [
     unlockedScenes: 4,
     totalScenes: 6,
     requiredScore: 80,
-    firstUnlockedSceneId: 'network-monologue',
+    firstUnlockedSceneId: 'rooftop',
   },
   {
     id: 'level-5',
@@ -30,7 +30,7 @@ export const mockLevels = [
     unlockedScenes: 2,
     totalScenes: 5,
     requiredScore: 86,
-    firstUnlockedSceneId: 'arrival-room',
+    firstUnlockedSceneId: 'oxygen_low',
   },
   {
     id: 'level-8',

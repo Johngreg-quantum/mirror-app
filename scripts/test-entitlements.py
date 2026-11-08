@@ -8,8 +8,9 @@ Posts real HMAC-signed payloads at /api/billing/webhook and asserts on the
 resulting rows, so this exercises signature verification, the handler, and the
 SQL together rather than testing helpers in isolation.
 
-Requires LEMONSQUEEZY_SIGNING_SECRET to match the server's, and the target
-server to be running against the given SQLite file. Refuses to run against
+Requires LEMONSQUEEZY_SIGNING_SECRET to match the server's, the target server
+to run with BILLING_PROVIDER=lemonsqueezy (the default is stripe) and
+LEMONSQUEEZY_STARTER_VARIANT_ID set, and against the given SQLite file. Refuses to run against
 PostgreSQL -- it writes and deletes test rows.
 
 `baseUrl` must have ENFORCE_ENTITLEMENTS on, and the run aborts if it does not

@@ -1,6 +1,5 @@
 // Four of the real scenes from docs/original-scenes.json, in the shape
-// scene-adapter.js produces. They were four films with their dialogue quoted
-// verbatim; Mirror owns everything here instead.
+// scene-adapter.js produces.
 //
 // `imageUrl` points at the stage 3 art path. Until those files exist the mock
 // renders the same broken-image fallback a real scene would, which is the

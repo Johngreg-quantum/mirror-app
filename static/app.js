@@ -445,14 +445,9 @@ function getSceneColor(sceneId, fallback = '#c9a84c') {
 }
 
 // ── Scene media ──
-// The film version read a YouTube id and a clip range out of scene_config, and
-// poster/backdrop paths pointing at TMDB artwork. Original scenes carry none of
-// those. Stage 2 writes `ui.audio` (the generated mp3) and stage 3 writes
-// `ui.art` / `ui.art_sm`, and these accessors are where those land.
-//
-// Until then every one of them returns empty, which is the "scene has no
-// media" path the callers were already written to survive -- the scene player
-// shows nothing between this stage and stage 2, on purpose.
+// A scene carries `ui.audio` (its generated mp3) and `ui.art` / `ui.art_sm`
+// (its poster), and these accessors are where those are read. Any of them can
+// be empty, which is the "scene has no media" path the callers survive.
 
 function getSceneAudioUrl(sceneId) {
   const url = getSceneUiMeta(sceneId).audio;
@@ -776,7 +771,6 @@ async function enterAuthenticatedApp(options = {}) {
       if (btn) btn.click();
     }, 800);
   }
-  console.log('[TRACE] enterAuthenticatedApp:end');
 }
 
 onClick('btnLogout', logout);
@@ -801,7 +795,7 @@ bindBackdropDismiss('authModalOverlay', closeAuthModal);
 // ══════════════════════════════
 // BILLING PLANS
 // ══════════════════════════════
-// Variant ids and prices belong to the Lemon Squeezy store, so they are
+// Price ids and prices belong to the payment provider, so they are
 // fetched rather than restated here. /api/billing/plans reads ids from the
 // environment and prices from the store, which makes going live a config
 // change instead of a code change.
@@ -841,18 +835,20 @@ const BillingPlans = {
     return pill ? pill.dataset.billing : 'yearly';
   },
 
+  // Whole dollars without cents ("$1", not "$1.00"), so a button never shows a
+  // different price string from the card it sits on.
   money(cents) {
-    return (cents === null || cents === undefined) ? null : '$' + (cents / 100).toFixed(2);
+    if (cents === null || cents === undefined) return null;
+    return '$' + (cents % 100 === 0 ? String(cents / 100) : (cents / 100).toFixed(2));
   },
 
   // Lets the card keep its "/mo" presentation for a yearly plan without this
   // file knowing what a year costs.
   perMonthCents(p) {
     if (!p || p.price_cents === null || p.price_cents === undefined) return null;
-    // A one-time plan has no months to divide by. Lemon Squeezy still returns
-    // an `interval` on those variants -- the one-time pack comes back as
-    // interval:'year' with is_subscription:false -- so trusting interval alone
-    // would price a $1 purchase at $0.08.
+    // A one-time plan has no months to divide by. A provider may still return
+    // an `interval` on it, so trusting interval alone would price a $1
+    // purchase at $0.08.
     if (!p.is_subscription) return p.price_cents;
     const n = p.interval_count || 1;
     const months = p.interval === 'year' ? 12 * n : (p.interval === 'month' ? n : 1);
@@ -911,9 +907,9 @@ const BillingPlans = {
       } else if (plan && plan.is_subscription && plan.interval === 'year' && total) {
         subEl.textContent = 'billed yearly (' + total + '/year)';
       } else if (!perMo) {
-        // The button stays usable: the variant ids are correct even when the
-        // price lookup fails, so checkout still works and Lemon Squeezy shows
-        // the real amount. Saying so beats an unexplained em dash.
+        // The button stays usable: the price ids are correct even when the
+        // price lookup fails, so checkout still works and shows the real
+        // amount. Saying so beats an unexplained em dash.
         subEl.textContent = 'Live pricing shown at checkout';
       } else {
         subEl.textContent = '';
@@ -946,8 +942,7 @@ const BillingPlans = {
     //            fetch would tell visitors billing is unavailable during the
     //            window it is merely unanswered.
     // `shut`  -- BILLING_OPEN is off. The prices stay on the card, because
-    //            that is what the card is for and Polar's review has to see
-    //            them; only the button changes. The server refuses too, so
+    //            that is what the card is for; only the button changes. The server refuses too, so
     //            this is the label, not the lock.
     const none = !loading && !this.plans.length;
     const shut = !loading && !this.billingOpen;
@@ -969,9 +964,8 @@ const BillingPlans = {
     });
 
     // The Starter Pack is shown only when the server has that plan configured.
-    // An environment without POLAR_LEVEL1_PRODUCT_ID (or its Lemon Squeezy
-    // equivalent) serves no starter plan, and a visible button there would open
-    // a checkout that 400s.
+    // An environment without a starter price id serves no starter plan, and a
+    // visible button there would open a checkout that 400s.
     const lvl1 = loading ? null : this.get('starter');
     const lvl1Wrap = document.getElementById('pricingLevel1Wrap');
     if (lvl1Wrap) lvl1Wrap.hidden = !lvl1;
@@ -1329,7 +1323,6 @@ async function loadScenes() {
 }
 
 function renderCards() {
-  console.log('[TRACE] renderCards:start scenes-count=' + Object.keys(scenes || {}).length);
   refreshSceneCardsSurface({
     createCardElement: makeCard,
     grids: {
@@ -3108,10 +3101,8 @@ function hearSelf() {
 // ══════════════════════════════════════════════
 // SCENE AUDIO PLAYER
 // ══════════════════════════════════════════════
-// Replaces the YouTube IFrame API. A scene is an mp3 we generated and serve
-// ourselves, so playback is an <audio> element: no third-party script to wait
-// on, no `ytApiReady` race on modal open, and `ended` is an event rather than a
-// 250ms poll comparing currentTime against a clip end.
+// A scene is an mp3 we generated and serve ourselves, so playback is an
+// <audio> element: no third-party script to wait on, and `ended` is an event.
 //
 // The waveform is drawn, not analysed. Decoding each mp3 through the Web Audio
 // API to read real peaks costs a fetch and a decode per scene and fails behind
@@ -3190,29 +3181,39 @@ function loadSceneAudio(sceneId, url) {
     return;
   }
 
-  sceneAudio = new Audio(url);
-  sceneAudio.preload = 'metadata';
+  const audio = new Audio(url);
+  sceneAudio = audio;
+  audio.preload = 'metadata';
   saSetTime(getSceneUiMeta(sceneId).audio_seconds || 0);
 
-  sceneAudio.addEventListener('loadedmetadata', function () {
-    if (isFinite(sceneAudio.duration)) saSetTime(sceneAudio.duration);
+  // Every handler reads its OWN element and ignores events once it is no
+  // longer the current one. They read the global, which is null after the
+  // modal closes (a TypeError on a late loadedmetadata) and is the NEXT
+  // scene's audio once "Next scene" has opened it -- so a late event from the
+  // old scene repainted the new scene's waveform and timer.
+  const current = function () { return sceneAudio === audio; };
+  audio.addEventListener('loadedmetadata', function () {
+    if (current() && isFinite(audio.duration)) saSetTime(audio.duration);
   });
-  sceneAudio.addEventListener('timeupdate', function () {
-    const d = sceneAudio.duration;
+  audio.addEventListener('timeupdate', function () {
+    if (!current()) return;
+    const d = audio.duration;
     if (isFinite(d) && d > 0) {
-      saPaint(sceneAudio.currentTime / d);
-      saSetTime(d - sceneAudio.currentTime);
+      saPaint(audio.currentTime / d);
+      saSetTime(d - audio.currentTime);
     }
   });
-  sceneAudio.addEventListener('play',  function () { saSetPlaying(true); });
-  sceneAudio.addEventListener('pause', function () { saSetPlaying(false); });
-  sceneAudio.addEventListener('ended', function () {
+  audio.addEventListener('play',  function () { if (current()) saSetPlaying(true); });
+  audio.addEventListener('pause', function () { if (current()) saSetPlaying(false); });
+  audio.addEventListener('ended', function () {
+    if (!current()) return;
     saSetPlaying(false);
     saPaint(1);
-    // Same affordance the YouTube end-check used to drive, now from an event.
+    // Offer the line again once the scene has played.
     showReplayLine();
   });
-  sceneAudio.addEventListener('error', function () {
+  audio.addEventListener('error', function () {
+    if (!current()) return;
     if (btn) btn.disabled = true;
     saSetPlaying(false);
   });
@@ -4582,8 +4583,7 @@ const QuizController = {
     document.getElementById('quizComboBadge').style.display = 'none';
     this.answered = false;
 
-    // Was /static/posters/<id>.jpg -- TMDB film artwork, deleted in stage 6.
-    // The scene's own still, and the typographic poster when a scene has
+    // The scene's own poster, and the typographic poster when a scene has
     // none, so the slot is never an empty grey box.
     const img = document.getElementById('quizPosterImg');
     const movieLabel = document.getElementById('quizPosterMovie');

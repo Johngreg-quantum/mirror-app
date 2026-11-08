@@ -28,7 +28,7 @@ const baseRoutes = [
     id: 'scene-detail',
     path: '/scene/:sceneId',
     label: 'Scene detail',
-    navPath: '/scene/network-monologue',
+    navPath: '/scene/rooftop',
     nav: true,
     render: renderSceneDetailPage,
   },

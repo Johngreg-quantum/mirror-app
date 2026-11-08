@@ -591,6 +591,8 @@ def main():
                                     "payment_intent": "pi_sd"})
     check("a disputed Pro charge removes Pro",
           "pro" not in held(uid) and user_row(uid)[0] is False, str(held(uid)))
+    check("...and cancels the subscription, so the card is not charged again",
+          any(c[0] == "DELETE" and c[1] == "/v1/subscriptions/sub_sd" for c in FAKE.calls))
 
     # ── 6. DUPLICATES AND FAILURES ────────────────────────────────────────────
     print("\nduplicate deliveries and failed handlers")
@@ -817,8 +819,8 @@ def main():
     print("\nthe other providers")
     src = open(os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
                             "main.py"), encoding="utf-8").read()
-    check("BILLING_PROVIDER still defaults to lemonsqueezy",
-          'os.getenv("BILLING_PROVIDER", "lemonsqueezy")' in src)
+    check("BILLING_PROVIDER defaults to stripe, the live provider",
+          'os.getenv("BILLING_PROVIDER", "stripe")' in src)
     check("Polar and Lemon Squeezy handlers are both still routed",
           "return await _polar_webhook(request)" in src
           and "return await _lemonsqueezy_webhook(request)" in src)
