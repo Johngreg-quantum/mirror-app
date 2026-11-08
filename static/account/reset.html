@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Reset password · Mirror</title>
+<link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root { --gold: #c8a96e; --text: #f0ede6; --muted: rgba(240,237,230,0.6); --bg: #08080a; }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; min-height: 100vh; display: flex; align-items: center; justify-content: center;
+    padding: 24px 16px; background: radial-gradient(ellipse at top, #16130d 0%, var(--bg) 60%);
+    color: var(--text); font-family: 'DM Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  }
+  .box {
+    width: 100%; max-width: 400px; padding: 30px 24px 24px; border-radius: 18px;
+    background: #0d0d12; border: 1px solid rgba(200,169,110,0.25); box-shadow: 0 30px 90px rgba(0,0,0,0.6);
+  }
+  .brand { font-family: 'Bebas Neue', sans-serif; letter-spacing: .3em; color: var(--gold); font-size: 18px; text-decoration: none; }
+  h1 { font-family: 'Bebas Neue', sans-serif; font-weight: 400; font-size: 36px; letter-spacing: .04em; margin: 14px 0 6px; }
+  p { color: var(--muted); font-size: 14px; line-height: 1.55; margin: 0 0 18px; }
+  label { display: block; font-size: 12px; color: var(--muted); margin: 0 0 6px; }
+  input {
+    width: 100%; padding: 13px 14px; margin-bottom: 12px; border-radius: 10px; font-size: 15px;
+    background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.12); color: var(--text);
+    font-family: inherit;
+  }
+  input:focus { outline: none; border-color: var(--gold); }
+  button {
+    width: 100%; padding: 14px; border: none; border-radius: 12px; cursor: pointer; margin-top: 4px;
+    background: linear-gradient(135deg, #d9bb7c, #c8a96e 55%, #b8955a); color: #0b0b0e;
+    font-family: inherit; font-size: 15px; font-weight: 700;
+  }
+  button:disabled { opacity: .6; cursor: default; }
+  .msg { font-size: 14px; line-height: 1.5; margin-top: 14px; min-height: 1px; }
+  .msg.err { color: #f08a8a; }
+  .msg.ok { color: #9be3c4; }
+  .back { display: block; text-align: center; margin-top: 18px; color: var(--muted); font-size: 13px; text-decoration: none; }
+  .back:hover { color: var(--text); }
+  [hidden] { display: none !important; }
+</style>
+</head>
+<body>
+<main class="box">
+  <a class="brand" href="/">MIRROR</a>
+
+  <section id="ask">
+    <h1>Forgot your password?</h1>
+    <p>Enter the email you signed up with and we'll send you a link to set a new one.<br><span lang="es">Escribe tu correo y te enviamos un enlace para crear una contraseña nueva.</span></p>
+    <form id="askForm" novalidate>
+      <label for="email">Email</label>
+      <input id="email" type="email" autocomplete="email" required>
+      <button id="askBtn" type="submit">Send reset link</button>
+    </form>
+    <div class="msg" id="askMsg" role="status"></div>
+  </section>
+
+  <section id="set" hidden>
+    <h1>Set a new password</h1>
+    <p>At least 6 characters. <span lang="es">Mínimo 6 caracteres.</span></p>
+    <form id="setForm" novalidate>
+      <label for="pw1">New password</label>
+      <input id="pw1" type="password" autocomplete="new-password" minlength="6" required>
+      <label for="pw2">Confirm password</label>
+      <input id="pw2" type="password" autocomplete="new-password" minlength="6" required>
+      <button id="setBtn" type="submit">Save and sign in</button>
+    </form>
+    <div class="msg" id="setMsg" role="status"></div>
+  </section>
+
+  <a class="back" href="/">&larr; Back to Mirror</a>
+</main>
+<script>
+(function () {
+  var token = new URLSearchParams(location.search).get('token');
+  var $ = function (id) { return document.getElementById(id); };
+  function show(id, text, ok) { var m = $(id); m.textContent = text; m.className = 'msg ' + (ok ? 'ok' : 'err'); }
+
+  if (token) { $('ask').hidden = true; $('set').hidden = false; }
+
+  $('askForm').addEventListener('submit', function (e) {
+    e.preventDefault();
+    var email = $('email').value.trim();
+    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) { show('askMsg', 'Enter a valid email address.'); return; }
+    $('askBtn').disabled = true;
+    fetch('/api/auth/forgot', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email: email }) })
+      .then(function (r) { return r.json().then(function (d) { return { ok: r.ok, d: d }; }); })
+      .then(function (res) {
+        if (res.ok) { show('askMsg', res.d.message || 'Check your inbox.', true); }
+        else { show('askMsg', res.d.detail || 'Something went wrong. Try again.'); $('askBtn').disabled = false; }
+      })
+      .catch(function () { show('askMsg', 'Network error. Try again.'); $('askBtn').disabled = false; });
+  });
+
+  $('setForm').addEventListener('submit', function (e) {
+    e.preventDefault();
+    var a = $('pw1').value, b = $('pw2').value;
+    if (a.length < 6) { show('setMsg', 'Use at least 6 characters.'); return; }
+    if (a !== b) { show('setMsg', "The two passwords don't match."); return; }
+    $('setBtn').disabled = true;
+    fetch('/api/auth/reset', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ token: token, password: a }) })
+      .then(function (r) { return r.json().then(function (d) { return { ok: r.ok, d: d }; }); })
+      .then(function (res) {
+        if (res.ok && res.d.access_token) {
+          try { localStorage.setItem('mirror_token', res.d.access_token); } catch (err) {}
+          show('setMsg', 'Password saved. Taking you to Mirror…', true);
+          setTimeout(function () { location.href = '/'; }, 900);
+        } else {
+          show('setMsg', (res.d && res.d.detail) || 'This link is invalid or has expired.');
+          $('setBtn').disabled = false;
+        }
+      })
+      .catch(function () { show('setMsg', 'Network error. Try again.'); $('setBtn').disabled = false; });
+  });
+})();
+</script>
+</body>
+</html>

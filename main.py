@@ -8,6 +8,7 @@ import sqlite3
 import difflib
 import hashlib
 import hmac
+import secrets
 import logging
 import tempfile
 import traceback
@@ -92,6 +93,7 @@ _APP_DIR = os.path.dirname(os.path.abspath(__file__))
 _STATIC_DIR = os.path.join(_APP_DIR, "static")
 _INDEX_HTML_PATH = os.path.join(_APP_DIR, "index.html")
 _NEW_SHELL_INDEX_HTML_PATH = os.path.join(_STATIC_DIR, "new-shell", "index.html")
+_RESET_HTML_PATH = os.path.join(_STATIC_DIR, "account", "reset.html")
 _SCENE_CONFIG_PATH = os.path.join(_APP_DIR, "scene_config.json")
 _PRIVACY_MD_PATH = os.path.join(_APP_DIR, "docs", "privacy-policy.md")
 _TERMS_MD_PATH   = os.path.join(_APP_DIR, "docs", "terms-of-service.md")
@@ -425,8 +427,16 @@ if os.path.isdir(_STATIC_DIR):
 # Rate limiting
 # ---------------------------------------------------------------------------
 _RATE_WINDOW        = 3600          # sliding window — 1 hour in seconds
-_IP_LIMIT           = 100           # max API requests per IP per window
-_SUBMIT_LIMIT       = 10            # max recording submissions per user per window
+# A coarse flood guard, not a per-person quota. It was 100, which one engaged
+# learner spends in about ten minutes (an app load is ~12 calls, a take ~4), and
+# Latin American mobile carriers put many phones behind one shared IP -- so it
+# locked out real users for an hour. The limits that protect something real are
+# per account: logins, password resets and submissions below.
+_IP_LIMIT           = 1500          # max API requests per IP per window
+_SUBMIT_LIMIT       = 60            # max recording submissions per user per window
+# Paths the flood guard never counts: Stripe's own retries come from a handful
+# of Stripe IPs and must not be refused -- a 429 delays someone's access.
+_RATE_EXEMPT_PATHS  = ("/api/billing/webhook",)
 _MAX_AUDIO_BYTES    = 10 * 1024 * 1024   # 10 MB upload cap
 _ALLOWED_AUDIO_EXT  = {".webm", ".mp4", ".ogg", ".mp3", ".wav", ".m4a"}
 
@@ -443,13 +453,30 @@ def _client_ip(request: Request) -> str:
     return request.client.host if request.client else "unknown"
 
 
+_ip_last_sweep = 0.0
+
+
+def _sweep_ip_hits(now: float) -> None:
+    """Drop IPs with no hit inside the window. Without this the dict only ever
+    grew, and a client rotating a spoofed X-Forwarded-For grew it per request."""
+    global _ip_last_sweep
+    if now - _ip_last_sweep < 300:
+        return
+    _ip_last_sweep = now
+    for ip in [k for k, dq in _ip_hits.items() if not dq or dq[-1] < now - _RATE_WINDOW]:
+        _ip_hits.pop(ip, None)
+
+
 @app.middleware("http")
 async def ip_rate_limit(request: Request, call_next):
     """Reject requests from IPs that exceed _IP_LIMIT API calls per hour.
-    OPTIONS (CORS preflight) and the HTML root are exempt."""
-    if request.method != "OPTIONS" and request.url.path.startswith("/api/"):
+    OPTIONS (CORS preflight), the HTML pages and the billing webhook are exempt."""
+    path = request.url.path
+    if (request.method != "OPTIONS" and path.startswith("/api/")
+            and path not in _RATE_EXEMPT_PATHS):
         ip  = _client_ip(request)
         now = time.monotonic()
+        _sweep_ip_hits(now)
         dq  = _ip_hits[ip]
         while dq and dq[0] < now - _RATE_WINDOW:
             dq.popleft()
@@ -461,6 +488,39 @@ async def ip_rate_limit(request: Request, call_next):
             )
         dq.append(now)
     return await call_next(request)
+
+
+# Failed sign-ins, per email and per IP, in memory (one instance). The IP
+# limiter above is far too loose to stop password guessing, and an IP can be
+# spoofed; the email key cannot be dodged that way.
+_LOGIN_WINDOW        = 900     # 15 minutes
+_LOGIN_FAILS_EMAIL   = 8
+_LOGIN_FAILS_IP      = 40
+_login_fails: dict[str, deque] = defaultdict(deque)
+
+
+def _login_blocked(*keys_limits) -> bool:
+    now = time.monotonic()
+    for key, limit in keys_limits:
+        dq = _login_fails.get(key)
+        if not dq:
+            continue
+        while dq and dq[0] < now - _LOGIN_WINDOW:
+            dq.popleft()
+        if not dq:
+            _login_fails.pop(key, None)
+        elif len(dq) >= limit:
+            return True
+    return False
+
+
+def _login_failed(*keys) -> None:
+    now = time.monotonic()
+    for key in keys:
+        _login_fails[key].append(now)
+    if len(_login_fails) > 20000:          # a flood of distinct keys
+        for k in [k for k, dq in _login_fails.items() if not dq or dq[-1] < now - _LOGIN_WINDOW]:
+            _login_fails.pop(k, None)
 
 
 def _check_submit_rate(user_id: int, conn) -> None:
@@ -1747,6 +1807,18 @@ def init_db():
         )
     """)
 
+    # One row per emailed reset link. Only the SHA-256 of the token is kept, so
+    # a leaked table holds nothing a person could paste into /reset.
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS password_resets (
+            token_hash  TEXT PRIMARY KEY,
+            user_id     INTEGER NOT NULL,
+            created_at  TEXT NOT NULL,
+            expires_at  TEXT NOT NULL,
+            used_at     TEXT
+        )
+    """)
+
     # user_streak.user_id and user_missions.user_id on databases that predate
     # them. Separate from the CREATE TABLEs above, which only run for a database
     # that does not have the table at all.
@@ -2250,14 +2322,56 @@ async def new_shell_app_entry(
     return _read_html_file(_NEW_SHELL_INDEX_HTML_PATH, "app index.html not found", request)
 
 
+# Shared links (a challenge from "Challenge a Friend", a scene link) open the
+# main app, which reads the path at boot. They used to open the newer shell,
+# which still shows developer text ("unauthenticated", "Runtime state") and has
+# no Terms or Refunds links -- the wrong first screen for someone arriving from
+# a friend's message. The new shell stays at /app while it is being built.
 @app.get("/scene/{scene_id}", response_class=HTMLResponse)
 @app.get("/challenge/{challenge_id}", response_class=HTMLResponse)
-async def new_shell_legacy_links(
+async def shared_links(
     request: Request,
     scene_id: Optional[str] = None,
     challenge_id: Optional[str] = None,
 ):
-    return _read_html_file(_NEW_SHELL_INDEX_HTML_PATH, "app index.html not found", request)
+    return _read_html_file(_INDEX_HTML_PATH, "index.html not found", request)
+
+
+# Crawlers: these returned 404. The app, the API and the account pages are
+# not for indexing; the landing and the three legal pages are.
+_PUBLIC_BASE = APP_BASE_URL or "https://mirrorspeak.app"
+
+
+@app.get("/robots.txt", include_in_schema=False)
+async def robots_txt():
+    body = (
+        "User-agent: *\n"
+        "Allow: /\n"
+        "Disallow: /api/\n"
+        "Disallow: /app\n"
+        "Disallow: /legacy\n"
+        "Disallow: /forgot\n"
+        "Disallow: /reset\n"
+        "Disallow: /challenge/\n"
+        f"Sitemap: {_PUBLIC_BASE}/sitemap.xml\n"
+    )
+    return Response(body, media_type="text/plain", headers={"Cache-Control": "public, max-age=86400"})
+
+
+@app.get("/sitemap.xml", include_in_schema=False)
+async def sitemap_xml():
+    urls = "".join(
+        f"<url><loc>{_PUBLIC_BASE}{path}</loc></url>"
+        for path in ("/", "/privacy", "/terms", "/refunds")
+    )
+    body = ('<?xml version="1.0" encoding="UTF-8"?>'
+            '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">' + urls + '</urlset>')
+    return Response(body, media_type="application/xml", headers={"Cache-Control": "public, max-age=86400"})
+
+
+@app.get("/favicon.ico", include_in_schema=False)
+async def favicon_ico():
+    return Response(status_code=301, headers={"Location": "/static/favicon.svg"})
 
 
 @app.get("/legacy", response_class=HTMLResponse)
@@ -2487,6 +2601,8 @@ async def register(req: RegisterRequest):
     if len(req.password) < 6:
         raise HTTPException(400, "Password must be at least 6 characters")
 
+    import anyio
+    pw_hash = await anyio.to_thread.run_sync(hash_pw, req.password)
     conn = get_conn()
     cur  = conn.cursor()
     try:
@@ -2494,13 +2610,13 @@ async def register(req: RegisterRequest):
             # RETURNING id is the PostgreSQL way to get the new row's id
             cur.execute(
                 f"INSERT INTO users (username, email, password_hash) VALUES ({PH}, {PH}, {PH}) RETURNING id",
-                (username, email, hash_pw(req.password)),
+                (username, email, pw_hash),
             )
             user_id = cur.fetchone()[0]
         else:
             cur.execute(
                 f"INSERT INTO users (username, email, password_hash) VALUES ({PH}, {PH}, {PH})",
-                (username, email, hash_pw(req.password)),
+                (username, email, pw_hash),
             )
             user_id = cur.lastrowid
         conn.commit()
@@ -2513,20 +2629,182 @@ async def register(req: RegisterRequest):
 
 
 @app.post("/api/auth/login")
-async def login(req: LoginRequest):
+async def login(req: LoginRequest, request: Request):
+    import anyio
+    email = req.email.lower().strip()
+    email_key, ip_key = "e:" + email, "i:" + _client_ip(request)
+    if _login_blocked((email_key, _LOGIN_FAILS_EMAIL), (ip_key, _LOGIN_FAILS_IP)):
+        raise HTTPException(
+            429,
+            "Too many sign-in attempts. Wait 15 minutes, or reset your password.",
+        )
     conn = get_conn()
     cur  = conn.cursor()
     cur.execute(
         f"SELECT id, username, password_hash FROM users WHERE email = {PH}",
-        (req.email.lower().strip(),),
+        (email,),
     )
     row = cur.fetchone()
     conn.close()
 
-    if not row or not verify_pw(req.password, row[2]):
+    # bcrypt is ~0.25 s of CPU: run it in a worker thread, not on the event
+    # loop, or every login stalls every other request for that long.
+    ok = bool(row) and await anyio.to_thread.run_sync(verify_pw, req.password, row[2])
+    if not ok:
+        _login_failed(email_key, ip_key)
         raise HTTPException(401, "Invalid email or password")
 
     return {"access_token": make_token(row[0], row[1]), "token_type": "bearer", "username": row[1]}
+
+
+# ─── Password reset ──────────────────────────────────────────────────────────
+# Email is sent through Resend's HTTP API (https://resend.com), the one setting
+# that has to exist before this works: RESEND_API_KEY, with EMAIL_FROM on a
+# domain verified there. Until then /api/auth/forgot answers 503 with the
+# support address, instead of claiming to have sent a mail that never leaves.
+RESET_TTL_MINUTES   = 60
+RESET_PER_HOUR      = 3
+RESEND_API_KEY      = os.getenv("RESEND_API_KEY", "")
+EMAIL_FROM          = os.getenv("EMAIL_FROM", "Mirror <no-reply@mirrorspeak.app>")
+SUPPORT_EMAIL       = "contact@mirrorspeak.app"
+
+
+class ForgotRequest(BaseModel):
+    email: str = Field(..., max_length=255)
+
+
+class ResetRequest(BaseModel):
+    token:    str = Field(..., min_length=20, max_length=200)
+    password: str = Field(..., min_length=6, max_length=128)
+
+
+def _reset_hash(token: str) -> str:
+    return hashlib.sha256(token.encode("utf-8")).hexdigest()
+
+
+async def _send_email(to: str, subject: str, text: str, html: str) -> bool:
+    if not RESEND_API_KEY:
+        return False
+    try:
+        async with httpx.AsyncClient(timeout=15) as client:
+            r = await client.post(
+                "https://api.resend.com/emails",
+                headers={"Authorization": f"Bearer {RESEND_API_KEY}"},
+                json={"from": EMAIL_FROM, "to": [to], "subject": subject,
+                      "text": text, "html": html},
+            )
+        if r.status_code >= 300:
+            logger.error("[email] send failed status=%s body=%s", r.status_code, r.text[:300])
+            return False
+        return True
+    except Exception:
+        logger.exception("[email] send failed")
+        return False
+
+
+@app.post("/api/auth/forgot")
+async def forgot_password(req: ForgotRequest, request: Request):
+    """Email a one-time reset link. The answer is the same whether or not the
+    address has an account, so this cannot be used to discover who signed up."""
+    if not RESEND_API_KEY:
+        raise HTTPException(
+            503,
+            f"Password reset by email isn't available yet. Write to {SUPPORT_EMAIL} "
+            f"from the address you signed up with and we'll help you get back in.",
+        )
+    generic = {"ok": True, "message": "If an account exists for that email, a reset link is on its way. It works for 1 hour."}
+    email = req.email.lower().strip()
+    conn = get_conn()
+    cur  = conn.cursor()
+    try:
+        cur.execute(f"SELECT id, username FROM users WHERE email = {PH}", (email,))
+        row = cur.fetchone()
+        if not row:
+            return generic
+        user_id, username = row[0], row[1]
+        since = (datetime.now(timezone.utc) - timedelta(hours=1)).strftime("%Y-%m-%dT%H:%M:%SZ")
+        cur.execute(
+            f"SELECT COUNT(*) FROM password_resets WHERE user_id = {PH} AND created_at > {PH}",
+            (user_id, since),
+        )
+        if (cur.fetchone() or [0])[0] >= RESET_PER_HOUR:
+            logger.info("[reset] per-hour cap reached user_id=%s", user_id)
+            return generic
+        token = secrets.token_urlsafe(32)
+        now = datetime.now(timezone.utc)
+        cur.execute(
+            f"INSERT INTO password_resets (token_hash, user_id, created_at, expires_at) "
+            f"VALUES ({PH}, {PH}, {PH}, {PH})",
+            (_reset_hash(token), user_id, now.strftime("%Y-%m-%dT%H:%M:%SZ"),
+             (now + timedelta(minutes=RESET_TTL_MINUTES)).strftime("%Y-%m-%dT%H:%M:%SZ")),
+        )
+        conn.commit()
+    finally:
+        conn.close()
+
+    base = APP_BASE_URL or str(request.base_url).rstrip("/")
+    link = f"{base}/reset?token={token}"
+    text = (f"Hi {username},\n\nReset your Mirror password here (the link works for "
+            f"1 hour):\n{link}\n\nIf you didn't ask for this, ignore this email -- "
+            f"your password stays the same.\n\nHola {username}: para cambiar tu "
+            f"contraseña de Mirror abre el enlace de arriba (sirve por 1 hora). Si no "
+            f"lo pediste, ignora este correo.\n")
+    html = (
+        f'<div style="font-family:Arial,sans-serif;max-width:480px;margin:auto;color:#111">'
+        f'<h2 style="letter-spacing:.2em">MIRROR</h2>'
+        f'<p>Hi {username},</p><p>Reset your Mirror password with the button below. '
+        f'The link works for 1 hour.</p>'
+        f'<p><a href="{link}" style="display:inline-block;background:#c8a96e;color:#0b0b0e;'
+        f'padding:12px 20px;border-radius:8px;text-decoration:none;font-weight:bold">'
+        f'Reset password / Cambiar contraseña</a></p>'
+        f'<p style="color:#666;font-size:13px">If you didn\'t ask for this, ignore this email '
+        f'— your password stays the same. Si no lo pediste, ignora este correo.</p></div>'
+    )
+    sent = await _send_email(email, "Reset your Mirror password", text, html)
+    if not sent:
+        raise HTTPException(502, f"We couldn't send the email right now. Try again in a minute, or write to {SUPPORT_EMAIL}.")
+    return generic
+
+
+@app.post("/api/auth/reset")
+async def reset_password(req: ResetRequest):
+    """Set a new password from an emailed link, and sign the user in."""
+    import anyio
+    conn = get_conn()
+    cur  = conn.cursor()
+    try:
+        cur.execute(
+            f"SELECT r.user_id, r.expires_at, r.used_at, u.username, u.email FROM password_resets r "
+            f"JOIN users u ON u.id = r.user_id WHERE r.token_hash = {PH}",
+            (_reset_hash(req.token),),
+        )
+        row = cur.fetchone()
+        expires = _parse_iso(row[1]) if row else None
+        if (not row or row[2] or expires is None
+                or expires < datetime.now(timezone.utc)):
+            raise HTTPException(400, "This reset link is invalid or has expired. Ask for a new one.")
+        user_id, username, email = row[0], row[3], (row[4] or "")
+        pw_hash = await anyio.to_thread.run_sync(hash_pw, req.password)
+        now = _now_iso()
+        cur.execute(f"UPDATE users SET password_hash = {PH} WHERE id = {PH}", (pw_hash, user_id))
+        # Every outstanding link for this account dies with this one.
+        cur.execute(
+            f"UPDATE password_resets SET used_at = {PH} WHERE user_id = {PH} AND used_at IS NULL",
+            (now, user_id),
+        )
+        conn.commit()
+    finally:
+        conn.close()
+    # Whoever just proved they own the inbox is not the one guessing.
+    _login_fails.pop("e:" + email.lower().strip(), None)
+    logger.info("[reset] password changed user_id=%s", user_id)
+    return {"access_token": make_token(user_id, username), "token_type": "bearer", "username": username}
+
+
+@app.get("/forgot", response_class=HTMLResponse)
+@app.get("/reset", response_class=HTMLResponse)
+async def password_reset_page(request: Request):
+    return _read_html_file(_RESET_HTML_PATH, "page not found", request)
 
 
 @app.get("/api/auth/me")
@@ -2646,6 +2924,8 @@ async def accept_recording_consent(user: dict = Depends(current_user)):
 # erasure has to clear those too. The same is true of challenges, where current
 # code fills challenger_user_id but older rows carry only the name.
 _USER_DATA_TABLES = [
+    ("entitlements",    "user_id",           "id"),
+    ("password_resets", "user_id",           "id"),
     ("word_mastery",  "user_id",             "id"),
     ("scores",        "user_id",             "id"),
     ("challenges",    "challenger_user_id",  "id"),
@@ -3079,19 +3359,45 @@ def accessible_scene_ids(cur, user_id: int) -> list:
     return out
 
 
-def _challenge_scene_id(cur, challenge_id: str):
+# A challenge link is a taste, not a key. Without these two limits one Pro
+# user could post 47 links that opened every scene to everyone, forever.
+CHALLENGE_TTL_DAYS   = 14   # a link stops opening its scene after this
+CHALLENGE_FREE_TAKES = 3    # takes a non-owner gets at a challenged scene
+
+
+def _challenge_scene_id(cur, challenge_id: str, include_expired: bool = False):
     """The scene a challenge points at, or None. Looked up rather than trusted:
     the client sends the challenge id, so the pairing of challenge to scene has
     to come from the table or the hole below would open every scene to anyone
-    who passes a challenge id along with an arbitrary scene."""
+    who passes a challenge id along with an arbitrary scene.
+
+    A challenge older than CHALLENGE_TTL_DAYS points at nothing, unless the
+    caller only wants to display it (include_expired)."""
     if not challenge_id or not re.match(r"^[a-f0-9]{16}$", challenge_id):
         return None
     cur.execute(
-        f"SELECT scene_id FROM challenges WHERE challenge_id = {PH}",
+        f"SELECT scene_id, created_at FROM challenges WHERE challenge_id = {PH}",
         (challenge_id,),
     )
     row = cur.fetchone()
-    return row[0] if row else None
+    if not row:
+        return None
+    if not include_expired:
+        created = _parse_iso(row[1])
+        # Unknown age is treated as expired: the safe failure is a refused
+        # take, which the upgrade prompt turns into an offer.
+        if created is None or datetime.now(timezone.utc) - created > timedelta(days=CHALLENGE_TTL_DAYS):
+            return None
+    return row[0]
+
+
+def _challenge_takes_left(cur, user_id: int, scene_id: str) -> bool:
+    cur.execute(
+        f"SELECT COUNT(*) FROM scores WHERE user_id = {PH} AND scene_id = {PH}",
+        (user_id, scene_id),
+    )
+    row = cur.fetchone()
+    return (row[0] if row else 0) < CHALLENGE_FREE_TAKES
 
 
 def can_play_scene(cur, user_id: int, scene_id: str, challenge_id: str = "",
@@ -3150,7 +3456,9 @@ def can_play_scene(cur, user_id: int, scene_id: str, challenge_id: str = "",
     # challenge was sent, which is falsy and so enforces correctly, but makes a
     # function annotated -> bool return "" and quietly breaks any caller that
     # compares against False. A test asserted on the type and caught it.
-    return bool(challenge_id) and _challenge_scene_id(cur, challenge_id) == scene_id
+    if not challenge_id or _challenge_scene_id(cur, challenge_id) != scene_id:
+        return False
+    return _challenge_takes_left(cur, user_id, scene_id)
 
 
 _LOCKED_DETAIL = (
@@ -5506,7 +5814,10 @@ async def submit_recording(
     expected_line = scene["line"]
 
     # Validate and read audio
-    audio_bytes = await audio.read()
+    # Bounded read: read() with no size pulled the whole upload into memory
+    # before the size check below, so one oversized file could exhaust the
+    # instance. One byte over the cap is enough to know it is too large.
+    audio_bytes = await audio.read(_MAX_AUDIO_BYTES + 1)
     logger.info(
         "[submit] user_id=%s scene_id=%r filename=%r content_type=%r size=%d",
         user["id"], scene_id, audio.filename, audio.content_type, len(audio_bytes),
@@ -5771,24 +6082,44 @@ async def submit_recording(
 
 class ChallengeRequest(BaseModel):
     scene_id: str  = Field(..., max_length=50)
-    score:    float = Field(..., ge=0, le=100)
+    # Accepted from older clients and ignored: the score to beat is read from
+    # the challenger's own best take, never taken from the request.
+    score:    Optional[float] = Field(None, ge=0, le=100)
 
 
 @app.post("/api/challenge")
 async def create_challenge(req: ChallengeRequest, user: dict = Depends(current_user)):
-    """Create a shareable challenge link for the authenticated user's score."""
+    """Create a shareable challenge link for the authenticated user's score.
+
+    Only for a scene the challenger can play themselves, and only once they
+    have a real take on it. A challenge row opens its scene to whoever follows
+    the link (can_play_scene), so creating one for a scene you do not have was
+    a way to unlock any paid scene for free."""
     if req.scene_id not in SCENES:
         raise HTTPException(400, "Invalid scene_id")
-    cid  = uuid.uuid4().hex[:16]   # 16-char hex, URL-safe and short enough to share
     conn = get_conn()
     cur  = conn.cursor()
-    cur.execute(
-        f"INSERT INTO challenges (challenge_id, challenger_username, challenger_user_id, scene_id, score_to_beat) "
-        f"VALUES ({PH}, {PH}, {PH}, {PH}, {PH})",
-        (cid, user["username"], user["id"], req.scene_id, round(req.score, 1)),
-    )
-    conn.commit()
-    conn.close()
+    try:
+        if not can_play_scene(cur, user["id"], req.scene_id):
+            raise HTTPException(403, _LOCKED_DETAIL)
+        cur.execute(
+            f"SELECT MAX(sync_score) FROM scores WHERE user_id = {PH} AND scene_id = {PH} "
+            f"AND transcription <> '[quiz pass]'",
+            (user["id"], req.scene_id),
+        )
+        row = cur.fetchone()
+        best = row[0] if row else None
+        if best is None:
+            raise HTTPException(400, "Record this scene first, then challenge a friend.")
+        cid = uuid.uuid4().hex[:16]   # 16-char hex, URL-safe and short enough to share
+        cur.execute(
+            f"INSERT INTO challenges (challenge_id, challenger_username, challenger_user_id, scene_id, score_to_beat) "
+            f"VALUES ({PH}, {PH}, {PH}, {PH}, {PH})",
+            (cid, user["username"], user["id"], req.scene_id, round(float(best), 1)),
+        )
+        conn.commit()
+    finally:
+        conn.close()
     return {
         "challenge_id": cid,
         "url": build_app_url(f"/challenge/{cid}"),
@@ -5843,8 +6174,11 @@ async def get_leaderboard():
             streak = int(r[9]) if r[9] is not None else 0
             div    = get_division(pts)
             result[sid].append({
+                # No transcription: this endpoint is public, the UI never shows
+                # it, and the privacy policy does not say what people said into
+                # their microphone is published.
                 "id": r[0], "scene_id": r[1], "title": r[2], "line": r[3],
-                "transcription": r[4], "sync_score": r[5], "username": r[6] or "",
+                "sync_score": r[5], "username": r[6] or "",
                 "created_at": r[7].isoformat() if hasattr(r[7], "isoformat") else r[7],
                 "user_points": pts,
                 "division": div,

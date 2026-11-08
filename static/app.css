@@ -744,6 +744,14 @@ body::after {
 .auth-input:focus { border-color: rgba(255,255,255,.22); }
 
 .auth-error { font-size: 12px; color: var(--red); min-height: 18px; padding-top: 2px; }
+.auth-forgot {
+  display: block; margin-top: 12px; text-align: center;
+  font-size: 13px; color: var(--gold); text-decoration: none;
+}
+.auth-forgot:hover { text-decoration: underline; }
+.auth-legal { margin: 10px 0 0; font-size: 11.5px; line-height: 1.5; color: var(--muted); text-align: center; }
+.auth-legal a { color: var(--gold); text-decoration: none; }
+.auth-legal a:hover { text-decoration: underline; }
 
 .auth-submit {
   width: 100%; padding: 13px;
@@ -2997,3 +3005,57 @@ header {
 @media (prefers-reduced-motion: reduce) {
   .sp-next-btn, .sp-rs-overlay, .sp-rs-box, .sp-toast { transition: none; }
 }
+
+/* ══════════════════════════════════════════════
+   UPGRADE SHEET — locked scenes (UpgradeSheet in app.js)
+══════════════════════════════════════════════ */
+.up-overlay {
+  position: fixed; inset: 0; z-index: 100000;
+  display: flex; align-items: center; justify-content: center; padding: 20px;
+  background: rgba(0,0,0,0.74); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+  opacity: 0; pointer-events: none; transition: opacity .25s;
+}
+.up-overlay.open { opacity: 1; pointer-events: all; }
+.up-box {
+  position: relative; width: 100%; max-width: 400px; max-height: 100%; overflow-y: auto;
+  background: #0d0d12; border: 1px solid rgba(200,169,110,0.3); border-radius: 18px;
+  padding: 26px 22px 18px; box-shadow: 0 30px 90px rgba(0,0,0,0.7);
+  font-family: 'DM Sans', system-ui, sans-serif; color: #f0ede6;
+  transform: translateY(14px); transition: transform .25s;
+}
+.up-overlay.open .up-box { transform: none; }
+.up-close {
+  position: absolute; top: 10px; right: 12px; background: none; border: none; cursor: pointer;
+  color: rgba(240,237,230,0.5); font-size: 26px; line-height: 1; padding: 4px 8px;
+}
+.up-close:hover { color: #f0ede6; }
+.up-eyebrow {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: 10px; font-weight: 700; letter-spacing: .2em; text-transform: uppercase; color: #c8a96e;
+}
+.up-title { font-family: 'Bebas Neue', sans-serif; font-weight: 400; font-size: 34px; letter-spacing: .04em; line-height: 1.05; margin: 6px 0 8px; }
+.up-body { font-size: 14px; line-height: 1.5; color: rgba(240,237,230,0.72); margin: 0 0 16px; }
+.up-opt {
+  display: block; width: 100%; margin-bottom: 8px; padding: 14px 16px; border-radius: 12px; cursor: pointer;
+  font-family: 'DM Sans', sans-serif; font-size: 15px; font-weight: 700; text-align: center;
+  background: transparent; color: #f0ede6; border: 1px solid rgba(200,169,110,0.35);
+  transition: background .2s, border-color .2s;
+}
+.up-opt:hover { background: rgba(200,169,110,0.08); border-color: rgba(200,169,110,0.6); }
+.up-opt[hidden] { display: none; }
+.up-opt-main { background: linear-gradient(135deg, #d9bb7c, #c8a96e 55%, #b8955a); color: #0b0b0e; border-color: transparent; }
+.up-opt-main:hover { background: linear-gradient(135deg, #e2c58a, #d0b277 55%, #bf9c61); }
+.up-opt-starter { border-color: rgba(244,162,97,0.5); color: #f6c79d; }
+.up-opt:disabled { opacity: .6; cursor: default; }
+.up-box .checkout-legal { margin-top: 10px; text-align: center; }
+
+/* Locked scene in the "Practice specific scenes" carousel. */
+.carousel-card.is-locked .carousel-poster img { filter: grayscale(0.55) brightness(0.55); }
+.carousel-lock {
+  position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);
+  width: 48px; height: 48px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  background: rgba(8,8,10,0.72); color: #c8a96e; border: 1px solid rgba(200,169,110,0.45);
+  pointer-events: none;
+}
+.sc-card.locked { cursor: pointer; }

@@ -297,6 +297,8 @@ function handleGlobalEscape() {
   // user was about to record, dumping them back to the browser.
   if (isOverlayOpen('recConsentOverlay')) {
     closeRecordingConsent();
+  } else if (typeof UpgradeSheet !== 'undefined' && UpgradeSheet.isOpen()) {
+    UpgradeSheet.close();
   } else if (window.MirrorScenePath && MirrorScenePath.isReviewSheetOpen()) {
     MirrorScenePath.closeReviewSheet();
   } else if (isOverlayOpen('authModalOverlay')) {
@@ -345,7 +347,10 @@ function applySceneConfig(config) {
   // Only once enforcement is on, though. Narrowing this while the server
   // refuses nothing would hide fifteen playable scenes behind a lock that does
   // not exist.
-  DEFAULT_UNLOCKED_SCENES = (ENTITLEMENTS_ENFORCED && FREE_SCENE_IDS.length)
+  // With enforcement on that is the free set even when it is EMPTY: falling
+  // back to all of Level 1 there showed an account that owns nothing twenty
+  // open scenes, each of which the server refused after the take.
+  DEFAULT_UNLOCKED_SCENES = ENTITLEMENTS_ENFORCED
     ? FREE_SCENE_IDS.slice()
     : (CLV_LEVELS.length ? CLV_LEVELS[0].scenes.slice() : []);
   if (!userProgress.unlocked_scenes || !userProgress.unlocked_scenes.length) {
@@ -579,6 +584,13 @@ let waveAnimFrame  = null;
     await loadChallengePage(pathParts[1]);
     return;
   }
+  // A shared scene link (/scene/<id>): open that scene once the app is up, or
+  // after sign-in when the visitor has no session yet. The path is reset to /
+  // so a reload does not reopen it.
+  if (pathParts[0] === 'scene' && /^[a-z0-9_]{1,50}$/.test(pathParts[1] || '')) {
+    window._pendingSceneId = pathParts[1];
+    try { window.history.replaceState({}, '', '/'); } catch (e) { /* ignore */ }
+  }
   if (authToken) {
     const ok = await verifyToken();
     if (ok) {
@@ -588,6 +600,16 @@ let waveAnimFrame  = null;
   }
   showAuthScreen();
 })();
+
+function openPendingScene() {
+  const sid = window._pendingSceneId;
+  if (!sid) return;
+  window._pendingSceneId = null;
+  const s = scenes && scenes[sid];
+  if (!s) return;
+  const open = (userProgress.unlocked_scenes || []).includes(sid);
+  if (open) openModal(sid, s); else lockedSceneTap(sid);
+}
 
 // Detect post-checkout redirect
 if (window.location.search.includes('checkout=success')) {
@@ -723,6 +745,7 @@ async function enterAuthenticatedApp(options = {}) {
   await loadProgress();
   await Promise.all([loadScenes(), loadScores(), loadDaily(), loadStreakCard()]);
   if (activeChallenge) enterChallengeFromAuth();
+  else openPendingScene();
 
   try {
     const meResp = await fetch(`${API}/api/auth/me`, {
@@ -1069,6 +1092,89 @@ onClick('pricingLevel1Btn', () =>
   startCheckout('starter', 'pricingLevel1Btn', 'Starter Pack · $1'));
 
 // ══════════════════════════════════════════════
+// UPGRADE SHEET — what a locked scene offers
+// ══════════════════════════════════════════════
+// Every locked tap used to be a dead end: cards had no click at all, and a take
+// the server refused (403) ended in an alert. This is the one place a signed-in
+// learner is offered a plan, from wherever they hit the lock -- and the only
+// place in the app that offers monthly, since the pricing pill that chooses it
+// lives on the landing page, which is hidden once signed in.
+const UpgradeSheet = {
+  sceneId: null,
+
+  open(sceneId) {
+    const ov = el('upgradeSheet');
+    if (!ov) return;
+    if (window.mirrorIsPro) return;
+    this.sceneId = sceneId || null;
+    const s = (sceneId && scenes[sceneId]) || null;
+    setText('upScene', s ? s.title : 'every scene');
+    const isStarter = !!(sceneId && STARTER_SCENE_IDS.includes(sceneId));
+    const ownsStarter = Array.isArray(userProgress.accessible_scenes)
+      && STARTER_SCENE_IDS.length
+      && STARTER_SCENE_IDS.every(function(id) { return userProgress.accessible_scenes.includes(id); });
+    const starterBtn = el('upStarterBtn');
+    if (starterBtn) starterBtn.hidden = !(isStarter && !ownsStarter);
+    setText('upBody', isStarter && !ownsStarter
+      ? 'This scene is in the Starter Pack. Or get all ' + Object.keys(scenes).length + ' scenes with Pro.'
+      : 'Get all ' + Object.keys(scenes).length + ' scenes with Mirror Pro.');
+    this.renderPrices();
+    BillingPlans.load().then(() => this.renderPrices());
+    ov.classList.add('open');
+    ov.setAttribute('aria-hidden', 'false');
+  },
+
+  close() {
+    const ov = el('upgradeSheet');
+    if (!ov) return;
+    ov.classList.remove('open');
+    ov.setAttribute('aria-hidden', 'true');
+  },
+
+  isOpen() {
+    const ov = el('upgradeSheet');
+    return !!(ov && ov.classList.contains('open'));
+  },
+
+  label(key) {
+    const p = BillingPlans.get(key);
+    const price = p ? BillingPlans.money(p.price_cents) : null;
+    if (key === 'starter') return 'Starter Pack · 5 scenes' + (price ? ' · ' + price : '');
+    if (key === 'yearly') {
+      const pm = p ? BillingPlans.money(BillingPlans.perMonthCents(p)) : null;
+      return 'Pro yearly' + (price ? ' · ' + price + '/year' : '') + (pm ? ' (' + pm + '/mo)' : '');
+    }
+    return 'Pro monthly' + (price ? ' · ' + price + '/month' : '');
+  },
+
+  renderPrices() {
+    ['starter', 'yearly', 'monthly'].forEach((key) => {
+      const btn = el('up' + key.charAt(0).toUpperCase() + key.slice(1) + 'Btn');
+      if (btn && !btn.disabled) btn.textContent = this.label(key);
+    });
+  },
+};
+
+['starter', 'yearly', 'monthly'].forEach(function(key) {
+  const id = 'up' + key.charAt(0).toUpperCase() + key.slice(1) + 'Btn';
+  onClick(id, function() { startCheckout(key, id, UpgradeSheet.label(key)); });
+});
+onClick('upClose', function() { UpgradeSheet.close(); });
+bindBackdropDismiss('upgradeSheet', function() { UpgradeSheet.close(); });
+
+// A tap on a locked scene, from any surface. Not owned: offer a plan. Owned
+// but not reached yet: say what reaches it.
+function lockedSceneTap(sid) {
+  const owned = !Array.isArray(userProgress.accessible_scenes)
+    || userProgress.accessible_scenes.includes(sid);
+  if (!owned) { UpgradeSheet.open(sid); return; }
+  const lvl = LEVEL_MAP[sid];
+  const prev = CLV_LEVELS.find(function(l) { return l.level === lvl; });
+  const need = prev && prev.unlock ? prev.unlock : SCORE.PASS;
+  showToast('Level ' + lvl + ' unlocks at ' + need + '% on a Level ' + (lvl - 1) + ' scene', 3200);
+}
+
+// ══════════════════════════════════════════════
 // AUTH ORCHESTRATION — tab switching
 // ══════════════════════════════════════════════
 onClick('tabLoginBtn', () => switchAuthTab('login'));
@@ -1291,7 +1397,7 @@ function makeCard(id, s) {
         ${locked ? 'Locked' : 'Open Scene'}
       </span>
     </div>`;
-  if (!locked) el.addEventListener('click', () => openModal(id, s));
+  el.addEventListener('click', () => (locked ? lockedSceneTap(id) : openModal(id, s)));
   return el;
 }
 
@@ -1524,12 +1630,7 @@ if (window.MirrorScenePath) {
       const tab = document.querySelector('.bn-tab[data-panel="panelLevels"]');
       if (tab && typeof switchTab === 'function') switchTab(tab);
     },
-    showUpgrade: function() {
-      const tab = document.querySelector('.bn-tab[data-panel="panelHome"]');
-      if (tab && typeof switchTab === 'function') switchTab(tab);
-      const card = document.getElementById('proUpgradeCard');
-      if (card) setTimeout(function() { card.scrollIntoView({ behavior: 'smooth', block: 'center' }); }, 120);
-    },
+    showUpgrade: function(sid) { UpgradeSheet.open(sid); },
   });
 }
 
@@ -1906,6 +2007,13 @@ async function analyze() {
     // 422: the server heard no speech (a muted or wrong mic, or silence that
     // Whisper filled with "thanks for watching"). Nothing was scored or saved,
     // so this is a prompt to record again, said on the card -- not an alert.
+    // 403: the gate refused the scene (not owned, or a challenge link that is
+    // expired or used up). Nothing was scored.
+    if (res.status === 403) {
+      UpgradeSheet.open(activeScene);
+      return;
+    }
+
     if (res.status === 422) {
       const e = await res.json().catch(() => ({}));
       showRecNotice(e.detail || "We couldn't hear you clearly. Check your microphone and record again.");
@@ -3444,8 +3552,12 @@ function renderCarousel() {
   if (!track) return;
   track.innerHTML = '';
 
+  // Open scenes first, then the locked ones -- which used to be left out, so
+  // an account that owns nothing saw an empty block where the carousel goes.
   const unlocked = userProgress.unlocked_scenes || [];
-  const sceneIds = Object.keys(scenes).filter(sid => unlocked.includes(sid));
+  const allIds = Object.keys(scenes);
+  const sceneIds = allIds.filter(sid => unlocked.includes(sid))
+    .concat(allIds.filter(sid => !unlocked.includes(sid)));
   if (!sceneIds.length) return;
 
   // Build card elements
@@ -3455,8 +3567,9 @@ function renderCarousel() {
     if (!s) return;
     const poster = getSceneArtThumb(sid);
 
+    const isLocked = !unlocked.includes(sid);
     const card = document.createElement('div');
-    card.className = 'carousel-card';
+    card.className = 'carousel-card' + (isLocked ? ' is-locked' : '');
     card.dataset.sid = sid;
     card.dataset.index = i;
 
@@ -3488,7 +3601,7 @@ function renderCarousel() {
     card.addEventListener('click', () => {
       const idx = parseInt(card.dataset.index);
       if (idx === cfState.center) {
-        openModal(sid, s);
+        if (isLocked) lockedSceneTap(sid); else openModal(sid, s);
       } else {
         const diff = idx - cfState.center;
         if (Math.abs(diff) <= 3) {
@@ -3497,6 +3610,12 @@ function renderCarousel() {
       }
     });
 
+    if (isLocked) {
+      const lock = document.createElement('div');
+      lock.className = 'carousel-lock';
+      lock.innerHTML = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>';
+      (card.querySelector('.carousel-poster') || card).appendChild(lock);
+    }
     track.appendChild(card);
     cards.push({ card, sid, scene: s });
   });

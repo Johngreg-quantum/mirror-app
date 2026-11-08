@@ -36,7 +36,7 @@
       scoreHTML = `<span class="sc-score" style="color:${scoreColor};background:${scoreColor}18;border-color:${scoreColor}44">${card.pb}%</span>`;
     }
 
-    return `<div class="sc-card${card.locked ? ' locked' : ''}"${card.locked ? '' : ` onclick="selectScene('${card.sid}')"`}>
+    return `<div class="sc-card${card.locked ? ' locked' : ''}" onclick="${card.locked ? 'lockedSceneTap' : 'selectScene'}('${card.sid}')">
       <div class="sc-poster">
         ${posterHTML}
         <div class="sc-poster-overlay"></div>
@@ -47,7 +47,7 @@
       <div class="sc-info">
         <div class="sc-accent" style="background:${card.color}"></div>
         <div class="sc-movie">${card.title}</div>
-        <div class="sc-quote">&ldquo;${card.line}&rdquo;</div>
+        <div class="sc-quote">&ldquo;${card.quote || ''}&rdquo;</div>
       </div>
     </div>`;
   }

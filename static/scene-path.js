@@ -230,7 +230,10 @@
     }
 
     if (p.kind === 'scene' || p.kind === 'daily') { open(p.id); return; }
-    if (p.kind === 'locked') { ctx.close(); if (p.owned) ctx.showLevels(); else ctx.showUpgrade(); return; }
+    if (p.kind === 'locked') {
+      if (p.owned) { ctx.close(); ctx.showLevels(); } else { ctx.showUpgrade(p.id); }
+      return;
+    }
     ctx.close();
   }
 
