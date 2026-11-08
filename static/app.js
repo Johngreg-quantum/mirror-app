@@ -297,6 +297,8 @@ function handleGlobalEscape() {
   // user was about to record, dumping them back to the browser.
   if (isOverlayOpen('recConsentOverlay')) {
     closeRecordingConsent();
+  } else if (window.MirrorScenePath && MirrorScenePath.isReviewSheetOpen()) {
+    MirrorScenePath.closeReviewSheet();
   } else if (isOverlayOpen('authModalOverlay')) {
     closeAuthModal();
   } else if (isOverlayOpen('progressOverlay')) {
@@ -1498,7 +1500,37 @@ function openModal(id, s) {
   loadSceneAudio(id, playback.audioUrl);
 
   resetRec();
+  if (window.MirrorScenePath) MirrorScenePath.onOpen(id);
   setOverlayActive('overlay', true);
+}
+
+// Next scene / quick review (static/scene-path.js). Reads app state through
+// these accessors rather than globals so the module never holds a stale copy.
+if (window.MirrorScenePath) {
+  MirrorScenePath.init({
+    passScore: SCORE.PASS,
+    getActiveScene: function() { return activeScene; },
+    getLevels: function() { return CLV_LEVELS; },
+    getProgress: function() { return userProgress; },
+    getScenes: function() { return scenes; },
+    getUser: function() { return authUser; },
+    openScene: function(sid, s) {
+      openModal(sid, s);
+      const m = el('modal');
+      if (m) m.scrollTo({ top: 0, behavior: 'auto' });
+    },
+    close: closeModal,
+    showLevels: function() {
+      const tab = document.querySelector('.bn-tab[data-panel="panelLevels"]');
+      if (tab && typeof switchTab === 'function') switchTab(tab);
+    },
+    showUpgrade: function() {
+      const tab = document.querySelector('.bn-tab[data-panel="panelHome"]');
+      if (tab && typeof switchTab === 'function') switchTab(tab);
+      const card = document.getElementById('proUpgradeCard');
+      if (card) setTimeout(function() { card.scrollIntoView({ behavior: 'smooth', block: 'center' }); }, 120);
+    },
+  });
 }
 
 function closeModal() {
@@ -1554,6 +1586,8 @@ function resetRec() {
   });
   setOn('scorePanel', false);
   setOn('pbCompare', false);
+  hideRecNotice();
+  if (window.MirrorScenePath) MirrorScenePath.hide();
   setDisplay('phonSection', 'none');
   setOn('perfectBadge', false);
   const ptsPanel = el('ptsEarned');
@@ -1692,7 +1726,20 @@ function startRec() {
   beginRecording(navigator.mediaDevices.getUserMedia({ audio: true }));
 }
 
+function showRecNotice(message) {
+  const n = el('recNotice');
+  if (!n) { alert(message); return; }
+  n.textContent = message;
+  n.hidden = false;
+}
+
+function hideRecNotice() {
+  const n = el('recNotice');
+  if (n) n.hidden = true;
+}
+
 async function beginRecording(streamPromise) {
+  hideRecNotice();
   // Ownership point: browser permission, MediaRecorder construction, blob
   // creation, timer start, and empty-recording handling all stay together.
   // Takes an already-issued getUserMedia promise so the call itself can live
@@ -1856,6 +1903,15 @@ async function analyze() {
       return;
     }
 
+    // 422: the server heard no speech (a muted or wrong mic, or silence that
+    // Whisper filled with "thanks for watching"). Nothing was scored or saved,
+    // so this is a prompt to record again, said on the card -- not an alert.
+    if (res.status === 422) {
+      const e = await res.json().catch(() => ({}));
+      showRecNotice(e.detail || "We couldn't hear you clearly. Check your microphone and record again.");
+      return;
+    }
+
     if (!res.ok) {
       const e = await res.json().catch(() => ({ detail: 'Server error' }));
       throw new Error(e.detail);
@@ -1903,6 +1959,7 @@ async function analyze() {
     } catch (refreshErr) {
       console.error('Post-score refresh failed; showing the sequence anyway.', refreshErr);
     }
+    if (window.MirrorScenePath && activeScene) MirrorScenePath.render();
 
     if (typeof RewardSequence !== 'undefined') {
       const shown = RewardSequence.start(data, levelUp);
@@ -1965,6 +2022,11 @@ function showScore(data) {
   if (challengeCtx) {
     showChallengeResult(pct, challengeCtx.score_to_beat);
     challengeCtx = null;
+  }
+
+  if (window.MirrorScenePath) {
+    MirrorScenePath.onScored(activeScene, data);
+    MirrorScenePath.render();
   }
 }
 
@@ -2791,13 +2853,17 @@ function stopWaveform() {
 // ANALYZE / SCORE ORCHESTRATION — phoneme breakdown
 // ══════════════════════════════════════════════
 function renderPhonemeBreakdown(expected, transcribed) {
+  const scene = (activeScene && scenes[activeScene]) || {};
   renderPhonemeBreakdownDisplay({
     expected: expected,
     helpers: {
-      esTranslate: APP_HELPERS.esTranslate,
+      glossFor: function(index, word) { return APP_HELPERS.sceneGloss(scene, index, word); },
       wordBreakdown: APP_HELPERS.wordBreakdown,
     },
+    phrases: scene.phrases,
     refs: {
+      hintEl: el('phonHint'),
+      phrasesEl: el('phonPhrases'),
       sectionEl: el('phonSection'),
       wordsEl: el('phonWords'),
     },
@@ -2904,8 +2970,15 @@ onClick('btnHearSelf',  hearSelf);
 
 // Flip word cards on tap/click
 on('phonWords', 'click', e => {
-  const card = e.target.closest('.phon-word');
+  const card = e.target.closest('.phon-word.has-es');
   if (card) card.classList.toggle('flipped');
+});
+on('phonWords', 'keydown', e => {
+  if (e.key !== 'Enter' && e.key !== ' ') return;
+  const card = e.target.closest('.phon-word.has-es');
+  if (!card) return;
+  e.preventDefault();
+  card.classList.toggle('flipped');
 });
 onClick('btnTryAgain', () => {
   resetRec();

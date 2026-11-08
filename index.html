@@ -1024,13 +1024,26 @@
       border: 0.5px solid rgba(200,169,110,0.12);
       background: #000; aspect-ratio: 16 / 9;
     }
+    /* The line the learner has to say is the one thing on this card they must
+       read at a glance, mid-take. It was 14px italic Cormorant at 50% opacity:
+       elegant, and hard to read on a phone. Now a clean sans at full contrast. */
     .target-quote {
-      font-size: 14px; font-style: italic;
-      color: rgba(240,237,230,0.5); line-height: 1.65;
-      padding: 14px 16px; border-radius: 10px;
-      background: rgba(200,169,110,0.04);
-      border-left: 2px solid rgba(200,169,110,0.32);
-      margin: 14px 0;
+      font-family: 'DM Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+      font-size: 21px; font-style: normal; font-weight: 600;
+      color: #f5f1e8; line-height: 1.4; letter-spacing: -0.005em;
+      padding: 16px 18px; border-radius: 12px;
+      background: rgba(200,169,110,0.07);
+      border-left: 3px solid rgba(200,169,110,0.6);
+      /* Inset to the card's content edge like the video and the controls; at
+         0 it ran flush into both sides of the modal. */
+      margin: 6px 28px 18px;
+    }
+    .target-quote small {
+      font-size: 10px; font-weight: 600; letter-spacing: 0.2em;
+      color: rgba(200,169,110,0.85); margin-bottom: 8px;
+    }
+    @media (max-width: 640px) {
+      .target-quote { font-size: 18px; padding: 14px 15px; margin: 4px 20px 14px; }
     }
 
     /* ── SECTION 10 — RECORD BUTTON & SCORE ── */
@@ -6297,6 +6310,8 @@
       </button>
     </div>
 
+    <div class="sp-review-banner" id="spReviewBanner" hidden></div>
+
     <div class="target-quote">
       <small>Your target line</small>
       <span id="mQuote"></span>
@@ -6326,6 +6341,8 @@
         </button>
       </div>
 
+      <div class="rec-notice" id="recNotice" role="status" hidden></div>
+
       <div class="waveform-wrap" id="waveformWrap"></div>
 
       <div class="score-panel" id="scorePanel">
@@ -6352,12 +6369,14 @@
         </div>
         <div class="phon-section" id="phonSection" style="display:none">
           <div class="phon-label">Word Breakdown</div>
+          <div class="phon-hint" id="phonHint" hidden>Tap a word to see it in Spanish</div>
           <div class="phon-words" id="phonWords"></div>
           <div class="phon-legend">
             <span class="phon-legend-item"><span class="phon-legend-dot good"></span>Matched</span>
             <span class="phon-legend-item"><span class="phon-legend-dot close"></span>Close</span>
             <span class="phon-legend-item"><span class="phon-legend-dot miss"></span>Missed</span>
           </div>
+          <div class="phon-phrases" id="phonPhrases" hidden></div>
         </div>
         <div class="compare">
           <div class="compare-row">
@@ -6413,6 +6432,22 @@
         </div>
         <div class="challenge-result" id="challengeResult"></div>
       </div>
+    </div>
+
+    <!-- Next scene: pinned to the bottom of the card once a take is scored, so
+         the way forward is on screen without closing anything. Driven by
+         static/scene-path.js. -->
+    <div class="sp-next" id="spNext" hidden>
+      <button class="sp-next-btn" id="spNextBtn" type="button">
+        <span class="sp-next-thumb" id="spNextThumb"></span>
+        <span class="sp-next-text">
+          <span class="sp-next-eyebrow" id="spNextEyebrow">Next scene</span>
+          <span class="sp-next-title" id="spNextTitle"></span>
+        </span>
+        <span class="sp-next-arrow" aria-hidden="true">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m13 6 6 6-6 6"/></svg>
+        </span>
+      </button>
     </div>
 
   </div>
@@ -6678,6 +6713,18 @@
   </div>
 </div>
 
+<!-- Quick review, every 10 scenes: the ones still under the pass mark. -->
+<div class="sp-rs-overlay" id="spReviewSheet" aria-hidden="true">
+  <div class="sp-rs-box" role="dialog" aria-modal="true" aria-labelledby="spRsTitle">
+    <div class="sp-rs-eyebrow">10 scenes done</div>
+    <h2 class="sp-rs-title" id="spRsTitle">Quick review</h2>
+    <p class="sp-rs-body"><span id="spRsCount"></span> Retake them now while they're fresh &mdash; then we keep going.</p>
+    <ul class="sp-rs-list" id="spRsList"></ul>
+    <button class="sp-rs-start" id="spRsStart" type="button">Start review &rarr;</button>
+    <button class="sp-rs-skip" id="spRsSkip" type="button">Skip for now</button>
+  </div>
+</div>
+
 <!-- First-run recording consent (privacy policy §6). Opened by startRec() when
      the account has not consented; acceptance is stored on the user record, so
      this appears once per account, not once per device. Accepting starts the
@@ -6714,6 +6761,7 @@
 <script src="/static/scene-browser-domain.js"></script>
 <script src="/static/scene-modal-domain.js"></script>
 <script src="/static/analyze-score-domain.js"></script>
+<script src="/static/scene-path.js"></script>
 <script src="/static/recording-playback-domain.js"></script>
 <script src="/static/auth-modal-domain.js"></script>
 <script src="/static/daily-challenge-domain.js"></script>

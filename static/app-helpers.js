@@ -101,9 +101,22 @@
   </svg>`;
   }
 
+  // Fallback only: a bare-word dictionary cannot know that "get" in "get on
+  // that train" means "subirse". Scenes carry their own per-word glosses
+  // (sceneGloss below); this answers only for a scene that has none, and an
+  // unknown word gets no translation at all rather than a placeholder.
   function esTranslate(word) {
     const key = word.toLowerCase().replace(/[^a-z']/g, '').replace(/'/g, '');
-    return ES_DICT[key] || 'traducir…';
+    return ES_DICT[key] || '';
+  }
+
+  // The gloss for the index-th word of a scene's line. Index, not word: the
+  // same word means different things in different lines ("back" in "come
+  // back" vs "fight back"), and scene.glosses is aligned with line.split().
+  function sceneGloss(scene, index, word) {
+    const glosses = scene && Array.isArray(scene.glosses) ? scene.glosses : null;
+    if (glosses && typeof glosses[index] === 'string' && glosses[index]) return glosses[index];
+    return glosses ? '' : esTranslate(word || '');
   }
 
   function normalizeText(s) {
@@ -171,6 +184,7 @@
     buildCircleSVG,
     charSeqRatio,
     esTranslate,
+    sceneGloss,
     formatAvgPb,
     getDivision,
     lcsLength,

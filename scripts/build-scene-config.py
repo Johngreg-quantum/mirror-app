@@ -32,8 +32,13 @@ TARGET = ROOT / "scene_config.json"
 AUDIO_DIR = ROOT / "static" / "scenes" / "audio"
 AUDIO_URL = "/static/scenes/audio/%s.mp3"
 ART_DIR = ROOT / "static" / "scenes" / "art"
-ART_URL = "/static/scenes/art/%s.webp"
-ART_SM_URL = "/static/scenes/art/%s-sm.webp"
+# The query string is a cache-buster, not part of the path: the art used to be
+# a 302 to a stock photo sent with max-age=3600, and browsers keep following a
+# cached redirect. A new URL is one no browser has cached. Bump it whenever the
+# art behind these paths changes; the server ignores it.
+ART_VERSION = "poster2"
+ART_URL = "/static/scenes/art/%s.webp?v=" + ART_VERSION
+ART_SM_URL = "/static/scenes/art/%s-sm.webp?v=" + ART_VERSION
 
 # Unlock thresholds are a product decision, not something the scene list knows,
 # and they are unchanged from the film version: level 1 is open, level 2 wants
@@ -106,6 +111,21 @@ def build() -> dict:
         if s.get("idioms"):
             entry["idioms"] = list(s["idioms"])
 
+        # Word-by-word Spanish for the result screen's word breakdown, one
+        # gloss per whitespace token of `line` -- the same split the client
+        # makes -- so a gloss is found by position, in context, rather than
+        # by looking the bare word up in a dictionary. Public on purpose: it
+        # is a learning aid shown on tap, unlike `translation`, which is earned.
+        glosses = s.get("glosses")
+        if glosses is not None:
+            tokens = s["line"].split()
+            if len(glosses) != len(tokens):
+                raise SystemExit("scene %s: %d glosses for %d words"
+                                 % (s["id"], len(glosses), len(tokens)))
+            entry["glosses"] = list(glosses)
+        if s.get("phrases"):
+            entry["phrases"] = [{"en": p["en"], "es": p["es"]} for p in s["phrases"]]
+
         scenes[s["id"]] = entry
         levels.setdefault(level, []).append(s["id"])
 
@@ -133,7 +153,9 @@ def main() -> int:
 
     if "--check" in sys.argv:
         current = TARGET.read_text(encoding="utf-8", newline="") if TARGET.exists() else ""
-        if current != text:
+        # Line endings are git's business: the file is stored LF and checked
+        # out CRLF on Windows, so only the content is compared.
+        if current.replace("\r\n", "\n") != text.replace("\r\n", "\n"):
             print("scene_config.json is STALE -- rerun scripts/build-scene-config.py")
             return 1
         print("scene_config.json matches docs/original-scenes.json")

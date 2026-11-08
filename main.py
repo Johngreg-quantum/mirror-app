@@ -710,7 +710,9 @@ def get_openai_client() -> openai.OpenAI:
     api_key = os.getenv("OPENAI_API_KEY")
     if not api_key:
         raise HTTPException(500, "OPENAI_API_KEY environment variable is not set")
-    return openai.OpenAI(api_key=api_key)
+    # Bounded: the SDK default is a 600 s read timeout with 2 retries, so one
+    # stuck OpenAI request could hold a take open for half an hour.
+    return openai.OpenAI(api_key=api_key, timeout=45.0, max_retries=1)
 
 
 pwd_ctx = CryptContext(schemes=["bcrypt"], deprecated="auto")
@@ -1873,6 +1875,81 @@ def normalize(text: str) -> str:
     text = text.lower()
     text = re.sub(r"[^\w\s']", "", text)
     return re.sub(r"\s+", " ", text).strip()
+
+# Whisper does not return nothing for silence or noise: it returns the most
+# likely caption for a video, which is how a take with a muted mic came back as
+# "Thank you for watching and please subscribe to my channel" and was scored
+# 23% against a line the learner never got to say. Such a take is refused
+# (422) before it is scored or stored, so it costs no attempt and no streak.
+_NO_SPEECH_PHRASES = (
+    "thank you for watching", "thanks for watching", "thank you so much for watching",
+    "subscribe", "see you in the next video", "see you next time",
+    "subtitles by", "subtitled by", "captions by", "caption by", "amaraorg",
+    "transcribed by", "transcription by", "translated by", "please like",
+)
+_NO_SPEECH_EXACT = {"you", "thank you", "thank you very much", "thanks", "bye", "bye bye"}
+NO_SPEECH_DETAIL = (
+    "We couldn't hear you clearly. Check that your microphone is on and close "
+    "to you, then record again. / No te escuchamos bien: revisa que tu "
+    "micrófono esté encendido y cerca, y graba otra vez."
+)
+
+
+def _seg_field(seg, name):
+    return seg.get(name) if isinstance(seg, dict) else getattr(seg, name, None)
+
+
+def take_has_no_speech(transcript, text: str, expected: str) -> bool:
+    """True when the transcript is Whisper filling silence rather than speech.
+
+    Two independent signals, either of which is enough:
+      - the text is empty, a bare filler ("you", "thank you"), or contains a
+        known video-caption phrase that the expected line does not;
+      - every segment is both probably-silent and low-confidence -- Whisper's
+        own skip rule (no_speech_prob > 0.6 and avg_logprob < -1.0), read from
+        the verbose response. A transcript without segments (a stub, an older
+        response shape) is judged on the text alone."""
+    said = normalize(text or "")
+    if not said:
+        return True
+    if said in _NO_SPEECH_EXACT and normalize(expected) not in _NO_SPEECH_EXACT:
+        return True
+    expected_n = normalize(expected or "").replace(".", "")
+    said_flat = said.replace(".", "")
+    for phrase in _NO_SPEECH_PHRASES:
+        if phrase in said_flat and phrase not in expected_n:
+            return True
+    segments = _seg_field(transcript, "segments") or []
+    if not segments:
+        return False
+    for seg in segments:
+        nsp = _seg_field(seg, "no_speech_prob")
+        alp = _seg_field(seg, "avg_logprob")
+        if nsp is None or alp is None:
+            return False
+        if not (nsp > 0.6 and alp < -1.0):
+            return False
+    return True
+
+
+def _transcribe_take(path: str):
+    """Blocking Whisper call. Run through anyio.to_thread: called directly
+    inside the async handler it stalled every other request on the worker for
+    the length of the upload and transcription."""
+    client = get_openai_client()
+    with open(path, "rb") as f:
+        return client.audio.transcriptions.create(
+            model="whisper-1",
+            file=f,
+            # Pinned: the learner is saying an English line, and with the
+            # language left open a quiet or accented take was sometimes
+            # "heard" as Spanish or Portuguese words that cannot score.
+            language="en",
+            # Segments carry no_speech_prob / avg_logprob for the check above.
+            response_format="verbose_json",
+            temperature=0,
+        )
+
 
 def sync_score(expected: str, transcribed: str) -> float:
     ratio = difflib.SequenceMatcher(None, normalize(expected), normalize(transcribed)).ratio()
@@ -5449,15 +5526,31 @@ async def submit_recording(
         tmp.write(audio_bytes)
         tmp_path = tmp.name
 
+    import anyio
     try:
-        with open(tmp_path, "rb") as f:
-            transcript = get_openai_client().audio.transcriptions.create(model="whisper-1", file=f)
-        transcription = transcript.text
-    except Exception as e:
-        raise HTTPException(500, f"Transcription failed: {e}")
+        transcript = await anyio.to_thread.run_sync(_transcribe_take, tmp_path)
+    except HTTPException:
+        raise
+    except Exception:
+        # Logged, not returned: the raw error carried OpenAI's own message,
+        # masked API key included, straight to the learner.
+        logger.exception("[submit] transcription failed user_id=%s scene_id=%r",
+                         user["id"], scene_id)
+        raise HTTPException(
+            502,
+            "We couldn't process your recording right now. Please try again "
+            "in a moment. / No pudimos procesar tu grabación. Intenta de nuevo "
+            "en un momento.",
+        )
     finally:
         if os.path.exists(tmp_path):
             os.unlink(tmp_path)
+
+    transcription = (getattr(transcript, "text", "") or "").strip()
+    if take_has_no_speech(transcript, transcription, expected_line):
+        logger.info("[submit] no speech user_id=%s scene_id=%r heard=%r",
+                    user["id"], scene_id, transcription[:120])
+        raise HTTPException(422, NO_SPEECH_DETAIL)
 
     score = sync_score(expected_line, transcription)
 

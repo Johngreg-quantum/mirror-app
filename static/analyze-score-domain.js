@@ -93,17 +93,48 @@
       return;
     }
 
+    // The Spanish is looked up by POSITION in the line (helpers.glossFor), so
+    // "get" in "get on that train" reads "te subes" rather than a dictionary's
+    // "conseguir". A word with no gloss is a plain chip that does not flip --
+    // never a placeholder like the old "traducir…".
+    //
+    // No flag emoji on the back: Windows has no flag glyphs and drew it as the
+    // letters "ES", which read as part of the translation.
+    let glossed = 0;
     if (refs.wordsEl) {
-      refs.wordsEl.innerHTML = tokens.map(function(token) {
-        return `<span class="phon-word ${token.status}">
+      refs.wordsEl.innerHTML = tokens.map(function(token, i) {
+        const gloss = helpers.glossFor ? helpers.glossFor(i, token.word) : '';
+        if (gloss) glossed++;
+        return `<span class="phon-word ${token.status}${gloss ? ' has-es' : ''}"${gloss ? ' role="button" tabindex="0"' : ''}>
        <span class="phon-inner">
-         <span class="phon-face phon-front">${token.word}</span>
-         <span class="phon-face phon-back" lang="es">&#127466;&#127480; ${helpers.esTranslate(token.word)}</span>
+         <span class="phon-face phon-front">${escapeHtml(token.word)}</span>
+         ${gloss ? `<span class="phon-face phon-back" lang="es">${escapeHtml(gloss)}</span>` : ''}
        </span>
      </span>`;
       }).join('');
     }
+    if (refs.hintEl) refs.hintEl.hidden = glossed === 0;
+
+    // Phrasal verbs and idioms: "get on" is not "get" + "on", so the pair is
+    // spelled out once under the chips.
+    const phrases = Array.isArray(options.phrases) ? options.phrases : [];
+    if (refs.phrasesEl) {
+      refs.phrasesEl.innerHTML = phrases.length
+        ? `<div class="phon-phrases-label">Key phrases</div>` + phrases.map(function(p) {
+            return `<div class="phon-phrase"><span class="phon-phrase-en">${escapeHtml(p.en)}</span>`
+              + `<span class="phon-phrase-eq">=</span>`
+              + `<span class="phon-phrase-es" lang="es">${escapeHtml(p.es)}</span></div>`;
+          }).join('')
+        : '';
+      refs.phrasesEl.hidden = !phrases.length;
+    }
     if (refs.sectionEl) refs.sectionEl.style.display = '';
+  }
+
+  function escapeHtml(s) {
+    return String(s == null ? '' : s)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
   }
 
   function renderChallengeResultDisplay(options) {

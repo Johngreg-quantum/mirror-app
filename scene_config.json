@@ -17,7 +17,28 @@
         "audio_seconds": 4.06,
         "art": "/static/scenes/art/last_train.webp?v=poster2",
         "art_sm": "/static/scenes/art/last_train-sm.webp?v=poster2"
-      }
+      },
+      "glosses": [
+        "si",
+        "tú",
+        "te subes",
+        "a",
+        "ese",
+        "tren",
+        "no",
+        "vengas",
+        "de vuelta"
+      ],
+      "phrases": [
+        {
+          "en": "get on",
+          "es": "subirse (a un tren, bus)"
+        },
+        {
+          "en": "come back",
+          "es": "volver, regresar"
+        }
+      ]
     },
     "fashionably_late": {
       "title": "Fashionably Late",
@@ -36,7 +57,23 @@
         "audio_seconds": 3.86,
         "art": "/static/scenes/art/fashionably_late.webp?v=poster2",
         "art_sm": "/static/scenes/art/fashionably_late-sm.webp?v=poster2"
-      }
+      },
+      "glosses": [
+        "estoy",
+        "no",
+        "tarde",
+        "todos",
+        "los demás",
+        "están",
+        "solo",
+        "temprano"
+      ],
+      "phrases": [
+        {
+          "en": "everyone else",
+          "es": "todos los demás"
+        }
+      ]
     },
     "rooftop": {
       "title": "Rooftop",
@@ -55,7 +92,29 @@
         "audio_seconds": 5.45,
         "art": "/static/scenes/art/rooftop.webp?v=poster2",
         "art_sm": "/static/scenes/art/rooftop-sm.webp?v=poster2"
-      }
+      },
+      "glosses": [
+        "yo",
+        "casi",
+        "dije",
+        "lo",
+        "un",
+        "cien",
+        "veces",
+        "yo",
+        "quiero",
+        "te"
+      ],
+      "phrases": [
+        {
+          "en": "a hundred times",
+          "es": "cien veces"
+        },
+        {
+          "en": "I love you",
+          "es": "te quiero, te amo"
+        }
+      ]
     },
     "countdown": {
       "title": "Countdown",
@@ -74,7 +133,18 @@
         "audio_seconds": 3.5,
         "art": "/static/scenes/art/countdown.webp?v=poster2",
         "art_sm": "/static/scenes/art/countdown-sm.webp?v=poster2"
-      }
+      },
+      "glosses": [
+        "nosotros",
+        "tenemos",
+        "noventa",
+        "segundos",
+        "agarra",
+        "la",
+        "bolsa",
+        "y",
+        "corre"
+      ]
     },
     "locked_door": {
       "title": "The Locked Door",
@@ -93,7 +163,18 @@
         "audio_seconds": 5.57,
         "art": "/static/scenes/art/locked_door.webp?v=poster2",
         "art_sm": "/static/scenes/art/locked_door-sm.webp?v=poster2"
-      }
+      },
+      "glosses": [
+        "alguien",
+        "estuvo",
+        "en",
+        "esta",
+        "casa",
+        "la",
+        "puerta",
+        "estaba",
+        "cerrada con llave"
+      ]
     },
     "first_day": {
       "title": "First Day",
@@ -112,7 +193,25 @@
         "audio_seconds": 3.6,
         "art": "/static/scenes/art/first_day.webp?v=poster2",
         "art_sm": "/static/scenes/art/first_day-sm.webp?v=poster2"
-      }
+      },
+      "glosses": [
+        "hola",
+        "soy",
+        "nuevo",
+        "¿es?",
+        "esto",
+        "siempre",
+        "tan",
+        "ruidoso",
+        "en",
+        "aquí"
+      ],
+      "phrases": [
+        {
+          "en": "in here",
+          "es": "aquí adentro"
+        }
+      ]
     },
     "the_promise": {
       "title": "The Promise",
@@ -131,7 +230,22 @@
         "audio_seconds": 4.42,
         "art": "/static/scenes/art/the_promise.webp?v=poster2",
         "art_sm": "/static/scenes/art/the_promise-sm.webp?v=poster2"
-      }
+      },
+      "glosses": [
+        "voy a",
+        "venir",
+        "de vuelta",
+        "por",
+        "ti",
+        "yo",
+        "prometo"
+      ],
+      "phrases": [
+        {
+          "en": "come back",
+          "es": "volver, regresar"
+        }
+      ]
     },
     "no_signal": {
       "title": "No Signal",
@@ -150,7 +264,25 @@
         "audio_seconds": 4.92,
         "art": "/static/scenes/art/no_signal.webp?v=poster2",
         "art_sm": "/static/scenes/art/no_signal-sm.webp?v=poster2"
-      }
+      },
+      "glosses": [
+        "sin",
+        "señal",
+        "sin",
+        "camino",
+        "y",
+        "la",
+        "gasolina",
+        "está",
+        "casi",
+        "acabada"
+      ],
+      "phrases": [
+        {
+          "en": "gas",
+          "es": "gasolina (en EE. UU.)"
+        }
+      ]
     },
     "champion": {
       "title": "Champion",
@@ -169,7 +301,27 @@
         "audio_seconds": 5.02,
         "art": "/static/scenes/art/champion.webp?v=poster2",
         "art_sm": "/static/scenes/art/champion-sm.webp?v=poster2"
-      }
+      },
+      "glosses": [
+        "nadie",
+        "creyó",
+        "en",
+        "nosotros",
+        "mira",
+        "a",
+        "nosotros",
+        "ahora"
+      ],
+      "phrases": [
+        {
+          "en": "believe in",
+          "es": "creer en"
+        },
+        {
+          "en": "look at us",
+          "es": "míranos"
+        }
+      ]
     },
     "wrong_number": {
       "title": "Wrong Number",
@@ -188,7 +340,25 @@
         "audio_seconds": 5.21,
         "art": "/static/scenes/art/wrong_number.webp?v=poster2",
         "art_sm": "/static/scenes/art/wrong_number-sm.webp?v=poster2"
-      }
+      },
+      "glosses": [
+        "perdón",
+        "quién",
+        "es",
+        "esto",
+        "por qué",
+        "(pregunta)",
+        "usted",
+        "tiene",
+        "mi",
+        "perro"
+      ],
+      "phrases": [
+        {
+          "en": "who is this?",
+          "es": "¿quién habla? (al teléfono)"
+        }
+      ]
     },
     "the_storm": {
       "title": "The Storm",
@@ -207,7 +377,27 @@
         "audio_seconds": 3.22,
         "art": "/static/scenes/art/the_storm.webp?v=poster2",
         "art_sm": "/static/scenes/art/the_storm-sm.webp?v=poster2"
-      }
+      },
+      "glosses": [
+        "agárrate",
+        "(hold on)",
+        "de",
+        "la",
+        "cuerda",
+        "no",
+        "mires",
+        "abajo"
+      ],
+      "phrases": [
+        {
+          "en": "hold on to",
+          "es": "agarrarse de"
+        },
+        {
+          "en": "look down",
+          "es": "mirar hacia abajo"
+        }
+      ]
     },
     "the_letter": {
       "title": "The Letter",
@@ -226,7 +416,16 @@
         "audio_seconds": 5.21,
         "art": "/static/scenes/art/the_letter.webp?v=poster2",
         "art_sm": "/static/scenes/art/the_letter-sm.webp?v=poster2"
-      }
+      },
+      "glosses": [
+        "yo",
+        "leí",
+        "tu",
+        "carta",
+        "cada",
+        "palabra",
+        "dos veces"
+      ]
     },
     "interrogation": {
       "title": "Interrogation",
@@ -245,7 +444,24 @@
         "audio_seconds": 3.96,
         "art": "/static/scenes/art/interrogation.webp?v=poster2",
         "art_sm": "/static/scenes/art/interrogation-sm.webp?v=poster2"
-      }
+      },
+      "glosses": [
+        "tú",
+        "estabas",
+        "ahí",
+        "esa",
+        "noche",
+        "deja de",
+        "mentir",
+        "a",
+        "mí"
+      ],
+      "phrases": [
+        {
+          "en": "stop lying",
+          "es": "deja de mentir"
+        }
+      ]
     },
     "surprise": {
       "title": "Surprise",
@@ -264,7 +480,22 @@
         "audio_seconds": 3.26,
         "art": "/static/scenes/art/surprise.webp?v=poster2",
         "art_sm": "/static/scenes/art/surprise-sm.webp?v=poster2"
-      }
+      },
+      "glosses": [
+        "cierra",
+        "tus",
+        "ojos",
+        "bien",
+        "ahora",
+        "abre",
+        "los"
+      ],
+      "phrases": [
+        {
+          "en": "open them",
+          "es": "ábrelos"
+        }
+      ]
     },
     "the_deal": {
       "title": "The Deal",
@@ -283,7 +514,24 @@
         "audio_seconds": 5.45,
         "art": "/static/scenes/art/the_deal.webp?v=poster2",
         "art_sm": "/static/scenes/art/the_deal-sm.webp?v=poster2"
-      }
+      },
+      "glosses": [
+        "diez",
+        "mil",
+        "última",
+        "oferta",
+        "toma",
+        "lo",
+        "o",
+        "deja",
+        "lo"
+      ],
+      "phrases": [
+        {
+          "en": "take it or leave it",
+          "es": "lo tomas o lo dejas"
+        }
+      ]
     },
     "lost_city": {
       "title": "Lost City",
@@ -302,7 +550,18 @@
         "audio_seconds": 5.62,
         "art": "/static/scenes/art/lost_city.webp?v=poster2",
         "art_sm": "/static/scenes/art/lost_city-sm.webp?v=poster2"
-      }
+      },
+      "glosses": [
+        "(pregunta)",
+        "tú",
+        "ves",
+        "eso",
+        "es",
+        "real",
+        "es",
+        "de verdad",
+        "real"
+      ]
     },
     "the_apology": {
       "title": "The Apology",
@@ -321,7 +580,27 @@
         "audio_seconds": 5.3,
         "art": "/static/scenes/art/the_apology.webp?v=poster2",
         "art_sm": "/static/scenes/art/the_apology-sm.webp?v=poster2"
-      }
+      },
+      "glosses": [
+        "yo",
+        "estaba",
+        "equivocado",
+        "estoy",
+        "arrepentido",
+        "por favor",
+        "no",
+        "te vayas"
+      ],
+      "phrases": [
+        {
+          "en": "I was wrong",
+          "es": "me equivoqué"
+        },
+        {
+          "en": "I'm sorry",
+          "es": "lo siento"
+        }
+      ]
     },
     "midnight_call": {
       "title": "Midnight Call",
@@ -340,7 +619,25 @@
         "audio_seconds": 4.42,
         "art": "/static/scenes/art/midnight_call.webp?v=poster2",
         "art_sm": "/static/scenes/art/midnight_call-sm.webp?v=poster2"
-      }
+      },
+      "glosses": [
+        "no",
+        "abras",
+        "la",
+        "puerta",
+        "lo que sea",
+        "tú",
+        "oigas",
+        "no",
+        "abras",
+        "la"
+      ],
+      "phrases": [
+        {
+          "en": "whatever you hear",
+          "es": "oigas lo que oigas"
+        }
+      ]
     },
     "stand_up": {
       "title": "Stand Up",
@@ -359,7 +656,23 @@
         "audio_seconds": 5.71,
         "art": "/static/scenes/art/stand_up.webp?v=poster2",
         "art_sm": "/static/scenes/art/stand_up-sm.webp?v=poster2"
-      }
+      },
+      "glosses": [
+        "esta noche",
+        "nosotros",
+        "no",
+        "huimos",
+        "esta noche",
+        "nosotros",
+        "luchamos",
+        "de vuelta"
+      ],
+      "phrases": [
+        {
+          "en": "fight back",
+          "es": "defenderse, contraatacar"
+        }
+      ]
     },
     "coffee_shop": {
       "title": "Coffee Shop",
@@ -378,7 +691,23 @@
         "audio_seconds": 3.36,
         "art": "/static/scenes/art/coffee_shop.webp?v=poster2",
         "art_sm": "/static/scenes/art/coffee_shop-sm.webp?v=poster2"
-      }
+      },
+      "glosses": [
+        "¿está?",
+        "este",
+        "asiento",
+        "ocupado",
+        "o",
+        "guardado",
+        "para",
+        "mí"
+      ],
+      "phrases": [
+        {
+          "en": "is this seat taken?",
+          "es": "¿está ocupado este asiento?"
+        }
+      ]
     },
     "job_offer": {
       "title": "The Offer",
@@ -397,7 +726,30 @@
         "audio_seconds": 6.0,
         "art": "/static/scenes/art/job_offer.webp?v=poster2",
         "art_sm": "/static/scenes/art/job_offer-sm.webp?v=poster2"
-      }
+      },
+      "glosses": [
+        "ellos",
+        "ofrecieron",
+        "me",
+        "el",
+        "trabajo",
+        "en",
+        "Nueva",
+        "York",
+        "yo",
+        "pedí",
+        "(ask for)",
+        "una",
+        "noche",
+        "para",
+        "pensar"
+      ],
+      "phrases": [
+        {
+          "en": "ask for",
+          "es": "pedir"
+        }
+      ]
     },
     "the_heist": {
       "title": "The Plan",
@@ -416,7 +768,30 @@
         "audio_seconds": 5.86,
         "art": "/static/scenes/art/the_heist.webp?v=poster2",
         "art_sm": "/static/scenes/art/the_heist-sm.webp?v=poster2"
-      }
+      },
+      "glosses": [
+        "nadie",
+        "toca",
+        "la",
+        "alarma",
+        "nadie",
+        "usa",
+        "reales",
+        "nombres",
+        "estamos",
+        "adentro",
+        "y",
+        "afuera",
+        "en",
+        "cuatro",
+        "minutos"
+      ],
+      "phrases": [
+        {
+          "en": "in and out",
+          "es": "entrar y salir rápido"
+        }
+      ]
     },
     "old_friends": {
       "title": "Old Friends",
@@ -435,7 +810,33 @@
         "audio_seconds": 5.45,
         "art": "/static/scenes/art/old_friends.webp?v=poster2",
         "art_sm": "/static/scenes/art/old_friends-sm.webp?v=poster2"
-      }
+      },
+      "glosses": [
+        "tú",
+        "no has",
+        "cambiado",
+        "para",
+        "nada",
+        "eres",
+        "todavía",
+        "el",
+        "peor",
+        "conductor",
+        "yo",
+        "he",
+        "jamás",
+        "conocido"
+      ],
+      "phrases": [
+        {
+          "en": "not ... at all",
+          "es": "para nada"
+        },
+        {
+          "en": "the worst I have ever met",
+          "es": "el peor que he conocido"
+        }
+      ]
     },
     "good_news": {
       "title": "Good News",
@@ -454,7 +855,28 @@
         "audio_seconds": 4.2,
         "art": "/static/scenes/art/good_news.webp?v=poster2",
         "art_sm": "/static/scenes/art/good_news-sm.webp?v=poster2"
-      }
+      },
+      "glosses": [
+        "el",
+        "doctor",
+        "dice",
+        "ella",
+        "va",
+        "a",
+        "estar",
+        "bien",
+        "yo",
+        "puedo",
+        "por fin",
+        "respirar",
+        "otra vez"
+      ],
+      "phrases": [
+        {
+          "en": "be going to",
+          "es": "ir a (futuro)"
+        }
+      ]
     },
     "blind_date": {
       "title": "Blind Date",
@@ -473,7 +895,32 @@
         "audio_seconds": 5.71,
         "art": "/static/scenes/art/blind_date.webp?v=poster2",
         "art_sm": "/static/scenes/art/blind_date-sm.webp?v=poster2"
-      }
+      },
+      "glosses": [
+        "voy a",
+        "ser",
+        "honesto",
+        "yo",
+        "casi",
+        "cancelé",
+        "esta noche",
+        "pero",
+        "estoy",
+        "muy",
+        "contento",
+        "yo",
+        "no lo hice"
+      ],
+      "phrases": [
+        {
+          "en": "I'll be honest",
+          "es": "te seré honesto"
+        },
+        {
+          "en": "I'm glad",
+          "es": "me alegra"
+        }
+      ]
     },
     "final_round": {
       "title": "Final Round",
@@ -492,7 +939,30 @@
         "audio_seconds": 5.3,
         "art": "/static/scenes/art/final_round.webp?v=poster2",
         "art_sm": "/static/scenes/art/final_round-sm.webp?v=poster2"
-      }
+      },
+      "glosses": [
+        "tus",
+        "piernas",
+        "están",
+        "cansadas",
+        "y",
+        "tus",
+        "pulmones",
+        "están",
+        "ardiendo",
+        "pero",
+        "tú",
+        "estás",
+        "no",
+        "terminado",
+        "todavía"
+      ],
+      "phrases": [
+        {
+          "en": "not done yet",
+          "es": "todavía no has terminado"
+        }
+      ]
     },
     "the_secret": {
       "title": "The Secret",
@@ -511,7 +981,30 @@
         "audio_seconds": 5.76,
         "art": "/static/scenes/art/the_secret.webp?v=poster2",
         "art_sm": "/static/scenes/art/the_secret-sm.webp?v=poster2"
-      }
+      },
+      "glosses": [
+        "si",
+        "yo",
+        "digo",
+        "te",
+        "lo que",
+        "yo",
+        "vi",
+        "tú",
+        "tienes",
+        "que",
+        "prometer",
+        "vas a",
+        "nunca",
+        "repetir",
+        "lo"
+      ],
+      "phrases": [
+        {
+          "en": "have to",
+          "es": "tener que"
+        }
+      ]
     },
     "moving_out": {
       "title": "Moving Out",
@@ -530,7 +1023,29 @@
         "audio_seconds": 6.86,
         "art": "/static/scenes/art/moving_out.webp?v=poster2",
         "art_sm": "/static/scenes/art/moving_out-sm.webp?v=poster2"
-      }
+      },
+      "glosses": [
+        "este",
+        "apartamento",
+        "era",
+        "demasiado",
+        "pequeño",
+        "demasiado",
+        "ruidoso",
+        "y",
+        "el",
+        "mejor",
+        "hogar",
+        "yo",
+        "jamás",
+        "tuve"
+      ],
+      "phrases": [
+        {
+          "en": "too small",
+          "es": "demasiado pequeño"
+        }
+      ]
     },
     "lost_luggage": {
       "title": "Lost Luggage",
@@ -549,7 +1064,25 @@
         "audio_seconds": 5.81,
         "art": "/static/scenes/art/lost_luggage.webp?v=poster2",
         "art_sm": "/static/scenes/art/lost_luggage-sm.webp?v=poster2"
-      }
+      },
+      "glosses": [
+        "así que",
+        "mi",
+        "maleta",
+        "fue",
+        "a",
+        "París",
+        "y",
+        "yo",
+        "fui",
+        "a",
+        "Chicago",
+        "gran",
+        "comienzo",
+        "de",
+        "mis",
+        "vacaciones"
+      ]
     },
     "the_pilot": {
       "title": "Mayday",
@@ -568,7 +1101,33 @@
         "audio_seconds": 5.16,
         "art": "/static/scenes/art/the_pilot.webp?v=poster2",
         "art_sm": "/static/scenes/art/the_pilot-sm.webp?v=poster2"
-      }
+      },
+      "glosses": [
+        "nosotros",
+        "perdimos",
+        "motor",
+        "dos",
+        "yo",
+        "voy",
+        "a",
+        "aterrizar",
+        "este",
+        "avión",
+        "así que",
+        "todos",
+        "agárrense",
+        "(hold on)"
+      ],
+      "phrases": [
+        {
+          "en": "I'm going to",
+          "es": "voy a"
+        },
+        {
+          "en": "hold on",
+          "es": "agárrense, sujétense"
+        }
+      ]
     },
     "missed_games": {
       "title": "Missed Games",
@@ -587,7 +1146,33 @@
         "audio_seconds": 5.16,
         "art": "/static/scenes/art/missed_games.webp?v=poster2",
         "art_sm": "/static/scenes/art/missed_games-sm.webp?v=poster2"
-      }
+      },
+      "glosses": [
+        "yo",
+        "no estuve",
+        "ahí",
+        "para",
+        "tus",
+        "partidos",
+        "y",
+        "estoy",
+        "arrepentido",
+        "deja",
+        "me",
+        "estar",
+        "ahí",
+        "ahora"
+      ],
+      "phrases": [
+        {
+          "en": "I'm sorry",
+          "es": "lo siento"
+        },
+        {
+          "en": "let me",
+          "es": "déjame"
+        }
+      ]
     },
     "the_window": {
       "title": "The Window",
@@ -606,7 +1191,23 @@
         "audio_seconds": 6.22,
         "art": "/static/scenes/art/the_window.webp?v=poster2",
         "art_sm": "/static/scenes/art/the_window-sm.webp?v=poster2"
-      }
+      },
+      "glosses": [
+        "la",
+        "ventana",
+        "estaba",
+        "rota",
+        "desde",
+        "el",
+        "interior",
+        "quienquiera que",
+        "hizo",
+        "esto",
+        "nunca",
+        "salió de",
+        "la",
+        "casa"
+      ]
     },
     "wedding_toast": {
       "title": "The Toast",
@@ -625,7 +1226,33 @@
         "audio_seconds": 5.45,
         "art": "/static/scenes/art/wedding_toast.webp?v=poster2",
         "art_sm": "/static/scenes/art/wedding_toast-sm.webp?v=poster2"
-      }
+      },
+      "glosses": [
+        "cuando",
+        "ellos",
+        "por primera vez",
+        "se conocieron",
+        "ella",
+        "dijo",
+        "él",
+        "era",
+        "molesto",
+        "claramente",
+        "ella",
+        "estaba",
+        "medio",
+        "en lo cierto"
+      ],
+      "phrases": [
+        {
+          "en": "first met",
+          "es": "se conocieron"
+        },
+        {
+          "en": "half right",
+          "es": "con media razón"
+        }
+      ]
     },
     "night_shift": {
       "title": "Night Shift",
@@ -644,7 +1271,22 @@
         "audio_seconds": 5.66,
         "art": "/static/scenes/art/night_shift.webp?v=poster2",
         "art_sm": "/static/scenes/art/night_shift-sm.webp?v=poster2"
-      }
+      },
+      "glosses": [
+        "yo",
+        "trabajo",
+        "dos",
+        "empleos",
+        "para que",
+        "tú",
+        "puedas",
+        "tener",
+        "las",
+        "oportunidades",
+        "yo",
+        "nunca",
+        "tuve"
+      ]
     },
     "the_audition": {
       "title": "The Audition",
@@ -663,7 +1305,29 @@
         "audio_seconds": 5.4,
         "art": "/static/scenes/art/the_audition.webp?v=poster2",
         "art_sm": "/static/scenes/art/the_audition-sm.webp?v=poster2"
-      }
+      },
+      "glosses": [
+        "he",
+        "practicado",
+        "esto",
+        "cada",
+        "noche",
+        "durante",
+        "un",
+        "año",
+        "por favor",
+        "solo",
+        "da",
+        "me",
+        "una",
+        "oportunidad"
+      ],
+      "phrases": [
+        {
+          "en": "give me",
+          "es": "dame"
+        }
+      ]
     },
     "oxygen_low": {
       "title": "Oxygen Low",
@@ -682,7 +1346,35 @@
         "audio_seconds": 6.41,
         "art": "/static/scenes/art/oxygen_low.webp?v=poster2",
         "art_sm": "/static/scenes/art/oxygen_low-sm.webp?v=poster2"
-      }
+      },
+      "glosses": [
+        "el oxígeno",
+        "está",
+        "al",
+        "cuarenta",
+        "por ciento",
+        "si",
+        "nosotros",
+        "no",
+        "arreglamos",
+        "esto",
+        "ahora",
+        "nosotros",
+        "no vamos a",
+        "tener",
+        "otro",
+        "intento"
+      ],
+      "phrases": [
+        {
+          "en": "won't",
+          "es": "will not: no (futuro)"
+        },
+        {
+          "en": "another try",
+          "es": "otro intento"
+        }
+      ]
     },
     "first_dance": {
       "title": "First Dance",
@@ -701,7 +1393,35 @@
         "audio_seconds": 5.52,
         "art": "/static/scenes/art/first_dance.webp?v=poster2",
         "art_sm": "/static/scenes/art/first_dance-sm.webp?v=poster2"
-      }
+      },
+      "glosses": [
+        "yo",
+        "no",
+        "sé",
+        "cómo",
+        "(to + verbo)",
+        "bailar",
+        "enseña",
+        "me",
+        "y",
+        "yo",
+        "prometo",
+        "no",
+        "(to + verbo)",
+        "pisar",
+        "(step on)",
+        "a ti"
+      ],
+      "phrases": [
+        {
+          "en": "how to dance",
+          "es": "cómo bailar"
+        },
+        {
+          "en": "step on",
+          "es": "pisar"
+        }
+      ]
     },
     "the_rival": {
       "title": "The Rival",
@@ -720,7 +1440,32 @@
         "audio_seconds": 5.62,
         "art": "/static/scenes/art/the_rival.webp?v=poster2",
         "art_sm": "/static/scenes/art/the_rival-sm.webp?v=poster2"
-      }
+      },
+      "glosses": [
+        "tú",
+        "ganaste",
+        "me",
+        "pasado",
+        "año",
+        "este",
+        "año",
+        "yo",
+        "vine",
+        "aquí",
+        "listo",
+        "para",
+        "ti"
+      ],
+      "phrases": [
+        {
+          "en": "last year",
+          "es": "el año pasado"
+        },
+        {
+          "en": "beat me",
+          "es": "me ganaste"
+        }
+      ]
     },
     "runaway": {
       "title": "Runaway",
@@ -739,7 +1484,22 @@
         "audio_seconds": 6.96,
         "art": "/static/scenes/art/runaway.webp?v=poster2",
         "art_sm": "/static/scenes/art/runaway-sm.webp?v=poster2"
-      }
+      },
+      "glosses": [
+        "deja",
+        "tu",
+        "teléfono",
+        "lleva",
+        "solo",
+        "efectivo",
+        "y",
+        "no",
+        "digas",
+        "a nadie",
+        "adónde",
+        "tú",
+        "vas"
+      ]
     },
     "grandmas_kitchen": {
       "title": "Grandma's Kitchen",
@@ -758,7 +1518,29 @@
         "audio_seconds": 6.0,
         "art": "/static/scenes/art/grandmas_kitchen.webp?v=poster2",
         "art_sm": "/static/scenes/art/grandmas_kitchen-sm.webp?v=poster2"
-      }
+      },
+      "glosses": [
+        "ella",
+        "enseñó",
+        "me",
+        "a",
+        "cocinar",
+        "sin",
+        "una",
+        "receta",
+        "solo",
+        "prueba",
+        "lo",
+        "y",
+        "confía en",
+        "ti mismo"
+      ],
+      "phrases": [
+        {
+          "en": "trust yourself",
+          "es": "confía en ti"
+        }
+      ]
     },
     "boardroom": {
       "title": "The Boardroom",
@@ -781,6 +1563,33 @@
       "idioms": [
         "beat around the bush",
         "drop the ball"
+      ],
+      "glosses": [
+        "vamos a",
+        "no",
+        "golpear",
+        "alrededor de",
+        "el",
+        "arbusto",
+        "los",
+        "números",
+        "están",
+        "malos",
+        "y",
+        "alguien",
+        "dejó caer",
+        "la",
+        "pelota"
+      ],
+      "phrases": [
+        {
+          "en": "beat around the bush",
+          "es": "andarse con rodeos"
+        },
+        {
+          "en": "drop the ball",
+          "es": "fallar, descuidar algo"
+        }
       ]
     },
     "roommate": {
@@ -803,6 +1612,28 @@
       },
       "idioms": [
         "sarcasm"
+      ],
+      "glosses": [
+        "ah",
+        "genial",
+        "tú",
+        "terminaste",
+        "la",
+        "leche",
+        "otra vez",
+        "de verdad",
+        "eres",
+        "un",
+        "regalo",
+        "para",
+        "este",
+        "apartamento"
+      ],
+      "phrases": [
+        {
+          "en": "Oh, great",
+          "es": "¡qué bien! (con sarcasmo)"
+        }
       ]
     },
     "the_comeback": {
@@ -825,6 +1656,34 @@
       },
       "idioms": [
         "write someone off"
+      ],
+      "glosses": [
+        "todos",
+        "descartaron",
+        "me",
+        "(write off)",
+        "curiosa",
+        "cosa",
+        "es",
+        "yo",
+        "estaba",
+        "apenas",
+        "empezando",
+        "(get started)"
+      ],
+      "phrases": [
+        {
+          "en": "write someone off",
+          "es": "dar a alguien por acabado"
+        },
+        {
+          "en": "funny thing is",
+          "es": "lo curioso es que"
+        },
+        {
+          "en": "get started",
+          "es": "empezar"
+        }
       ]
     },
     "cold_feet": {
@@ -847,6 +1706,27 @@
       },
       "idioms": [
         "get cold feet"
+      ],
+      "glosses": [
+        "estoy",
+        "no",
+        "poniéndome",
+        "fríos",
+        "pies",
+        "estoy",
+        "solo",
+        "reconsiderando",
+        "cada",
+        "decisión",
+        "he",
+        "alguna vez",
+        "tomado"
+      ],
+      "phrases": [
+        {
+          "en": "get cold feet",
+          "es": "echarse para atrás (por nervios)"
+        }
       ]
     },
     "the_bluff": {
@@ -870,6 +1750,33 @@
       "idioms": [
         "read someone like a book",
         "bluff"
+      ],
+      "glosses": [
+        "estás",
+        "fanfarroneando",
+        "yo",
+        "puedo",
+        "leer",
+        "te",
+        "como",
+        "un",
+        "libro",
+        "y",
+        "es",
+        "un",
+        "muy",
+        "corto",
+        "libro"
+      ],
+      "phrases": [
+        {
+          "en": "bluff",
+          "es": "fingir, fanfarronear"
+        },
+        {
+          "en": "read someone like a book",
+          "es": "saber lo que alguien piensa"
+        }
       ]
     },
     "done_waiting": {
@@ -893,6 +1800,35 @@
       "idioms": [
         "bend over backwards",
         "bite your tongue"
+      ],
+      "glosses": [
+        "he",
+        "doblado",
+        "(bend over)",
+        "hacia atrás",
+        "por",
+        "esta",
+        "empresa",
+        "y",
+        "estoy",
+        "harto de",
+        "morder",
+        "mi",
+        "lengua"
+      ],
+      "phrases": [
+        {
+          "en": "bend over backwards",
+          "es": "hacer lo imposible"
+        },
+        {
+          "en": "I'm done",
+          "es": "ya me cansé"
+        },
+        {
+          "en": "bite your tongue",
+          "es": "callarse, aguantarse"
+        }
       ]
     },
     "lucky": {
@@ -915,6 +1851,31 @@
       },
       "idioms": [
         "if it helps you sleep at night"
+      ],
+      "glosses": [
+        "ve",
+        "adelante",
+        "y",
+        "llama",
+        "lo",
+        "suerte",
+        "si",
+        "eso",
+        "ayuda",
+        "te",
+        "dormir",
+        "por",
+        "la noche"
+      ],
+      "phrases": [
+        {
+          "en": "go ahead",
+          "es": "adelante, hazlo"
+        },
+        {
+          "en": "if that helps you sleep at night",
+          "es": "si así te quedas tranquilo"
+        }
       ]
     }
   },
