@@ -2514,6 +2514,10 @@ header {
 }
 .app-nav-logo em { font-style: normal; color: var(--text); }
 .app-nav-right { display: flex; align-items: center; gap: 10px; }
+/* In the nav the chip is a flex item like its neighbours. Its base rule is
+   position:absolute (top/right 24px) from an older layout, which pinned it to
+   the corner ON TOP of the sound and My Progress buttons. */
+.app-nav-right .user-chip { position: static; }
 .app-nav-progress {
   position: static;
   font-size: 11px; padding: 6px 12px 6px 9px;

@@ -3497,7 +3497,10 @@ function renderHeroFeatured() {
   // The scene header. No art yet means the typographic poster, injected
   // beside the <img> rather than instead of it, so the existing gradient
   // and title overlay keep working either way.
-  const heroImg = getSceneArtWide(sid);
+  // The -bg art carries no lettering: the hero sets the title in real text,
+  // and a poster with its own title painted in showed it twice.
+  const heroArt = getSceneArt(sid);
+  const heroImg = heroArt ? heroArt.replace(/\.webp(\?|$)/, '-bg.webp$1') : '';
   const posterImg = document.getElementById('heroPosterImg');
   if (posterImg) {
     const host = posterImg.parentElement;

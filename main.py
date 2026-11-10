@@ -112,9 +112,9 @@ _REFUNDS_MD_PATH = os.path.join(_APP_DIR, "docs", "refund-policy.md")
 # new shell keeps working unchanged. A scene missing from the file falls back
 # to the local webp. Delete the file (or an entry) to go back.
 _PHOTO_ART_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "static", "scenes", "photo-art.json")
-_PHOTO_ART_RE = re.compile(r"^scenes/art/([a-z0-9_]+?)(-sm|-wide)?\.webp$")
+_PHOTO_ART_RE = re.compile(r"^scenes/art/([a-z0-9_]+?)(-sm|-wide|-bg)?\.webp$")
 # Crop sizes per variant: full 2:3 card, small 2:3 card, landscape marquee card.
-_PHOTO_ART_SIZES = {None: (800, 1200), "-sm": (400, 600), "-wide": (640, 372)}
+_PHOTO_ART_SIZES = {None: (800, 1200), "-sm": (400, 600), "-wide": (640, 372), "-bg": (800, 1200)}
 try:
     with open(_PHOTO_ART_PATH, encoding="utf-8") as _f:
         _PHOTO_ART = {
@@ -285,6 +285,21 @@ async def _poster_art_response(path: str):
     from fastapi.responses import FileResponse
     scene_id, variant = m.group(1), m.group(2)
     headers = {"Cache-Control": "public, max-age=3600"}
+    if variant == "-bg":
+        # A backdrop: art with NO lettering, for a surface that sets the title
+        # itself in real text (the Home hero). The 8 posters with a painted-in
+        # title have a text-free twin; for the rest the portrait art already
+        # has none. Stretched behind the hero, a titled poster showed its own
+        # title in letters a screen wide, under the real one.
+        if scene_id in _HF_POSTERS and scene_id not in _HF_BAKED_TITLE:
+            wall = await _hf_poster_file(scene_id)
+            card = wall[:-len(".webp")] + "-card.webp" if wall else ""
+            if card and os.path.exists(card):
+                return FileResponse(card, media_type="image/webp", headers=headers)
+        bg = os.path.join(_POSTERS_DIR, scene_id + "-bg.webp")
+        if os.path.exists(bg):
+            return FileResponse(bg, media_type="image/webp", headers=headers)
+        return None
     if scene_id in _HF_POSTERS and (variant == "-wide" or scene_id not in _HF_BAKED_TITLE):
         wall = await _hf_poster_file(scene_id)
         if wall:
