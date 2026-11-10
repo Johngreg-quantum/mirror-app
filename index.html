@@ -1626,11 +1626,57 @@
     .rs-pip.new::before { transform: scaleX(0); transform-origin: left; }
     .rs-card.rs-enter .rs-pip.new::before { animation: rsFill 0.7s cubic-bezier(.22,.9,.3,1) 0.35s both; }
 
+    /* A phrase as the hero ("Nailed it") rather than a figure. */
+    .rs-card.rs-words .rs-value { font-size: 58px; letter-spacing: 0.04em; text-transform: uppercase; }
+
+    /* The take in three figures. */
+    .rs-stats { display: flex; gap: 10px; justify-content: center; margin: 18px 0 14px; }
+    .rs-stat {
+      flex: 1 1 0; max-width: 112px; padding: 2px; border-radius: 14px;
+      background: linear-gradient(180deg, rgba(232,205,150,0.85), rgba(160,125,62,0.75));
+      box-shadow: 0 8px 22px rgba(0,0,0,0.45);
+    }
+    .rs-stat-label {
+      padding: 5px 0 4px; font-family: 'DM Sans', sans-serif; font-size: 10px; font-weight: 700;
+      letter-spacing: 0.14em; text-transform: uppercase; color: #14110a;
+    }
+    .rs-stat-value {
+      padding: 12px 4px 11px; border-radius: 12px; background: #0e0e13;
+      font-family: 'Bebas Neue', sans-serif; font-size: 30px; line-height: 1; color: #f3e3b6;
+    }
+    .rs-stat-value small { font-size: 17px; opacity: 0.75; margin-left: 1px; }
+    .rs-stat.rs-tone-low { background: linear-gradient(180deg, rgba(200,200,205,0.6), rgba(120,120,128,0.55)); }
+    .rs-stat.rs-tone-low .rs-stat-value { color: #e4e2dc; }
+    .rs-card.rs-enter .rs-stat { animation: rsPop 0.5s cubic-bezier(.2,1.4,.4,1) calc(0.2s + var(--i) * 0.14s) both; }
+
+    /* The week of a streak. */
+    .rs-week { display: flex; justify-content: center; gap: 9px; margin: 16px 0 10px; }
+    .rs-day { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+    .rs-day-dot {
+      width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+      background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.1); color: #14110a;
+    }
+    .rs-day-dot svg { width: 15px; height: 15px; }
+    .rs-day.lit .rs-day-dot { background: linear-gradient(180deg, #ffb45c, #f07a2a); border-color: transparent; box-shadow: 0 0 14px rgba(244,140,60,0.45); }
+    .rs-day-l { font-family: 'DM Sans', sans-serif; font-size: 10px; font-weight: 700; color: rgba(255,255,255,0.4); }
+    .rs-day.today .rs-day-l { color: #ffb45c; }
+    .rs-card.rs-enter .rs-day.today .rs-day-dot { animation: rsPop 0.6s cubic-bezier(.2,1.6,.4,1) 0.55s both; }
+
+    /* The road to the next rank. */
+    .rs-road { max-width: 270px; margin: 18px auto 4px; }
+    .rs-road-ends { display: flex; justify-content: space-between; font-family: 'DM Sans', sans-serif; font-size: 11px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: rgba(240,237,230,0.7); margin-bottom: 7px; }
+    .rs-road-track { height: 10px; border-radius: 6px; background: rgba(255,255,255,0.09); overflow: hidden; }
+    .rs-road-fill { height: 100%; border-radius: 6px; background: linear-gradient(90deg, #f3dfa8, #c8a96e); box-shadow: 0 0 12px rgba(232,205,150,0.5); transition: width 1s cubic-bezier(.22,.9,.3,1) 0.45s; }
+    .rs-road-left { margin-top: 9px; font-size: 13px; color: rgba(255,255,255,0.55); }
+    .rs-road-left strong { color: #f0ede6; }
+
     /* Each screen arrives in order: medallion, label, figure, the rest. */
     .rs-card.rs-enter .rs-medal { animation: rsRise 0.5s cubic-bezier(.2,.8,.2,1) both; }
     .rs-card.rs-enter .rs-label { animation: rsRise 0.5s cubic-bezier(.2,.8,.2,1) 0.08s both; }
     .rs-card.rs-enter .rs-value { animation: rsRise 0.55s cubic-bezier(.2,.8,.2,1) 0.14s both; }
     .rs-card.rs-enter .rs-title,
+    .rs-card.rs-enter .rs-week,
+    .rs-card.rs-enter .rs-road,
     .rs-card.rs-enter .rs-pips,
     .rs-card.rs-enter .rs-bar-track,
     .rs-card.rs-enter .rs-tally,
@@ -1705,7 +1751,19 @@
       transition: filter 0.2s, transform 0.12s;
     }
     .rs-continue:hover { filter: brightness(1.07); }
-    .rs-continue:active { transform: scale(0.985); }
+    /* A button with an edge: it has a darker base that it presses down onto. */
+    .rs-continue { box-shadow: 0 4px 0 #8a6a2f, 0 14px 30px rgba(200,169,110,0.25); }
+    .rs-continue:active { transform: translateY(4px); box-shadow: 0 0 0 #8a6a2f, 0 6px 16px rgba(200,169,110,0.2); }
+    /* Last screen: the button is the next scene. */
+    .rs-continue.rs-cta-next { display: grid; grid-template-columns: 1fr auto; column-gap: 12px; align-items: center; text-align: left; padding: 11px 16px 11px 18px; }
+    .rs-cta-eyebrow { grid-column: 1; font-size: 10px; font-weight: 700; letter-spacing: 0.16em; text-transform: uppercase; opacity: 0.72; }
+    .rs-cta-title { grid-column: 1; font-family: 'Bebas Neue', sans-serif; font-size: 24px; font-weight: 400; letter-spacing: 0.05em; line-height: 1.05; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .rs-cta-arrow { grid-column: 2; grid-row: 1 / span 2; width: 38px; height: 38px; padding: 9px; border-radius: 50%; background: rgba(11,11,14,0.14); box-sizing: border-box; }
+    .rs-alt {
+      display: block; width: 100%; margin-top: 14px; padding: 8px; background: none; border: none; cursor: pointer;
+      font-family: 'DM Sans', sans-serif; font-size: 13px; color: rgba(240,237,230,0.6);
+    }
+    .rs-alt:hover { color: #f0ede6; }
     .rs-dots { display: flex; gap: 6px; justify-content: center; margin-top: 18px; }
     .rs-dot { width: 5px; height: 5px; border-radius: 3px; background: rgba(255,255,255,0.16); transition: width 0.25s, background 0.25s; }
     .rs-dot.done { background: rgba(200,169,110,0.45); }
@@ -6853,11 +6911,15 @@
     <div class="rs-label" id="rsLabel"></div>
     <div class="rs-value" id="rsValue"></div>
     <div class="rs-title" id="rsTitle"></div>
+    <div class="rs-stats" id="rsStats" hidden></div>
+    <div class="rs-week" id="rsWeek" hidden></div>
+    <div class="rs-road" id="rsRoad" hidden></div>
     <div class="rs-pips" id="rsPips" hidden></div>
     <div class="rs-bar-track" id="rsBarTrack" hidden><div class="rs-bar-fill" id="rsBarFill"></div></div>
     <div class="rs-tally" id="rsTally"></div>
     <div class="rs-sub" id="rsSub"></div>
     <button class="rs-continue" id="rsContinue" type="button">Continue</button>
+    <button class="rs-alt" id="rsAlt" type="button" hidden>See my results</button>
     <div class="rs-dots" id="rsDots"></div>
   </div>
 </div>

@@ -2519,6 +2519,46 @@ const RewardSequence = {
   build(data, levelUp) {
     const steps = [];
 
+    // ── The take, summed up ────────────────────────────────────────────────
+    // Always first, on every take: a verdict in words and three figures. A
+    // take that earned nothing else used to show no reward screen at all,
+    // which made the ordinary case -- most takes -- feel like nothing happened.
+    const score = Math.round(data.sync_score || 0);
+    const tier = score >= SCORE.TIER_STRONG ? 'great'
+      : (score >= SCORE.PROFICIENT ? 'good' : (score >= SCORE.PASS ? 'pass' : 'low'));
+    // Varied on purpose: the same sentence after every take stops being read.
+    const PRAISE = {
+      great: ['Nailed it', 'What a take', 'Scene stolen', 'Flawless delivery'],
+      good:  ['Great take', 'Strong delivery', 'That\u2019s a keeper'],
+      pass:  ['Scene passed', 'Good take', 'You\u2019re rolling'],
+      low:   ['Keep rolling', 'Take two', 'Almost there'],
+    }[tier];
+    const SUBS = {
+      great: 'You sounded like the scene. That is the whole game.',
+      good:  'Clear and confident. One more take could make it perfect.',
+      pass:  'You passed this scene. Run it again to sharpen it.',
+      low:   'Every take trains your ear. Go again \u2014 you are closer than you think.',
+    };
+    let hit = 0, total = 0;
+    try {
+      const tokens = APP_HELPERS.wordBreakdown(data.expected || '', data.transcription || '');
+      total = tokens.length;
+      hit = tokens.filter(function (k) { return k.status === 'good'; }).length;
+    } catch (err) { /* the tile is simply left out */ }
+    const stats = [{ label: 'Score', value: score, suffix: '%', tone: tier }];
+    if ((data.points_earned || 0) > 0) stats.push({ label: 'XP', value: data.points_earned, prefix: '+' });
+    if (total > 0) stats.push({ label: 'Words', value: hit, suffix: '/' + total });
+    steps.push({
+      kind: tier === 'great' ? 'star' : 'clapper',
+      label: 'Scene complete',
+      value: PRAISE[Math.floor(Math.random() * PRAISE.length)],
+      words: true,                          // the hero is a phrase, not a figure
+      stats: stats,
+      sub: SUBS[tier],
+      celebrate: tier === 'great' || tier === 'good',
+      onShow: tier === 'great' ? fireCelebration : null,
+    });
+
     if (data.is_new_pb) {
       const prev = (typeof data.prev_best === 'number') ? Math.round(data.prev_best) : null;
       const gain = (prev !== null) ? Math.round(data.sync_score) - prev : 0;
@@ -2549,6 +2589,22 @@ const RewardSequence = {
         sub: (data.daily_floor_applied && data.daily_floor_applied >= xp)
           ? 'For finishing today’s Daily Take. Score 70% or better to earn more.'
           : 'You now have <strong>' + (data.total_points || 0).toLocaleString() + '</strong> points.',
+        // The road to the next rank: how far these points moved you along it.
+        // A goal in sight is a reason to do one more scene.
+        road: (function () {
+          const pts = data.total_points || 0, next = nextDivision(pts);
+          if (!next) return null;
+          const list = (window.MIRROR_FRONTEND_CONFIG && window.MIRROR_FRONTEND_CONFIG.DIVISIONS) || [];
+          let cur = list[0] || { name: '', min: 0 };
+          for (let i = 0; i < list.length; i++) if (list[i].min <= pts) cur = list[i];
+          const span = Math.max(1, next.min - cur.min);
+          return {
+            from: cur.name, to: next.name,
+            before: Math.max(0, Math.min(100, ((pts - xp - cur.min) / span) * 100)),
+            after:  Math.max(0, Math.min(100, ((pts - cur.min) / span) * 100)),
+            left: next.min - pts,
+          };
+        })(),
       });
     }
 
@@ -2566,7 +2622,10 @@ const RewardSequence = {
         value: daily.lines_done + ' / ' + daily.line_total,
         sub: left > 0
           ? ('<strong>' + countWord(left) + '</strong> more short ' +
-             (left === 1 ? 'line' : 'lines') + ' to finish today’s set.')
+             (left === 1 ? 'line' : 'lines') + ' to finish today’s set' +
+             ((data.streak || 0) > 0
+               ? ' and keep your <strong>' + data.streak + '-day streak</strong> alive.'
+               : ' and start your streak.'))
           : '',
       });
     }
@@ -2598,6 +2657,8 @@ const RewardSequence = {
       steps.push({
         kind: 'flame', label: 'Day streak',
         value: String(data.streak),
+        week: Math.min(7, data.streak),
+        celebrate: true,
         sub: data.streak === 1
           ? 'A new streak starts today.'
           : '<strong>' + data.streak + ' days</strong> in a row. Come back tomorrow to keep it.',
@@ -2724,6 +2785,57 @@ const RewardSequence = {
     set('rsLabel', s.label, !!s.label);
     set('rsValue', s.value, !!s.value);
     this.countUp(s.value);
+    if (card) card.classList.toggle('rs-words', !!s.words);
+
+    // Three figures for the take: each tile counts up, one after the other.
+    set('rsStats', s.stats ? s.stats.map(function (st, i) {
+      return '<div class="rs-stat' + (st.tone ? ' rs-tone-' + st.tone : '') + '" style="--i:' + i + '">' +
+        '<div class="rs-stat-label">' + st.label + '</div>' +
+        '<div class="rs-stat-value">' + (st.prefix || '') +
+          '<span class="rs-stat-num" data-to="' + st.value + '">' + st.value + '</span>' +
+          (st.suffix ? '<small>' + st.suffix + '</small>' : '') + '</div></div>';
+    }).join('') : '', !!s.stats);
+    if (s.stats && !prefersReducedMotion()) {
+      const self0 = this;
+      document.querySelectorAll('#rsStats .rs-stat-num').forEach(function (n, i) {
+        const to = parseInt(n.dataset.to, 10) || 0;
+        n.textContent = '0';
+        setTimeout(function () { if (self0.isOpen()) animateNum(n, 0, to, 650); }, 260 + i * 140);
+      });
+    }
+
+    // The road to the next rank, moving from where the points found you.
+    const road = document.getElementById('rsRoad');
+    if (road) {
+      road.hidden = !s.road;
+      if (s.road) {
+        road.innerHTML =
+          '<div class="rs-road-ends"><span>' + s.road.from + '</span><span>' + s.road.to + '</span></div>' +
+          '<div class="rs-road-track"><div class="rs-road-fill" style="width:' + s.road.before + '%"></div></div>' +
+          '<div class="rs-road-left"><strong>' + s.road.left.toLocaleString() + '</strong> points to ' + s.road.to + '</div>';
+        const fillEl = road.querySelector('.rs-road-fill');
+        requestAnimationFrame(function(){ requestAnimationFrame(function(){ fillEl.style.width = s.road.after + '%'; }); });
+      }
+    }
+
+    // The week, with today lighting up last: a streak you can see is one you
+    // do not want to break.
+    const week = document.getElementById('rsWeek');
+    if (week) {
+      week.hidden = !s.week;
+      if (s.week) {
+        const today = new Date().getDay();              // 0 = Sunday
+        const letters = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
+        let html = '';
+        for (let i = 6; i >= 0; i--) {
+          const lit = i < s.week;
+          html += '<div class="rs-day' + (lit ? ' lit' : '') + (i === 0 ? ' today' : '') + '">' +
+            '<span class="rs-day-dot">' + (lit ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.500L19 7.500"/></svg>' : '') + '</span>' +
+            '<span class="rs-day-l">' + letters[(today - i + 7) % 7] + '</span></div>';
+        }
+        week.innerHTML = html;
+      }
+    }
 
     // The ring fills to the step's progress: a count (1 of 3) shows a third,
     // arriving from where it stood before this take; anything else is whole.
@@ -2767,8 +2879,34 @@ const RewardSequence = {
       }
     }
 
+    // The last screen does not end the session, it offers the next scene: the
+    // primary button goes straight there, and the results stay one tap away.
     const btn = document.getElementById('rsContinue');
-    if (btn) btn.textContent = (this.index === this.steps.length - 1) ? 'Done' : 'Continue';
+    const alt = document.getElementById('rsAlt');
+    const last = this.index === this.steps.length - 1;
+    const nextBar = document.getElementById('spNext');
+    const nextBtn = document.getElementById('spNextBtn');
+    const canNext = !!(last && nextBar && !nextBar.hidden && nextBtn &&
+                       !nextBtn.classList.contains('is-locked'));
+    this._goNext = canNext;
+    if (btn) {
+      if (canNext) {
+        const eyebrow = (document.getElementById('spNextEyebrow') || {}).textContent || 'Next scene';
+        const title   = (document.getElementById('spNextTitle') || {}).textContent || '';
+        btn.innerHTML = '<span class="rs-cta-eyebrow">' + eyebrow + '</span>' +
+          '<span class="rs-cta-title"></span>' +
+          '<svg class="rs-cta-arrow" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.600" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="m13 6 6 6-6 6"/></svg>';
+        btn.querySelector('.rs-cta-title').textContent = title;
+        btn.classList.add('rs-cta-next');
+      } else {
+        btn.textContent = last ? 'Done' : 'Continue';
+        btn.classList.remove('rs-cta-next');
+      }
+    }
+    if (alt) alt.hidden = !canNext;
+
+    // A light tap in the hand on phones that support it.
+    try { if (navigator.vibrate && this.index > 0) navigator.vibrate(s.celebrate || s.finale ? [12, 40, 18] : 8); } catch (err) {}
 
     // Dots only earn their place when there is more than one screen.
     const dots = document.getElementById('rsDots');
@@ -2843,7 +2981,17 @@ const RewardSequence = {
 };
 window.RewardSequence = RewardSequence;
 
-onClick('rsContinue', function(){ RewardSequence.next(); });
+onClick('rsContinue', function(){
+  // On the last screen the button is "Next scene": close, and go there.
+  if (RewardSequence._goNext && RewardSequence.index === RewardSequence.steps.length - 1) {
+    RewardSequence.close();
+    const go = document.getElementById('spNextBtn');
+    if (go) go.click();
+    return;
+  }
+  RewardSequence.next();
+});
+onClick('rsAlt', function(){ RewardSequence.close(); });
 // Escape and backdrop both dismiss — nothing is lost, so there is no reason to
 // trap someone in a celebration.
 document.addEventListener('keydown', function(e){
