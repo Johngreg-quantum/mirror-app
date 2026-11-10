@@ -3590,6 +3590,15 @@ function renderCarousel() {
       img.loading = 'lazy';
       posterDiv.appendChild(img);
 
+      // The film title, set over the art like the landing's poster wall
+      // (mirrorPosterType in index.html). It returns nothing for the scenes
+      // whose art already has its title painted in.
+      const type = window.mirrorPosterType && window.mirrorPosterType(sid, true);
+      if (type) {
+        posterDiv.classList.add('hfp');
+        posterDiv.appendChild(type);
+      }
+
       // Reflection
       const ref = document.createElement('div');
       ref.className = 'carousel-reflection';

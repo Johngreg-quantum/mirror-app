@@ -4570,6 +4570,19 @@
   .hfp-bottom .hfp-tag { margin-top: 1cqw; font-family: 'Bebas Neue', sans-serif; font-style: normal; font-size: 3cqw; letter-spacing: .14em; }
   .hfp-foot { display: none; margin-top: 1.2cqw; font-family: 'Bebas Neue', sans-serif; font-size: 1.9cqw; letter-spacing: .35em; padding-left: .35em; color: #c8a96e; }
   @container (min-width: 380px) { .hfp-foot { display: block; } }
+
+  /* Portrait (2:3) cards: the scene carousel in the app. Same faces and
+     colours, sized for a card ~180px wide instead of a 16:9 wall tile. */
+  .carousel-poster.hfp { container-type: inline-size; position: relative; }
+  .hfp-portrait { padding: 7cqw 6cqw 6cqw; }
+  .hfp-portrait::before { background: linear-gradient(180deg, rgba(0,0,0,.72) 0%, rgba(0,0,0,0) 40%, rgba(0,0,0,0) 56%, rgba(0,0,0,.8) 100%); }
+  .hfp-portrait .hfp-pre { font-size: 4.4cqw; letter-spacing: .38em; padding-left: .38em; }
+  .hfp-portrait .hfp-t { margin-top: 3cqw; line-height: 1; }
+  .hfp-portrait.hfp-bottom .hfp-t { margin-top: 0; }
+  .hfp-portrait .hfp-sub { margin-top: 3cqw; font-size: 3.9cqw; letter-spacing: .2em; padding-left: .2em; line-height: 1.35; }
+  .hfp-portrait .hfp-tag { font-size: 7.4cqw; line-height: 1.15; }
+  .hfp-portrait.hfp-bottom .hfp-tag { margin-top: 2cqw; font-size: 5.6cqw; }
+  .hfp-portrait .hfp-foot { display: block; margin-top: 2.6cqw; font-size: 3.3cqw; letter-spacing: .26em; padding-left: .26em; }
   /* type families */
   .hfp-f-cinzel .hfp-t { font-family: 'Cinzel', serif; font-weight: 700; letter-spacing: .06em; }
   .hfp-f-cinzelthin .hfp-t { font-family: 'Cinzel', serif; font-weight: 600; letter-spacing: .1em; }
@@ -4977,17 +4990,21 @@
       .replace(/\bi\b/g, 'I')
       .replace(/\bparis\b/g, 'Paris');
   }
-  function mlPosterType(id){
+  // `portrait`: the same typography for a 2:3 card (the app's scene carousel).
+  // A portrait card is narrow, so a title of two or more words always breaks
+  // into two lines and is set much larger relative to the card's width.
+  function mlPosterType(id, portrait){
     const d = POSTER_T[id]; if (!d) return null;
     const K = {cinzel:.9, cinzelthin:.88, bebas:.47, corm:.7}[d.f] || .8;
-    const longest = Math.max.apply(null, d.t.split(' ').map(w => w.length));
-    const lines = d.t.length > 13 && d.t.indexOf(' ') > 0 ? (() => { const w = d.t.split(' '), h = Math.ceil(w.length/2); return [w.slice(0,h).join(' '), w.slice(h).join(' ')]; })() : [d.t];
+    const split = d.t.indexOf(' ') > 0 && (portrait ? d.t.length > 7 : d.t.length > 13);
+    const lines = split ? (() => { const w = d.t.split(' '), h = Math.ceil(w.length/2); return [w.slice(0,h).join(' '), w.slice(h).join(' ')]; })() : [d.t];
     const len = Math.max.apply(null, lines.map(l => l.length));
-    const base = {cinzel:9, cinzelthin:8.5, bebas:13, corm:10}[d.f] || 9;
-    const size = Math.min(base, 86 / (len * K)).toFixed(2);
+    const base = (portrait ? {cinzel:15, cinzelthin:15, bebas:25, corm:17}
+                           : {cinzel:9, cinzelthin:8.5, bebas:13, corm:10})[d.f] || 9;
+    const size = Math.min(base, (portrait ? 80 : 86) / (len * K)).toFixed(2);
     const esc = t => String(t).replace(/[&<>"]/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[ch]));
     const ov = document.createElement('div');
-    ov.className = 'hfp-ov hfp-' + d.p + ' hfp-f-' + d.f + ' hfp-c-' + d.c;
+    ov.className = 'hfp-ov hfp-' + d.p + ' hfp-f-' + d.f + ' hfp-c-' + d.c + (portrait ? ' hfp-portrait' : '');
     ov.setAttribute('aria-hidden', 'true');
     const title = '<div class="hfp-t" style="font-size:' + size + 'cqw">' + lines.map(esc).join('<br>') + '</div>';
     const sub = '<div class="hfp-sub">' + esc(d.sub) + '</div>';
@@ -4999,6 +5016,8 @@
       : pre + title + sub + '<div class="hfp-sp"></div>' + tag + foot;
     return ov;
   }
+  // The app's carousel (static/app.js) sets the same titles on its cards.
+  window.mirrorPosterType = mlPosterType;
 
   function mlShuffle(a){return [...a].sort(()=>Math.random()-.5);}
 
