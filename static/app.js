@@ -2333,17 +2333,54 @@ const RewardSound = {
               this.ctx.state === 'running' && !isMicOpen());
   },
 
-  // One very short, very quiet click. Meant to sit just under notice.
-  tick() {
+  // A warm, round note per screen -- a soft mallet on wood, not a click. The
+  // tick this replaces was 8ms of 1800Hz sine: by design "just under notice",
+  // in practice a thin, sharp blip that read as an error beep.
+  //
+  // Each screen plays the next note UP a major pentatonic scale, so tapping
+  // Continue through a sequence climbs: the sound itself says "more".
+  SCALE: [523.25, 587.33, 659.25, 783.99, 880.00, 1046.50, 1174.66, 1318.51],  // C5 pentatonic
+
+  _warm() {
+    const lp = this.ctx.createBiquadFilter();
+    lp.type = 'lowpass'; lp.frequency.value = 3800; lp.Q.value = 0.5;
+    lp.connect(this.master);
+    return lp;
+  },
+
+  // Fundamental, a quiet octave below for body, and a fast-dying 4th harmonic
+  // -- the partial that makes a marimba bar sound struck rather than switched on.
+  _mallet(freq, at, peak, decay, dest) {
+    const self = this;
+    const part = function (f, gain, d, attack) {
+      const o = self.ctx.createOscillator(), g = self.ctx.createGain();
+      o.type = 'sine'; o.frequency.value = f;
+      g.gain.setValueAtTime(0.0001, at);
+      g.gain.exponentialRampToValueAtTime(gain, at + attack);
+      g.gain.exponentialRampToValueAtTime(0.0001, at + d);
+      o.connect(g); g.connect(dest);
+      o.start(at); o.stop(at + d + 0.03);
+    };
+    part(freq,     peak,        decay,        0.006);
+    part(freq / 2, peak * 0.35, decay * 0.9,  0.010);
+    part(freq * 4, peak * 0.10, decay * 0.22, 0.003);
+  },
+
+  // One note for an ordinary screen.
+  chime(step) {
     if (!this.ready()) return;
-    const t = this.ctx.currentTime;
-    const o = this.ctx.createOscillator(), g = this.ctx.createGain();
-    o.type = 'sine'; o.frequency.value = 1800;
-    g.gain.setValueAtTime(0.0001, t);
-    g.gain.exponentialRampToValueAtTime(0.03, t + 0.002);
-    g.gain.exponentialRampToValueAtTime(0.0001, t + 0.008);
-    o.connect(g); g.connect(this.master);
-    o.start(t); o.stop(t + 0.02);
+    const f = this.SCALE[Math.min(Math.max(step, 0), this.SCALE.length - 1)];
+    this._mallet(f, this.ctx.currentTime + 0.01, 0.22, 0.55, this._warm());
+  },
+
+  // Something was completed (a personal best, the Daily Take, a mission, a
+  // rank): the note and the fifth above it, a beat apart -- an answer.
+  success(step) {
+    if (!this.ready()) return;
+    const f = this.SCALE[Math.min(Math.max(step, 0), this.SCALE.length - 3)];
+    const out = this._warm(), t0 = this.ctx.currentTime + 0.01;
+    this._mallet(f,       t0,        0.22, 0.5,  out);
+    this._mallet(f * 1.5, t0 + 0.11, 0.24, 0.75, out);
   },
 
   // The chime this replaced was dull by construction rather than by accident:
@@ -2352,16 +2389,16 @@ const RewardSound = {
   //
   // The last note leaps an octave above the root instead of stepping to the
   // third. The leap is what reads as arrival.
-  NOTES:   [440, 554.37, 880],      // A4, C#5, A5
-  SPACING: 0.07,                    // one gesture, not three notes
-  ATTACK:  0.0015,                  // the transient IS the reward
-  DECAY:   [0.24, 0.24, 0.34],      // ~480ms total
+  NOTES:   [523.25, 659.25, 783.99, 1046.50],   // C5 E5 G5 C6: home, and up to it
+  SPACING: 0.09,
+  ATTACK:  0.004,                   // struck, but not a click
+  DECAY:   [0.5, 0.5, 0.55, 1.1],   // the top note rings
 
   // A ceiling rather than a colour: at 9kHz this shapes without dulling, which
   // is the whole difference from the 2600Hz filter it replaced.
   _shaper() {
     const lp = this.ctx.createBiquadFilter();
-    lp.type = 'lowpass'; lp.frequency.value = 9000; lp.Q.value = 0.7;
+    lp.type = 'lowpass'; lp.frequency.value = 5200; lp.Q.value = 0.6;
     lp.connect(this.master);
     return lp;
   },
@@ -2386,9 +2423,10 @@ const RewardSound = {
     const out = this._shaper(), t0 = this.ctx.currentTime;
     for (let i = 0; i < this.NOTES.length; i++) {
       const f = this.NOTES[i], at = t0 + i * this.SPACING, d = this.DECAY[i];
-      this._voice(f,     at, 0.30, d,       out);
-      this._voice(f * 2, at, 0.15, d * 0.8, out);
-      this._voice(f * 3, at, 0.07, d * 0.6, out);
+      this._voice(f,     at, 0.24, d,       out);
+      this._voice(f / 2, at, 0.09, d * 0.9, out);
+      this._voice(f * 2, at, 0.09, d * 0.6, out);
+      this._voice(f * 3, at, 0.03, d * 0.4, out);
     }
   },
 
@@ -2452,6 +2490,25 @@ function countScenesAtLevel(level) {
 // /api/submit responded, and refreshPostScoreSurfaces() runs unconditionally
 // after showScore() — never gated on this UI. Tapping away at any step loses
 // nothing and leaves the app in the same state as tapping through.
+// Drawn icons for the medallion, one per kind of step. Emoji looked different
+// on every device (and like a system default on all of them); these are the
+// app's own line weight in its own gold.
+const RS_ICONS = (function () {
+  const svg = function (inner) {
+    return '<svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.6" ' +
+           'stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + inner + '</svg>';
+  };
+  return {
+    star:    svg('<path d="M24 6.5l5.3 10.8 11.9 1.7-8.6 8.4 2 11.9L24 33.7l-10.6 5.6 2-11.9-8.6-8.4 11.9-1.7z"/>'),
+    bolt:    svg('<path d="M27 5L10 27h12l-2 16 18-23H26z"/>'),
+    target:  svg('<circle cx="24" cy="24" r="17"/><circle cx="24" cy="24" r="9.5"/><circle cx="24" cy="24" r="2.2" fill="currentColor"/>'),
+    clapper: svg('<rect x="7" y="20" width="34" height="21" rx="3"/><path d="M7 20l31-8.5 1.7 6.2L8.7 26"/><path d="M15.5 17.7l4.8 5M24.7 15.2l4.8 5M33.6 12.7l4.6 5"/>'),
+    flame:   svg('<path d="M24 5c1.5 7.5 11 11.5 11 22a11 11 0 0 1-22 0c0-4.6 2.2-7.6 4.6-10 .4 3.4 2 5.4 4.2 6.2C21 17.500 21.500 10.500 24 5z"/>'),
+    trophy:  svg('<path d="M15 8h18v11a9 9 0 0 1-18 0z"/><path d="M15 11H8.500c0 6 2.800 9.500 7.300 10.300M33 11h6.500c0 6-2.800 9.500-7.300 10.300"/><path d="M24 28v7M16.500 41h15M19 35h10v6H19z"/>'),
+    key:     svg('<rect x="9" y="21" width="30" height="21" rx="4"/><path d="M15.500 21v-5.500a8.500 8.500 0 0 1 16.600-2.600"/><circle cx="24" cy="31" r="2.600" fill="currentColor"/><path d="M24 33.500v3.500"/>'),
+  };
+})();
+
 const RewardSequence = {
   steps: [],
   index: 0,
@@ -2466,7 +2523,7 @@ const RewardSequence = {
       const prev = (typeof data.prev_best === 'number') ? Math.round(data.prev_best) : null;
       const gain = (prev !== null) ? Math.round(data.sync_score) - prev : 0;
       steps.push({
-        icon: '⭐', label: 'New personal best',
+        kind: 'star', celebrate: true, label: 'New personal best',
         value: Math.round(data.sync_score) + '<sup>%</sup>',
         // Leads with what moved. Both numbers are in the submit response, so
         // this costs nothing. Rounding can flatten a real PB to a gain of 0
@@ -2483,7 +2540,7 @@ const RewardSequence = {
     const xp = data.points_earned || 0;
     if (xp > 0) {
       steps.push({
-        icon: '⚡', label: 'Points earned',
+        kind: 'bolt', label: 'Points earned',
         value: '+' + xp,
         // When the whole award was the daily completion floor, say that rather
         // than implying the take earned it. The score below 70% earned nothing
@@ -2504,7 +2561,8 @@ const RewardSequence = {
     if (daily && !daily.completed_now && !daily.already_done && daily.line_total > 1) {
       const left = Math.max(0, daily.line_total - daily.lines_done);
       steps.push({
-        icon: '🎯', label: 'Daily Take',
+        kind: 'target', label: 'Daily Take',
+        count: { done: daily.lines_done, total: daily.line_total },
         value: daily.lines_done + ' / ' + daily.line_total,
         sub: left > 0
           ? ('<strong>' + countWord(left) + '</strong> more short ' +
@@ -2521,7 +2579,7 @@ const RewardSequence = {
         ? 'All three above 85%'
         : (daily.combo === 'all_proficient' ? 'All three above 70%' : '');
       steps.push({
-        icon: '🎬', label: 'Daily Take complete',
+        kind: 'clapper', celebrate: true, label: 'Daily Take complete',
         value: '+' + (daily.award || 0),
         // The three line scores are the aggregate: the point of showing them
         // together is that the set was the unit of work, not any one take.
@@ -2538,7 +2596,7 @@ const RewardSequence = {
     // time in the user's day — the same condition the server increments on.
     if (daily && daily.completed_now && data.streak > 0) {
       steps.push({
-        icon: '🔥', label: 'Day streak',
+        kind: 'flame', label: 'Day streak',
         value: String(data.streak),
         sub: data.streak === 1
           ? 'A new streak starts today.'
@@ -2563,7 +2621,8 @@ const RewardSequence = {
         ? ('+' + m.xp_earned + '<sup>XP</sup>')
         : tally;
       steps.push({
-        icon: meta.icon || '🎯',
+        kind: done ? 'trophy' : 'target', celebrate: done,
+        count: goal > 0 ? { done: Math.min(m.new_progress, goal), total: goal } : null,
         label: done ? 'Mission complete' : 'Mission progress',
         value: hero,
         mission: true,                       // demotes .rs-title to support
@@ -2595,7 +2654,7 @@ const RewardSequence = {
       const pts  = data.total_points || 0;
       const next = nextDivision(pts);
       steps.push({
-        icon: '🏆', label: 'New rank',
+        kind: 'trophy', celebrate: true, label: 'New rank',
         value: to.name,
         sub: next
           ? ('Up from ' + from.name + '. <strong>' + (next.min - pts).toLocaleString() +
@@ -2610,7 +2669,7 @@ const RewardSequence = {
       const opened = countScenesAtLevel(levelUp);
       steps.push({
         finale: true,
-        icon: '🎬', label: 'Level unlocked',
+        kind: 'key', label: 'Level unlocked',
         value: 'LEVEL ' + levelUp,
         sub: opened === 1
           ? 'One new scene is open to you.'
@@ -2630,6 +2689,14 @@ const RewardSequence = {
     if (!this.steps.length) return false;
     const ov = document.getElementById('rewardSeq');
     if (!ov) return false;
+    // The scene just played, far back and out of focus.
+    const bg = document.getElementById('rsBg');
+    if (bg) {
+      const art = (typeof activeScene === 'string' && activeScene) ? getSceneArt(activeScene) : '';
+      const url = art ? art.replace(/\.webp(\?|$)/, '-bg.webp$1') : '';
+      bg.style.backgroundImage = url ? 'url("' + url + '")' : '';
+      bg.classList.toggle('on', !!url);
+    }
     ov.classList.add('open');
     this.render();
     return true;
@@ -2653,9 +2720,38 @@ const RewardSequence = {
     const halo = document.getElementById('rsHalo');
     if (halo) halo.hidden = !s.finale;
 
-    set('rsIcon',  s.icon,  !!s.icon);
+    set('rsIcon',  RS_ICONS[s.kind] || RS_ICONS.star, true);
     set('rsLabel', s.label, !!s.label);
     set('rsValue', s.value, !!s.value);
+    this.countUp(s.value);
+
+    // The ring fills to the step's progress: a count (1 of 3) shows a third,
+    // arriving from where it stood before this take; anything else is whole.
+    const ring = document.getElementById('rsRingFill');
+    if (ring) {
+      const C = 339.3;
+      const c = s.count && s.count.total > 0 ? s.count : null;
+      const to   = c ? Math.min(1, c.done / c.total) : 1;
+      const from = c ? Math.max(0, (c.done - 1) / c.total) : 0;
+      ring.style.transition = 'none';
+      ring.style.strokeDashoffset = String(C * (1 - from));
+      requestAnimationFrame(function(){ requestAnimationFrame(function(){
+        ring.style.transition = '';
+        ring.style.strokeDashoffset = String(C * (1 - to));
+      }); });
+    }
+
+    // Small goals are drawn as one segment per unit; the bar is for the rest.
+    const pips = document.getElementById('rsPips');
+    const usePips = !!(s.count && s.count.total >= 2 && s.count.total <= 6);
+    if (pips) {
+      pips.hidden = !usePips;
+      pips.innerHTML = usePips
+        ? Array.from({ length: s.count.total }, function(_, i){
+            return '<span class="rs-pip' + (i < s.count.done - 1 ? ' done' : (i === s.count.done - 1 ? ' new' : '')) + '"></span>';
+          }).join('')
+        : '';
+    }
     set('rsTitle', s.title, !!s.title);
     set('rsTally', s.tally, !!s.tally);
     set('rsSub',   s.sub,   !!s.sub);
@@ -2663,7 +2759,7 @@ const RewardSequence = {
     const track = document.getElementById('rsBarTrack');
     const fill  = document.getElementById('rsBarFill');
     if (track && fill) {
-      track.hidden = (s.bar === null || s.bar === undefined);
+      track.hidden = usePips || (s.bar === null || s.bar === undefined);
       if (!track.hidden) {
         fill.style.width = '0%';
         // Next frame so the width transition actually runs.
@@ -2679,18 +2775,45 @@ const RewardSequence = {
     if (dots) {
       dots.innerHTML = this.steps.length > 1
         ? this.steps.map(function(_, i){
-            return '<span class="rs-dot' + (i === this.index ? ' on' : '') + '"></span>';
+            return '<span class="rs-dot' + (i === this.index ? ' on' : (i < this.index ? ' done' : '')) + '"></span>';
           }, this).join('')
         : '';
     }
 
-    // The finale earns the arpeggio; every other step gets the tick, so the
-    // chord is never doubled with a click. Both no-op when the mic is open or
-    // sound is off -- see RewardSound.ready().
-    if (s.finale) RewardSound.finale();
-    else          RewardSound.tick();
+    // Restart the entrance: each screen arrives rather than swapping in place.
+    if (card) {
+      card.classList.remove('rs-enter');
+      void card.offsetWidth;
+      card.classList.add('rs-enter');
+    }
+
+    // The finale earns the arpeggio, a completed thing gets two notes, and
+    // every other screen one -- each a step higher than the last. All no-op
+    // when the mic is open or sound is off: see RewardSound.ready().
+    if (s.finale)         RewardSound.finale();
+    else if (s.celebrate) RewardSound.success(this.index);
+    else                  RewardSound.chime(this.index);
 
     if (typeof s.onShow === 'function') s.onShow();
+  },
+
+  // "+100" counts up from zero; "1 / 3" and "LEVEL 2" are shown as they are.
+  countUp(value) {
+    const elv = document.getElementById('rsValue');
+    const m = /^(\+?)(\d+)((?:<sup>.*<\/sup>)?)$/.exec(String(value || ''));
+    if (!elv || !m || prefersReducedMotion()) return;
+    const target = parseInt(m[2], 10);
+    if (target < 2) return;
+    const mine = (this._countRun = (this._countRun || 0) + 1);
+    const self = this, t0 = performance.now(), ms = Math.min(900, 380 + target * 6);
+    const tick = function (now) {
+      if (self._countRun !== mine || !self.isOpen()) return;
+      const k = Math.min(1, (now - t0) / ms);
+      elv.innerHTML = m[1] + Math.round(target * (1 - Math.pow(1 - k, 3))) + m[3];
+      if (k < 1) requestAnimationFrame(tick);
+    };
+    elv.innerHTML = m[1] + '0' + m[3];
+    requestAnimationFrame(tick);
   },
 
   next() {
@@ -2708,6 +2831,7 @@ const RewardSequence = {
     if (ov) ov.classList.remove('open');
     // No rAF may outlive the overlay.
     RewardBurst.stop();
+    this._countRun = (this._countRun || 0) + 1;   // stops a running count-up
     this.steps = [];
     this.index = 0;
   },

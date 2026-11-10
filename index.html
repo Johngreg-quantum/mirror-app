@@ -1550,16 +1550,96 @@
        the text swapping in place. */
     .rs-card.rs-swap { opacity: 0; transform: translateY(12px); }
 
-    .rs-icon  { font-size: 46px; line-height: 1; margin-bottom: 18px; }
+    /* Scene art behind everything, blurred and dimmed, with a vignette so the
+       card always sits on near-black. */
+    .rs-bg {
+      position: absolute; inset: -40px; pointer-events: none;
+      background-size: cover; background-position: center;
+      filter: blur(30px) saturate(1.25) brightness(0.5);
+      opacity: 0; transition: opacity 0.6s ease;
+    }
+    .rs-overlay.open .rs-bg.on { opacity: 0.55; }
+    .rs-overlay::after {
+      content: ''; position: absolute; inset: 0; pointer-events: none;
+      background: radial-gradient(ellipse at 50% 42%, rgba(4,4,8,0.15) 0%, rgba(4,4,8,0.72) 62%, rgba(4,4,8,0.94) 100%);
+    }
+
+    /* Medallion */
+    .rs-medal {
+      position: relative; width: 124px; height: 124px; margin: 0 auto 22px;
+      border-radius: 50%;
+      background: radial-gradient(circle at 50% 35%, rgba(200,169,110,0.16), rgba(12,12,16,0.92) 68%);
+      box-shadow: 0 0 44px rgba(200,169,110,0.22), inset 0 0 0 1px rgba(200,169,110,0.14);
+    }
+    /* A ring of light that leaves the medallion as each step lands. */
+    .rs-medal::after {
+      content: ''; position: absolute; inset: 0; border-radius: 50%;
+      border: 1.5px solid rgba(232,205,150,0.75); opacity: 0; pointer-events: none;
+    }
+    .rs-card.rs-enter .rs-medal::after { animation: rsPing 0.95s cubic-bezier(.2,.7,.2,1) 0.12s both; }
+    .rs-ring { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+    .rs-ring-track { fill: none; stroke: rgba(200,169,110,0.16); stroke-width: 3; }
+    .rs-ring-fill {
+      fill: none; stroke: url(#rsGold); stroke-width: 4.5; stroke-linecap: round;
+      stroke-dasharray: 339.3; stroke-dashoffset: 339.3;
+      transition: stroke-dashoffset 0.95s cubic-bezier(.22,.9,.3,1);
+      filter: drop-shadow(0 0 6px rgba(232,205,150,0.6));
+    }
+    .rs-icon {
+      position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+      color: #e8cd96; line-height: 1;
+    }
+    .rs-icon svg { width: 50px; height: 50px; filter: drop-shadow(0 0 10px rgba(232,205,150,0.5)); }
+    .rs-card.rs-enter .rs-icon svg { animation: rsPop 0.6s cubic-bezier(.2,1.5,.4,1) 0.05s both; }
+
     .rs-label {
+      display: flex; align-items: center; justify-content: center; gap: 12px;
       font-family: 'Space Mono', monospace; font-size: 10px;
       letter-spacing: 0.34em; text-transform: uppercase;
-      color: rgba(200,169,110,0.75); margin-bottom: 14px;
+      color: rgba(216,190,135,0.9); margin-bottom: 12px;
     }
+    .rs-label::before, .rs-label::after {
+      content: ''; width: 26px; height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(200,169,110,0.7));
+    }
+    .rs-label::after { transform: scaleX(-1); }
     .rs-value {
-      font-family: 'Bebas Neue', sans-serif; font-size: 68px; line-height: 0.95;
-      letter-spacing: 0.02em; color: #c8a96e; margin-bottom: 10px;
+      font-family: 'Bebas Neue', sans-serif; font-size: 76px; line-height: 0.95;
+      letter-spacing: 0.02em; margin-bottom: 10px;
+      background: linear-gradient(180deg, #fbeecb 0%, #dfc184 48%, #a8823f 100%);
+      -webkit-background-clip: text; background-clip: text; color: transparent;
+      filter: drop-shadow(0 4px 22px rgba(200,169,110,0.28));
     }
+
+    /* One segment per unit of a small goal (1 / 3): what is done is lit, and
+       the one just earned fills as the screen lands. */
+    .rs-pips { display: flex; justify-content: center; gap: 8px; margin: 16px 0 6px; }
+    .rs-pip {
+      position: relative; width: 46px; height: 7px; border-radius: 4px; overflow: hidden;
+      background: rgba(255,255,255,0.1);
+    }
+    .rs-pip.done::before, .rs-pip.new::before {
+      content: ''; position: absolute; inset: 0; border-radius: 4px;
+      background: linear-gradient(90deg, #f3dfa8, #c8a96e);
+    }
+    .rs-pip.new { box-shadow: 0 0 12px rgba(232,205,150,0.55); }
+    .rs-pip.new::before { transform: scaleX(0); transform-origin: left; }
+    .rs-card.rs-enter .rs-pip.new::before { animation: rsFill 0.7s cubic-bezier(.22,.9,.3,1) 0.35s both; }
+
+    /* Each screen arrives in order: medallion, label, figure, the rest. */
+    .rs-card.rs-enter .rs-medal { animation: rsRise 0.5s cubic-bezier(.2,.8,.2,1) both; }
+    .rs-card.rs-enter .rs-label { animation: rsRise 0.5s cubic-bezier(.2,.8,.2,1) 0.08s both; }
+    .rs-card.rs-enter .rs-value { animation: rsRise 0.55s cubic-bezier(.2,.8,.2,1) 0.14s both; }
+    .rs-card.rs-enter .rs-title,
+    .rs-card.rs-enter .rs-pips,
+    .rs-card.rs-enter .rs-bar-track,
+    .rs-card.rs-enter .rs-tally,
+    .rs-card.rs-enter .rs-sub { animation: rsRise 0.5s cubic-bezier(.2,.8,.2,1) 0.24s both; }
+    .rs-card.rs-enter .rs-continue { animation: rsRise 0.5s cubic-bezier(.2,.8,.2,1) 0.34s both; }
+    @keyframes rsRise { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+    @keyframes rsPop  { from { opacity: 0; transform: scale(0.5); } to { opacity: 1; transform: none; } }
+    @keyframes rsPing { from { opacity: 0.9; transform: scale(1); } to { opacity: 0; transform: scale(1.55); } }
+    @keyframes rsFill { to { transform: scaleX(1); } }
     .rs-value sup { font-size: 26px; top: -0.5em; }
     .rs-title {
       font-family: 'Bebas Neue', sans-serif; font-size: 30px;
@@ -1603,10 +1683,11 @@
     .rs-overlay [hidden] { display: none !important; }
 
     /* Level up is the finale and gets the weight the others do not. */
-    .rs-card.rs-finale .rs-icon  { font-size: 66px; margin-bottom: 22px; }
+    .rs-card.rs-finale .rs-medal { width: 148px; height: 148px; box-shadow: 0 0 70px rgba(200,169,110,0.4), inset 0 0 0 1px rgba(200,169,110,0.2); }
+    .rs-card.rs-finale .rs-icon svg { width: 60px; height: 60px; }
     /* Up from the standard 68px, never down. A level unlock is the largest
        thing that can happen here and used to render 35% smaller than "+60". */
-    .rs-card.rs-finale .rs-value { font-size: 84px; }
+    .rs-card.rs-finale .rs-value { font-size: 92px; }
     .rs-card.rs-finale .rs-sub   { font-size: 14px; }
     .rs-halo {
       position: absolute; inset: -45% -25%; z-index: -1; pointer-events: none;
@@ -1614,24 +1695,30 @@
     }
 
     .rs-continue {
-      width: 100%; margin-top: 30px; padding: 14px; min-height: 46px;
-      background: var(--gold); color: #0a0a0a; border: none; border-radius: 9px;
-      font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 700;
-      letter-spacing: 0.05em; cursor: pointer;
+      width: 100%; margin-top: 30px; padding: 15px; min-height: 50px;
+      background: linear-gradient(135deg, #e6cb8f, #c8a96e 55%, #b08d4c);
+      color: #0a0a0a; border: none; border-radius: 14px;
+      font-family: 'DM Sans', sans-serif; font-size: 15px; font-weight: 700;
+      letter-spacing: 0.04em; cursor: pointer;
+      box-shadow: 0 10px 30px rgba(200,169,110,0.28);
       touch-action: manipulation; -webkit-tap-highlight-color: transparent;
-      transition: filter 0.2s;
+      transition: filter 0.2s, transform 0.12s;
     }
-    .rs-continue:hover { filter: brightness(1.1); }
+    .rs-continue:hover { filter: brightness(1.07); }
+    .rs-continue:active { transform: scale(0.985); }
     .rs-dots { display: flex; gap: 6px; justify-content: center; margin-top: 18px; }
-    .rs-dot { width: 5px; height: 5px; border-radius: 50%; background: rgba(255,255,255,0.16); }
-    .rs-dot.on { background: rgba(200,169,110,0.85); }
+    .rs-dot { width: 5px; height: 5px; border-radius: 3px; background: rgba(255,255,255,0.16); transition: width 0.25s, background 0.25s; }
+    .rs-dot.done { background: rgba(200,169,110,0.45); }
+    .rs-dot.on { width: 16px; background: rgba(216,190,135,0.95); }
 
     @media (max-width: 480px) {
-      .rs-value { font-size: 58px; }
-      .rs-card.rs-finale .rs-value { font-size: 68px; }
+      .rs-value { font-size: 66px; }
+      .rs-card.rs-finale .rs-value { font-size: 76px; }
     }
     @media (prefers-reduced-motion: reduce) {
-      .rs-overlay, .rs-card, .rs-bar-fill { transition: none; }
+      .rs-overlay, .rs-card, .rs-bar-fill, .rs-ring-fill, .rs-bg { transition: none; }
+      .rs-card.rs-enter * , .rs-card.rs-enter .rs-medal::after, .rs-card.rs-enter .rs-pip.new::before { animation: none !important; }
+      .rs-pip.new::before { transform: none; }
     }
 
     /* First-run recording consent (privacy policy §6). Informational, not a
@@ -6743,13 +6830,30 @@
      returns to that card and its detail views (word breakdown, compare,
      translation) rather than closing anything. -->
 <div class="rs-overlay" id="rewardSeq" role="dialog" aria-modal="true" aria-live="polite">
+  <!-- The scene's own art, blurred far back: the reward belongs to the scene
+       just played rather than floating on a blank screen. -->
+  <div class="rs-bg" id="rsBg" aria-hidden="true"></div>
   <canvas class="rs-burst" id="rsBurst" aria-hidden="true"></canvas>
   <div class="rs-card" id="rsCard">
     <div class="rs-halo" id="rsHalo" hidden></div>
-    <div class="rs-icon"  id="rsIcon"></div>
+    <!-- Medallion: a ring that fills to the step's progress, around a drawn
+         icon. Replaces the emoji, which rendered differently on every phone. -->
+    <div class="rs-medal" id="rsMedal" aria-hidden="true">
+      <svg class="rs-ring" viewBox="0 0 120 120">
+        <defs>
+          <linearGradient id="rsGold" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0" stop-color="#f8e7b8"/><stop offset=".5" stop-color="#d9bb7c"/><stop offset="1" stop-color="#a47f3f"/>
+          </linearGradient>
+        </defs>
+        <circle class="rs-ring-track" cx="60" cy="60" r="54"/>
+        <circle class="rs-ring-fill" id="rsRingFill" cx="60" cy="60" r="54" transform="rotate(-90 60 60)"/>
+      </svg>
+      <div class="rs-icon" id="rsIcon"></div>
+    </div>
     <div class="rs-label" id="rsLabel"></div>
     <div class="rs-value" id="rsValue"></div>
     <div class="rs-title" id="rsTitle"></div>
+    <div class="rs-pips" id="rsPips" hidden></div>
     <div class="rs-bar-track" id="rsBarTrack" hidden><div class="rs-bar-fill" id="rsBarFill"></div></div>
     <div class="rs-tally" id="rsTally"></div>
     <div class="rs-sub" id="rsSub"></div>
