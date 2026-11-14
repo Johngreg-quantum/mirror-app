@@ -39,6 +39,7 @@
   <!-- No third-party player script: scenes are Mirror's own mp3s, played
        by an <audio> element. -->
   <link rel="stylesheet" href="/static/app.css" />
+  <link rel="stylesheet" href="/static/verbs.css" />
   <style>
     @property --ripple-offset {
       syntax: '<length>';
@@ -5353,6 +5354,21 @@
         <h3>Reta a un amigo</h3>
         <p>Manda tu escena con tu puntaje. Si te supera, te toca responder.</p>
       </div>
+      <div class="ld-feat">
+        <div class="ld-ico"><svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#c8a96e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 4h6v3H9zM9 5H6v16h12V5h-3"/><path d="M9 13l2 2 4-4"/></svg></div>
+        <h3>Exámenes por nivel</h3>
+        <p>Pasa el examen del Nivel 1 y del Nivel 2 para desbloquear el siguiente. Sabes exactamente cuándo estás listo.</p>
+      </div>
+      <div class="ld-feat">
+        <div class="ld-ico"><svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#c8a96e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6" width="13" height="15" rx="2"/><path d="M8 3h11a2 2 0 0 1 2 2v13"/></svg></div>
+        <h3>Tu vocabulario</h3>
+        <p>Las palabras clave de cada escena que dominas pasan a tus tarjetas. Repásalas hasta que sean tuyas.</p>
+      </div>
+      <div class="ld-feat">
+        <div class="ld-ico"><svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#c8a96e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h10M4 12h10M4 18h7"/><path d="M17 15l2 2 3-4"/></svg></div>
+        <h3>50 verbos que necesitas</h3>
+        <p>Los verbos más usados del inglés con su pasado, ejemplos de las escenas, audio y práctica rápida.</p>
+      </div>
     </div>
   </div>
 </section>
@@ -5391,6 +5407,7 @@
           <li><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#c8a96e" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg><span id="pricingFreeCount">5 escenas para empezar</span></li>
           <li><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#c8a96e" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>El Daily Take, gratis todos los días</li>
           <li><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#c8a96e" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>Retos de tus amigos</li>
+          <li><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#c8a96e" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>Los 50 verbos esenciales</li>
           <li><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#c8a96e" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>No se renueva</li>
         </ul>
         <button type="button" class="ld-plan-cta ld-plan-cta--line" id="pricingLevel1Btn">Empezar por $1</button>
@@ -5404,8 +5421,9 @@
         <p class="ld-plan-note" id="proPriceSub"></p>
         <ul class="ld-list">
           <li><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#c8a96e" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg><span id="pricingProCount">Las 47 escenas</span></li>
-          <li><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#c8a96e" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>Niveles 1, 2 y 3</li>
+          <li><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#c8a96e" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>Niveles 1, 2 y 3 con sus exámenes</li>
           <li><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#c8a96e" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>Español palabra por palabra en cada escena</li>
+          <li><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#c8a96e" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>Vocabulario y los 50 verbos esenciales</li>
           <li><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#c8a96e" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>Cancela cuando quieras</li>
         </ul>
         <button type="button" class="ld-plan-cta ld-plan-cta--gold" id="pricingProBtn">Elegir Pro</button>
@@ -6569,6 +6587,7 @@
 <script src="/static/app-leaderboard-orchestration.js"></script>
 <script src="/static/app-level-panel-orchestration.js"></script>
 <script src="/static/app.js"></script>
+<script src="/static/verbs.js"></script>
 
 <!-- lang="es" on the whole overlay: the quiz is Spanish throughout — questions,
      options, "¡Correcto!", and the results card nested inside this element.
@@ -7024,6 +7043,13 @@
     <div id="mpMissionList" style="display:flex; flex-direction:column; gap:8px; margin-bottom:24px;"></div>
   </div>
   <div class="app-panel" id="panelWords">
+    <!-- 50 verbos: opens the study set in static/verbs.js -->
+    <button type="button" id="verbsEntry" class="vb-entry" lang="es" onclick="if (window.VerbsController) VerbsController.open()">
+      <span class="vb-entry-k">VOCABULARIO ESENCIAL</span>
+      <span class="vb-entry-t">50 verbos que necesitas saber</span>
+      <span class="vb-entry-s" id="verbsEntryCount">Pasado, ejemplos, audio y práctica</span>
+      <span class="vb-entry-go" aria-hidden="true">→</span>
+    </button>
     <div id="wordsHeader">
       <div id="wordsTitleRow">
         <span id="wordsTitle">MY WORDS</span>
@@ -7110,6 +7136,7 @@ function switchTab(tab) {
     if (typeof userProfile !== 'undefined' && userProfile && typeof WordsController !== 'undefined') {
       WordsController.init();
     }
+    if (window.VerbsController) window.VerbsController.refreshEntry();
   } else if (panel === 'panelProfile') {
     if (appShell) appShell.style.display = 'block';
     const pp = document.getElementById('panelProfile');
