@@ -406,8 +406,9 @@ function renderSceneCounts() {
   // the card never promises more than can_access_scene() grants. `free` is the
   // free tier and is empty now; the element kept its id because renaming a DOM
   // id to match a renamed product is churn the markup does not need.
-  if (starter) set('pricingFreeCount', starter + ' starter scenes');
-  set('pricingProCount',  'All ' + total + ' scenes');
+  // The landing's pricing card is in Spanish.
+  if (starter) set('pricingFreeCount', starter + ' escenas para empezar');
+  set('pricingProCount',  'Las ' + total + ' escenas');
   set('proUpgradeCount',  total + ' scenes');
 }
 
@@ -674,7 +675,7 @@ function showAuthScreen() {
   setOverlayOpen('authModalOverlay', false);
   setBodyScrollLocked(false);
   const mlLanding = document.getElementById('mirrorLanding');
-  if (mlLanding) mlLanding.style.display = 'flex';
+  if (mlLanding) mlLanding.style.display = '';  // its own CSS decides (block)
 }
 
 function showApp() {
@@ -726,7 +727,7 @@ function logout() {
   const appScreen = document.getElementById('appScreen');
   if (appScreen) appScreen.style.display = 'none';
   const mlLanding = document.getElementById('mirrorLanding');
-  if (mlLanding) mlLanding.style.display = 'flex';
+  if (mlLanding) mlLanding.style.display = '';  // its own CSS decides (block)
   window.scrollTo(0, 0);
   window.location.href = '/';
 }
@@ -891,35 +892,40 @@ const BillingPlans = {
         }
       } else {
         amountEl.removeAttribute('aria-busy');
-        amountEl.textContent = perMo || '\u2014';
+        // The landing card (Spanish) shows what is charged -- $47.88 a year,
+        // $8.99 a month -- with the per-month equivalent underneath.
+        amountEl.textContent = total || '\u2014';
       }
     }
 
-    // "/mo" is an assertion about cadence, so it is shown only once a
-    // per-month figure actually exists to attach it to.
+    // A cadence is shown only once there is a price to attach it to.
+    const yearly = !!(plan && plan.is_subscription && plan.interval === 'year');
     const cadenceEl = document.getElementById('proPriceCadence');
-    if (cadenceEl) cadenceEl.hidden = loading || !perMo;
+    if (cadenceEl) {
+      cadenceEl.textContent = yearly ? '/a\u00f1o' : '/mes';
+      cadenceEl.hidden = loading || !total;
+    }
 
+    const pct = loading ? null : this.discountPct();
     const subEl = document.getElementById('proPriceSub');
     if (subEl) {
       if (loading) {
         subEl.textContent = '';
-      } else if (plan && plan.is_subscription && plan.interval === 'year' && total) {
-        subEl.textContent = 'billed yearly (' + total + '/year)';
-      } else if (!perMo) {
+      } else if (yearly && perMo) {
+        subEl.textContent = 'Equivale a ' + perMo + ' al mes' + (pct ? ' \u00b7 ahorras ' + pct + '%' : '');
+      } else if (!total) {
         // The button stays usable: the price ids are correct even when the
         // price lookup fails, so checkout still works and shows the real
         // amount. Saying so beats an unexplained em dash.
-        subEl.textContent = 'Live pricing shown at checkout';
+        subEl.textContent = 'El precio final se muestra al pagar';
       } else {
-        subEl.textContent = '';
+        subEl.textContent = 'Se renueva cada mes \u00b7 cancela cuando quieras';
       }
     }
 
     const badgeEl = document.getElementById('pricingYearlyBadge');
     if (badgeEl) {
-      const pct = loading ? null : this.discountPct();
-      badgeEl.textContent = pct === null ? '' : ('\u2212' + pct + '%');
+      badgeEl.textContent = pct === null ? '' : ('\u00b7 ahorra ' + pct + '%');
       badgeEl.hidden = pct === null;
     }
 
@@ -950,16 +956,17 @@ const BillingPlans = {
       const b = document.getElementById(id);
       if (!b) return;
       b.disabled = none || shut;
+      const es = id.indexOf('pricing') === 0; // the landing card is Spanish
       if (shut) {
         if (!b.dataset.openLabel) b.dataset.openLabel = b.textContent;
-        b.textContent = 'Coming soon';
-        b.title = 'Payments are not open yet';
+        b.textContent = es ? 'Pr\u00f3ximamente' : 'Coming soon';
+        b.title = es ? 'Los pagos a\u00fan no est\u00e1n abiertos' : 'Payments are not open yet';
       } else {
         if (b.dataset.openLabel) {
           b.textContent = b.dataset.openLabel;
           delete b.dataset.openLabel;
         }
-        b.title = none ? 'Pricing is unavailable right now' : '';
+        b.title = none ? (es ? 'Los precios no est\u00e1n disponibles ahora' : 'Pricing is unavailable right now') : '';
       }
     });
 
@@ -975,10 +982,10 @@ const BillingPlans = {
       // product repriced in the dashboard does not leave a stale "$1" here.
       const amount = this.money(lvl1.price_cents);
       lvl1Btn.textContent = shut
-        ? 'Coming soon'
-        : (amount ? ('Starter Pack · ' + amount) : 'Starter Pack');
+        ? 'Pr\u00f3ximamente'
+        : (amount ? ('Empezar por ' + amount) : 'Empezar');
       lvl1Btn.disabled = shut;
-      lvl1Btn.title = shut ? 'Payments are not open yet' : '';
+      lvl1Btn.title = shut ? 'Los pagos a\u00fan no est\u00e1n abiertos' : '';
     }
   },
 };
@@ -1013,7 +1020,6 @@ window.BillingPlans = BillingPlans;
 onClick('navLoginBtn',     () => openAuthModal('login'));
 onClick('navRegisterBtn',  () => openAuthModal('register'));
 onClick('heroStartBtn',    () => openAuthModal('register'));
-onClick('pricingFreeBtn',  () => openAuthModal('register'));
 // One checkout path for every plan.
 //
 // The server is asked by PLAN KEY ('monthly' / 'yearly' / 'starter') rather than
@@ -1025,10 +1031,12 @@ onClick('pricingFreeBtn',  () => openAuthModal('register'));
 // holding a stale one. `variant_id` still rides along for a server running an
 // older build.
 async function startCheckout(planKey, btnId, idleLabel) {
+  // The landing's pricing buttons (pricing*) speak Spanish; the in-app ones don't.
+  const es = String(btnId || '').indexOf('pricing') === 0;
   await BillingPlans.load();
   const plan = BillingPlans.get(planKey);
   if (!plan) {
-    if (typeof showToast === 'function') showToast('Pricing is unavailable right now.', 3000);
+    if (typeof showToast === 'function') showToast(es ? 'Los precios no est\u00e1n disponibles ahora.' : 'Pricing is unavailable right now.', 3000);
     return;
   }
 
@@ -1043,12 +1051,12 @@ async function startCheckout(planKey, btnId, idleLabel) {
   if (window.mirrorIsPro) {
     // Pro already covers every scene, so Level 1 would be buying something the
     // user has.
-    if (typeof showToast === 'function') showToast('You already have Mirror Pro!', 2500);
+    if (typeof showToast === 'function') showToast(es ? '\u00a1Ya tienes Mirror Pro!' : 'You already have Mirror Pro!', 2500);
     return;
   }
 
   const btn = document.getElementById(btnId);
-  if (btn) { btn.textContent = 'Loading...'; btn.disabled = true; }
+  if (btn) { idleLabel = btn.textContent || idleLabel; btn.textContent = es ? 'Cargando\u2026' : 'Loading...'; btn.disabled = true; }
 
   try {
     const resp = await fetch(`${API}/api/billing/checkout`, {
@@ -1066,13 +1074,13 @@ async function startCheckout(planKey, btnId, idleLabel) {
       throw new Error('No checkout URL');
     }
   } catch(e) {
-    if (typeof showToast === 'function') showToast('Something went wrong. Try again.', 3000);
+    if (typeof showToast === 'function') showToast(es ? 'Algo sali\u00f3 mal. Intenta de nuevo.' : 'Something went wrong. Try again.', 3000);
     if (btn) { btn.textContent = idleLabel; btn.disabled = false; }
   }
 }
 
 onClick('pricingProBtn', () =>
-  startCheckout(BillingPlans.activeBilling(), 'pricingProBtn', 'Go pro'));
+  startCheckout(BillingPlans.activeBilling(), 'pricingProBtn', 'Elegir Pro'));
 
 // The $1 one-time Starter Pack. The plan has been configured server-side and
 // served by /api/billing/plans all along, but nothing in either shell could
@@ -1083,7 +1091,7 @@ onClick('pricingProBtn', () =>
 // and stage 7 rewrites that card wholesale; renaming them here would churn
 // three files for no behaviour change.
 onClick('pricingLevel1Btn', () =>
-  startCheckout('starter', 'pricingLevel1Btn', 'Starter Pack · $1'));
+  startCheckout('starter', 'pricingLevel1Btn', 'Empezar por $1'));
 
 // ══════════════════════════════════════════════
 // UPGRADE SHEET — what a locked scene offers

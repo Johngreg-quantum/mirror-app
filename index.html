@@ -16,8 +16,8 @@
       document.head.appendChild(style);
     })();
   </script>
-  <title>MIRROR — Learn English Through Cinema</title>
-  <meta name="description" content="Speak English like a movie scene. 47 original cinematic scenes voiced with emotion: hear the line, say it back, and get scored on your delivery. Built for Spanish speakers." />
+  <title>Mirror — Habla inglés como en las películas</title>
+  <meta name="description" content="Aprende inglés actuando escenas de cine: escucha la línea, grábate y la IA te califica palabra por palabra, con traducción al español. 47 escenas originales. Empieza por $1." />
   <link rel="canonical" href="https://mirrorspeak.app/" />
   <meta name="theme-color" content="#08080a" />
   <link rel="icon" href="/static/favicon.svg" type="image/svg+xml" />
@@ -25,8 +25,8 @@
   <!-- OpenGraph / Twitter — link previews for shared URLs. Crawlers do not run
        JS, so these must stay static markup in the served HTML. Absolute URLs are
        required; APP_BASE_URL is server-side only and does not reach this file. -->
-  <meta property="og:title" content="Mirror — Speak like the screen" />
-  <meta property="og:description" content="Speak English like a movie scene. Original cinematic scenes, voiced with emotion. Hear it, say it, get scored." />
+  <meta property="og:title" content="Mirror — Habla inglés como en las películas" />
+  <meta property="og:description" content="Escucha la escena, grábate diciendo la línea y la IA te califica palabra por palabra. Empieza por $1." />
   <meta property="og:url" content="https://mirrorspeak.app/" />
   <meta property="og:type" content="website" />
   <meta property="og:image" content="https://mirrorspeak.app/static/og-image.jpg" />
@@ -35,7 +35,7 @@
   <meta name="twitter:card" content="summary_large_image" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Cinzel:wght@600;700&family=Playfair+Display:ital,wght@0,700;1,700&family=DM+Sans:wght@300;400;500;600;700&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,300;1,400;1,500&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Cinzel:wght@600;700&family=Playfair+Display:ital,wght@0,700;1,400;1,700&family=DM+Sans:wght@300;400;500;600;700&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,300;1,400;1,500&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
   <!-- No third-party player script: scenes are Mirror's own mp3s, played
        by an <audio> element. -->
   <link rel="stylesheet" href="/static/app.css" />
@@ -4767,361 +4767,735 @@
 <div class="bg-orb bg-orb-3"></div>
 <div class="grain-overlay"></div>
 
-<!-- ═══════════════════════════════════════════════════════
-     MIRROR CINEMATIC LANDING HERO
-     Sits on top of #authScreen; auth modal (z 8500) still wins.
-     CTA buttons fire heroStartBtn.click() inside #authScreen below.
-════════════════════════════════════════════════════════ -->
-<section id="mirrorLanding">
+<!-- ══════════ MIRROR LANDING (Spanish sales page) ══════════
+     Everything a signed-out visitor sees lives in #mirrorLanding, pricing and
+     footer included. Its CTAs open the auth modal (mlOpenAuth) or the $1
+     Starter checkout (mlStartStarter -> #pricingLevel1Btn). -->
+<section id="mirrorLanding" lang="es">
 <style>
+/* ═══ Landing (Spanish, sales layout) ═══
+   One section holds the whole public page: nav, hero, proof, steps, scenes,
+   features, lines, pricing, founder, FAQ, closing and footer. enterAppMode()
+   hides it in one place, and the preload rule in <head> hides it for a
+   returning token, so nothing here can leak into the app. */
 #mirrorLanding {
-  position: relative; min-height: 100vh; z-index: 1;
-  background: #080808;
-  overflow: hidden;
-  font-family: 'DM Sans', sans-serif;
+  --ld-bg: #080808; --ld-bg2: #0c0b0d; --ld-card: #111013; --ld-gold: #c8a96e; --ld-gold-hi: #e3c78f;
+  --ld-text: #f0ede6; --ld-muted: #cfcbc2; --ld-dim: #a9a59c; --ld-line: rgba(240,237,230,0.1); --ld-gline: rgba(200,169,110,0.16);
+  position: relative; z-index: 1; background: var(--ld-bg); color: var(--ld-text);
+  font-family: 'DM Sans', system-ui, sans-serif; overflow-x: clip;
 }
-#ml-frame::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background:
-    radial-gradient(ellipse 45% 50% at 0%   0%,   rgba(0,0,0,0.96) 0%, transparent 60%),
-    radial-gradient(ellipse 45% 50% at 100% 0%,   rgba(0,0,0,0.96) 0%, transparent 60%),
-    radial-gradient(ellipse 45% 50% at 0%   100%, rgba(0,0,0,0.96) 0%, transparent 60%),
-    radial-gradient(ellipse 45% 50% at 100% 100%, rgba(0,0,0,0.96) 0%, transparent 60%);
-  pointer-events: none;
-  z-index: 15;
-  border-radius: 0;
-}
-#mirrorLanding::after {
-  content: '';
-  position: absolute; inset: 0; pointer-events: none; z-index: 10;
-  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-  opacity: 0.025;
-  animation: mlGrain .1s steps(1) infinite;
-}
-@keyframes mlGrain {
-  0%  { transform: translate(0,0); }
-  25% { transform: translate(-2px,1px); }
-  50% { transform: translate(1px,-2px); }
-  75% { transform: translate(2px,1px); }
-  100%{ transform: translate(-1px,2px); }
-}
-#ml-rows-container {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  gap: 8px;
-  z-index: 1;
-  transform-style: preserve-3d;
-}
-.ml-mrow {
-  display: flex;
-  gap: 8px;
-  overflow: hidden;
-  flex-shrink: 0;
-  transform-style: preserve-3d;
-}
-.ml-mtrack {
-  display: flex;
-  gap: 8px;
-  will-change: transform;
-  align-items: stretch;
-  transform-style: preserve-3d;
-}
-.ml-mrow.ml-left  .ml-mtrack { animation: mlL var(--spd, 30s) linear infinite; }
-.ml-mrow.ml-right .ml-mtrack { animation: mlR var(--spd, 30s) linear infinite; }
-@keyframes mlL { from{transform:translateX(0)} to{transform:translateX(-50%)} }
-@keyframes mlR { from{transform:translateX(-50%)} to{transform:translateX(0)} }
-.ml-card {
-  flex-shrink: 0;
-  border-radius: 10px;
-  overflow: hidden;
-  position: relative;
-  cursor: pointer;
-  transition: transform 0.25s ease, scale 0.25s ease, box-shadow 0.25s ease;
-}
-/* The marquee curve writes an inline `transform` on every card, which would
-   override a hover transform. The standalone `scale` property composes with
-   it instead, so the lift survives. Colour is never touched on hover. */
-.ml-card:hover {
-  scale: 1.04;
-  box-shadow: 0 14px 32px rgba(0,0,0,0.55);
-}
-.ml-card img {
-  width: 100%; height: 100%; object-fit: cover; display: block;
-}
-.ml-card-grad {
-  position: absolute; inset: 0;
-  /* Light: no marquee card carries text, so this only adds depth. The
-     blockbuster art is already dark at the top and needs no extra shade. */
-  background: linear-gradient(to top, rgba(0,0,0,0.18), transparent 45%);
-  pointer-events: none;
-}
-.ml-vignette {
-  position: absolute; inset: 0; z-index: 5; pointer-events: none;
-  background: linear-gradient(to right, rgba(0,0,0,0.4), transparent 15%, transparent 85%, rgba(0,0,0,0.4));
-}
-.ml-vignette2 {
-  position: absolute; inset: 0; z-index: 6; pointer-events: none;
-  background: radial-gradient(ellipse 38% 38% at 50% 50%, rgba(8,8,8,0.5) 0%, transparent 70%);
-}
-#mlTopBar {
-  position: absolute; top: 0; left: 0; right: 0;
-  display: flex; justify-content: space-between; align-items: center;
-  padding: 18px 24px; z-index: 20;
-}
-.ml-brand { font-size: .5rem; color: rgba(255,255,255,0.22); letter-spacing: .12em; line-height: 1.7; }
-.ml-pill {
-  display: flex; background: rgba(255,255,255,0.07);
-  border: 0.5px solid rgba(255,255,255,0.14); border-radius: 100px;
-  padding: 3px; gap: 2px;
-}
-.ml-pill-btn {
-  padding: .28rem .9rem; border-radius: 100px; border: none;
-  font-size: .6rem; letter-spacing: .1em; font-weight: 500;
-  font-family: 'DM Sans', sans-serif; cursor: pointer; transition: all .2s;
-  color: rgba(255,255,255,0.4); background: transparent;
-}
-.ml-pill-btn.ml-on { background: rgba(255,255,255,0.14); color: #fff; }
-.ml-topright { font-size: .48rem; color: rgba(255,255,255,0.18); letter-spacing: .1em; text-align: right; line-height: 1.7; }
-#mlSidebar {
-  position: absolute; left: 18px; top: 50%; transform: translateY(-50%);
-  display: flex; flex-direction: column; gap: 10px; z-index: 20;
-}
-.ml-sb-item {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  cursor: pointer;
-}
-.ml-sb-circle {
-  width: 42px; height: 42px; border-radius: 50%;
-  background: rgba(255,255,255,0.07);
-  border: 1.5px solid rgba(255,255,255,0.25);
-  display: flex; align-items: center; justify-content: center;
-  font-size: 0.88rem; flex-shrink: 0;
-  transition: all 0.2s;
-}
-.ml-sb-item.ml-on .ml-sb-circle {
-  background: rgba(255,255,255,0.15);
-  border-color: rgba(255,255,255,0.5);
-}
-.ml-sb-label {
-  font-size: 0.68rem;
-  color: rgba(255,255,255,0.45);
-  font-family: 'DM Sans', sans-serif;
-  letter-spacing: 0.04em;
-  white-space: nowrap;
-}
-.ml-sb-item.ml-on .ml-sb-label {
-  color: rgba(255,255,255,0.85);
-}
-#mlCenter {
-  position: absolute; top: 50%; left: 50%;
-  transform: translate(-50%, -50%);
-  z-index: 15; text-align: center;
-  width: min(560px, 78vw);
-  animation: mlCopyIn .9s ease .2s both;
-}
-@keyframes mlCopyIn {
-  from { opacity:0; transform: translate(-50%, -44%); }
-  to   { opacity:1; transform: translate(-50%, -50%); }
-}
-#mlCenter h1 {
-  font-family: 'Bebas Neue', sans-serif;
-  font-size: clamp(2rem, 4.5vw, 3.4rem);
-  letter-spacing: .08em; line-height: 1.05; color: #fff;
-  text-shadow: 0 2px 40px rgba(0,0,0,0.9); margin-bottom: .45rem;
-}
-#mlCenter p {
-  font-size: .8rem; color: rgba(255,255,255,0.48);
-  letter-spacing: .04em; margin-bottom: 1.1rem; font-style: italic;
-  text-shadow: 0 1px 12px rgba(0,0,0,0.9);
-}
-.ml-cta-row { display: flex; gap: 10px; justify-content: center; }
-.ml-btn-primary {
-  position: relative;
-  padding: .62rem 1.6rem;
-  border-radius: 100px;
-  background: linear-gradient(180deg, #1f1f1f 0%, #141414 100%);
-  color: #fff;
-  border: none;
-  font-family: 'DM Sans', sans-serif;
-  font-size: .74rem;
-  font-weight: 600;
-  letter-spacing: .07em;
-  cursor: pointer;
-  transition: all .2s;
-  z-index: 1;
-  box-shadow:
-    inset 0 1px 0 rgba(255,255,255,0.1),
-    0 4px 12px rgba(0,0,0,0.5);
-}
-.ml-btn-primary:hover {
-  background: linear-gradient(180deg, #2a2a2a 0%, #1a1a1a 100%);
-  transform: scale(1.03);
-}
-.ml-btn-secondary {
-  padding: .62rem 1.3rem; border-radius: 100px;
-  background: rgba(255,255,255,0.07); color: rgba(255,255,255,0.65);
-  border: .5px solid rgba(255,255,255,0.18);
-  font-family: 'DM Sans', sans-serif; font-size: .74rem;
-  letter-spacing: .07em; cursor: pointer; transition: all .2s;
-}
-.ml-btn-secondary:hover { background: rgba(255,255,255,0.13); color: #fff; }
-.ml-corner {
-  position: absolute; font-size: .46rem;
-  letter-spacing: .08em; color: rgba(255,255,255,0.17);
-  z-index: 20; line-height: 1.7;
+/* Resets wrapped in :where() so they weigh nothing against the classes below. */
+:where(#mirrorLanding) *, :where(#mirrorLanding) *::before, :where(#mirrorLanding) *::after { box-sizing: border-box; }
+:where(#mirrorLanding) :where(p, h1, h2, h3, ul, figure, blockquote) { margin: 0; }
+:where(#mirrorLanding) ul { padding: 0; list-style: none; }
+:where(#mirrorLanding) a { color: inherit; }
+:where(#mirrorLanding) img { display: block; max-width: 100%; }
+:where(#mirrorLanding) button { font-family: inherit; }
+#mirrorLanding :focus-visible { outline: 2px solid var(--ld-gold-hi); outline-offset: 3px; }
+#mirrorLanding section[id] { scroll-margin-top: 72px; }
+.ld-wrap { max-width: 1200px; margin: 0 auto; padding-left: clamp(16px, 4vw, 40px); padding-right: clamp(16px, 4vw, 40px); }
+.ld-pad { padding-top: clamp(64px, 8vw, 112px); padding-bottom: clamp(64px, 8vw, 112px); }
+.ld-band { background: var(--ld-bg2); border-top: 1px solid var(--ld-gline); border-bottom: 1px solid var(--ld-gline); }
+.ld-eyebrow { font-family: 'Space Mono', monospace; font-size: 12px; letter-spacing: .2em; color: var(--ld-gold); text-transform: uppercase; }
+.ld-h2 { font-family: 'Bebas Neue', sans-serif; font-weight: 400; font-size: clamp(44px, 5.5vw, 72px); line-height: .95; letter-spacing: .01em; }
+.ld-gold { color: var(--ld-gold); }
+.ld-lead { font-size: 18px; line-height: 1.6; color: var(--ld-muted); }
+.ld-serif { font-family: 'Playfair Display', serif; font-style: italic; font-weight: 400; }
+.ld-head { display: flex; flex-direction: column; gap: 14px; max-width: 760px; }
+.ld-head--center { align-items: center; text-align: center; margin: 0 auto; }
+
+/* buttons */
+.ld-btn { display: inline-flex; align-items: center; justify-content: center; gap: 10px; min-height: 52px; padding: 0 28px;
+  border-radius: 999px; font-size: 17px; font-weight: 700; text-decoration: none; cursor: pointer; border: 0;
+  transition: transform .15s ease, background .15s ease, border-color .15s ease; white-space: nowrap; }
+.ld-btn:active { transform: scale(.98); }
+.ld-btn-gold { background: var(--ld-gold); color: #0b0b0e; }
+.ld-btn-gold:hover { background: var(--ld-gold-hi); }
+.ld-btn-ghost { background: transparent; color: var(--ld-text); border: 1px solid rgba(240,237,230,.28); font-weight: 500; }
+.ld-btn-ghost:hover { border-color: rgba(240,237,230,.6); }
+.ld-btn svg { flex: 0 0 auto; }
+
+/* nav */
+/* Fixed, not sticky: html and body both set overflow-x, which turns body into
+   the sticky containing block and the bar would scroll away with the page. */
+#mirrorLanding { padding-top: 69px; }
+.ld-nav { position: fixed; top: 0; left: 0; right: 0; z-index: 60; padding: 0; text-align: left; /* app.css styles every <header> */ background: rgba(8,8,8,.9); -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); border-bottom: 1px solid var(--ld-gline); }
+.ld-nav-in { display: flex; align-items: center; gap: 16px; padding-top: 12px; padding-bottom: 12px; }
+.ld-logo { font-family: 'Bebas Neue', sans-serif; font-size: 26px; letter-spacing: .3em; color: var(--ld-gold); text-decoration: none; }
+#mirrorLanding .ld-logo { color: var(--ld-gold); }
+.ld-links { flex: 1 1 auto; display: flex; justify-content: center; gap: 28px; font-size: 14px; }
+.ld-links a { color: #d8d4cb; text-decoration: none; padding: 8px 0; }
+.ld-links a:hover { color: var(--ld-text); }
+.ld-lang { font-family: 'Space Mono', monospace; font-size: 12px; letter-spacing: .08em; color: #d8d4cb; padding: 8px 0; }
+.ld-lang b { color: var(--ld-gold); font-weight: 700; }
+.ld-signin { background: none; border: 0; color: var(--ld-text); font-size: 14px; font-weight: 500; padding: 12px 6px; cursor: pointer; margin-left: auto; }
+.ld-nav .ld-btn { min-height: 44px; padding: 0 18px; font-size: 14px; }
+@media (max-width: 860px) { .ld-links { display: none; } }
+
+/* hero */
+.ld-hero { position: relative; background: radial-gradient(ellipse at 75% 0%, #1d170d 0%, var(--ld-bg) 62%); }
+.ld-hero-in { display: flex; flex-wrap: wrap; align-items: center; gap: 40px; padding-top: clamp(40px, 6vw, 88px); padding-bottom: clamp(48px, 6vw, 88px); }
+.ld-hero-copy { flex: 1 1 480px; min-width: 0; display: flex; flex-direction: column; gap: 22px; }
+.ld-h1 { font-family: 'Bebas Neue', sans-serif; font-weight: 400; font-size: clamp(58px, 8vw, 108px); line-height: .9; letter-spacing: .01em; }
+.ld-sub { font-size: clamp(17px, 1.6vw, 20px); line-height: 1.55; color: var(--ld-muted); max-width: 520px; }
+.ld-ctas { display: flex; flex-wrap: wrap; gap: 12px; padding-top: 4px; }
+.ld-checks { display: flex; flex-wrap: wrap; gap: 10px 22px; font-size: 14px; color: #d8d4cb; }
+.ld-checks li { display: flex; align-items: center; gap: 8px; }
+.ld-proof { display: flex; align-items: center; gap: 14px; padding-top: 6px; font-size: 14px; color: var(--ld-muted); }
+.ld-proof strong { color: var(--ld-text); }
+.ld-faces { display: flex; }
+.ld-faces img { width: 36px; height: 36px; border-radius: 50%; object-fit: cover; object-position: top; border: 2px solid var(--ld-bg); }
+.ld-faces img + img { margin-left: -10px; }
+.ld-stage { flex: 1 1 400px; min-width: 0; position: relative; height: 660px; display: flex; align-items: center; justify-content: center; }
+.ld-wall { position: absolute; inset: -40px -60px; display: flex; gap: 14px; justify-content: center; transform: rotate(-9deg); opacity: .55; pointer-events: none;
+  -webkit-mask-image: radial-gradient(ellipse at center, #000 35%, transparent 75%); mask-image: radial-gradient(ellipse at center, #000 35%, transparent 75%); }
+.ld-wall-col { flex: 0 0 170px; display: flex; flex-direction: column; gap: 14px; animation: lpDrift 26s ease-in-out infinite alternate; }
+.ld-wall-col:nth-child(2) { padding-top: 90px; animation-duration: 32s; animation-direction: alternate-reverse; }
+.ld-wall-col:nth-child(3) { padding-top: 30px; animation-duration: 29s; }
+.ld-wall-col img { width: 170px; height: 255px; object-fit: cover; border-radius: 10px; }
+@keyframes lpDrift { from { transform: translateY(0); } to { transform: translateY(-60px); } }
+@media (prefers-reduced-motion: reduce) { .ld-wall-col { animation: none; } }
+.ld-phone { position: relative; z-index: 2; width: 300px; border-radius: 46px; padding: 10px; background: #19181c; border: 1px solid rgba(255,255,255,.12); box-shadow: 0 40px 120px rgba(0,0,0,.8); }
+.ld-screen { border-radius: 37px; overflow: hidden; background: #0d0d10; display: flex; flex-direction: column; }
+.ld-shot { position: relative; height: 150px; }
+.ld-shot img { width: 100%; height: 100%; object-fit: cover; object-position: center 30%; }
+.ld-shot::after { content: ''; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(13,13,16,0) 30%, #0d0d10 100%); }
+.ld-shot-cap { position: absolute; z-index: 1; left: 18px; right: 18px; bottom: 10px; }
+.ld-shot-title { font-family: 'Bebas Neue', sans-serif; font-size: 32px; line-height: 1; letter-spacing: .04em; }
+.ld-shot-meta { margin-top: 4px; font-size: 12px; color: #c9c5bc; }
+.ld-sbody { padding: 14px 18px 20px; display: flex; flex-direction: column; gap: 14px; }
+.ld-label { font-family: 'Space Mono', monospace; font-size: 10px; letter-spacing: .18em; color: var(--ld-gold); }
+.ld-line { font-size: 16px; line-height: 1.4; font-weight: 500; margin-top: 6px; }
+.ld-score { display: flex; align-items: center; gap: 14px; }
+.ld-ring { position: relative; width: 84px; height: 84px; flex: 0 0 auto; }
+.ld-ring b { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-family: 'Bebas Neue', sans-serif; font-size: 36px; font-weight: 400; color: var(--ld-gold-hi); }
+.ld-praise { font-family: 'Playfair Display', serif; font-style: italic; font-size: 20px; }
+.ld-tally { margin-top: 4px; font-size: 12px; color: #bdb9b0; }
+.ld-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.ld-chip { font-size: 13px; font-weight: 500; padding: 6px 9px; border-radius: 8px; background: rgba(62,207,142,.12); border: 1px solid rgba(62,207,142,.5); color: #86e3b5; }
+.ld-chip--close { background: rgba(244,183,64,.14); border: 1px dashed rgba(244,183,64,.75); color: #f6c768; }
+.ld-phrases { margin-top: -4px; font-size: 11px; color: var(--ld-dim); }
+.ld-prow { display: flex; gap: 8px; }
+.ld-prow > * { flex: 1 1 0; min-height: 44px; display: flex; align-items: center; justify-content: center; border-radius: 12px; font-size: 13px; font-weight: 700; cursor: pointer; text-decoration: none; }
+.ld-es-btn { background: transparent; border: 1px solid rgba(200,169,110,.5); color: var(--ld-gold-hi); }
+.ld-next { background: var(--ld-gold); color: #0b0b0e; border: 0; }
+.ld-tip { position: absolute; z-index: 3; right: max(0px, calc(50% - 250px)); top: 70px; background: var(--ld-text); color: #111; border-radius: 14px; padding: 10px 14px; font-size: 13px; font-weight: 700; box-shadow: 0 16px 40px rgba(0,0,0,.5); max-width: 160px; line-height: 1.3; }
+
+/* stats */
+.ld-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 28px; padding-top: 36px; padding-bottom: 36px; }
+.ld-stat b { display: block; font-family: 'Bebas Neue', sans-serif; font-weight: 400; font-size: 56px; line-height: 1; color: var(--ld-gold); }
+.ld-stat span { display: block; margin-top: 4px; font-size: 14px; color: var(--ld-muted); }
+
+/* before / after */
+.ld-stack { display: flex; flex-direction: column; gap: 40px; }
+.ld-ba { display: flex; flex-wrap: wrap; gap: 20px; }
+.ld-ba-card { flex: 1 1 340px; min-width: 0; background: var(--ld-card); border: 1px solid var(--ld-line); border-radius: 20px; padding: 32px; display: flex; flex-direction: column; gap: 18px; }
+.ld-ba-card--mirror { flex-basis: 400px; background: linear-gradient(180deg, #17130b 0%, var(--ld-card) 100%); border-color: rgba(200,169,110,.45); }
+.ld-ba-card .ld-eyebrow { font-size: 12px; letter-spacing: .16em; }
+.ld-ba-card:first-child .ld-eyebrow { color: var(--ld-dim); }
+.ld-list { display: flex; flex-direction: column; gap: 14px; font-size: 16px; line-height: 1.45; color: var(--ld-muted); }
+.ld-list li { display: flex; gap: 12px; }
+.ld-list svg { flex: 0 0 auto; margin-top: 1px; }
+.ld-ba-card--mirror .ld-list { color: var(--ld-text); }
+.ld-diff { background: #0a0a0c; border: 1px solid var(--ld-line); border-radius: 14px; padding: 18px; display: flex; flex-direction: column; gap: 12px; }
+.ld-diff small { display: block; font-size: 12px; color: var(--ld-dim); margin-bottom: 4px; }
+.ld-diff p { font-size: 16px; }
+.ld-mark-close { background: rgba(244,183,64,.16); color: #f6c768; border-bottom: 2px dashed #f4b740; padding: 0 3px; }
+.ld-mark-ok { background: rgba(62,207,142,.14); color: #86e3b5; border-bottom: 2px solid #3ecf8e; padding: 0 3px; }
+.ld-diff-note { font-size: 13px; color: var(--ld-muted); border-top: 1px solid rgba(240,237,230,.08); padding-top: 12px; }
+
+/* steps */
+.ld-steps { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; }
+.ld-step { background: var(--ld-card); border: 1px solid var(--ld-line); border-radius: 20px; padding: 28px; display: flex; flex-direction: column; gap: 14px; }
+.ld-step-n { font-family: 'Bebas Neue', sans-serif; font-size: 44px; line-height: 1; color: var(--ld-gold); }
+.ld-step h3 { font-size: 22px; font-weight: 700; }
+.ld-step p { font-size: 16px; line-height: 1.55; color: var(--ld-muted); }
+.ld-mini { margin-top: auto; background: #0a0a0c; border-radius: 14px; padding: 16px; display: flex; align-items: center; gap: 14px; }
+.ld-round { width: 44px; height: 44px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex: 0 0 auto; }
+.ld-wave { flex: 1 1 auto; min-width: 0; height: 32px; display: flex; align-items: center; gap: 3px; overflow: hidden; }
+.ld-wave i { flex: 0 0 4px; border-radius: 2px; background: rgba(240,237,230,.25); }
+.ld-wave i.on { background: var(--ld-gold); }
+.ld-mono { font-family: 'Space Mono', monospace; font-size: 12px; color: var(--ld-dim); }
+.ld-bars { flex: 1 1 auto; display: flex; flex-direction: column; gap: 6px; font-size: 12px; color: var(--ld-muted); }
+.ld-bars div { display: flex; align-items: center; gap: 8px; }
+.ld-bars span:first-child { width: 64px; }
+.ld-bars em { flex: 1 1 auto; height: 6px; border-radius: 3px; background: rgba(240,237,230,.1); overflow: hidden; }
+.ld-bars em i { display: block; height: 6px; border-radius: 3px; }
+.ld-center { display: flex; justify-content: center; }
+
+/* ticker */
+.ld-ticker { overflow: hidden; white-space: nowrap; padding: 18px 0; border-bottom: 1px solid rgba(200,169,110,.12); font-family: 'Bebas Neue', sans-serif; font-size: 30px; letter-spacing: .08em; color: #d8d4cb; }
+.ld-ticker-track { display: inline-block; animation: lpTick 60s linear infinite; }
+.ld-ticker span { color: var(--ld-gold); margin: 0 .5em; }
+@keyframes lpTick { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+@media (prefers-reduced-motion: reduce) { .ld-ticker-track { animation: none; } }
+
+/* scenes */
+.ld-scenes-head { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 20px; }
+.ld-scenes-head .ld-head { max-width: 640px; }
+.ld-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 28px 20px; }
+@media (max-width: 900px) { .ld-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px 14px; } }
+.ld-scene { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.ld-scene-art { position: relative; }
+.ld-scene-art img { width: 100%; height: auto; aspect-ratio: 2 / 3; object-fit: cover; border-radius: 12px; box-shadow: 0 18px 40px rgba(0,0,0,.5); background: #15141a; }
+.ld-badge { position: absolute; top: 10px; left: 10px; background: var(--ld-gold); color: #0b0b0e; font-size: 11px; font-weight: 700; letter-spacing: .04em; padding: 5px 9px; border-radius: 999px; }
+.ld-scene-meta { font-family: 'Space Mono', monospace; font-size: 11px; letter-spacing: .08em; color: var(--ld-gold); }
+.ld-scene-line { font-family: 'Playfair Display', serif; font-style: italic; font-size: 16px; line-height: 1.35; }
+.ld-scene-es { font-size: 13px; line-height: 1.4; color: var(--ld-dim); }
+
+/* features */
+.ld-feats { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 18px; }
+.ld-feat { background: var(--ld-card); border: 1px solid var(--ld-line); border-radius: 18px; padding: 26px; display: flex; flex-direction: column; gap: 12px; }
+.ld-ico { width: 44px; height: 44px; border-radius: 12px; background: rgba(200,169,110,.14); display: flex; align-items: center; justify-content: center; }
+.ld-feat h3 { font-size: 19px; font-weight: 700; }
+.ld-feat p { font-size: 15px; line-height: 1.55; color: var(--ld-muted); }
+
+/* lines */
+.ld-quotes { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 18px; }
+.ld-quote { background: var(--ld-card); border: 1px solid var(--ld-line); border-radius: 18px; padding: 26px; display: flex; flex-direction: column; gap: 10px; }
+.ld-quote figcaption { font-family: 'Space Mono', monospace; font-size: 11px; letter-spacing: .12em; color: var(--ld-gold); }
+.ld-quote blockquote { font-family: 'Playfair Display', serif; font-style: italic; font-size: 22px; line-height: 1.3; }
+.ld-quote p { font-size: 14px; color: var(--ld-dim); }
+
+/* pricing (ids are read by BillingPlans in static/app.js) */
+#mirrorLanding #pricingSection { min-height: 0; padding: 0; display: block; z-index: auto; background: radial-gradient(ellipse at 50% 0%, #1d170d 0%, var(--ld-bg2) 55%); border-top: 1px solid var(--ld-gline); border-bottom: 1px solid var(--ld-gline); }
+.ld-price-in { display: flex; flex-direction: column; align-items: center; gap: 32px; }
+.ld-price-h { font-size: clamp(52px, 6.5vw, 88px); }
+#mirrorLanding .ld-pills { display: inline-flex; gap: 4px; padding: 4px; margin: 0; border-radius: 999px; border: 1px solid rgba(240,237,230,.18); background: #0a0a0c; }
+#mirrorLanding .ld-pills .mc-pill { font-family: 'DM Sans', system-ui, sans-serif; min-height: 44px; border: 0; border-radius: 999px; padding: 0 22px; font-size: 14px; font-weight: 700; letter-spacing: 0; text-transform: none; cursor: pointer; background: transparent; color: #d8d4cb; display: inline-flex; align-items: center; gap: 8px; }
+#mirrorLanding .ld-pills .mc-pill.active { background: var(--ld-gold); color: #0b0b0e; }
+#mirrorLanding .ld-pills .mc-pill::after { display: none; }
+#mirrorLanding .ld-pills .mc-pill-badge { position: static; transform: none; background: none; color: inherit; font-family: inherit; text-transform: none; font-size: 13px; font-weight: 700; padding: 0; border: 0; letter-spacing: 0; }
+#mirrorLanding .ld-pills .mc-pill-badge[hidden] { display: none; }
+.ld-plans { width: 100%; max-width: 900px; display: flex; flex-wrap: wrap; gap: 20px; align-items: stretch; }
+.ld-plan { flex: 1 1 320px; min-width: 0; position: relative; background: var(--ld-card); border: 1px solid rgba(240,237,230,.14); border-radius: 22px; padding: 32px; display: flex; flex-direction: column; gap: 18px; }
+.ld-plan--pro { background: linear-gradient(180deg, #1a150c 0%, var(--ld-card) 100%); border: 1.5px solid var(--ld-gold); box-shadow: 0 30px 80px rgba(200,169,110,.12); }
+.ld-plan-flag { position: absolute; top: -13px; left: 32px; background: var(--ld-gold); color: #0b0b0e; font-size: 11px; font-weight: 700; letter-spacing: .1em; padding: 6px 12px; border-radius: 999px; }
+.ld-plan-name { font-family: 'Space Mono', monospace; font-size: 13px; letter-spacing: .18em; color: #d8d4cb; }
+.ld-plan--pro .ld-plan-name { color: var(--ld-gold); }
+.ld-plan-price { display: flex; align-items: baseline; gap: 10px; min-height: 68px; }
+.ld-plan-amt { font-family: 'Bebas Neue', sans-serif; font-size: 76px; line-height: .9; }
+.ld-plan-amt .price-skeleton { width: 150px; height: 60px; }
+.ld-plan-per { font-size: 14px; color: var(--ld-muted); line-height: 1.35; }
+#proPriceCadence { font-size: 16px; color: var(--ld-muted); }
+#proPriceCadence[hidden] { display: none; }
+.ld-plan-note { margin-top: -8px; min-height: 20px; font-size: 14px; color: var(--ld-gold-hi); }
+.ld-plan .ld-list { gap: 12px; font-size: 15px; color: #e6e2d9; }
+.ld-plan-cta { margin-top: auto; width: 100%; min-height: 52px; border-radius: 14px; font-size: 16px; font-weight: 700; cursor: pointer; }
+.ld-plan-cta[disabled] { opacity: .6; cursor: default; }
+.ld-plan-cta--line { background: transparent; color: var(--ld-text); border: 1px solid rgba(240,237,230,.4); }
+.ld-plan-cta--line:hover:not([disabled]) { border-color: var(--ld-text); }
+.ld-plan-cta--gold { background: var(--ld-gold); color: #0b0b0e; border: 0; }
+.ld-plan-cta--gold:hover:not([disabled]) { background: var(--ld-gold-hi); }
+.ld-legal { font-size: 13px; color: var(--ld-dim); text-align: center; max-width: 620px; line-height: 1.6; }
+.ld-legal a { color: #d8d4cb; }
+
+/* founder */
+.ld-founder { max-width: 1000px; }
+.ld-founder-card { display: flex; flex-wrap: wrap; gap: 32px; align-items: center; background: var(--ld-card); border: 1px solid var(--ld-line); border-radius: 24px; padding: clamp(28px, 4vw, 48px); }
+.ld-mono-av { width: 120px; height: 120px; border-radius: 50%; border: 1.5px solid var(--ld-gold); display: flex; align-items: center; justify-content: center; font-family: 'Bebas Neue', sans-serif; font-size: 48px; color: var(--ld-gold); letter-spacing: .06em; flex: 0 0 auto; }
+.ld-founder-txt { flex: 1 1 360px; min-width: 0; display: flex; flex-direction: column; gap: 14px; }
+.ld-founder-txt blockquote { font-family: 'Playfair Display', serif; font-style: italic; font-size: clamp(21px, 2.2vw, 27px); line-height: 1.4; }
+.ld-founder-txt p { font-size: 15px; color: var(--ld-muted); }
+.ld-founder-txt p strong { color: var(--ld-text); }
+#mirrorLanding .ld-x { color: var(--ld-gold-hi); font-size: 14px; font-weight: 500; text-decoration: none; }
+
+/* faq */
+.ld-faq { max-width: 860px; padding-top: 0; }
+.ld-faq-list { border-top: 1px solid rgba(240,237,230,.12); }
+.ld-faq details { border-bottom: 1px solid rgba(240,237,230,.12); }
+.ld-faq summary { min-height: 64px; display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 18px 0; font-size: 17px; font-weight: 700; cursor: pointer; list-style: none; }
+.ld-faq summary::-webkit-details-marker { display: none; }
+.ld-faq summary::after { content: '+'; flex: 0 0 auto; width: 32px; height: 32px; border-radius: 50%; border: 1px solid rgba(200,169,110,.5); color: var(--ld-gold); display: flex; align-items: center; justify-content: center; font-size: 20px; font-weight: 400; }
+.ld-faq details[open] summary::after { content: '\2212'; }
+.ld-faq details p { padding: 0 48px 22px 0; font-size: 16px; line-height: 1.6; color: var(--ld-muted); }
+
+/* closing */
+.ld-close { position: relative; overflow: hidden; border-top: 1px solid var(--ld-gline); }
+.ld-close-bg { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: .32; }
+.ld-close::before { content: ''; position: absolute; inset: 0; z-index: 1; background: linear-gradient(180deg, var(--ld-bg) 0%, rgba(8,8,8,.55) 45%, var(--ld-bg) 100%); }
+.ld-close-in { position: relative; z-index: 2; max-width: 900px; padding-top: clamp(80px, 10vw, 140px); padding-bottom: clamp(80px, 10vw, 140px); display: flex; flex-direction: column; align-items: center; gap: 24px; text-align: center; }
+.ld-close-h { font-family: 'Bebas Neue', sans-serif; font-weight: 400; font-size: clamp(64px, 10vw, 140px); line-height: .88; }
+.ld-close-sub { font-size: clamp(19px, 2vw, 23px); color: #e6e2d9; max-width: 560px; }
+.ld-fine { font-size: 13px; color: var(--ld-dim); }
+
+/* footer */
+.ld-foot { border-top: 1px solid rgba(240,237,230,.08); background: #060606; }
+.ld-foot-in { display: flex; flex-wrap: wrap; gap: 40px; padding-top: 48px; padding-bottom: 32px; }
+.ld-foot-brand { flex: 1 1 260px; display: flex; flex-direction: column; gap: 10px; }
+.ld-foot-brand p { font-size: 14px; color: var(--ld-dim); line-height: 1.5; }
+.ld-foot-col { flex: 1 1 140px; max-width: 200px; display: flex; flex-direction: column; gap: 10px; font-size: 14px; }
+.ld-foot-col .ld-eyebrow { font-size: 11px; letter-spacing: .16em; }
+.ld-foot-col a, .ld-foot-col button { color: var(--ld-muted); text-decoration: none; background: none; border: 0; padding: 0; font-size: 14px; text-align: left; cursor: pointer; }
+.ld-foot-col a:hover, .ld-foot-col button:hover { color: var(--ld-text); }
+.ld-copy { text-align: center; font-size: 12px; color: #8f8a80; padding-bottom: 32px; }
+
+@media (max-width: 600px) {
+  .ld-stage { height: 600px; }
+  .ld-ba-card, .ld-step, .ld-plan { padding: 24px; }
+  .ld-tip { right: 4px; top: 40px; }
+  .ld-faq details p { padding-right: 0; }
+  .ld-nav .ld-btn { padding: 0 14px; }
+  .ld-logo { font-size: 22px; letter-spacing: .24em; }
 }
 </style>
 
-<!-- Full-bleed wall — fills #mirrorLanding entirely -->
-<div id="ml-frame" style="
-  position: absolute;
-  inset: 0;
-  border-radius: 0;
-  background: #080808;
-  box-shadow: none;
-  overflow: hidden;
-  width: 100%;
-  height: 100%;
-  transform: none;
-  top: 0; left: 0;
-">
-  <div id="ml-rows-container" style="perspective: 1400px; transform-style: preserve-3d;"></div>
-
-  <!-- Rows injected by JS -->
-  <!-- Edge vignettes (corners are handled by #ml-frame::before inset shadow) -->
-  <!-- Left edge -->
-  <div style="position:absolute;top:0;left:0;width:12%;height:100%;
-       background:linear-gradient(to right, rgba(0,0,0,0.75), transparent);
-       z-index:7;pointer-events:none;"></div>
-
-  <!-- Right edge -->
-  <div style="position:absolute;top:0;right:0;width:12%;height:100%;
-       background:linear-gradient(to left, rgba(0,0,0,0.75), transparent);
-       z-index:7;pointer-events:none;"></div>
-
-  <!-- Top edge -->
-  <div style="position:absolute;top:0;left:0;right:0;height:15%;
-       background:linear-gradient(to bottom, rgba(0,0,0,0.72), transparent);
-       z-index:7;pointer-events:none;"></div>
-
-  <!-- Bottom edge -->
-  <div style="position:absolute;bottom:0;left:0;right:0;height:22%;
-       background:linear-gradient(to top, rgba(0,0,0,0.85), rgba(0,0,0,0.15) 55%, transparent);
-       z-index:7;pointer-events:none;"></div>
-
-  <div id="mlTopBar">
-    <div class="ml-brand">MIRROR<br>V 2.0</div>
-    <div class="ml-pill">
-      <button class="ml-pill-btn ml-on" onclick="mlPill(this)">CREATE</button>
-      <button class="ml-pill-btn" onclick="mlPill(this)">EXPLORE</button>
+<!-- NAV -->
+<header class="ld-nav">
+  <nav class="ld-wrap ld-nav-in" aria-label="Principal">
+    <a href="#lpTop" class="ld-logo" data-ld-scroll>MIRROR</a>
+    <div class="ld-links">
+      <a href="#lpComo" data-ld-scroll>Cómo funciona</a>
+      <a href="#lpEscenas" data-ld-scroll>Escenas</a>
+      <a href="#pricingSection" data-ld-scroll>Precios</a>
+      <a href="#lpPreguntas" data-ld-scroll>Preguntas</a>
+      <span class="ld-lang"><b>ES</b> / EN</span>
     </div>
-    <div class="ml-topright">50+ LEARNERS<br>AND COUNTING</div>
-  </div>
+    <button type="button" class="ld-signin" onclick="mlOpenAuth('login')">Entrar</button>
+    <button type="button" class="ld-btn ld-btn-gold" data-ld-start>Empezar por $1</button>
+  </nav>
+</header>
 
-  <div id="mlCenter">
-    <h1 class="ml-hero-title">Steal the<br><em>Scene</em></h1>
-    <p class="ml-hero-sub">Speak English like a movie scene.<br>Original cinematic scenes, voiced with emotion.</p>
-    <div class="ml-cta-row">
-      <button class="ml-btn-primary" onclick="mlOpenAuth()">Start practicing</button>
-      <button class="ml-btn-secondary" onclick="mlOpenAuth('login')">Sign in</button>
+<!-- HERO -->
+<section class="ld-hero" id="lpTop">
+  <div class="ld-wrap ld-hero-in">
+    <div class="ld-hero-copy">
+      <p class="ld-eyebrow">Steal the scene · Inglés para hispanohablantes</p>
+      <h1 class="ld-h1">Habla inglés<br>como en las <span class="ld-gold">películas.</span></h1>
+      <p class="ld-sub">Escucha una escena, grábate diciendo la línea y la IA te califica palabra por palabra, con la traducción al español de cada palabra.</p>
+      <div class="ld-ctas">
+        <button type="button" class="ld-btn ld-btn-gold" data-ld-start>Empezar por $1
+          <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
+        <a href="#lpComo" class="ld-btn ld-btn-ghost" data-ld-scroll>
+          <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5.5v13l11-6.5z"/></svg>Ver cómo funciona</a>
+      </div>
+      <ul class="ld-checks">
+        <li><svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#c8a96e" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>5 escenas por $1, pago único</li>
+        <li><svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#c8a96e" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>Español palabra por palabra</li>
+        <li><svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#c8a96e" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>Sin descargar nada</li>
+      </ul>
+      <div class="ld-proof">
+        <div class="ld-faces" aria-hidden="true">
+          <img src="/static/scenes/posters/last_train-sm.webp" alt="" width="36" height="36">
+          <img src="/static/scenes/posters/rooftop-sm.webp" alt="" width="36" height="36">
+          <img src="/static/scenes/posters/champion-sm.webp" alt="" width="36" height="36">
+          <img src="/static/scenes/posters/oxygen_low-sm.webp" alt="" width="36" height="36">
+        </div>
+        <p><strong>50+ estudiantes</strong> ya practican con Mirror</p>
+      </div>
+    </div>
+
+    <div class="ld-stage">
+      <div class="ld-wall" aria-hidden="true">
+        <div class="ld-wall-col">
+          <img src="/static/scenes/posters/champion-sm.webp" alt="" width="170" height="255">
+          <img src="/static/scenes/posters/midnight_call-sm.webp" alt="" width="170" height="255">
+          <img src="/static/scenes/posters/surprise-sm.webp" alt="" width="170" height="255">
+        </div>
+        <div class="ld-wall-col">
+          <img src="/static/scenes/posters/oxygen_low-sm.webp" alt="" width="170" height="255">
+          <img src="/static/scenes/posters/the_storm-sm.webp" alt="" width="170" height="255">
+          <img src="/static/scenes/posters/first_day-sm.webp" alt="" width="170" height="255">
+        </div>
+        <div class="ld-wall-col">
+          <img src="/static/scenes/posters/countdown-sm.webp" alt="" width="170" height="255">
+          <img src="/static/scenes/posters/the_deal-sm.webp" alt="" width="170" height="255">
+          <img src="/static/scenes/posters/lucky-sm.webp" alt="" width="170" height="255">
+        </div>
+      </div>
+
+      <div class="ld-phone">
+        <div class="ld-screen">
+          <div class="ld-shot">
+            <img src="/static/scenes/posters/last_train-bg.webp" alt="Andén de tren de noche, escena Last Train" width="280" height="150">
+            <div class="ld-shot-cap">
+              <p class="ld-shot-title">LAST TRAIN</p>
+              <p class="ld-shot-meta">Drama · Dolido pero firme · Nivel 1</p>
+            </div>
+          </div>
+          <div class="ld-sbody">
+            <div>
+              <p class="ld-label">TU LÍNEA</p>
+              <p class="ld-line">“If you get on that train, don’t come back.”</p>
+            </div>
+            <div class="ld-score">
+              <div class="ld-ring">
+                <svg role="img" aria-label="Puntaje 87 de 100" width="84" height="84" viewBox="0 0 120 120"><circle cx="60" cy="60" r="52" fill="none" stroke="rgba(240,237,230,0.12)" stroke-width="10"/><circle cx="60" cy="60" r="52" fill="none" stroke="#c8a96e" stroke-width="10" stroke-linecap="round" stroke-dasharray="284 327" transform="rotate(-90 60 60)"/></svg>
+                <b aria-hidden="true">87</b>
+              </div>
+              <div>
+                <p class="ld-praise">¡Gran toma!</p>
+                <p class="ld-tally">8 coinciden · 1 casi · 0 fallaron</p>
+              </div>
+            </div>
+            <div class="ld-chips" id="lpChips" aria-live="polite">
+              <span class="ld-chip" data-es="si">If</span>
+              <span class="ld-chip" data-es="tú">you</span>
+              <span class="ld-chip" data-es="te subes">get</span>
+              <span class="ld-chip" data-es="a">on</span>
+              <span class="ld-chip ld-chip--close" data-es="ese">that</span>
+              <span class="ld-chip" data-es="tren">train,</span>
+              <span class="ld-chip" data-es="no">don’t</span>
+              <span class="ld-chip" data-es="vengas">come</span>
+              <span class="ld-chip" data-es="de vuelta">back.</span>
+            </div>
+            <p class="ld-phrases">get on = subirse (a un tren) · come back = volver</p>
+            <div class="ld-prow">
+              <button type="button" class="ld-es-btn" id="lpEsBtn" aria-pressed="false">Ver en español</button>
+              <a href="#lpEscenas" class="ld-next" data-ld-scroll>Siguiente →</a>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="ld-tip" aria-hidden="true">Toca una palabra y ve su traducción</div>
     </div>
   </div>
+</section>
 
-  <div class="ml-corner" style="bottom:16px;left:18px;">ENGLISH<br>THROUGH CINEMA</div>
-  <div class="ml-corner" style="bottom:16px;right:18px;text-align:right;">ACT · SCORE<br>MASTER<br><a href="/privacy" style="color:rgba(200,169,110,0.45);text-decoration:none;">PRIVACY</a></div>
-</div>
+<!-- STATS -->
+<section class="ld-band" aria-label="Mirror en números">
+  <div class="ld-wrap ld-stats">
+    <div class="ld-stat"><b>47</b><span>escenas originales para actuar</span></div>
+    <div class="ld-stat"><b>3</b><span>niveles: básico, intermedio y avanzado</span></div>
+    <div class="ld-stat"><b>0–100</b><span>puntaje en cada toma</span></div>
+    <div class="ld-stat"><b>$1</b><span>para empezar hoy</span></div>
+  </div>
+</section>
 
-<div id="mlSidebar" style="
-  position: absolute;
-  left: 28px;
-  top: 50%;
-  transform: translateY(-50%);
-  z-index: 600;
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-">
-  <div class="ml-sb-item ml-on">
-    <div class="ml-sb-circle">🎬</div>
-    <span class="ml-sb-label">Scenes</span>
+<!-- BEFORE / AFTER -->
+<section class="ld-wrap ld-pad ld-stack" aria-labelledby="lpProblemaH">
+  <div class="ld-head">
+    <p class="ld-eyebrow">El problema</p>
+    <h2 class="ld-h2" id="lpProblemaH">Deja de memorizar.<br><span class="ld-gold">Empieza a hablar.</span></h2>
+    <p class="ld-lead">Entiendes inglés, pero cuando te toca hablar te congelas. No es tu culpa: nadie te puso a decirlo en voz alta.</p>
   </div>
-  <div class="ml-sb-item">
-    <div class="ml-sb-circle">📚</div>
-    <span class="ml-sb-label">Levels</span>
+  <div class="ld-ba">
+    <div class="ld-ba-card">
+      <p class="ld-eyebrow">Así te enseñaron</p>
+      <ul class="ld-list">
+        <li><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ff8a7a" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>Listas de vocabulario que olvidas en una semana</li>
+        <li><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ff8a7a" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>Reglas de gramática sin saber cómo suenan</li>
+        <li><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ff8a7a" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>Te quedas en blanco cuando alguien te habla</li>
+        <li><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ff8a7a" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>Nadie te dice qué palabra pronunciaste mal</li>
+      </ul>
+    </div>
+    <div class="ld-ba-card ld-ba-card--mirror">
+      <p class="ld-eyebrow">Así aprendes con Mirror</p>
+      <ul class="ld-list">
+        <li><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#c8a96e" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>Dices frases completas, con emoción, como un actor</li>
+        <li><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#c8a96e" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>Escuchas primero cómo suena la línea</li>
+        <li><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#c8a96e" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>La IA te muestra la palabra exacta que fallaste</li>
+      </ul>
+      <div class="ld-diff">
+        <div><small>Tú dijiste</small><p>“If you get on <span class="ld-mark-close">the</span> train, don’t come back.”</p></div>
+        <div><small>La línea</small><p>“If you get on <span class="ld-mark-ok">that</span> train, don’t come back.”</p></div>
+        <p class="ld-diff-note">Casi: dijiste <strong>the</strong> en vez de <strong>that</strong> (ese). Repite y sube tu puntaje.</p>
+      </div>
+    </div>
   </div>
-  <div class="ml-sb-item">
-    <div class="ml-sb-circle">🏆</div>
-    <span class="ml-sb-label">Ranks</span>
+</section>
+
+<!-- HOW IT WORKS -->
+<section class="ld-band" id="lpComo" aria-labelledby="lpComoH">
+  <div class="ld-wrap ld-pad ld-stack">
+    <div class="ld-head ld-head--center">
+      <p class="ld-eyebrow">Cómo funciona</p>
+      <h2 class="ld-h2" id="lpComoH">Tres pasos. <span class="ld-gold">Una escena.</span></h2>
+      <p class="ld-lead">Cada escena dura menos de un minuto. Puedes hacer una en el bus, en el break o antes de dormir.</p>
+    </div>
+    <div class="ld-steps">
+      <div class="ld-step">
+        <p class="ld-step-n">01</p>
+        <h3>Escucha la escena</h3>
+        <p>Cada escena trae la línea en voz original, con la emoción que pide.</p>
+        <div class="ld-mini">
+          <div class="ld-round" style="background:#c8a96e"><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="#0b0b0e"><path d="M8 5.5v13l11-6.5z"/></svg></div>
+          <div class="ld-wave" aria-hidden="true"><i class="on" style="height:8px"></i><i class="on" style="height:14px"></i><i class="on" style="height:22px"></i><i class="on" style="height:12px"></i><i class="on" style="height:26px"></i><i class="on" style="height:18px"></i><i class="on" style="height:10px"></i><i class="on" style="height:24px"></i><i class="on" style="height:30px"></i><i style="height:16px"></i><i style="height:20px"></i><i style="height:12px"></i><i style="height:28px"></i><i style="height:18px"></i><i style="height:9px"></i><i style="height:22px"></i><i style="height:14px"></i><i style="height:26px"></i><i style="height:11px"></i><i style="height:17px"></i><i style="height:8px"></i><i style="height:13px"></i></div>
+          <p class="ld-mono">0:04</p>
+        </div>
+      </div>
+      <div class="ld-step">
+        <p class="ld-step-n">02</p>
+        <h3>Grábate diciéndola</h3>
+        <p>Toca el micrófono y actúa la línea. Repite las veces que quieras.</p>
+        <div class="ld-mini">
+          <div class="ld-round" style="background:#e5484d;box-shadow:0 0 0 6px rgba(229,72,77,.22)"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg></div>
+          <div>
+            <p style="font-size:14px;font-weight:700">Grabando…</p>
+            <p class="ld-serif" style="font-size:13px;color:#a9a59c">“…don’t come back.”</p>
+          </div>
+          <p class="ld-mono" style="margin-left:auto;color:#ff9c9f">0:03</p>
+        </div>
+      </div>
+      <div class="ld-step">
+        <p class="ld-step-n">03</p>
+        <h3>Recibe tu puntaje</h3>
+        <p>La IA califica cada palabra y te dice qué mejorar, en español.</p>
+        <div class="ld-mini">
+          <p style="font-family:'Bebas Neue',sans-serif;font-size:48px;line-height:1;color:#e3c78f">87</p>
+          <div class="ld-bars">
+            <div><span>Coinciden</span><em><i style="width:89%;background:#3ecf8e"></i></em><span>8</span></div>
+            <div><span>Casi</span><em><i style="width:11%;background:#f4b740"></i></em><span>1</span></div>
+            <div><span>Fallaron</span><em></em><span>0</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="ld-center">
+      <button type="button" class="ld-btn ld-btn-gold" data-ld-start>Probar mi primera escena por $1
+        <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
+    </div>
   </div>
-  <div class="ml-sb-item">
-    <div class="ml-sb-circle">⚡</div>
-    <span class="ml-sb-label">Missions</span>
+</section>
+
+<!-- TICKER -->
+<div class="ld-ticker" aria-hidden="true"><div class="ld-ticker-track">DRAMA<span>✦</span>ROMANCE<span>✦</span>ACCIÓN<span>✦</span>SUSPENSO<span>✦</span>CIENCIA FICCIÓN<span>✦</span>COMEDIA<span>✦</span>CRIMEN<span>✦</span>DEPORTES<span>✦</span>FAMILIA<span>✦</span>DRAMA<span>✦</span>ROMANCE<span>✦</span>ACCIÓN<span>✦</span>SUSPENSO<span>✦</span>CIENCIA FICCIÓN<span>✦</span>COMEDIA<span>✦</span>CRIMEN<span>✦</span>DEPORTES<span>✦</span>FAMILIA<span>✦</span></div></div>
+
+<!-- SCENES -->
+<section class="ld-wrap ld-pad ld-stack" id="lpEscenas" aria-labelledby="lpEscenasH">
+  <div class="ld-scenes-head">
+    <div class="ld-head">
+      <p class="ld-eyebrow">Las escenas</p>
+      <h2 class="ld-h2" id="lpEscenasH">47 escenas <span class="ld-gold">originales.</span></h2>
+      <p class="ld-serif" style="font-size:21px;color:#e6e2d9">De confesiones susurradas a gritos de victoria.</p>
+      <p style="font-size:16px;line-height:1.55;color:#cfcbc2">Escritas para decirse en voz alta, con voces y pósters propios. Empiezas en el Nivel 1 y subes cuando pasas.</p>
+    </div>
+    <a href="#pricingSection" class="ld-btn ld-btn-ghost" data-ld-scroll>Ver las 47 escenas</a>
   </div>
-</div>
+  <div class="ld-grid">
+    <article class="ld-scene">
+      <div class="ld-scene-art"><img src="/static/scenes/posters/last_train-sm.webp" srcset="/static/scenes/posters/last_train-sm.webp 400w, /static/scenes/posters/last_train.webp 800w" sizes="(max-width: 600px) 46vw, 270px" alt="Póster de Last Train" width="400" height="600" loading="lazy" decoding="async"><span class="ld-badge">INCLUIDA EN $1</span></div>
+      <p class="ld-scene-meta">NIVEL 1 · DRAMA</p>
+      <p class="ld-scene-line">“If you get on that train, don’t come back.”</p>
+      <p class="ld-scene-es">Si te subes a ese tren, no regreses.</p>
+    </article>
+    <article class="ld-scene">
+      <div class="ld-scene-art"><img src="/static/scenes/posters/rooftop-sm.webp" srcset="/static/scenes/posters/rooftop-sm.webp 400w, /static/scenes/posters/rooftop.webp 800w" sizes="(max-width: 600px) 46vw, 270px" alt="Póster de Rooftop" width="400" height="600" loading="lazy" decoding="async"><span class="ld-badge">INCLUIDA EN $1</span></div>
+      <p class="ld-scene-meta">NIVEL 1 · ROMANCE</p>
+      <p class="ld-scene-line">“I almost said it a hundred times. I love you.”</p>
+      <p class="ld-scene-es">Casi te lo dije cien veces. Te quiero.</p>
+    </article>
+    <article class="ld-scene">
+      <div class="ld-scene-art"><img src="/static/scenes/posters/countdown-sm.webp" srcset="/static/scenes/posters/countdown-sm.webp 400w, /static/scenes/posters/countdown.webp 800w" sizes="(max-width: 600px) 46vw, 270px" alt="Póster de Countdown" width="400" height="600" loading="lazy" decoding="async"><span class="ld-badge">INCLUIDA EN $1</span></div>
+      <p class="ld-scene-meta">NIVEL 1 · ACCIÓN</p>
+      <p class="ld-scene-line">“We have ninety seconds. Grab the bag and run!”</p>
+      <p class="ld-scene-es">Tenemos noventa segundos. ¡Agarra la bolsa y corre!</p>
+    </article>
+    <article class="ld-scene">
+      <div class="ld-scene-art"><img src="/static/scenes/posters/champion-sm.webp" srcset="/static/scenes/posters/champion-sm.webp 400w, /static/scenes/posters/champion.webp 800w" sizes="(max-width: 600px) 46vw, 270px" alt="Póster de Champion" width="400" height="600" loading="lazy" decoding="async"></div>
+      <p class="ld-scene-meta">NIVEL 1 · DEPORTES</p>
+      <p class="ld-scene-line">“Nobody believed in us. Look at us now!”</p>
+      <p class="ld-scene-es">Nadie creyó en nosotros. ¡Míranos ahora!</p>
+    </article>
+    <article class="ld-scene">
+      <div class="ld-scene-art"><img src="/static/scenes/posters/oxygen_low-sm.webp" srcset="/static/scenes/posters/oxygen_low-sm.webp 400w, /static/scenes/posters/oxygen_low.webp 800w" sizes="(max-width: 600px) 46vw, 270px" alt="Póster de Oxygen Low" width="400" height="600" loading="lazy" decoding="async"></div>
+      <p class="ld-scene-meta">NIVEL 2 · CIENCIA FICCIÓN</p>
+      <p class="ld-scene-line">“Oxygen is at forty percent. If we don’t fix this now, we won’t get another try.”</p>
+      <p class="ld-scene-es">El oxígeno está al cuarenta por ciento. Si no lo arreglamos ahora, no habrá otro intento.</p>
+    </article>
+    <article class="ld-scene">
+      <div class="ld-scene-art"><img src="/static/scenes/posters/the_pilot-sm.webp" srcset="/static/scenes/posters/the_pilot-sm.webp 400w, /static/scenes/posters/the_pilot.webp 800w" sizes="(max-width: 600px) 46vw, 270px" alt="Póster de Mayday" width="400" height="600" loading="lazy" decoding="async"></div>
+      <p class="ld-scene-meta">NIVEL 2 · ACCIÓN</p>
+      <p class="ld-scene-line">“We lost engine two. I’m going to land this plane, so everybody hold on.”</p>
+      <p class="ld-scene-es">Perdimos el motor dos. Voy a aterrizar este avión, así que todos agárrense.</p>
+    </article>
+    <article class="ld-scene">
+      <div class="ld-scene-art"><img src="/static/scenes/posters/the_rival-sm.webp" srcset="/static/scenes/posters/the_rival-sm.webp 400w, /static/scenes/posters/the_rival.webp 800w" sizes="(max-width: 600px) 46vw, 270px" alt="Póster de The Rival" width="400" height="600" loading="lazy" decoding="async"></div>
+      <p class="ld-scene-meta">NIVEL 2 · DEPORTES</p>
+      <p class="ld-scene-line">“You beat me last year. This year, I came here ready for you.”</p>
+      <p class="ld-scene-es">Me ganaste el año pasado. Este año vine preparado para ti.</p>
+    </article>
+    <article class="ld-scene">
+      <div class="ld-scene-art"><img src="/static/scenes/posters/the_bluff-sm.webp" srcset="/static/scenes/posters/the_bluff-sm.webp 400w, /static/scenes/posters/the_bluff.webp 800w" sizes="(max-width: 600px) 46vw, 270px" alt="Póster de The Bluff" width="400" height="600" loading="lazy" decoding="async"></div>
+      <p class="ld-scene-meta">NIVEL 3 · CRIMEN</p>
+      <p class="ld-scene-line">“You’re bluffing. I can read you like a book, and it’s a very short book.”</p>
+      <p class="ld-scene-es">Estás fanfarroneando. Te leo como un libro, y es un libro muy corto.</p>
+    </article>
+  </div>
+</section>
+
+<!-- FEATURES -->
+<section class="ld-band" aria-labelledby="lpFeatsH">
+  <div class="ld-wrap ld-pad ld-stack">
+    <div class="ld-head">
+      <p class="ld-eyebrow">Lo que obtienes</p>
+      <h2 class="ld-h2" id="lpFeatsH">Todo para que <span class="ld-gold">hables,</span><br>no solo entiendas.</h2>
+    </div>
+    <div class="ld-feats">
+      <div class="ld-feat">
+        <div class="ld-ico"><svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#c8a96e" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.5"/></svg></div>
+        <h3>Puntaje en vivo</h3>
+        <p>Apenas terminas, cada palabra sale marcada: coincide, casi o falló. Sabes qué repetir.</p>
+      </div>
+      <div class="ld-feat">
+        <div class="ld-ico"><svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#c8a96e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5h9M8.5 3v2M6 5c0 4 3 7 6 8M11 5c-1 4-4 7-7 8M13 21l4-9 4 9M14.5 18h5"/></svg></div>
+        <h3>Español palabra por palabra</h3>
+        <p>Toca cualquier palabra y ves su traducción en contexto. Frases como “get on” vienen explicadas.</p>
+      </div>
+      <div class="ld-feat">
+        <div class="ld-ico"><svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#c8a96e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12a8 8 0 0 1 14-5.3L20 9M20 4v5h-5M20 12a8 8 0 0 1-14 5.3L4 15M4 20v-5h5"/></svg></div>
+        <h3>Repaso inteligente</h3>
+        <p>Cada 10 escenas, Mirror te regresa a las que no pasaste. Lo difícil no se te escapa.</p>
+      </div>
+      <div class="ld-feat">
+        <div class="ld-ico"><svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#c8a96e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3c1 3 4 5 4 9a4 4 0 0 1-8 0c0-2 1-3 2-4 0 2 1 3 2 3 0-3-1-5 0-8z"/></svg></div>
+        <h3>Daily Take y rachas</h3>
+        <p>Tres líneas cortas al día. Termínalas y tu racha sigue viva.</p>
+      </div>
+      <div class="ld-feat">
+        <div class="ld-ico"><svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#c8a96e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 4h8v5a4 4 0 0 1-8 0zM8 6H5a3 3 0 0 0 3 4M16 6h3a3 3 0 0 1-3 4M12 13v4M8 20h8M10 17h4"/></svg></div>
+        <h3>Rangos y ligas</h3>
+        <p>Sube de Bronce a Director y compite cada semana con otros estudiantes.</p>
+      </div>
+      <div class="ld-feat">
+        <div class="ld-ico"><svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#c8a96e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM3 20a6 6 0 0 1 12 0M16 5a3 3 0 0 1 0 6M18 14a5 5 0 0 1 3 6"/></svg></div>
+        <h3>Reta a un amigo</h3>
+        <p>Manda tu escena con tu puntaje. Si te supera, te toca responder.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- LINES -->
+<section class="ld-wrap ld-pad ld-stack" aria-labelledby="lpLinesH">
+  <h2 class="ld-h2" id="lpLinesH" style="text-align:center">Líneas que vale la pena<br>decir <span class="ld-gold">en voz alta</span></h2>
+  <div class="ld-quotes">
+    <figure class="ld-quote"><figcaption>CHAMPION · TRIUNFAL</figcaption><blockquote>“Nobody believed in us. Look at us now!”</blockquote><p>Nadie creyó en nosotros. ¡Míranos ahora!</p></figure>
+    <figure class="ld-quote"><figcaption>THE DEAL · SEGURO</figcaption><blockquote>“Ten thousand. Final offer. Take it or leave it.”</blockquote><p>Diez mil. Última oferta. Lo tomas o lo dejas.</p></figure>
+    <figure class="ld-quote"><figcaption>ROOFTOP · NERVIOSO, SINCERO</figcaption><blockquote>“I almost said it a hundred times. I love you.”</blockquote><p>Casi te lo dije cien veces. Te quiero.</p></figure>
+    <figure class="ld-quote"><figcaption>COLD FEET · NERVIOSO</figcaption><blockquote>“I’m not getting cold feet. I’m just… reconsidering every decision I’ve ever made.”</blockquote><p>No me estoy arrepintiendo. Solo estoy… reconsiderando cada decisión que he tomado.</p></figure>
+  </div>
+</section>
+
+<!-- PRICING — every id below is read by BillingPlans / startCheckout in static/app.js -->
+<section id="pricingSection" aria-labelledby="lpPreciosH">
+  <div class="ld-wrap ld-pad ld-price-in">
+    <div class="ld-head ld-head--center">
+      <p class="ld-eyebrow">Precios</p>
+      <h2 class="ld-h2 ld-price-h" id="lpPreciosH">Empieza por <span class="ld-gold">$1.</span></h2>
+      <p class="ld-serif" style="font-size:21px;color:#e6e2d9">Menos que un café. Tomas infinitas.</p>
+    </div>
+    <div class="mc-pill-group ld-pills" id="pricingPill" role="group" aria-label="Periodo de pago de Pro">
+      <button type="button" class="mc-pill" data-billing="monthly">Mensual</button>
+      <button type="button" class="mc-pill active" data-billing="yearly">Anual <span class="mc-pill-badge" id="pricingYearlyBadge" hidden></span></button>
+    </div>
+    <div class="ld-plans">
+      <div class="ld-plan">
+        <p class="ld-plan-name">STARTER</p>
+        <div class="ld-plan-price">
+          <p class="ld-plan-amt">$1</p>
+          <p class="ld-plan-per">pago único<br>tuyo para siempre</p>
+        </div>
+        <ul class="ld-list">
+          <li><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#c8a96e" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg><span id="pricingFreeCount">5 escenas para empezar</span></li>
+          <li><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#c8a96e" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>El Daily Take, gratis todos los días</li>
+          <li><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#c8a96e" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>Retos de tus amigos</li>
+          <li><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#c8a96e" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>No se renueva</li>
+        </ul>
+        <button type="button" class="ld-plan-cta ld-plan-cta--line" id="pricingLevel1Btn">Empezar por $1</button>
+      </div>
+      <div class="ld-plan ld-plan--pro">
+        <span class="ld-plan-flag">RECOMENDADO</span>
+        <p class="ld-plan-name">PRO</p>
+        <div class="ld-plan-price">
+          <span class="ld-plan-amt" id="proPriceAmount" aria-busy="true"><span class="price-skeleton" aria-hidden="true"></span></span><span id="proPriceCadence" hidden></span>
+        </div>
+        <p class="ld-plan-note" id="proPriceSub"></p>
+        <ul class="ld-list">
+          <li><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#c8a96e" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg><span id="pricingProCount">Las 47 escenas</span></li>
+          <li><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#c8a96e" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>Niveles 1, 2 y 3</li>
+          <li><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#c8a96e" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>Español palabra por palabra en cada escena</li>
+          <li><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#c8a96e" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>Cancela cuando quieras</li>
+        </ul>
+        <button type="button" class="ld-plan-cta ld-plan-cta--gold" id="pricingProBtn">Elegir Pro</button>
+      </div>
+    </div>
+    <p class="ld-legal">Pagos seguros con Stripe. Pro se renueva automáticamente hasta que canceles. Todos los pagos son finales. <a href="/terms">Términos</a> · <a href="/refunds">Política de reembolsos</a></p>
+  </div>
+</section>
+
+<!-- FOUNDER -->
+<section class="ld-wrap ld-pad ld-founder" aria-label="El fundador">
+  <div class="ld-founder-card">
+    <div class="ld-mono-av" aria-hidden="true">JG</div>
+    <div class="ld-founder-txt">
+      <p class="ld-eyebrow">Por qué existe Mirror</p>
+      <blockquote>“Aprendí inglés repitiendo líneas de películas hasta decirlas como los actores las sentían, no solo lo que decían. Mirror es ese hábito convertido en app.”</blockquote>
+      <p><strong>John Greg</strong> · Fundador · Miami</p>
+      <a class="ld-x" href="https://x.com/JohnGregQuantum" target="_blank" rel="noopener">Sígueme en X → @JohnGregQuantum</a>
+    </div>
+  </div>
+</section>
+
+<!-- FAQ -->
+<section class="ld-wrap ld-pad ld-faq ld-stack" id="lpPreguntas" aria-labelledby="lpPreguntasH">
+  <div class="ld-head ld-head--center">
+    <p class="ld-eyebrow">Preguntas</p>
+    <h2 class="ld-h2" id="lpPreguntasH">Preguntas frecuentes</h2>
+  </div>
+  <div class="ld-faq-list">
+    <details open><summary>¿Necesito saber inglés para empezar?</summary><p>No. El Nivel 1 son líneas cortas y cada palabra trae su traducción al español. Subes de nivel cuando pasas tus escenas.</p></details>
+    <details><summary>¿Cómo me califica la IA?</summary><p>Escucha tu grabación, la convierte en texto y la compara con la línea palabra por palabra: coincide, casi o falló. Te da un puntaje de 0 a 100.</p></details>
+    <details><summary>¿Son escenas de películas reales?</summary><p>No. Son 47 escenas originales, escritas para actuarse en voz alta, con sus propias voces y pósters.</p></details>
+    <details><summary>¿Qué incluye el pago de $1?</summary><p>5 escenas para siempre, el Daily Take todos los días y los retos de tus amigos. Es un pago único y no se renueva.</p></details>
+    <details><summary>¿Puedo cancelar Pro?</summary><p>Sí, cuando quieras. No hay contratos.</p></details>
+    <details><summary>¿Hay reembolsos?</summary><p>No. Todos los pagos son finales; por eso puedes probar Mirror con solo $1.</p></details>
+    <details><summary>¿Tengo que descargar algo?</summary><p>No. Mirror funciona en el navegador de tu teléfono o computadora. Solo necesitas un micrófono.</p></details>
+    <details><summary>¿Qué pasa con mi grabación?</summary><p>Se usa para calificar tu toma. Los detalles están en la <a href="/privacy">Política de privacidad</a>.</p></details>
+  </div>
+</section>
+
+<!-- CLOSING -->
+<section class="ld-close" aria-labelledby="lpCloseH">
+  <img class="ld-close-bg" src="/static/scenes/posters/last_train-bg.webp" alt="" loading="lazy" decoding="async">
+  <div class="ld-wrap ld-close-in">
+    <p class="ld-eyebrow">Se abre el telón</p>
+    <h2 class="ld-close-h" id="lpCloseH">Tu escena<br>empieza <span class="ld-gold">ahora.</span></h2>
+    <p class="ld-serif ld-close-sub">50+ estudiantes ya están hablando como en el cine. La próxima gran actuación es la tuya.</p>
+    <div class="ld-ctas" style="justify-content:center">
+      <button type="button" class="ld-btn ld-btn-gold" data-ld-start>Empezar por $1
+        <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
+      <a href="#pricingSection" class="ld-btn ld-btn-ghost" data-ld-scroll>Ver precios</a>
+    </div>
+    <p class="ld-fine">Pago único de $1 · Sin descargar nada · Español en cada palabra</p>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer class="ld-foot">
+  <div class="ld-wrap ld-foot-in">
+    <div class="ld-foot-brand">
+      <p class="ld-logo">MIRROR</p>
+      <p>Aprende inglés actuando escenas.<br><a href="mailto:contact@mirrorspeak.app" style="text-decoration:none">contact@mirrorspeak.app</a></p>
+    </div>
+    <nav class="ld-foot-col" aria-label="Producto">
+      <p class="ld-eyebrow">Producto</p>
+      <a href="#lpComo" data-ld-scroll>Cómo funciona</a>
+      <a href="#lpEscenas" data-ld-scroll>Escenas</a>
+      <a href="#pricingSection" data-ld-scroll>Precios</a>
+      <a href="#lpPreguntas" data-ld-scroll>Preguntas</a>
+    </nav>
+    <nav class="ld-foot-col" aria-label="Cuenta">
+      <p class="ld-eyebrow">Cuenta</p>
+      <button type="button" onclick="mlOpenAuth('login')">Entrar</button>
+      <button type="button" onclick="mlOpenAuth('register')">Crear cuenta</button>
+      <a href="/forgot">Olvidé mi contraseña</a>
+    </nav>
+    <nav class="ld-foot-col" aria-label="Legal">
+      <p class="ld-eyebrow">Legal</p>
+      <a href="/terms">Términos</a>
+      <a href="/refunds">Reembolsos</a>
+      <a href="/privacy">Privacidad</a>
+    </nav>
+  </div>
+  <p class="ld-copy">&copy; 2026 Mirror</p>
+</footer>
 
 <script>
 (function(){
-  // The marquee: Mirror's own scene posters, one card per scene in
-  // scene_config order. `bg` is the genre colour, shown
-  // for the instant before the image decodes and as the whole card if it
-  // never does.
-  const ML_SCENES = [
-    {id:'last_train',       bg:'#8a5a1a'},
-    {id:'fashionably_late', bg:'#d4a843'},
-    {id:'rooftop',          bg:'#c75050'},
-    {id:'countdown',        bg:'#cc2233'},
-    {id:'locked_door',      bg:'#2a3a5a'},
-    {id:'first_day',        bg:'#d4a843'},
-    {id:'the_promise',      bg:'#8a5a1a'},
-    {id:'no_signal',        bg:'#1a2a4a'},
-    {id:'champion',         bg:'#e07b39'},
-    {id:'wrong_number',     bg:'#d4a843'},
-    {id:'the_storm',        bg:'#4a7c8c'},
-    {id:'the_letter',       bg:'#8a5a1a'},
-    {id:'interrogation',    bg:'#3a2a4a'},
-    {id:'surprise',         bg:'#5a7d8c'},
-    {id:'the_deal',         bg:'#8a5a1a'},
-    {id:'lost_city',        bg:'#4a7c8c'},
-    {id:'the_apology',      bg:'#c75050'},
-    {id:'midnight_call',    bg:'#2a3a5a'},
-    {id:'stand_up',         bg:'#8a5a1a'},
-    {id:'coffee_shop',      bg:'#c75050'},
-    {id:'job_offer',        bg:'#8a5a1a'},
-    {id:'the_heist',        bg:'#3a2a4a'},
-    {id:'old_friends',      bg:'#d4a843'},
-    {id:'good_news',        bg:'#8a5a1a'},
-    {id:'blind_date',       bg:'#c75050'},
-    {id:'final_round',      bg:'#e07b39'},
-    {id:'the_secret',       bg:'#2a3a5a'},
-    {id:'moving_out',       bg:'#8a5a1a'},
-    {id:'lost_luggage',     bg:'#d4a843'},
-    {id:'the_pilot',        bg:'#cc2233'},
-    {id:'missed_games',     bg:'#5a7d8c'},
-    {id:'the_window',       bg:'#3a2a4a'},
-    {id:'wedding_toast',    bg:'#d4a843'},
-    {id:'night_shift',      bg:'#8a5a1a'},
-    {id:'the_audition',     bg:'#8a5a1a'},
-    {id:'oxygen_low',       bg:'#2a5a8a'},
-    {id:'first_dance',      bg:'#c75050'},
-    {id:'the_rival',        bg:'#e07b39'},
-    {id:'runaway',          bg:'#1a2a4a'},
-    {id:'grandmas_kitchen', bg:'#5a7d8c'},
-    {id:'boardroom',        bg:'#8a5a1a'},
-    {id:'roommate',         bg:'#d4a843'},
-    {id:'the_comeback',     bg:'#e07b39'},
-    {id:'cold_feet',        bg:'#d4a843'},
-    {id:'the_bluff',        bg:'#3a2a4a'},
-    {id:'done_waiting',     bg:'#8a5a1a'},
-    {id:'lucky',            bg:'#1a2a4a'},
-  ];
-
+  // Poster typography for the app's scene carousel (static/app.js reads
+  // window.mirrorPosterType). Kept here from the old landing wall.
   // Poster typography for the Higgsfield wall art (the art itself has no text, so
   // every title is spelled exactly). f = type family, c = colour, p = top/bottom.
   // Scenes not listed here carry their own title in the image.
@@ -5164,771 +5538,65 @@
   // The app's carousel (static/app.js) sets the same titles on its cards.
   window.mirrorPosterType = mlPosterType;
 
-  function mlShuffle(a){return [...a].sort(()=>Math.random()-.5);}
-
-  function mlBuildWall(){
-    const container = document.getElementById('ml-rows-container');
-    if(!container) return;
-
-    const rowH = Math.floor(window.innerHeight / 5) - 6;
-    const cardW = Math.floor(rowH * 1.72);
-
-    // Cloud-drift parallax — reference rows are almost imperceptibly slow.
-    const ML_ROWS = [
-      {dir:'left',  spd:'80s'},
-      {dir:'right', spd:'120s'},
-      {dir:'left',  spd:'65s'},
-      {dir:'right', spd:'150s'},
-      {dir:'left',  spd:'95s'},
-    ];
-
-    // Keep in step with the rows[n].style.opacity block after the rows are built.
-    const ROW_OPACITIES = ['1', '1', '1', '0.8', '0.45'];
-    // Fixed layout, not shuffled: each scene lives in exactly one row, and the
-    // order is chosen so that side-by-side posters (including the loop seam)
-    // never share palette, genre or composition, and neighbouring rows use
-    // disjoint palette families (rows 1/3/5: blue-gold, red-black, neon green;
-    // rows 2/4: cold white, sunset orange, purple-cyan), so no colour stacks
-    // vertically either. Built offline from the poster plan.
-    const ML_LAYOUT = [["first_dance","surprise","last_train","lucky","stand_up","lost_city","no_signal","boardroom"],["cold_feet","lost_luggage","missed_games","the_pilot","the_deal","midnight_call","the_audition","first_day","old_friends","the_window","final_round","champion"],["the_bluff","the_promise","blind_date","done_waiting","the_secret","oxygen_low","wrong_number","coffee_shop"],["job_offer","rooftop","the_apology","fashionably_late","the_comeback","the_letter","the_heist","roommate","locked_door","wedding_toast","the_storm"],["runaway","night_shift","interrogation","good_news","grandmas_kitchen","countdown","moving_out","the_rival"]];
-    const byId = Object.fromEntries(ML_SCENES.map(s => [s.id, s]));
-    const rowSets = ML_LAYOUT.map(r => r.map(id => byId[id]).filter(Boolean));
-    ML_ROWS.forEach((cfg, rowIndex) => {
-      const row = document.createElement('div');
-      row.className = 'ml-mrow ml-' + cfg.dir;
-      row.style.setProperty('--spd', cfg.spd);
-      row.style.height = rowH + 'px';
-
-      // Entrance: rows fade up and slide in, staggered.
-      row.style.opacity = '0';
-      row.style.transform = 'translateY(30px)';
-      row.style.transition = 'opacity 0.8s ease, transform 0.8s ease';
-      setTimeout(() => {
-        row.style.opacity = ROW_OPACITIES[rowIndex];
-        row.style.transform = 'translateY(0)';
-      }, 200 + rowIndex * 150);
-
-      const track = document.createElement('div');
-      track.className = 'ml-mtrack';
-
-      // Seamless marquee loop: build halfCount cards, then duplicate so
-      // translateX(-50%) snaps back to an identical visual state.
-      // A whole number of row sets, so the loop is strictly periodic: a scene
-      // only comes back after every other scene in its row (no doubles at the seam).
-      const setLen = rowSets[rowIndex].length;
-      const halfCount = Math.ceil((Math.ceil((window.innerWidth / cardW) * 1.5) + 2) / setLen) * setLen;
-      const half = [];
-      while (half.length < halfCount) {
-        half.push(...rowSets[rowIndex]);
-      }
-      const finalPool = [...half.slice(0, halfCount), ...half.slice(0, halfCount)];
-
-      finalPool.forEach(s => {
-        const card = document.createElement('div');
-        card.className = 'ml-card';
-        card.dataset.scene = s.id;
-        card.style.cssText = 'width:' + cardW + 'px;height:' + rowH + 'px;position:relative;border-radius:14px;';
-
-        // Scene art is webp only -- there is no JPG fallback to pick between,
-        // so the <picture>/<source> pair that existed to choose one is gone.
-        // The marquee takes the 400x600 cut: these cards are ~150px wide.
-        // loading="lazy" lets the browser defer cards that aren't in the initial viewport;
-        // the marquee's auto-scroll triggers normal loading once they slide in.
-        const picture = document.createElement('picture');
-        picture.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;display:block;';
-        const img = document.createElement('img');
-        // Illustrated poster art (text-free landscape cut), static/scenes/posters.
-        img.src = '/static/scenes/posters/' + s.id + '-wall.webp';
-        img.alt = '';
-        img.loading = 'lazy';
-        img.decoding = 'async';
-        // The marquee is decorative. On a constrained connection its posters
-        // would otherwise compete with the stylesheet, fonts and app scripts
-        // for the same few connections, pushing first paint out.
-        img.fetchPriority = 'low';
-        img.style.cssText = 'width:100%;height:100%;object-fit:cover;display:block;';
-        img.onerror = function(){
-          picture.style.display = 'none';
-          card.style.background = s.bg;
-        };
-        picture.appendChild(img);
-
-        const grad = document.createElement('div');
-        grad.className = 'ml-card-grad';
-
-        card.appendChild(picture);
-        card.appendChild(grad);
-        const ov = mlPosterType(s.id);
-        if (ov) { card.classList.add('hfp'); card.appendChild(ov); }
-        track.appendChild(card);
-      });
-
-      row.appendChild(track);
-      container.appendChild(row);
-    });
-
-    const rows = container.querySelectorAll('.ml-mrow');
-    rows[0].style.opacity = '1';
-    rows[1].style.opacity = '1';
-    rows[2].style.opacity = '1';
-    rows[3].style.opacity = '0.8';
-    rows[4].style.opacity = '0.45';
-  }
-
-  window.mlPill = function(btn){
-    document.querySelectorAll('.ml-pill-btn').forEach(b=>b.classList.remove('ml-on'));
-    btn.classList.add('ml-on');
-  };
-
+  // Auth entry points. 'register' by default for callers that pass nothing.
   window.mlOpenAuth = function(tab){
-    // tab defaults to 'register' to preserve behavior for callers that don't pass an arg
     tab = tab || 'register';
-    // Tier 1: direct call to openAuthModal (preferred — modal is now body-level)
-    if(typeof window.openAuthModal === 'function'){
-      window.openAuthModal(tab);
-      return;
-    }
-    // Tier 2: fallback for the rare case openAuthModal isn't loaded yet (e.g. partial JS failure)
+    if (typeof window.openAuthModal === 'function') { window.openAuthModal(tab); return; }
     var modal = document.getElementById('authModalOverlay');
-    if(modal){
-      modal.classList.add('open');
-      document.body.style.overflow='hidden';
-    }
+    if (modal) { modal.classList.add('open'); document.body.style.overflow = 'hidden'; }
   };
 
+  // Every "Empezar por $1" is the Starter Pack checkout. Clicking the pricing
+  // card's own button reuses startCheckout() in static/app.js: a visitor
+  // without an account gets the signup modal first, and the purchase resumes
+  // by itself once they are in.
+  window.mlStartStarter = function(){
+    var b = document.getElementById('pricingLevel1Btn');
+    if (b && !b.disabled) { b.click(); return; }
+    window.mlOpenAuth('register');
+  };
+  document.querySelectorAll('#mirrorLanding [data-ld-start]').forEach(function(btn){
+    btn.addEventListener('click', window.mlStartStarter);
+  });
+
+  // In-page links scroll smoothly under the sticky nav.
+  var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  document.querySelectorAll('#mirrorLanding a[data-ld-scroll]').forEach(function(a){
+    a.addEventListener('click', function(e){
+      var t = document.querySelector(a.getAttribute('href'));
+      if (!t) return;
+      e.preventDefault();
+      t.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'start' });
+    });
+  });
+
+  // The phone demo: flip the chips between the line and its Spanish.
+  var esBtn = document.getElementById('lpEsBtn');
+  var chips = document.querySelectorAll('#lpChips .ld-chip');
+  chips.forEach(function(c){ c.dataset.en = c.textContent; });
+  if (esBtn) esBtn.addEventListener('click', function(){
+    var on = esBtn.getAttribute('aria-pressed') !== 'true';
+    esBtn.setAttribute('aria-pressed', on ? 'true' : 'false');
+    esBtn.textContent = on ? 'Ver en inglés' : 'Ver en español';
+    chips.forEach(function(c){ c.textContent = on ? c.dataset.es : c.dataset.en; });
+  });
+
+  // Signing in hides the whole landing; signing out brings it back.
   var _origEnter = window.enterAppMode;
   window.enterAppMode = function(){
     var l = document.getElementById('mirrorLanding');
-    if(l) l.style.display = 'none';
-    if(typeof _origEnter === 'function') _origEnter.apply(this, arguments);
+    if (l) l.style.display = 'none';
+    if (typeof _origEnter === 'function') _origEnter.apply(this, arguments);
   };
-
-  function mlRestoreLanding(){
-    var l = document.getElementById('mirrorLanding');
-    if(l) l.style.display = '';
-  }
   var _origLogout = window.logout;
   window.logout = function(){
-    mlRestoreLanding();
-    if(typeof _origLogout === 'function') _origLogout.apply(this, arguments);
+    var l = document.getElementById('mirrorLanding');
+    if (l) l.style.display = '';
+    if (typeof _origLogout === 'function') _origLogout.apply(this, arguments);
   };
-
-  if(document.readyState === 'loading'){
-    document.addEventListener('DOMContentLoaded', mlBuildWall);
-  } else {
-    mlBuildWall();
-  }
-
-  // ── 3D cylindrical curve — tilt rows away from the horizontal centerline
-  //    and rotateY each card based on its distance from the frame's vertical
-  //    centerline.  Re-applied periodically since marquee scroll changes each
-  //    card's screen position. ──
-  function mlApply3DCurve() {
-    const container = document.getElementById('ml-frame');
-    if (!container) return;
-    const frameW = container.offsetWidth;
-
-    container.querySelectorAll('.ml-mrow').forEach((row, rowIndex) => {
-      const totalRows = 5;
-      const rowOffset = (rowIndex / (totalRows - 1) - 0.5) * 2;
-      const rotX = rowOffset * 12;
-      row.style.transform = `rotateX(${rotX}deg)`;
-      row.style.transformOrigin = 'center center';
-
-      row.querySelectorAll('.ml-card').forEach(card => {
-        const rect = card.getBoundingClientRect();
-        const containerRect = container.getBoundingClientRect();
-        const cardCenterX = rect.left + rect.width / 2 - containerRect.left;
-        const normalizedX = (cardCenterX / frameW - 0.5) * 2;
-        const rotY = normalizedX * -22;
-        const scaleZ = 1 - Math.abs(normalizedX) * 0.08;
-        card.style.transform = `rotateY(${rotY}deg) scale(${scaleZ})`;
-        card.style.transformOrigin = 'center center';
-      });
-    });
-  }
-  setTimeout(mlApply3DCurve, 1000);
-  setInterval(mlApply3DCurve, 2000);
-
-  var token = localStorage.getItem('mirror_token');
-  if(token){
-    var s = document.createElement('style');
-    s.id = 'ml-preload-hide';
-    s.textContent = '#mirrorLanding{display:none!important;}';
-    document.head.appendChild(s);
-  }
 })();
 </script>
 </section>
-
-<!-- ═══════════════════════════ MIRROR SECTIONS 2-4 — editorial below hero ═══════════════════════════ -->
-
-<!-- ─── SECTION 2 — Mirror Method ─── -->
-<section class="ms-section" id="mirrorMethod">
-  <div class="mm-eyebrow ms-anim">The Mirror Method</div>
-  <h2 class="mm-head ms-anim d1">See a take<br>come together</h2>
-  <div class="mm-card ms-anim d3">
-    <p class="mm-card-body">Pick a scene. Hear the line. Speak it back. Our engine transcribes what you actually said and scores it against the script &mdash; word by word, matched, close or missed &mdash; until you can land the whole line clean.</p>
-    <button class="mm-ghost" type="button" id="mmWatchBtn">Hear a scene &rarr;</button>
-  </div>
-</section>
-
-<!-- ═══════════════════════════ SCREEN TEST — pinned 3D stage ═══════════════════════════ -->
-<style>
-  /* Stage CSS — verbatim from approved prototype (overrides spec §4 wherever they differ) */
-  #mlStage{position:relative;height:100vh;overflow:hidden;isolation:isolate}
-  .mls-spot{position:absolute;inset:0;z-index:0;pointer-events:none;
-    background:radial-gradient(ellipse 55% 42% at 50% 40%,rgba(200,169,110,.20),transparent 65%),
-               radial-gradient(ellipse 85% 55% at 50% 112%,rgba(200,169,110,.06),transparent 70%)}
-  #mlsCanvas{position:absolute;inset:0;width:100%;height:100%;z-index:1;display:block}
-
-  .mls-beat{position:absolute;left:50%;top:30%;transform:translateX(-50%);text-align:center;z-index:2;opacity:0;width:min(92vw,760px);pointer-events:none}
-  /* No poster card in the Screen Test: John rejected the photo there. The
-     stage is text only -- the three beats, the line and the level buttons.
-     !important beats the static-layout rule and the JS fallback's inline style. */
-  #mlsCanvas, #mlsCardFallback{ display:none !important; }
-  /* Poster card on the right, text on the left so they never overlap.
-     Real photo only, no lettering on it. */
-  .mls-beat{left:7%;transform:none;text-align:left;width:min(46vw,540px)}
-  .mls-beat .mls-wave{justify-content:flex-start}
-  .mls-beat .mls-subscores{justify-content:flex-start}
-  #mlsPoster{position:absolute;right:9%;top:50%;z-index:2;width:min(400px,36vw,53vh);aspect-ratio:2/3;
-    transform:translateY(-50%);perspective:1200px}
-  #mlsPoster .mls-pc{position:relative;width:100%;height:100%;border-radius:14px;overflow:hidden;background:#111;
-    box-shadow:0 0 0 1px rgba(200,169,110,.3),0 50px 110px rgba(0,0,0,.8),0 0 80px rgba(200,169,110,.14);
-    animation:mlsFloat 7s ease-in-out infinite;transform-origin:50% 50%}
-  #mlsPoster img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transition:opacity .45s ease}
-  #mlsPoster .mls-pc::after{content:'';position:absolute;inset:0;pointer-events:none;
-    background:linear-gradient(180deg,rgba(0,0,0,0) 65%,rgba(0,0,0,.35) 100%)}
-  @keyframes mlsFloat{0%,100%{transform:rotateY(-6deg) rotateX(2deg) translateY(0)}50%{transform:rotateY(4deg) rotateX(-1deg) translateY(-10px)}}
-  @media (prefers-reduced-motion: reduce){ #mlsPoster .mls-pc{animation:none} }
-  .mls-kicker{font-family:'Space Mono',monospace;font-size:.62rem;letter-spacing:.4em;color:#c8a96e;opacity:.85}
-  .mls-h{font-family:'Bebas Neue',sans-serif;font-size:clamp(2.4rem,6.5vw,4.8rem);line-height:.95;margin:.3em 0;letter-spacing:.02em}
-  .mls-h em{font-family:'Playfair Display',serif;font-style:italic;color:#c8a96e;letter-spacing:0}
-  .mls-sub{color:#9a948a;font-weight:300}
-  .mls-quote{font-family:'Playfair Display',serif;font-style:italic;font-size:clamp(1.05rem,2.4vw,1.5rem);color:#e8e2d6;margin-top:4px}
-
-  .mls-wave{display:flex;gap:5px;justify-content:center;margin-top:16px;height:32px;align-items:flex-end}
-  .mls-wave span{width:4px;background:#c8a96e;height:18%;border-radius:2px;box-shadow:0 0 8px rgba(200,169,110,.4)}
-
-  .mls-score{font-family:'Space Mono',monospace;font-size:clamp(3.6rem,11vw,7.5rem);color:#c8a96e;line-height:1;text-shadow:0 0 50px rgba(200,169,110,.35)}
-  .mls-scorelabel{font-family:'Space Mono',monospace;font-size:.6rem;letter-spacing:.32em;color:#6b6457;margin-top:4px}
-  .mls-subscores{display:flex;gap:26px;justify-content:center;color:#9a948a;font-family:'Space Mono',monospace;font-size:.68rem;letter-spacing:.1em;margin-top:16px;flex-wrap:wrap}
-  .mls-subscores b{color:#f5f0e8;margin-left:6px;font-weight:700}
-
-  .mls-swatches{position:absolute;left:50%;bottom:5%;transform:translateX(-50%);z-index:3;display:flex;gap:14px;align-items:center;flex-wrap:wrap;justify-content:center}
-  .mls-sw{width:46px;height:46px;border-radius:50%;border:1px solid rgba(200,169,110,.45);background:rgba(8,8,8,.65);color:#c8a96e;font-family:'Bebas Neue',sans-serif;font-size:1.15rem;cursor:pointer;transition:all .25s ease}
-  .mls-sw.active,.mls-sw:hover{background:#c8a96e;color:#080808;box-shadow:0 0 26px rgba(200,169,110,.5)}
-  .mls-sw-label{width:100%;text-align:center;font-family:'Space Mono',monospace;font-size:.55rem;letter-spacing:.32em;color:#6b6457;margin-top:8px}
-
-  #mlAudioToggle{position:fixed;left:14px;top:50%;z-index:950;transform:translateY(-50%) rotate(180deg);writing-mode:vertical-rl;background:none;border:none;cursor:pointer;color:#6b6457;font-family:'Space Mono',monospace;font-size:.6rem;letter-spacing:.32em;transition:color .25s;padding:10px 6px}
-  #mlAudioToggle[aria-pressed="true"]{color:#c8a96e}
-
-  /* CSS fallback card (spec §4 — prototype is silent on this selector) */
-  #mlsCardFallback{
-    display:none; position:absolute; left:50%; top:50%; z-index:1;
-    width:min(46vw,260px); aspect-ratio:2/3;
-    transform:translate(-50%,-50%);
-    background-size:cover; background-position:center;
-    border-radius:10px;
-    box-shadow:0 40px 80px rgba(0,0,0,.7), 0 0 60px rgba(200,169,110,.18);
-  }
-
-  /* Hide audio toggle in app mode (consistent with all other landing chrome) */
-  body.app-mode #mlAudioToggle,
-  body.app-mode #mlStage { display: none !important; }
-
-  /* ── Static stack: phones, coarse pointers, and reduced motion ──────────────
-     The scrubbed version only ever shows ONE beat at a time, fading them in and
-     out over a card pinned in the middle of a 100vh stage. Make all three
-     visible without moving the card and beats 2 and 3 render *underneath* it —
-     measured: elementFromPoint at their centres returned #mlsCardFallback, so
-     "SPEAK THE LINE" and the sync score were unreadable behind the poster.
-
-     That is exactly what the old reduced-motion rule did: it set the beats to
-     relative/opacity:1 but left the card absolute, so anyone with the OS
-     setting on has been getting the broken version. This block replaces it and
-     covers phones too — one poster at the top, three blocks beneath it, each
-     reading as ordinary stacked content. */
-  @media (max-width: 768px), (pointer: coarse), (prefers-reduced-motion: reduce){
-    /* Grow with content instead of clipping to one viewport. Flex column only
-       to reorder: the swatches sit last in the DOM, but they choose which
-       poster is shown, so they belong directly under it rather than three
-       blocks away. Beats share one order value and keep their DOM sequence. */
-    #mlStage{
-      height:auto; min-height:0; overflow:visible; padding:72px 0 88px;
-      display:flex; flex-direction:column;
-    }
-    #mlsCardFallback{ order:1; }
-    #mlsPoster{ order:1; position:relative; right:auto; top:auto; transform:none;
-      width:min(70vw,280px); margin:0 auto 18px; }
-    .mls-swatches{ order:2; }
-    .mls-beat{ order:3; }
-
-    /* The card joins the flow at the top rather than floating behind the text.
-       display is set to block here because the JS fallback path only unhides it
-       when it runs; in the static layout it should always occupy its slot. */
-    #mlsCardFallback{
-      display:block; position:relative; left:auto; top:auto; transform:none;
-      width:min(52vw,220px); margin:0 auto 8px;
-    }
-    /* No 3D card in this layout — the canvas would just be an empty box. */
-    #mlsCanvas{ display:none; }
-
-    /* Swatches follow the poster instead of being pinned to the stage bottom. */
-    .mls-swatches{
-      position:relative; left:auto; bottom:auto; transform:none;
-      margin:0 auto 8px; justify-content:center;
-    }
-
-    /* The three beats become ordinary stacked blocks. */
-    .mls-beat{
-      position:relative; left:auto; top:auto; transform:none; opacity:1;
-      margin:56px auto 0; pointer-events:auto;
-      text-align:center; width:min(92vw,760px);
-    }
-    .mls-beat .mls-wave, .mls-beat .mls-subscores{ justify-content:center; }
-    .mls-beat:first-of-type{ margin-top:40px; }
-
-    /* The spotlight wash is decorative and sized for a 100vh stage; letting it
-       stretch over a tall stacked section washes the whole thing out. */
-    .mls-spot{ display:none; }
-  }
-  @media (max-width:768px){ #mlAudioToggle{left:5px} }
-</style>
-
-<section id="mlStage" aria-label="The Screen Test">
-  <div class="mls-spot"></div>
-
-  <canvas id="mlsCanvas"></canvas>
-  <div id="mlsCardFallback"></div>
-
-  <!-- Poster card (real photo). The level buttons swap it. -->
-  <div id="mlsPoster" aria-hidden="true"><div class="mls-pc"><img id="mlsPosterImg" src="/static/scenes/poster-screen-test.webp" alt="" decoding="async"></div></div>
-
-  <!-- BEAT 1 -->
-  <div class="mls-beat" id="mlsBeat1">
-    <p class="mls-kicker">SCREEN TEST &middot; 01</p>
-    <h2 class="mls-h">HEAR THE <em>SCENE</em></h2>
-    <p class="mls-sub">Every take starts with the original line, voiced with emotion.</p>
-  </div>
-
-  <!-- BEAT 2 -->
-  <div class="mls-beat" id="mlsBeat2">
-    <p class="mls-kicker">SCREEN TEST &middot; 02</p>
-    <h2 class="mls-h">SPEAK THE <em>LINE</em></h2>
-    <p class="mls-quote" id="mlsQuote">&ldquo;Oxygen is at forty percent. If we don&rsquo;t fix this now, we won&rsquo;t get another try.&rdquo;</p>
-    <div class="mls-wave" aria-hidden="true">
-      <span></span><span></span><span></span><span></span><span></span>
-      <span></span><span></span><span></span><span></span><span></span>
-    </div>
-  </div>
-
-  <!-- BEAT 3 -->
-  <div class="mls-beat" id="mlsBeat3">
-    <p class="mls-kicker">SCREEN TEST &middot; 03</p>
-    <h2 class="mls-h">THE AI <em>NEVER LIES</em></h2>
-    <div class="mls-score"><span id="mlsScoreNum">0</span></div>
-    <div class="mls-scorelabel">SYNC SCORE</div>
-    <!-- The real breakdown, for the nine-word line in Beat 2. These are word
-         counts, not sub-scores: the engine reports which words it heard, so
-         8 matched + 1 close + 0 missed is what a 94 actually looks like. -->
-    <div class="mls-subscores">
-      <div>MATCHED <b data-target="8">0</b></div>
-      <div>CLOSE <b data-target="1">0</b></div>
-      <div>MISSED <b data-target="0">0</b></div>
-    </div>
-  </div>
-
-  <!-- Level swatches -->
-  <div class="mls-swatches" role="tablist" aria-label="Choose a level">
-    <button class="mls-sw active" data-poster="oxygen_low" data-img="/static/scenes/poster-screen-test.webp" data-quote="&ldquo;Oxygen is at forty percent. If we don&rsquo;t fix this now, we won&rsquo;t get another try.&rdquo;">I</button>
-    <button class="mls-sw"        data-poster="night_shift" data-img="/static/scenes/posters/night_shift.webp" data-quote="&ldquo;I work two jobs so you can have the chances I never had.&rdquo;">II</button>
-    <button class="mls-sw"        data-poster="the_bluff" data-img="/static/scenes/posters/the_bluff.webp"  data-quote="&ldquo;I can read you like a book, and it&rsquo;s a very short book.&rdquo;">III</button>
-    <p class="mls-sw-label">CHOOSE YOUR LEVEL</p>
-  </div>
-</section>
-
-<!-- Global ambient audio toggle (fixed, left edge) -->
-<button id="mlAudioToggle" aria-pressed="false">AUDIO &times; OFF</button>
-
-<!-- ─── SECTION 3 — Philosophy: Fluency × Cinema (cinematic video hero) ─── -->
-<section class="ms-section" id="mirrorPhilosophy">
-  <h2 class="mp-head ms-anim">Fluency <span class="mp-x">&times;</span> Cinema</h2>
-
-  <div class="mp-cinema ms-anim d1" id="mpCinema">
-    <div class="mp-video-wrap">
-      <mux-player
-        playback-id="r1BCbuq01pu4L6Q71btkOiBb01i01KEEWEO7Bfl745dhpI"
-        metadata-video-title="Mirror — Scene Preview"
-        stream-type="on-demand"
-        poster="/static/scenes/art/no_signal.webp?v=poster2"
-        preload="none"
-        playsinline
-        loop
-      ></mux-player>
-      <div class="mp-grade" aria-hidden="true"></div>
-
-      <button class="mp-play" id="mpPlay" aria-label="Play the scene">
-        <svg viewBox="0 0 24 24" aria-hidden="true">
-          <path d="M8 5v14l11-7z"></path>
-        </svg>
-      </button>
-
-      <div class="mp-glass ms-anim d2">
-        <div class="mp-glass-title">Speak the scene. <em>Own the line.</em></div>
-        <p class="mp-glass-body">Learn English through scenes written to be performed.
-        Pick a scene, hear the original line, speak it back, and get scored
-        on your delivery until it feels natural, confident, and real.</p>
-        <button class="mp-glass-cta" id="mpCta" type="button">
-          Try a scene <span class="arr">&rarr;</span>
-        </button>
-      </div>
-    </div>
-  </div>
-
-  <div class="mp-whyrow ms-anim d2">
-    <div class="mp-block">
-      <div class="mp-block-label">Why scenes</div>
-      <p class="mp-block-body">Real fluency lives at the intersection of language
-      and emotion. We teach through the lines people never forget &mdash; charged,
-      cinematic, alive &mdash; so the words stick to feeling instead of flashcards.</p>
-    </div>
-    <div class="mp-why-divider" aria-hidden="true"></div>
-    <div class="mp-block">
-      <div class="mp-block-label">Why it sticks</div>
-      <p class="mp-block-body">Performing a line builds muscle memory that listening
-      never can. You learn the rhythm, the stress, the swagger &mdash; and you walk
-      away speaking with the confidence of the screen, not the textbook.</p>
-    </div>
-  </div>
-
-  <div class="mp-founder ms-anim d3">
-    <div class="mp-block-label">Why Mirror exists</div>
-    <p class="mp-block-body">I learned English by repeating movie lines until I could
-    match how the actors felt them &mdash; not just what they said. Mirror is that
-    habit, turned into an app.</p>
-    <div class="mp-founder-sign">John Greg &middot; Founder</div>
-  </div>
-</section>
-
-<!-- ─── SECTION 4 — What you get ─── -->
-<section class="ms-section" id="mirrorWhat">
-  <div class="mw-headwrap">
-    <h2 class="mw-head ms-anim">What you get</h2>
-    <div class="mw-dim ms-anim d1">BUILT FOR SPEAKING</div>
-  </div>
-  <div class="mw-grid">
-    <div class="mw-card ms-anim">
-      <div class="mw-card-img"><img src="/static/scenes/posters/coffee_shop-wide.webp" width="800" height="500" alt="Poster art for Coffee Shop" loading="lazy" decoding="async"></div>
-      <div class="mw-card-body">
-        <div class="mw-card-arrow" aria-hidden="true">&rarr;</div>
-        <div class="mw-card-tag">PRACTICE</div>
-        <div class="mw-card-title">Scene Studio</div>
-        <p class="mw-card-desc">47 original scenes to step into. Read the line, hit record, and deliver it in your own voice.</p>
-      </div>
-    </div>
-    <div class="mw-card ms-anim d1">
-      <div class="mw-card-img"><img src="/static/scenes/posters/the_heist-wide.webp" width="800" height="500" alt="Poster art for The Plan" loading="lazy" decoding="async"></div>
-      <div class="mw-card-body">
-        <div class="mw-card-arrow" aria-hidden="true">&rarr;</div>
-        <div class="mw-card-tag">FEEDBACK</div>
-        <div class="mw-card-title">Live Scoring</div>
-        <p class="mw-card-desc">A sync score the instant you finish &mdash; plus every word of the line marked matched, close or missed against the script.</p>
-      </div>
-    </div>
-    <div class="mw-card ms-anim d2">
-      <div class="mw-card-img"><img src="/static/ranks-feed.webp" width="1200" height="750" alt="Mirror Ranks screen showing league and percentile" loading="lazy" decoding="async"></div>
-      <div class="mw-card-body">
-        <div class="mw-card-arrow" aria-hidden="true">&rarr;</div>
-        <div class="mw-card-tag">PROGRESS</div>
-        <div class="mw-card-title">Ranks &amp; Leagues</div>
-        <p class="mw-card-desc">Climb from Bronze to Director as you master scenes. Compete on weekly leaderboards with other performers.</p>
-      </div>
-    </div>
-    <div class="mw-card ms-anim d3">
-      <div class="mw-card-img"><img src="/static/scenes/posters/the_pilot-wide.webp" width="800" height="500" alt="Poster art for Mayday" loading="lazy" decoding="async"></div>
-      <div class="mw-card-body">
-        <div class="mw-card-arrow" aria-hidden="true">&rarr;</div>
-        <div class="mw-card-tag">HABIT</div>
-        <div class="mw-card-title">The Daily Take</div>
-        <p class="mw-card-desc">Three short lines, one sitting. Finish all three to keep your streak alive &mdash; and finishing always pays, however the takes went.</p>
-      </div>
-    </div>
-  </div>
-</section>
-
-<script>
-(function(){
-  // Skip everything in app-mode (logged in)
-  if (document.body.classList.contains('app-mode')) return;
-
-  // Wire "Try a scene" + play button to the existing register flow
-  // (mlOpenAuth is the existing helper; fallback to heroStartBtn.click)
-  function openAuthOrHero(){
-    if (typeof window.mlOpenAuth === 'function') { window.mlOpenAuth('register'); return; }
-    var hero = document.getElementById('heroStartBtn');
-    if (hero) hero.click();
-  }
-  var watchBtn = document.getElementById('mmWatchBtn');
-  if (watchBtn) watchBtn.addEventListener('click', openAuthOrHero);
-  var playBtn = document.querySelector('#mirrorMethod .mm-play');
-  if (playBtn) playBtn.addEventListener('click', openAuthOrHero);
-
-  // Scoped IntersectionObserver for Sections 2-4 only (does not modify the existing Acts observer)
-  var targets = document.querySelectorAll('#mirrorMethod .ms-anim, #mirrorPhilosophy .ms-anim, #mirrorWhat .ms-anim');
-  if (!('IntersectionObserver' in window)) {
-    targets.forEach(function(el){ el.classList.add('in'); });
-    return;
-  }
-  var msObs = new IntersectionObserver(function(entries){
-    entries.forEach(function(entry){
-      if (!entry.isIntersecting) return;
-      entry.target.classList.add('in');
-      msObs.unobserve(entry.target);
-    });
-  }, { threshold: 0.2 });
-  targets.forEach(function(el){ msObs.observe(el); });
-})();
-</script>
-
-<!-- ═══════════════════════════ CINEMATIC ACTS — narrative scroll ═══════════════════════════ -->
-<div class="act-grain" aria-hidden="true"></div>
-
-<!-- ─── ACT I — YOUR VOICE. YOUR STAGE. ─── -->
-<section class="act-section" id="actI">
-  <div class="act-vlabel">ACT <em>I</em></div>
-  <div class="actI-eyebrow act-anim">Open the curtain</div>
-  <h2 class="actI-head act-anim" data-delay="100">YOUR VOICE. <em>YOUR STAGE.</em></h2>
-  <p class="actI-sub act-anim" data-delay="200">The greatest actors in history once stood exactly where you are.</p>
-  <div class="actI-triptych act-anim" data-delay="300">
-    <div class="actI-poster is-poster"><img src="/static/scenes/posters/oxygen_low.webp" alt="Oxygen Low" loading="lazy" decoding="async"></div>
-    <div class="actI-poster is-poster"><img src="/static/scenes/posters/rooftop.webp" alt="Rooftop" loading="lazy" decoding="async"></div>
-    <div class="actI-poster is-poster"><img src="/static/scenes/posters/countdown.webp" alt="Countdown" loading="lazy" decoding="async"></div>
-  </div>
-  <div class="actI-ticker act-anim" data-delay="400">
-    <div class="actI-ticker-track">
-      <span class="actI-ticker-item">WORD BREAKDOWN</span><span class="actI-ticker-dot">•</span>
-      <span class="actI-ticker-item">SYNC SCORE</span><span class="actI-ticker-dot">•</span>
-      <span class="actI-ticker-item">FLUENCY RANK</span><span class="actI-ticker-dot">•</span>
-      <span class="actI-ticker-item">47 SCENES</span><span class="actI-ticker-dot">•</span>
-      <span class="actI-ticker-item">WORD BREAKDOWN</span><span class="actI-ticker-dot">•</span>
-      <span class="actI-ticker-item">SYNC SCORE</span><span class="actI-ticker-dot">•</span>
-      <span class="actI-ticker-item">FLUENCY RANK</span><span class="actI-ticker-dot">•</span>
-      <span class="actI-ticker-item">47 SCENES</span><span class="actI-ticker-dot">•</span>
-    </div>
-  </div>
-</section>
-
-<!-- ─── ACT II — LINES WORTH SAYING OUT LOUD ─── -->
-<!-- Five lines from Mirror's own scenes: the scene name and the line a
-     learner is asked to perform. -->
-<section class="act-section" id="actII">
-  <div class="act-vlabel">ACT <em>II</em></div>
-  <h2 class="actII-head act-anim">LINES WORTH SAYING <em>OUT LOUD</em></h2>
-  <div class="actII-quotes" id="actIIQuotes">
-    <div class="actII-quote" data-stagger="0">
-      <div class="actII-speaker">LAST TRAIN · HURT BUT FIRM</div>
-      <div class="actII-text">"If you get on that train, don't come back."</div>
-    </div>
-    <div class="actII-quote" data-stagger="1">
-      <div class="actII-speaker">ROOFTOP · NERVOUS, SINCERE</div>
-      <div class="actII-text">"I almost said it a hundred times. I love you."</div>
-    </div>
-    <div class="actII-quote" data-stagger="2">
-      <div class="actII-speaker">CHAMPION · TRIUMPHANT</div>
-      <div class="actII-text">"Nobody believed in us. Look at us now!"</div>
-    </div>
-    <div class="actII-quote" data-stagger="3">
-      <div class="actII-speaker">COUNTDOWN · URGENT</div>
-      <div class="actII-text">"We have ninety seconds. Grab the bag and run!"</div>
-    </div>
-    <div class="actII-quote" data-stagger="4">
-      <div class="actII-speaker">THE DEAL · CONFIDENT</div>
-      <div class="actII-text">"Ten thousand. Final offer. Take it or leave it."</div>
-    </div>
-  </div>
-  <div class="actII-cta act-anim" data-delay="500">MIRROR SCORES YOUR DELIVERY</div>
-</section>
-
-<!-- ─── ACT III — THE AI NEVER LIES. ─── -->
-<section class="act-section" id="actIV">
-  <div class="act-vlabel">ACT <em>III</em></div>
-  <h2 class="actIV-head act-anim">THE AI <em>NEVER LIES.</em></h2>
-  <div class="actIV-score act-anim" data-delay="100" id="actIVScore" data-target="94">94</div>
-  <div class="actIV-score-sub act-anim" data-delay="200">Mirror sync score · last take · 9 words</div>
-  <p class="actIV-method act-anim" data-delay="200">Don&rsquo;t just say the line. <em>Match the emotion.</em></p>
-  <p class="actIV-method-sub act-anim" data-delay="300">We count the words. The feeling is the work.</p>
-  <!-- What the result screen actually shows: the sync score above, and the
-       word breakdown. The three rows are word counts out of nine, so the bar
-       widths are shares of the line rather than scores out of 100. The old
-       fourth row repeated the sync score that is already the hero number. -->
-  <div class="actIV-meters">
-    <div class="actIV-meter-row act-anim" data-delay="300">
-      <span class="actIV-meter-label">Matched</span>
-      <div class="actIV-meter-bar"><div class="actIV-meter-fill" style="width:89%"></div></div>
-      <span class="actIV-meter-val">8</span>
-    </div>
-    <div class="actIV-meter-row act-anim" data-delay="400">
-      <span class="actIV-meter-label">Close</span>
-      <div class="actIV-meter-bar"><div class="actIV-meter-fill" style="width:11%"></div></div>
-      <span class="actIV-meter-val">1</span>
-    </div>
-    <div class="actIV-meter-row act-anim" data-delay="500">
-      <span class="actIV-meter-label">Missed</span>
-      <div class="actIV-meter-bar"><div class="actIV-meter-fill" style="width:0%"></div></div>
-      <span class="actIV-meter-val">0</span>
-    </div>
-  </div>
-</section>
-
-<!-- ─── ACT IV — 47 ORIGINAL SCENES. ─── -->
-<section class="act-section" id="actV">
-  <div class="act-vlabel">ACT <em>IV</em></div>
-  <h2 class="actV-head act-anim">47 <em>ORIGINAL</em> SCENES.</h2>
-  <p class="actV-sub act-anim" data-delay="100">From whispered confessions to roared battle cries.</p>
-  <div class="actV-grid">
-    <div class="actV-card is-poster" data-stagger="0">
-      <img src="/static/scenes/posters/the_deal.webp" alt="The Deal" loading="lazy" decoding="async">
-      <span class="actV-card-badge">LVL 1</span>
-      <div class="actV-card-title">THE DEAL</div>
-    </div>
-    <div class="actV-card is-poster" data-stagger="1">
-      <img src="/static/scenes/posters/interrogation.webp" alt="Interrogation" loading="lazy" decoding="async">
-      <span class="actV-card-badge">LVL 1</span>
-      <div class="actV-card-title">INTERROGATION</div>
-    </div>
-    <div class="actV-card is-poster" data-stagger="2">
-      <img src="/static/scenes/posters/the_letter.webp" alt="The Letter" loading="lazy" decoding="async">
-      <span class="actV-card-badge">LVL 1</span>
-      <div class="actV-card-title">THE LETTER</div>
-    </div>
-    <div class="actV-card is-poster" data-stagger="3">
-      <img src="/static/scenes/posters/champion.webp" alt="Champion" loading="lazy" decoding="async">
-      <span class="actV-card-badge">LVL 1</span>
-      <div class="actV-card-title">CHAMPION</div>
-    </div>
-    <div class="actV-card is-poster" data-stagger="4">
-      <img src="/static/scenes/posters/midnight_call.webp" alt="Midnight Call" loading="lazy" decoding="async">
-      <span class="actV-card-badge">LVL 1</span>
-      <div class="actV-card-title">MIDNIGHT CALL</div>
-    </div>
-    <div class="actV-card is-poster" data-stagger="5">
-      <img src="/static/scenes/posters/the_storm.webp" alt="The Storm" loading="lazy" decoding="async">
-      <span class="actV-card-badge">LVL 1</span>
-      <div class="actV-card-title">THE STORM</div>
-    </div>
-  </div>
-</section>
-
-<!-- ─── ACT V — FINALE: YOUR SCENE STARTS NOW. ─── -->
-<section class="act-section" id="actVII">
-  <div class="act-vlabel">ACT <em>V</em></div>
-  <div class="actVII-stack act-anim">
-    <div>YOUR</div>
-    <div>SCENE</div>
-    <div>STARTS</div>
-    <div><em>NOW.</em></div>
-  </div>
-  <p class="actVII-sub act-anim" data-delay="200">50+ learners are already speaking cinema. The next great performance is yours.</p>
-  <button class="actVII-cta act-anim" data-delay="300" id="actVIIStartBtn">START PRACTICING →</button>
-  <div class="actVII-proof act-anim" data-delay="400">
-    <div class="actVII-avatars">
-      <span>🎭</span><span>🎬</span><span>🎞️</span><span>🎤</span><span>⭐</span>
-    </div>
-    <div class="actVII-proof-text">50+ learners · 47 scenes</div>
-  </div>
-</section>
-
-<script>
-(function(){
-  // Skip everything when user lands in app-mode (logged in)
-  if (document.body.classList.contains('app-mode')) return;
-
-  // CTA wiring — re-uses the existing landing register flow without modifying it
-  var ctaBtn = document.getElementById('actVIIStartBtn');
-  if (ctaBtn) {
-    ctaBtn.addEventListener('click', function(){
-      if (typeof window.mlOpenAuth === 'function') {
-        window.mlOpenAuth('register');
-      } else {
-        var hero = document.getElementById('heroStartBtn');
-        if (hero) hero.click();
-      }
-    });
-  }
-
-  // IntersectionObserver — entry animations at 0.25 threshold
-  if (!('IntersectionObserver' in window)) {
-    // Fallback: reveal everything immediately
-    document.querySelectorAll('.act-anim, .actII-quote, .actV-card').forEach(function(el){
-      el.classList.add('in-view');
-    });
-    return;
-  }
-
-  var counterStarted = {};
-  function runCounter(el){
-    var key = el.id || 'anon';
-    if (counterStarted[key]) return;
-    counterStarted[key] = true;
-    var target = parseInt(el.dataset.target || '0', 10);
-    var dur = 1600;
-    var start = performance.now();
-    function tick(now){
-      var p = Math.min((now - start) / dur, 1);
-      var eased = 1 - Math.pow(1 - p, 3);
-      el.textContent = Math.round(eased * target);
-      if (p < 1) requestAnimationFrame(tick);
-    }
-    requestAnimationFrame(tick);
-  }
-
-  var obs = new IntersectionObserver(function(entries){
-    entries.forEach(function(entry){
-      if (!entry.isIntersecting) return;
-      var el = entry.target;
-      el.classList.add('in-view');
-      // If the section itself enters, propagate in-view to its meter fills' container
-      if (el.id === 'actIV') {
-        var score = document.getElementById('actIVScore');
-        if (score) runCounter(score);
-      }
-      // Stagger children (quotes / cards) when their section enters
-      if (el.id === 'actII' || el.id === 'actV') {
-        el.querySelectorAll('.actII-quote, .actV-card').forEach(function(child){
-          child.classList.add('in-view');
-        });
-      }
-      obs.unobserve(el);
-    });
-  }, { threshold: 0.25 });
-
-  // Observe both the section roots (for child stagger + counter trigger) and each .act-anim
-  ['actI','actII','actIV','actV','actVII'].forEach(function(id){
-    var el = document.getElementById(id);
-    if (el) obs.observe(el);
-  });
-  document.querySelectorAll('.act-anim').forEach(function(el){ obs.observe(el); });
-  // Also observe meter rows individually so each row's fill animates as it enters
-  document.querySelectorAll('#actIV .actIV-meter-row').forEach(function(el){ obs.observe(el); });
-
-  // Direct observer on the score element at low threshold — guarantees the count-up
-  // fires even if the section's 0.25 trigger never crosses (tall mobile viewports).
-  var scoreEl = document.getElementById('actIVScore');
-  if (scoreEl && 'IntersectionObserver' in window) {
-    var scoreObs = new IntersectionObserver(function(entries){
-      entries.forEach(function(entry){
-        if (entry.isIntersecting) {
-          runCounter(scoreEl);
-          scoreObs.unobserve(scoreEl);
-        }
-      });
-    }, { threshold: 0.1 });
-    scoreObs.observe(scoreEl);
-  }
-})();
-</script>
 
 <!-- ===== WHAT IS MIRROR — Aceternity 3D scroll ===== -->
 <div class="what-scroll-outer" id="whatScrollOuter">
@@ -6026,109 +5694,6 @@
       </div>
     </div>
   </section>
-
-<!-- ===== PHASE 3 [7/7]: PRICING SECTION (moved from #authScreen + editorial restyle) ===== -->
-<section class="pricing-section" id="pricingSection">
-  <div class="editorial-eyebrow what-eyebrow">The Deal</div>
-  <h2 class="what-title">Pick your <em>billing</em>.</h2>
-  <p class="pricing-tagline-edt">Less than a coffee. Endless retakes.</p>
-
-  <div class="mc-pill-group" id="pricingPill">
-    <button class="mc-pill" data-billing="monthly">Monthly</button>
-    <button class="mc-pill active" data-billing="yearly">
-      Yearly
-      <!-- Filled from the real monthly and yearly prices, and left hidden if
-           either is missing. Hardcoding it produced "−20%" for a saving that
-           is actually 56%. -->
-      <span class="mc-pill-badge" id="pricingYearlyBadge" hidden></span>
-    </button>
-  </div>
-
-  <div class="pricing-cards-edt">
-    <div class="price-card-edt">
-      <div class="price-card-tier">Starter</div>
-      <div class="price-card-amount">$1</div>
-      <div class="price-card-sub">one time, yours to keep</div>
-      <ul class="price-card-features">
-        <!-- This card used to be the free tier and promised "5 Beginner
-             scenes". Those five scenes ARE the Starter Pack now -- selling
-             exactly what was free was the reason FREE_SCENE_COUNT went to 0 --
-             so the card had to stop offering them for nothing.
-             The Daily Take and a shared challenge link are still free and
-             still need no purchase, which is what the last two lines say. -->
-        <li id="pricingFreeCount">5 starter scenes</li>
-        <li>The Daily Take, free every day</li>
-        <li>Challenge links from friends</li>
-      </ul>
-      <button class="price-card-cta" id="pricingFreeBtn" onclick="mlOpenAuth()">Create an account</button>
-      <!-- The $1 one-time unlock. The plan existed server-side and was served
-           by /api/billing/plans, but no button anywhere could request it, so
-           it was unbuyable. Hidden until /api/billing/plans confirms the plan
-           is configured, so an environment without it shows nothing rather
-           than a button that 400s. -->
-      <div class="price-card-alt" id="pricingLevel1Wrap" hidden>
-        <button class="price-card-alt-btn" id="pricingLevel1Btn">Starter Pack · $1</button>
-        <p class="price-card-alt-note">
-          One-time. The five starter scenes, yours to keep. No subscription.
-        </p>
-      </div>
-    </div>
-    <div class="price-card-edt pro">
-      <div class="price-card-tier">Pro</div>
-      <div class="price-card-amount">
-        <!-- Amount and cadence come from /api/billing/plans, which reads them
-             from the payment provider. This card used to state $4.99 for a
-             variant that charges $8.99. A price the store owns does not belong
-             in markup. -->
-        <span class="pro-price" id="proPriceAmount" aria-busy="true"><span class="price-skeleton" aria-hidden="true"></span></span><span class="pro-price-cadence" id="proPriceCadence" style="font-size:22px;color:rgba(255,255,255,0.5);" hidden>/mo</span>
-      </div>
-      <div class="pro-price-sub" id="proPriceSub"></div>
-      <ul class="price-card-features">
-        <!-- Only what Pro actually unlocks. It listed "Spanish translations",
-             "Advanced ranks" and "Priority new releases": translations unlock
-             for anyone at 70%, ranks are for everyone, and there is no release
-             queue -- three promises the product did not keep. -->
-        <li id="pricingProCount">All 47 scenes</li>
-        <li>Levels 1, 2 &amp; 3</li>
-        <li>Word-by-word Spanish on every scene</li>
-        <li>Cancel anytime</li>
-      </ul>
-      <button class="price-card-cta" id="pricingProBtn">Go pro</button>
-      <!-- Next to the checkout button, not only in the footer. Auto-renewal and
-           the refund window are the two things a buyer should be able to read
-           without hunting, and this is the moment they are deciding. -->
-      <p class="checkout-legal">
-        Renews automatically. Cancel anytime.
-        <a href="/refunds">All sales final</a> ·
-        <a href="/terms">Terms</a>
-      </p>
-    </div>
-  </div>
-  <p class="pricing-legal">
-    Secure payments by Stripe. By subscribing you agree to our
-    <a href="/terms">Terms of Service</a> and
-    <a href="/refunds">Refund Policy</a>.
-  </p>
-</section>
-
-<!-- ── LANDING FOOTER ──
-     The landing had no footer. .site-footer exists further down but lives
-     inside #authScreen, which is display:none on this page, so its links were
-     unreachable; the only legal link a visitor could actually see was the
-     hero's decorative corner "PRIVACY". A page selling subscriptions needs the
-     three documents reachable from the bottom of it, so this is a real footer
-     in the visible landing rather than more links added to hero chrome. -->
-<footer class="ml-landing-footer">
-  <div class="ml-landing-footer-inner">
-    <span class="ml-landing-footer-logo">MIR<em>RO</em>R</span>
-    <nav class="ml-landing-footer-legal" aria-label="Legal">
-      <a href="/terms">Terms of Service</a>
-      <a href="/refunds">Refund Policy</a>
-      <a href="/privacy">Privacy Policy</a>
-    </nav>
-    <span class="ml-landing-footer-copy">&copy; 2026 MIRROR</span>
-  </div>
-</footer>
 
 <!-- ═══════════════════════════ END MIRROR LANDING ═══════════════════════════ -->
 
@@ -8607,961 +8172,5 @@ function checkLevel2Unlock() {
 })();
 </script>
 
-<!-- ═══════════════════════════ SCREEN TEST — pinned timeline (2/3) ═══════════════════════════ -->
-<script>
-(function(){
-  if (!document.getElementById('mlStage')) return;
-
-  // GSAP is lazy-loaded now (see the loader below), so on first run it is
-  // normally absent — wait for the loader's signal rather than skipping the
-  // timeline permanently, which is what a bare `return` used to do.
-  if (typeof gsap === 'undefined' || typeof ScrollTrigger === 'undefined') {
-    document.addEventListener('mlstage:gsap-ready', boot, { once: true });
-    return;
-  }
-  boot();
-
-function boot(){
-  if (typeof gsap === 'undefined' || typeof ScrollTrigger === 'undefined') {
-    console.warn('[mlStage] GSAP/ScrollTrigger not loaded — skipping timeline');
-    return;
-  }
-
-  var reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
-
-  gsap.registerPlugin(ScrollTrigger);
-  ScrollTrigger.config({ ignoreMobileResize: true });
-
-  // Pin distance, resolved to pixels ONCE.
-  //
-  // Two things are going on here.
-  //
-  // 1. Length. On a phone a 300% pin means three full screens of swiping while
-  //    the view is deliberately held still, which reads as the page having
-  //    frozen — there is no scrollbar to show progress. Mobile gets 100%; the
-  //    desktop scrub is unchanged.
-  //
-  // 2. Units. `end: '+=300%'` is viewport-relative, so the pin-spacer is
-  //    recomputed whenever the viewport metric changes — and on iOS the URL bar
-  //    collapsing mid-scroll does exactly that. 300% of an ~80px change is
-  //    ~240px, which matched the measured shift: everything below #mlStage
-  //    jumped up 244px as the pin released. Resolving to a fixed pixel value at
-  //    init makes the spacer deterministic, so a later refresh cannot resize it.
-  var MLS_MOBILE = matchMedia('(max-width: 768px), (pointer: coarse)').matches;
-  // Phones and reduced-motion users get the static stack, not a shorter pin.
-  // The pin itself was the problem on mobile: a held-still stretch reads as a
-  // freeze on a touch device, and shortening it to one viewport did not fix it.
-  var MLS_STATIC = MLS_MOBILE || reduced;
-  var MLS_PIN_PX = Math.round(window.innerHeight * 3);
-
-  // Shared rotation handle — commit 3's Three.js scene reads window.mlsRot.y
-  // every frame to drive the card. In this commit it's tweened but unobserved.
-  window.mlsRot = window.mlsRot || { y: 0 };
-  var rot = window.mlsRot;
-
-  function initScroll(){
-    // Static layout (phone, coarse pointer, or reduced motion): no pin, no
-    // scrub, no timeline. The CSS block for these media queries lays the
-    // section out as ordinary stacked content, and the score count-up is
-    // handled by its own IntersectionObserver below — deliberately independent
-    // of GSAP, because on mobile GSAP is never loaded.
-    if (MLS_STATIC) return;
-
-    var tl = gsap.timeline({
-      scrollTrigger:{
-        trigger:'#mlStage', start:'top top', end:'+=' + MLS_PIN_PX,
-        pin:true, scrub:0.8, anticipatePin:1
-      }
-    });
-
-    // BEAT 1 — face camera
-    tl.fromTo('#mlsBeat1', {opacity:0, y:40}, {opacity:1, y:0, duration:1})
-      .to(rot, {y:0, duration:.6}, '<')
-      .to({}, {duration:1})
-      .to('#mlsBeat1', {opacity:0, y:-30, duration:.6});
-
-    // BEAT 2 — speak the line (rot.y = 0.62)
-    tl.fromTo('#mlsBeat2', {opacity:0, y:40}, {opacity:1, y:0, duration:1})
-      .to(rot, {y:0.62, duration:1.2}, '<')
-      .to({}, {duration:1})
-      .to('#mlsBeat2', {opacity:0, y:-30, duration:.6});
-
-    // BEAT 3 — sync score (rot.y = -0.52, score 0 → 94)
-    var score = {v:0};
-    tl.fromTo('#mlsBeat3', {opacity:0, y:40}, {opacity:1, y:0, duration:1})
-      .to(rot, {y:-0.52, duration:1.4}, '<')
-      .to(score, {v:94, duration:1.5, snap:'v',
-          onUpdate:function(){ document.getElementById('mlsScoreNum').textContent = score.v; }}, '<')
-      .to({}, {duration:1.2});
-
-    // Sub-scores: one-shot count-up when Beat 3 enters viewport
-    document.querySelectorAll('.mls-subscores b').forEach(function(el){
-      var o = {v:0}, target = +el.dataset.target;
-      ScrollTrigger.create({
-        // 60% of the way through the pin, whatever the pin length is. The old
-        // fixed '-180%' was 60% of a 300% pin; left as-is it would sit past the
-        // end of the shortened mobile pin and the count-up would never fire.
-        trigger:'#mlStage', start:'top -' + Math.round(MLS_PIN_PX * 0.6), once:true,
-        onEnter:function(){
-          gsap.to(o, {v:target, duration:1.2, snap:'v',
-            onUpdate:function(){ el.textContent = o.v; }});
-        }
-      });
-    });
-
-    // Waveform — continuous random-height yoyo, refreshes target each repeat
-    gsap.to('.mls-wave span', {
-      height: function(){ return (20 + Math.random()*75) + '%'; },
-      duration: .28, ease:'sine.inOut',
-      stagger:{ each:.05, repeat:-1, yoyo:true },
-      repeatRefresh: true
-    });
-  }
-
-  // Defer init until fonts settle so the pin measures correct layout heights
-  if (document.fonts && document.fonts.ready) {
-    document.fonts.ready.then(initScroll);
-  } else if (document.readyState === 'complete') {
-    initScroll();
-  } else {
-    window.addEventListener('load', initScroll);
-  }
-  // Refresh once all assets (incl. images above/below the pin) finish loading.
-  // GSAP can now arrive after the load event has already fired, in which case
-  // the listener would never run — refresh immediately in that case.
-  if (document.readyState === 'complete') {
-    ScrollTrigger.refresh();
-  } else {
-    window.addEventListener('load', function(){ ScrollTrigger.refresh(); });
-  }
-
-  // Drain on app-mode: revert the #mlStage pin (removes its ~3676px pin-spacer
-  // wrapper that would otherwise push #appScreen / #appShell down one viewport
-  // on the login path) and kill any other #mlStage-scoped triggers. Only touches
-  // triggers whose .trigger is #mlStage or a descendant; app-shell triggers, if
-  // any are added later, are left alone.
-  var stDrainObs = new MutationObserver(function(){
-    if (!document.body.classList.contains('app-mode')) return;
-    ScrollTrigger.getAll().forEach(function(t){
-      var trg = t.trigger;
-      if (trg && (trg.id === 'mlStage' || (trg.closest && trg.closest('#mlStage')))) {
-        t.kill(true);   // revert:true reverts the pin and removes the pin-spacer
-      }
-    });
-    ScrollTrigger.refresh();
-    stDrainObs.disconnect();
-  });
-  stDrainObs.observe(document.body, { attributes: true, attributeFilter: ['class'] });
-}
-})();
-</script>
-
-<script>
-// ── Screen Test scores for the static layout ────────────────────────────────
-// In the scrubbed desktop version the sync score and the three sub-scores are
-// counted up by the GSAP timeline. The static stack has no timeline, and on
-// mobile GSAP is never loaded at all — so without this the section would read
-// "THE AI NEVER LIES" followed by a sync score of 0, which is worse than not
-// showing the section. Deliberately dependency-free: plain rAF and an
-// IntersectionObserver, so it runs whether or not any CDN responded.
-(function(){
-  var stage = document.getElementById('mlStage');
-  var beat3 = document.getElementById('mlsBeat3');
-  if (!stage || !beat3) return;
-
-  // Same condition as the CSS block that lays the section out statically.
-  var isStatic = matchMedia('(max-width: 768px), (pointer: coarse), (prefers-reduced-motion: reduce)').matches;
-  if (!isStatic) return;
-
-  var SYNC_TARGET = 94;
-  var reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
-
-  function countTo(el, target, ms){
-    if (!el) return;
-    // Reduced motion means no animation — show the final value immediately.
-    if (reduced || ms <= 0) { el.textContent = target; return; }
-    var start = null;
-    function step(ts){
-      if (start === null) start = ts;
-      var t = Math.min(1, (ts - start) / ms);
-      // easeOutCubic, so it settles rather than stopping dead.
-      el.textContent = Math.round(target * (1 - Math.pow(1 - t, 3)));
-      if (t < 1) requestAnimationFrame(step);
-      else el.textContent = target;
-    }
-    requestAnimationFrame(step);
-  }
-
-  var done = false;
-  function run(){
-    if (done) return;
-    done = true;
-    countTo(document.getElementById('mlsScoreNum'), SYNC_TARGET, 1200);
-    beat3.querySelectorAll('.mls-subscores b').forEach(function(el, i){
-      var target = parseInt(el.dataset.target, 10);
-      if (isNaN(target)) return;
-      // Stagger slightly so the three do not tick in lockstep.
-      setTimeout(function(){ countTo(el, target, 900); }, 200 + i * 120);
-    });
-  }
-
-  // No IntersectionObserver (very old browsers): fill the numbers in rather
-  // than leaving zeros on screen.
-  if (!('IntersectionObserver' in window)) { run(); return; }
-
-  var io = new IntersectionObserver(function(entries){
-    for (var i = 0; i < entries.length; i++){
-      if (entries[i].isIntersecting) { io.disconnect(); run(); return; }
-    }
-  }, { rootMargin: '0px 0px -15% 0px' });
-  io.observe(beat3);
-})();
-</script>
-
-<script>
-(function(){
-  var cinema = document.getElementById('mpCinema');
-  var player = cinema ? cinema.querySelector('mux-player') : null;
-  function playScene(){
-    if (!player) return;
-    player.play();
-    cinema.classList.add('playing');
-  }
-  var playBtn = document.getElementById('mpPlay');
-  var cta = document.getElementById('mpCta');
-  if (playBtn) playBtn.addEventListener('click', playScene);
-  if (cta) cta.addEventListener('click', playScene);
-})();
-</script>
-
-<!-- ═══════════════════════════ LANDING-WOW: cinematic 3D layer ═══════════════════════════ -->
-<script>
-(function(){
-  // Hard stop in app mode (token-resume short-circuit; user reloads landing only if logged out)
-  if (document.body.classList.contains('app-mode')) return;
-
-  var mqReduce = window.matchMedia('(prefers-reduced-motion: reduce)');
-  var mqCoarse = window.matchMedia('(pointer: coarse)');
-  var reduce   = mqReduce.matches;
-  var coarse   = mqCoarse.matches;
-
-  function lerp(a, b, t){ return a + (b - a) * t; }
-
-  // ── Shared cleanup registry — drained when app-mode is detected ──
-  var teardownFns = [];
-  function teardown(){
-    while (teardownFns.length) {
-      try { teardownFns.pop()(); } catch(e){}
-    }
-  }
-  // Watch for app-mode activation (enterAppMode sets body.app-mode); remove all listeners.
-  var bodyClassObs = new MutationObserver(function(){
-    if (document.body.classList.contains('app-mode')) {
-      teardown();
-      bodyClassObs.disconnect();
-    }
-  });
-  bodyClassObs.observe(document.body, { attributes: true, attributeFilter: ['class'] });
-  teardownFns.push(function(){ bodyClassObs.disconnect(); });
-
-  // ═════════════════════════════════════════════════════════════════════
-  // EFFECT 1 + 2 — Hero camera push-in + mouse parallax (single writer on #ml-frame)
-  // mlApply3DCurve() writes to .ml-mrow / .ml-card transforms, NOT #ml-frame, so we own it.
-  // ═════════════════════════════════════════════════════════════════════
-  var heroFrame = document.getElementById('ml-frame');
-  if (heroFrame && !reduce) {
-    var hero = {
-      tgtScale: 1, tgtZ: 0, tgtRX: 0, tgtRY: 0,
-      curScale: 1, curZ: 0, curRX: 0, curRY: 0,
-      queued: false
-    };
-    function writeHero(){
-      hero.queued = false;
-      hero.curScale = lerp(hero.curScale, hero.tgtScale, 0.08);
-      hero.curZ     = lerp(hero.curZ,     hero.tgtZ,     0.08);
-      hero.curRX    = lerp(hero.curRX,    hero.tgtRX,    0.06);
-      hero.curRY    = lerp(hero.curRY,    hero.tgtRY,    0.06);
-      heroFrame.style.transform =
-        'perspective(1600px) ' +
-        'translateZ(' + hero.curZ.toFixed(2) + 'px) ' +
-        'scale(' + hero.curScale.toFixed(4) + ') ' +
-        'rotateX(' + hero.curRX.toFixed(3) + 'deg) ' +
-        'rotateY(' + hero.curRY.toFixed(3) + 'deg)';
-      var settled =
-        Math.abs(hero.curScale - hero.tgtScale) < 0.0005 &&
-        Math.abs(hero.curZ     - hero.tgtZ)     < 0.1 &&
-        Math.abs(hero.curRX    - hero.tgtRX)    < 0.01 &&
-        Math.abs(hero.curRY    - hero.tgtRY)    < 0.01;
-      if (!settled) requestHero();
-    }
-    function requestHero(){
-      if (hero.queued) return;
-      hero.queued = true;
-      requestAnimationFrame(writeHero);
-    }
-
-    // Effect 1 — dolly push-in driven by scrollY
-    function onHeroScroll(){
-      if (document.body.classList.contains('app-mode')) return;
-      var maxScroll = window.innerHeight * 1.2;
-      var p = Math.min(Math.max(window.scrollY / maxScroll, 0), 1);
-      var eased = p * p * (3 - 2 * p); // smoothstep ≈ cubic-bezier(0.25,0.46,0.45,0.94)
-      hero.tgtScale = 1 + eased * 0.18;
-      hero.tgtZ     = eased * 60;
-      requestHero();
-    }
-    window.addEventListener('scroll', onHeroScroll, { passive: true });
-    teardownFns.push(function(){ window.removeEventListener('scroll', onHeroScroll); });
-    onHeroScroll();
-
-    // Effect 2 — mouse parallax tilt (desktop only)
-    if (!coarse) {
-      function onHeroMouse(e){
-        if (document.body.classList.contains('app-mode')) return;
-        var nx = (e.clientX / window.innerWidth  - 0.5) * 2;
-        var ny = (e.clientY / window.innerHeight - 0.5) * 2;
-        hero.tgtRY =  nx * 4;    // ±4°
-        hero.tgtRX = -ny * 2.5;  // ±2.5°
-        requestHero();
-      }
-      function onHeroLeave(){
-        hero.tgtRX = 0; hero.tgtRY = 0;
-        requestHero();
-      }
-      window.addEventListener('mousemove', onHeroMouse, { passive: true });
-      window.addEventListener('mouseleave', onHeroLeave, { passive: true });
-      teardownFns.push(function(){
-        window.removeEventListener('mousemove', onHeroMouse);
-        window.removeEventListener('mouseleave', onHeroLeave);
-      });
-    }
-
-    teardownFns.push(function(){ heroFrame.style.transform = 'none'; });
-  }
-
-  // ═════════════════════════════════════════════════════════════════════
-  // EFFECT 3 — Spotlight cursor (desktop only)
-  // ═════════════════════════════════════════════════════════════════════
-  if (!coarse && !reduce) {
-    var spotlight = document.createElement('div');
-    spotlight.id = 'mlSpotlight';
-    spotlight.setAttribute('aria-hidden', 'true');
-    document.body.appendChild(spotlight);
-    var spot = {
-      tx: window.innerWidth / 2, ty: window.innerHeight / 2,
-      x:  window.innerWidth / 2, y:  window.innerHeight / 2,
-      queued: false
-    };
-    function writeSpot(){
-      spot.queued = false;
-      spot.x = lerp(spot.x, spot.tx, 0.18);
-      spot.y = lerp(spot.y, spot.ty, 0.18);
-      spotlight.style.transform = 'translate3d(' + (spot.x - 300) + 'px,' + (spot.y - 300) + 'px,0)';
-      if (Math.abs(spot.x - spot.tx) > 0.5 || Math.abs(spot.y - spot.ty) > 0.5) requestSpot();
-    }
-    function requestSpot(){
-      if (spot.queued) return;
-      spot.queued = true;
-      requestAnimationFrame(writeSpot);
-    }
-    function onSpotMove(e){
-      if (document.body.classList.contains('app-mode')) return;
-      spot.tx = e.clientX; spot.ty = e.clientY;
-      if (!spotlight.classList.contains('on')) spotlight.classList.add('on');
-      requestSpot();
-    }
-    function onSpotLeave(){ spotlight.classList.remove('on'); }
-    document.addEventListener('mousemove', onSpotMove, { passive: true });
-    document.addEventListener('mouseleave', onSpotLeave, { passive: true });
-    spotlight.style.transform = 'translate3d(' + (spot.x - 300) + 'px,' + (spot.y - 300) + 'px,0)';
-    teardownFns.push(function(){
-      document.removeEventListener('mousemove', onSpotMove);
-      document.removeEventListener('mouseleave', onSpotLeave);
-      if (spotlight.parentNode) spotlight.parentNode.removeChild(spotlight);
-    });
-  }
-
-  // ═════════════════════════════════════════════════════════════════════
-  // EFFECT 4 — Tilt cards on #mirrorWhat .mw-card (desktop only)
-  // Each card carries its own rAF-loop and sheen overlay.
-  // ═════════════════════════════════════════════════════════════════════
-  if (!coarse && !reduce) {
-    document.querySelectorAll('#mirrorWhat .mw-card').forEach(function(card){
-      var imgWrap = card.querySelector('.mw-card-img');
-      var img = imgWrap ? imgWrap.querySelector('img') : null;
-      var sheen = document.createElement('div');
-      sheen.className = 'mw-sheen';
-      card.appendChild(sheen);
-      var s = { tx: 0, ty: 0, x: 0, y: 0, sheenX: 50, queued: false, active: false };
-
-      function write(){
-        s.queued = false;
-        s.x = lerp(s.x, s.tx, 0.18);
-        s.y = lerp(s.y, s.ty, 0.18);
-        card.style.transform =
-          'perspective(900px) rotateX(' + s.x.toFixed(2) + 'deg) rotateY(' + s.y.toFixed(2) + 'deg)';
-        if (img) {
-          img.style.transform =
-            'translateZ(' + (s.active ? 28 : 0) + 'px) scale(' + (s.active ? 1.05 : 1) + ')';
-        }
-        sheen.style.background =
-          'linear-gradient(' + (135 + s.y * 8).toFixed(1) + 'deg, ' +
-          'transparent ' + Math.max(0, s.sheenX - 30).toFixed(1) + '%, ' +
-          'rgba(200,169,110,0.22) ' + s.sheenX.toFixed(1) + '%, ' +
-          'transparent ' + Math.min(100, s.sheenX + 30).toFixed(1) + '%)';
-        var settled = Math.abs(s.x - s.tx) < 0.05 && Math.abs(s.y - s.ty) < 0.05;
-        if (!settled) req();
-      }
-      function req(){
-        if (s.queued) return;
-        s.queued = true;
-        requestAnimationFrame(write);
-      }
-      function onMove(e){
-        if (document.body.classList.contains('app-mode')) return;
-        var rect = card.getBoundingClientRect();
-        var nx = ((e.clientX - rect.left) / rect.width  - 0.5) * 2;
-        var ny = ((e.clientY - rect.top)  / rect.height - 0.5) * 2;
-        s.tx = -ny * 6;
-        s.ty =  nx * 6;
-        s.sheenX = ((e.clientX - rect.left) / rect.width) * 100;
-        s.active = true;
-        card.classList.add('tilting');
-        req();
-      }
-      function onLeave(){
-        s.tx = 0; s.ty = 0; s.active = false;
-        card.classList.remove('tilting');
-        req();
-        // Reset image transform with the (re-enabled) CSS transition
-        if (img) img.style.transform = '';
-      }
-      card.addEventListener('mousemove', onMove, { passive: true });
-      card.addEventListener('mouseleave', onLeave, { passive: true });
-      teardownFns.push(function(){
-        card.removeEventListener('mousemove', onMove);
-        card.removeEventListener('mouseleave', onLeave);
-        if (sheen.parentNode) sheen.parentNode.removeChild(sheen);
-        card.classList.remove('tilting');
-        card.style.transform = '';
-        if (img) img.style.transform = '';
-      });
-    });
-  }
-
-  // ═════════════════════════════════════════════════════════════════════
-  // EFFECT 5 — ACT II quote depth reveal
-  // CSS-only: .actII-quote starts at scale(0.85) translateZ(-120px),
-  // resolves to flat/full when .in-view is added by the existing observer.
-  // Stagger delays are inherited from the existing [data-stagger="N"] rules.
-  // No JS needed here.
-  // ═════════════════════════════════════════════════════════════════════
-
-  // Live-toggle reduce-motion mid-page: if user enables it, drain everything.
-  if (mqReduce.addEventListener) {
-    mqReduce.addEventListener('change', function(e){ if (e.matches) teardown(); });
-  } else if (mqReduce.addListener) {
-    mqReduce.addListener(function(e){ if (e.matches) teardown(); });
-  }
-})();
-</script>
-
-<!-- ═══════════════════════════ SCREEN TEST — Three.js + audio (3/3) ═══════════════════════════ -->
-<script>
-(function initMlStage(){
-  if (!document.getElementById('mlStage')) return;
-  // Three.js is lazy-loaded (see the loader below), so on first run it is
-  // normally absent. Wait for the loader's signal and re-enter.
-  //
-  // Two signals, not one. 'three-ready' means the library arrived; 'three-
-  // skipped' means the loader decided not to fetch it at all (mobile) and this
-  // should proceed in 2D. Without the second, skipping the download would leave
-  // the section dead — the swatches, the audio toggle and the fallback card are
-  // all wired below this guard, in the branch that runs when there is no WebGL.
-  if (typeof THREE === 'undefined' && !window.mlsSkip3D) {
-    document.addEventListener('mlstage:three-ready', initMlStage, { once: true });
-    document.addEventListener('mlstage:three-skipped', initMlStage, { once: true });
-    return;
-  }
-
-  var reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
-  function webglOK(){
-    try {
-      var c = document.createElement('canvas');
-      return !!(c.getContext('webgl2') || c.getContext('webgl'));
-    } catch(e){ return false; }
-  }
-
-  // POSTERS: index-aligned with the three swatch buttons, one scene per level.
-  // Procedural canvas data here is the silent fallback if the scene art fails
-  // to load; the tints are the genre colours those scenes carry in
-  // scene_config, so the fallback and the image agree.
-  var POSTERS = [
-    { id:'the_secret',  title:['THE','SECRET'],  level:'LEVEL I · BEGINNER',      tint:'#8a5a1a' },
-    { id:'night_shift', title:['NIGHT','SHIFT'], level:'LEVEL II · INTERMEDIATE', tint:'#c75050' },
-    { id:'the_bluff',   title:['THE','BLUFF'],   level:'LEVEL III · ADVANCED',    tint:'#3a2a4a' }
-  ];
-  var POSTER_INDEX = { the_secret:0, night_shift:1, the_bluff:2 };
-
-  var canvas   = document.getElementById('mlsCanvas');
-  var fallback = document.getElementById('mlsCardFallback');
-  var stage    = document.getElementById('mlStage');
-
-  // ── Audio toggle (Web Audio projector hum) — wired in both modes ──
-  var actx = null, hum = null;
-  function buildHum(){
-    actx = new (window.AudioContext || window.webkitAudioContext)();
-    var len = actx.sampleRate * 2;
-    var buf = actx.createBuffer(1, len, actx.sampleRate);
-    var d = buf.getChannelData(0);
-    for (var i = 0; i < len; i++) d[i] = Math.random() * 2 - 1;
-    var src = actx.createBufferSource(); src.buffer = buf; src.loop = true;
-    var lp = actx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 220;
-    var gain = actx.createGain(); gain.gain.value = 0;
-    var lfo = actx.createOscillator(); lfo.frequency.value = 0.5;
-    var lfoG = actx.createGain(); lfoG.gain.value = 0.008;
-    lfo.connect(lfoG).connect(gain.gain);
-    src.connect(lp); lp.connect(gain); gain.connect(actx.destination);
-    src.start(); lfo.start();
-    return gain;
-  }
-  function wireAudio(){
-    var audioBtn = document.getElementById('mlAudioToggle');
-    if (!audioBtn) return;
-    audioBtn.addEventListener('click', function(){
-      if (!actx) hum = buildHum();
-      if (actx.state === 'suspended') actx.resume();
-      var on = audioBtn.getAttribute('aria-pressed') !== 'true';
-      audioBtn.setAttribute('aria-pressed', on);
-      audioBtn.textContent = on ? 'AUDIO ● ON' : 'AUDIO ✕ OFF';
-      hum.gain.linearRampToValueAtTime(on ? 0.03 : 0, actx.currentTime + 0.6);
-    });
-  }
-
-  // ── CSS fallback path: no Three.js, no WebGL, or reduced motion ──
-  if (reduced || typeof THREE === 'undefined' || !webglOK()) {
-    if (canvas) canvas.style.display = 'none';
-    if (fallback) {
-      fallback.style.display = 'block';
-      fallback.style.backgroundImage = "url('/static/scenes/art/the_secret.webp?v=poster2')";
-    }
-    document.querySelectorAll('.mls-sw').forEach(function(btn){
-      btn.addEventListener('click', function(){
-        var active = document.querySelector('.mls-sw.active');
-        if (active) active.classList.remove('active');
-        btn.classList.add('active');
-        if (fallback) {
-          fallback.style.backgroundImage = "url('/static/scenes/art/" + btn.dataset.poster + ".webp?v=poster2')";
-        }
-        var q = document.getElementById('mlsQuote');
-        if (q) q.innerHTML = btn.dataset.quote;
-      });
-    });
-    wireAudio();
-    return;
-  }
-
-  // ── Three.js path ──
-  var card, frontMat, renderer, camera, scene, textures = [];
-  var currentIdx = 0;
-  var mouseX = 0, mouseY = 0;
-  var animLoopOn = false, initStarted = false;
-  // Owned/written by commit 2's GSAP timeline; we only read it.
-  var rot = window.mlsRot = window.mlsRot || { y: 0 };
-
-  // Procedural poster fallback — verbatim from prototype drawPoster()
-  function drawPoster(p){
-    var c = document.createElement('canvas'); c.width = 512; c.height = 768;
-    var x = c.getContext('2d');
-    var g = x.createLinearGradient(0,0,0,768);
-    g.addColorStop(0,'#141414'); g.addColorStop(.55, p.tint); g.addColorStop(1,'#060606');
-    x.fillStyle = g; x.fillRect(0,0,512,768);
-    var r = x.createRadialGradient(256,250,30, 256,250,330);
-    r.addColorStop(0,'rgba(200,169,110,0.30)'); r.addColorStop(1,'rgba(200,169,110,0)');
-    x.fillStyle = r; x.fillRect(0,0,512,768);
-    x.strokeStyle = 'rgba(200,169,110,0.85)'; x.lineWidth = 3; x.strokeRect(26,26,460,716);
-    x.strokeStyle = 'rgba(200,169,110,0.25)'; x.lineWidth = 1; x.strokeRect(40,40,432,688);
-    x.fillStyle = '#f0e9da'; x.textAlign = 'center';
-    x.font = '700 86px "Bebas Neue", sans-serif';
-    var lines = p.title.filter(Boolean);
-    lines.forEach(function(ln,i){ x.fillText(ln, 256, 320 + i*86); });
-    x.fillStyle = '#c8a96e'; x.fillRect(216, 480, 80, 2);
-    x.font = '400 19px "Space Mono", monospace';
-    x.fillStyle = '#c8a96e';
-    x.fillText(p.level, 256, 540);
-    x.font = '400 15px "Space Mono", monospace';
-    x.fillStyle = 'rgba(154,148,138,0.8)';
-    x.fillText('M I R R O R', 256, 690);
-    var tex = new THREE.CanvasTexture(c);
-    tex.anisotropy = 4;
-    return tex;
-  }
-
-  function initThree(){
-    scene = new THREE.Scene();
-    camera = new THREE.PerspectiveCamera(35, 1, 0.1, 100);
-    renderer = new THREE.WebGLRenderer({ canvas: canvas, alpha: true, antialias: true });
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-
-    textures = POSTERS.map(drawPoster);
-
-    var edge = new THREE.MeshStandardMaterial({ color:0x161310, roughness:.6, metalness:.4 });
-    var back = new THREE.MeshStandardMaterial({ color:0x1a1610, roughness:.7, metalness:.3 });
-    frontMat = new THREE.MeshStandardMaterial({ map:textures[0], roughness:.55, metalness:.15 });
-
-    card = new THREE.Mesh(
-      new THREE.BoxGeometry(2.2, 3.3, 0.07),
-      [edge, edge, edge, edge, frontMat, back]
-    );
-    card.position.y = -0.15;
-    scene.add(card);
-
-    // Neutral light, bright enough that the poster reads at its own exposure
-    // and colour. A gold key with low ambient tinted and darkened the art.
-    scene.add(new THREE.AmbientLight(0xffffff, 0.8));
-    var key = new THREE.PointLight(0xffffff, 1.6, 30);
-    key.position.set(0, 4, 5); scene.add(key);
-    var fill = new THREE.DirectionalLight(0xffffff, 0.35);
-    fill.position.set(-4, 1, 6); scene.add(fill);
-
-    resize();
-
-    // Load the real scene art, replacing the procedural card on success.
-    // Silent fallback on error — procedural canvas already in place.
-    var loader = new THREE.TextureLoader();
-    POSTERS.forEach(function(p, idx){
-      loader.load(
-        '/static/scenes/art/' + p.id + '.webp?v=poster2',
-        function(tex){
-          if (THREE.SRGBColorSpace) tex.colorSpace = THREE.SRGBColorSpace;
-          tex.anisotropy = 4;
-          textures[idx] = tex;
-          if (currentIdx === idx) {
-            frontMat.map = tex;
-            frontMat.needsUpdate = true;
-          }
-        },
-        undefined,
-        function(){}
-      );
-    });
-
-    var resizeTimer = null;
-    window.addEventListener('resize', function(){
-      if (resizeTimer) clearTimeout(resizeTimer);
-      resizeTimer = setTimeout(resize, 120);
-    });
-    window.addEventListener('mousemove', function(e){
-      mouseX = (e.clientX / window.innerWidth)  * 2 - 1;
-      mouseY = (e.clientY / window.innerHeight) * 2 - 1;
-    }, { passive: true });
-  }
-
-  function resize(){
-    if (!renderer || !canvas) return;
-    var w = canvas.clientWidth || window.innerWidth;
-    var h = canvas.clientHeight || window.innerHeight;
-    renderer.setSize(w, h, false);
-    camera.aspect = w / h;
-    camera.position.z = camera.aspect < 0.85 ? 10.5 : 7.6;
-    camera.updateProjectionMatrix();
-  }
-
-  // Locked motion values from prototype:
-  //   idle Y-sway:   sin(time*0.5) * 0.045
-  //   idle X-sway:   sin(time*0.35) * 0.02
-  //   Y float:       -0.15 + sin(time*0.7) * 0.05
-  //   parallax X/Y:  mouseX*0.12 / mouseY*0.06
-  //   lerp factor:   0.06 (rot) / 0.05 (Y position)
-  function tick(t){
-    if (!card || !renderer) return;
-    var time = t * 0.001;
-    var idle    = Math.sin(time * 0.5) * 0.045;
-    var targetY = rot.y + idle + mouseX * 0.12;
-    var targetX = Math.sin(time * 0.35) * 0.02 + mouseY * 0.06;
-    card.rotation.y += (targetY - card.rotation.y) * 0.06;
-    card.rotation.x += (targetX - card.rotation.x) * 0.06;
-    card.position.y += ((-0.15 + Math.sin(time * 0.7) * 0.05) - card.position.y) * 0.05;
-    renderer.render(scene, camera);
-  }
-
-  function startLoop(){
-    if (animLoopOn || !renderer) return;
-    animLoopOn = true;
-    renderer.setAnimationLoop(tick);
-  }
-  function stopLoop(){
-    if (!animLoopOn || !renderer) return;
-    animLoopOn = false;
-    renderer.setAnimationLoop(null);
-  }
-
-  // setPoster accepts either string id ('last_train') or numeric index (0).
-  // Prototype script uses indices; our HTML uses string IDs (spec §3) so we bridge.
-  function setPoster(idOrIdx){
-    var idx = typeof idOrIdx === 'number' ? idOrIdx : POSTER_INDEX[idOrIdx];
-    if (idx == null) return;
-    currentIdx = idx;
-    if (!frontMat) return;
-    frontMat.map = textures[idx];
-    frontMat.needsUpdate = true;
-    if (typeof gsap !== 'undefined' && card) {
-      gsap.fromTo(card.scale, {x:.95,y:.95,z:.95}, {x:1,y:1,z:1, duration:.5, ease:'back.out(2.2)'});
-    }
-  }
-
-  function bootstrap(){
-    if (initStarted) return;
-    initStarted = true;
-    requestAnimationFrame(function(){
-      initThree();
-      startLoop();
-    });
-  }
-
-  // Swatches — Three.js path
-  document.querySelectorAll('.mls-sw').forEach(function(btn){
-    btn.addEventListener('click', function(){
-      var active = document.querySelector('.mls-sw.active');
-      if (active) active.classList.remove('active');
-      btn.classList.add('active');
-      setPoster(btn.dataset.poster);
-      var q = document.getElementById('mlsQuote');
-      if (q && typeof gsap !== 'undefined') {
-        gsap.fromTo(q, {opacity:0, y:8}, {opacity:1, y:0, duration:.4,
-          onStart:function(){ q.innerHTML = btn.dataset.quote; }});
-      } else if (q) {
-        q.innerHTML = btn.dataset.quote;
-      }
-    });
-  });
-
-  // Lazy init + pause-when-offscreen (rootMargin 200px per spec §6.2)
-  var io = new IntersectionObserver(function(entries){
-    entries.forEach(function(entry){
-      if (entry.isIntersecting) {
-        if (!initStarted) bootstrap();
-        else startLoop();
-      } else if (initStarted) {
-        stopLoop();
-      }
-    });
-  }, { rootMargin: '200px' });
-  io.observe(stage);
-
-  wireAudio();
-
-  // Drain on app-mode: stop rAF, release WebGL context (free GPU memory so the
-  // post-login compositor path isn't starved on desktop Chrome), and disconnect
-  // observers. The CSS rule body.app-mode #mlStage { display:none } hides the section.
-  var bodyObs = new MutationObserver(function(){
-    if (document.body.classList.contains('app-mode')) {
-      stopLoop();
-      if (renderer) {
-        renderer.dispose();
-        if (renderer.forceContextLoss) renderer.forceContextLoss();
-        renderer = null;
-      }
-      io.disconnect();
-      bodyObs.disconnect();
-    }
-  });
-  bodyObs.observe(document.body, { attributes: true, attributeFilter: ['class'] });
-})();
-</script>
-
-<script>
-// ── Three.js lazy loader for #mlStage ──────────────────────────────────────
-// Fetches Three.js only when the Screen Test stage is about to come into view,
-// then signals the stage IIFE above via 'mlstage:three-ready'.
-//
-// The key property: an IntersectionObserver never fires for an element inside a
-// display:none subtree. body.app-mode hides #mlStage, so logged-in users now
-// never download the library at all — previously they paid 654 KB of
-// render-blocking script for a hidden section.
-(function(){
-  var THREE_SRC = 'https://cdnjs.cloudflare.com/ajax/libs/three.js/0.160.0/three.min.js';
-  var GSAP_SRC  = 'https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js';
-  var ST_SRC    = 'https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js';
-  var stage = document.getElementById('mlStage');
-  if (!stage) return;
-
-  function inject(src, onload, onerror){
-    var s = document.createElement('script');
-    s.src = src;
-    s.async = true;
-    s.onload = onload;
-    s.onerror = onerror;
-    document.head.appendChild(s);
-  }
-
-  // Skip the 3D card on phones. Three.js is 132 KB gzipped and ~3s of download
-  // on cellular, arriving exactly as the user scrolls into the section, and it
-  // competes for bandwidth with the marquee posters still streaming in. The
-  // stage's own `typeof THREE === 'undefined'` guard already degrades to the
-  // 2D fallback card, so nothing breaks — the section just costs nothing.
-  // The stage no longer shows a card at all, so Three.js is never needed.
-  var THREE_ON_MOBILE = false;
-
-  var startedThree = false;
-  function loadThree(){
-    if (startedThree || typeof THREE !== 'undefined') return;
-    if (!THREE_ON_MOBILE) {
-      // Tell the stage to stop waiting and render its 2D card, rather than
-      // sitting on a 'three-ready' event that will never arrive.
-      window.mlsSkip3D = true;
-      document.dispatchEvent(new Event('mlstage:three-skipped'));
-      return;
-    }
-    startedThree = true;
-    inject(THREE_SRC,
-      function(){ document.dispatchEvent(new Event('mlstage:three-ready')); },
-      function(){
-        // Nothing to clean up — the stage's own `typeof THREE === 'undefined'`
-        // guard means a failed load degrades to no 3D card, not a broken page.
-        console.warn('[mlStage] Three.js failed to load — stage skipped');
-      });
-  }
-
-  // GSAP and ScrollTrigger exist only to drive the pinned Screen Test timeline.
-  // The static layout has no timeline, so on a phone (or under reduced motion)
-  // they would be 41 KB and two round trips fetched to animate nothing. The
-  // swatch quote-change also uses gsap, but it is already guarded with
-  // `typeof gsap !== 'undefined'` and falls back to setting the text directly —
-  // the control still works, it just does not cross-fade.
-  var GSAP_NEEDED = !matchMedia('(max-width: 768px), (pointer: coarse), (prefers-reduced-motion: reduce)').matches;
-
-  var startedGsap = false;
-  function loadGsap(){
-    if (startedGsap) return;
-    startedGsap = true;
-    if (!GSAP_NEEDED) {
-      console.info('[mlStage] static layout — skipping GSAP/ScrollTrigger');
-      return;
-    }
-    if (typeof gsap !== 'undefined' && typeof ScrollTrigger !== 'undefined') {
-      document.dispatchEvent(new Event('mlstage:gsap-ready'));
-      return;
-    }
-    // ScrollTrigger registers itself onto gsap, so it must load second —
-    // these two cannot be fetched in parallel.
-    inject(GSAP_SRC, function(){
-      inject(ST_SRC,
-        function(){ document.dispatchEvent(new Event('mlstage:gsap-ready')); },
-        function(){ console.warn('[mlStage] ScrollTrigger failed to load — timeline skipped'); });
-    }, function(){
-      // The timeline block re-checks both globals before using them, so a
-      // failure here means no pinned scroll animation, not a broken page.
-      console.warn('[mlStage] GSAP failed to load — timeline skipped');
-    });
-  }
-
-  function loadAll(){ loadGsap(); loadThree(); }
-
-  // No IntersectionObserver (very old browsers): load eagerly rather than
-  // silently dropping the stage.
-  if (!('IntersectionObserver' in window)) { loadAll(); return; }
-
-  var io = new IntersectionObserver(function(entries){
-    for (var i = 0; i < entries.length; i++) {
-      if (entries[i].isIntersecting) { io.disconnect(); loadAll(); return; }
-    }
-  }, { rootMargin: '400px' });
-  io.observe(stage);
-})();
-
-</script>
-
-<!-- ─── Movie-poster layer over the scene photos (real photos + typography, no AI) ─── -->
-<style>
-  .mp-host { container-type: size; }
-  .mp-poster { position:absolute; inset:0; pointer-events:none; z-index:3; overflow:hidden; border-radius:inherit; }
-  .mp-poster::before { content:""; position:absolute; inset:0;
-    background: linear-gradient(180deg, rgba(6,10,24,.86) 0%, rgba(6,10,24,.30) 34%, rgba(0,0,0,0) 52%, rgba(0,0,0,.30) 70%, rgba(4,4,8,.94) 100%); }
-  .mp-poster::after { content:""; position:absolute; inset:0; mix-blend-mode:soft-light;
-    background: radial-gradient(120% 75% at 50% 60%, rgba(200,169,110,.22), rgba(10,20,50,.38) 72%); }
-  .mp-in { position:absolute; inset:0; z-index:1; display:flex; flex-direction:column; align-items:center; text-align:center;
-    padding: 6cqh 6cqw 5cqh; box-sizing:border-box; }
-  .mp-in > * { flex-shrink:0; }
-  .mp-pre { font-family:'Bebas Neue',sans-serif; color:#d8cfbd; letter-spacing:.42em; font-size:clamp(6px,min(5.2cqh,4.9cqw),13px); padding-left:.42em; white-space:nowrap; }
-  .mp-title { margin-top:2.5cqh; font-family:'Cinzel',serif; font-weight:700; line-height:.95; letter-spacing:.03em;
-    /* Sized by the longest word (--w) so INTERROGATION fits a narrow card. */
-    font-size: clamp(10px, min(15cqh, calc(84cqw / (var(--w, 6) * 0.8))), 54px); text-transform:uppercase; white-space:nowrap;
-    background: linear-gradient(180deg,#f8e6b6 0%,#c8a96e 55%,#8a6a35 100%); -webkit-background-clip:text; background-clip:text; color:transparent;
-    filter: drop-shadow(0 2px 10px rgba(0,0,0,.55)); }
-  .mp-sub { margin-top:2.2cqh; font-family:'Bebas Neue',sans-serif; color:#c8a96e; letter-spacing:.3em; line-height:1.25; font-size:clamp(6px,min(4.6cqh,4.4cqw),12px); padding-left:.3em; }
-  .mp-foot { margin-top:auto; width:100%; }
-  .mp-tag { display:none; font-family:'Cormorant Garamond',serif; font-style:italic; color:#efe6d2; line-height:1.2;
-    font-size: clamp(10px, 3.6cqh, 20px); margin-bottom: 2.2cqh; text-shadow:0 1px 8px rgba(0,0,0,.6); }
-  .mp-bill { font-family:'Bebas Neue',sans-serif; color:#a59c8b; letter-spacing:.12em; line-height:1.3; font-size:clamp(5px,min(3.4cqh,3.6cqw),12px);
-    border-top:1px solid rgba(200,169,110,.35); padding-top:1.6cqh; }
-  .mp-bill b { color:#c8a96e; font-weight:400; }
-  .mp-logo { margin-top:1.2cqh; font-family:'Bebas Neue',sans-serif; color:#c8a96e; letter-spacing:.5em; font-size:clamp(6px,4cqh,15px); padding-left:.5em; }
-  /* Portrait posters have room for the line of dialogue. */
-  @container (min-height: 260px) and (max-aspect-ratio: 1/1) { .mp-tag { display:block; } }
-  /* Very small posters (the phone triptych): no credits block, it would be unreadable. */
-  @container (max-width: 150px) { .mp-bill { display:none; } }
-  /* The poster layer carries its own grade, title and level line. */
-  .mp-host .actV-card-title, .mp-host .actV-card-badge { display:none; }
-  /* Illustrated posters (static/scenes/posters) already carry title and credits. */
-  .is-poster .actV-card-title, .is-poster .actV-card-badge { display:none; }
-  .is-poster.actV-card::after, .is-poster.actI-poster::after { display:none; }
-  .mp-host.actV-card::after, .mp-host.actI-poster::after { display:none; }
-</style>
-<script>
-(function(){
-  var D = {"last_train":{"t":"Last Train","g":"Drama","e":"Hurt but firm","l":"If you get on that train, don't come back.","v":1},"fashionably_late":{"t":"Fashionably Late","g":"Comedy","e":"Confident, playful","l":"I'm not late. Everyone else is just early.","v":1},"rooftop":{"t":"Rooftop","g":"Romance","e":"Nervous, sincere","l":"I almost said it a hundred times. I love you.","v":1},"countdown":{"t":"Countdown","g":"Action","e":"Urgent","l":"We have ninety seconds. Grab the bag and run!","v":1},"locked_door":{"t":"The Locked Door","g":"Suspense","e":"Whispered fear","l":"Someone was in this house. The door was locked.","v":1},"first_day":{"t":"First Day","g":"Comedy","e":"Nervous, friendly","l":"Hi! I'm new. Is it always this loud in here?","v":1},"the_promise":{"t":"The Promise","g":"Drama","e":"Tender","l":"I'll come back for you. I promise.","v":1},"no_signal":{"t":"No Signal","g":"Thriller","e":"Tense","l":"No signal. No road. And the gas is almost gone.","v":1},"champion":{"t":"Champion","g":"Sports","e":"Triumphant","l":"Nobody believed in us. Look at us now!","v":1},"wrong_number":{"t":"Wrong Number","g":"Comedy","e":"Confused","l":"Sorry, who is this? Why do you have my dog?","v":1},"the_storm":{"t":"The Storm","g":"Adventure","e":"Shouting over wind","l":"Hold on to the rope! Don't look down!","v":1},"the_letter":{"t":"The Letter","g":"Drama","e":"Sad, quiet","l":"I read your letter. Every word. Twice.","v":1},"interrogation":{"t":"Interrogation","g":"Crime","e":"Cold, intense","l":"You were there that night. Stop lying to me.","v":1},"surprise":{"t":"Surprise","g":"Family","e":"Excited","l":"Close your eyes. Okay... now open them!","v":1},"the_deal":{"t":"The Deal","g":"Drama","e":"Confident","l":"Ten thousand. Final offer. Take it or leave it.","v":1},"lost_city":{"t":"Lost City","g":"Adventure","e":"Amazed","l":"Do you see that? It's real. It's actually real.","v":1},"the_apology":{"t":"The Apology","g":"Romance","e":"Regretful","l":"I was wrong. I'm sorry. Please don't go.","v":1},"midnight_call":{"t":"Midnight Call","g":"Suspense","e":"Afraid","l":"Don't open the door. Whatever you hear, don't open it.","v":1},"stand_up":{"t":"Stand Up","g":"Drama","e":"Inspiring","l":"Tonight, we don't run. Tonight, we fight back.","v":1},"coffee_shop":{"t":"Coffee Shop","g":"Romance","e":"Flirty","l":"Is this seat taken, or saved for me?","v":1},"job_offer":{"t":"The Offer","g":"Drama","e":"Excited but unsure","l":"They offered me the job in New York. I asked for one night to think.","v":2},"the_heist":{"t":"The Plan","g":"Crime","e":"Cool, in control","l":"Nobody touches the alarm. Nobody uses real names. We're in and out in four minutes.","v":2},"old_friends":{"t":"Old Friends","g":"Comedy","e":"Teasing, warm","l":"You haven't changed at all. You're still the worst driver I have ever met.","v":2},"good_news":{"t":"Good News","g":"Drama","e":"Relief","l":"The doctor says she's going to be fine. I can finally breathe again.","v":2},"blind_date":{"t":"Blind Date","g":"Romance","e":"Shy, honest","l":"I'll be honest, I almost cancelled tonight. But I'm really glad I didn't.","v":2},"final_round":{"t":"Final Round","g":"Sports","e":"Intense, motivating","l":"Your legs are tired and your lungs are burning, but you are not done yet.","v":2},"the_secret":{"t":"The Secret","g":"Suspense","e":"Hushed, serious","l":"If I tell you what I saw, you have to promise you'll never repeat it.","v":2},"moving_out":{"t":"Moving Out","g":"Drama","e":"Nostalgic","l":"This apartment was too small, too loud, and the best home I ever had.","v":2},"lost_luggage":{"t":"Lost Luggage","g":"Comedy","e":"Frustrated, funny","l":"So my suitcase went to Paris, and I went to Chicago. Great start to my vacation.","v":2},"the_pilot":{"t":"Mayday","g":"Action","e":"Calm under pressure","l":"We lost engine two. I'm going to land this plane, so everybody hold on.","v":2},"missed_games":{"t":"Missed Games","g":"Family","e":"Regretful, warm","l":"I wasn't there for your games, and I'm sorry. Let me be there now.","v":2},"the_window":{"t":"The Window","g":"Crime","e":"Sudden realization","l":"The window was broken from the inside. Whoever did this never left the house.","v":2},"wedding_toast":{"t":"The Toast","g":"Comedy","e":"Warm, joking","l":"When they first met, she said he was annoying. Clearly, she was half right.","v":2},"night_shift":{"t":"Night Shift","g":"Drama","e":"Quiet intensity","l":"I work two jobs so you can have the chances I never had.","v":2},"the_audition":{"t":"The Audition","g":"Drama","e":"Pleading","l":"I've practiced this every night for a year. Please, just give me one chance.","v":2},"oxygen_low":{"t":"Oxygen Low","g":"Sci-Fi","e":"Tense","l":"Oxygen is at forty percent. If we don't fix this now, we won't get another try.","v":2},"first_dance":{"t":"First Dance","g":"Romance","e":"Playful","l":"I don't know how to dance. Teach me, and I promise not to step on you.","v":2},"the_rival":{"t":"The Rival","g":"Sports","e":"Competitive","l":"You beat me last year. This year, I came here ready for you.","v":2},"runaway":{"t":"Runaway","g":"Thriller","e":"Urgent whisper","l":"Leave your phone, take only cash, and don't tell anyone where you're going.","v":2},"grandmas_kitchen":{"t":"Grandma's Kitchen","g":"Family","e":"Warm, loving","l":"She taught me to cook without a recipe. Just taste it, and trust yourself.","v":2},"boardroom":{"t":"The Boardroom","g":"Drama","e":"Blunt","l":"Let's not beat around the bush. The numbers are bad, and someone dropped the ball.","v":3},"roommate":{"t":"The Roommate","g":"Comedy","e":"Sarcastic","l":"Oh, great, you finished the milk again. Truly, you're a gift to this apartment.","v":3},"the_comeback":{"t":"The Comeback","g":"Sports","e":"Confident, cool","l":"Everyone wrote me off. Funny thing is, I was just getting started.","v":3},"cold_feet":{"t":"Cold Feet","g":"Comedy","e":"Nervous, rambling","l":"I'm not getting cold feet. I'm just... reconsidering every decision I've ever made.","v":3},"the_bluff":{"t":"The Bluff","g":"Crime","e":"Smug","l":"You're bluffing. I can read you like a book, and it's a very short book.","v":3},"done_waiting":{"t":"Done Waiting","g":"Drama","e":"Controlled anger","l":"I've bent over backwards for this company, and I'm done biting my tongue.","v":3},"lucky":{"t":"Lucky","g":"Thriller","e":"Cool, cutting","l":"Go ahead and call it luck, if that helps you sleep at night.","v":3}};
-  function idFrom(el){
-    if (el.dataset && el.dataset.scene) return el.dataset.scene;
-    var img = el.querySelector('img'); if (!img) return null;
-    var m = (img.getAttribute('src')||'').match(/scenes\/art\/([a-z0-9_]+?)(?:-sm|-wide)?\.webp/);
-    return m ? m[1] : null;
-  }
-  // Poster titles stack on at most two lines, split where the lines come out most even.
-  function splitTitle(t){
-    var w = t.split(/\s+/); if (w.length < 2) return [t];
-    var best = null;
-    for (var i = 1; i < w.length; i++) {
-      var a = w.slice(0,i).join(' '), b = w.slice(i).join(' '), m = Math.max(a.length, b.length);
-      if (!best || m < best.m) best = {m:m, l:[a,b]};
-    }
-    return best.l;
-  }
-  function esc(t){ return String(t).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];}); }
-  function dress(el){
-    if (el.__mp) return; var id = idFrom(el); var d = id && D[id]; if (!d) return;
-    el.__mp = 1; el.classList.add('mp-host');
-    if (getComputedStyle(el).position === 'static') el.style.position = 'relative';
-    var lines = splitTitle(d.t);
-    var p = document.createElement('div'); p.className = 'mp-poster'; p.setAttribute('aria-hidden','true');
-    p.innerHTML = '<div class="mp-in"><div class="mp-pre">MIRROR PRESENTS</div>' +
-      '<div class="mp-title" style="--w:' + Math.max(5, lines.reduce(function(m,l){return Math.max(m,l.length);},0)) + '">' + lines.map(esc).join('<br>') + '</div>' +
-      '<div class="mp-sub">' + esc(d.g) + ' · ' + esc(d.e) + '</div>' +
-      '<div class="mp-foot"><div class="mp-tag">“' + esc(d.l) + '”</div>' +
-      '<div class="mp-bill">A <b>MIRROR ORIGINAL</b> SCENE · STARRING <b>YOU</b> · VOICED WITH EMOTION · LEVEL ' + d.v + '</div>' +
-      '<div class="mp-logo">MIRROR</div></div></div>';
-    el.appendChild(p);
-  }
-  // The hero marquee wall stays photos only (no lettering behind the headline).
-  function run(){ document.querySelectorAll('.actI-poster, .actV-card').forEach(dress); }
-  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', run); else run();
-})();
-</script>
-
-<script>
-// Screen Test poster: the level buttons (I / II / III) swap the photo.
-(function(){
-  var img = document.getElementById('mlsPosterImg');
-  if (!img) return;
-  document.querySelectorAll('.mls-sw').forEach(function(btn){
-    btn.addEventListener('click', function(){
-      var src = btn.dataset.img || ('/static/scenes/art/' + btn.dataset.poster + '.webp?v=poster2');
-      if (img.getAttribute('src') === src) return;
-      img.style.opacity = '0';
-      setTimeout(function(){ img.onload = img.onerror = function(){ img.style.opacity = '1'; }; img.src = src; }, 250);
-    });
-  });
-})();
-</script>
 </body>
 </html>
