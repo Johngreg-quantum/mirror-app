@@ -3138,7 +3138,10 @@
 
     /* Mobile - slightly smaller text */
     @media (max-width: 480px) {
-      .bn-tab .bn-label { font-size: 14px; }
+      /* !important: the 17px rule above is !important, so this one never won
+         and the labels ran into each other on phones. */
+      .bn-tab .bn-label { font-size: 14px !important; }
+      .bn-tab { padding: 14px 4px; }
     }
 
     /* ===== LEVEL-UP REDESIGN [1/2]: cinematic results screen ===== */
@@ -5889,7 +5892,7 @@
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M18 20V10M12 20V4M6 20v-6"/>
           </svg>
-          My Progress
+          <span lang="es">Mi progreso</span>
         </button>
         <div class="user-chip" id="userChip">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -5898,7 +5901,7 @@
           <span class="div-dot" id="divDot" title="Bronze"></span>
           <span class="user-chip-name" id="userChipName"></span>
           <span class="pro-badge pro-only">PRO</span>
-          <button class="btn-logout" id="btnLogout">Logout</button>
+          <button class="btn-logout" id="btnLogout" lang="es">Salir</button>
         </div>
       </div>
     </div>
@@ -6732,24 +6735,24 @@
 </div>
 </div>
 
-<nav class="bottom-nav" id="bottomNav">
+<nav class="bottom-nav" id="bottomNav" lang="es" aria-label="Principal">
   <button class="bn-tab active" data-panel="panelHome" onclick="switchTab(this)">
-    <span class="bn-icon">🎬</span><span class="bn-label">Home</span><span class="bn-dot"></span>
+    <span class="bn-icon">🎬</span><span class="bn-label">Inicio</span><span class="bn-dot"></span>
   </button>
   <button class="bn-tab" data-panel="panelLevels" onclick="switchTab(this)">
-    <span class="bn-icon">📚</span><span class="bn-label">Levels</span><span class="bn-dot"></span>
+    <span class="bn-icon">📚</span><span class="bn-label">Niveles</span><span class="bn-dot"></span>
   </button>
   <button class="bn-tab" data-panel="panelRanks" onclick="switchTab(this)">
-    <span class="bn-icon">🏆</span><span class="bn-label">Ranks</span><span class="bn-dot"></span>
+    <span class="bn-icon">🏆</span><span class="bn-label">Rangos</span><span class="bn-dot"></span>
   </button>
   <button class="bn-tab" data-panel="panelMissions" onclick="switchTab(this)">
-    <span class="bn-icon">⚡</span><span class="bn-label">Missions</span><span class="bn-dot"></span>
+    <span class="bn-icon">⚡</span><span class="bn-label">Misiones</span><span class="bn-dot"></span>
   </button>
   <button class="bn-tab" data-panel="panelWords" onclick="switchTab(this)">
-    <span class="bn-icon">📖</span><span class="bn-label">My Words</span><span class="bn-dot"></span>
+    <span class="bn-icon">📖</span><span class="bn-label">Palabras</span><span class="bn-dot"></span>
   </button>
   <button class="bn-tab" data-panel="panelProfile" onclick="switchTab(this)">
-    <span class="bn-icon">👤</span><span class="bn-label">Profile</span><span class="bn-dot"></span>
+    <span class="bn-icon">👤</span><span class="bn-label">Perfil</span><span class="bn-dot"></span>
   </button>
 </nav>
 
@@ -6842,22 +6845,22 @@
     <div id="level1ProgressLabel" style="font-family:'DM Sans',sans-serif; font-size:11px; color:#c8a96e; white-space:nowrap;"></div>
   </div>
 
-  <!-- Level 2 — locked -->
-  <div style="background:rgba(255,255,255,0.02); border:0.5px solid rgba(255,255,255,0.07); border-radius:16px; padding:16px; margin-bottom:10px; display:flex; align-items:center; justify-content:space-between; opacity:0.45;">
+  <!-- Level 2 — locked (static/home.js hides it once level 2 is open) -->
+  <div id="homeLockL2" lang="es" style="background:rgba(255,255,255,0.02); border:0.5px solid rgba(255,255,255,0.07); border-radius:16px; padding:16px; margin-bottom:10px; display:flex; align-items:center; justify-content:space-between; opacity:0.45;">
     <div>
-      <div style="font-family:'DM Sans',sans-serif; font-size:9px; letter-spacing:2px; text-transform:uppercase; color:#555; margin-bottom:4px;">Level 2</div>
-      <div style="font-family:'Georgia',serif; font-size:17px; color:#fff; margin-bottom:2px;">Intermediate</div>
-      <div style="font-family:'DM Sans',sans-serif; font-size:11px; color:#444;">Score 60% on a Level 1 scene or pass the Level 1 Quiz to unlock</div>
+      <div style="font-family:'DM Sans',sans-serif; font-size:9px; letter-spacing:2px; text-transform:uppercase; color:#555; margin-bottom:4px;">Nivel 2</div>
+      <div style="font-family:'Georgia',serif; font-size:17px; color:#fff; margin-bottom:2px;">Intermedio</div>
+      <div style="font-family:'DM Sans',sans-serif; font-size:11px; color:#444;">Saca 60% en una escena del Nivel 1 o aprueba su examen para abrirlo</div>
     </div>
     <div style="font-size:28px;">🔒</div>
   </div>
 
-  <!-- Level 3 — locked -->
-  <div style="background:rgba(255,255,255,0.02); border:0.5px solid rgba(255,255,255,0.07); border-radius:16px; padding:16px; margin-bottom:10px; display:flex; align-items:center; justify-content:space-between; opacity:0.3;">
+  <!-- Level 3 — locked (static/home.js hides it once level 3 is open) -->
+  <div id="homeLockL3" lang="es" style="background:rgba(255,255,255,0.02); border:0.5px solid rgba(255,255,255,0.07); border-radius:16px; padding:16px; margin-bottom:10px; display:flex; align-items:center; justify-content:space-between; opacity:0.3;">
     <div>
-      <div style="font-family:'DM Sans',sans-serif; font-size:9px; letter-spacing:2px; text-transform:uppercase; color:#555; margin-bottom:4px;">Level 3</div>
-      <div style="font-family:'Georgia',serif; font-size:17px; color:#fff; margin-bottom:2px;">Advanced</div>
-      <div style="font-family:'DM Sans',sans-serif; font-size:11px; color:#444;">Complete Level 2 to unlock</div>
+      <div style="font-family:'DM Sans',sans-serif; font-size:9px; letter-spacing:2px; text-transform:uppercase; color:#555; margin-bottom:4px;">Nivel 3</div>
+      <div style="font-family:'Georgia',serif; font-size:17px; color:#fff; margin-bottom:2px;">Avanzado</div>
+      <div style="font-family:'DM Sans',sans-serif; font-size:11px; color:#444;">Saca 70% en una escena del Nivel 2 o aprueba su examen para abrirlo</div>
     </div>
     <div style="font-size:28px;">🔒</div>
   </div>

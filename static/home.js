@@ -74,6 +74,12 @@
       var link = document.getElementById('homeQuizLink');
       if (!link) return;
       var level = (typeof userProgress !== 'undefined' && userProgress && userProgress.level) || 1;
+      // The "locked" level cards further down the home are static markup; an
+      // open level should not keep showing a padlock.
+      var l2 = document.getElementById('homeLockL2'), l3 = document.getElementById('homeLockL3');
+      // (inline display:flex beats the hidden attribute, so set display)
+      if (l2) l2.style.display = level >= 2 ? 'none' : 'flex';
+      if (l3) l3.style.display = level >= 3 ? 'none' : 'flex';
       if (level >= 3) { link.hidden = true; return; }
       link.hidden = false;
       var title = document.getElementById('homeQuizTitle');
