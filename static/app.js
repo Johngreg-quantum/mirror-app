@@ -409,7 +409,7 @@ function renderSceneCounts() {
   // The landing's pricing card is in Spanish.
   if (starter) set('pricingFreeCount', starter + ' escenas para empezar');
   set('pricingProCount',  'Las ' + total + ' escenas');
-  set('proUpgradeCount',  total + ' scenes');
+  set('proUpgradeCount',  total + ' escenas');
 }
 
 let sceneConfigPromise = null;
@@ -605,6 +605,17 @@ function openPendingScene() {
   if (!s) return;
   const open = (userProgress.unlocked_scenes || []).includes(sid);
   if (open) openModal(sid, s); else lockedSceneTap(sid);
+}
+
+// Back from Stripe without paying: say so, and drop the parameter so a reload
+// does not repeat it.
+if (window.location.search.includes('checkout=cancel')) {
+  window.history.replaceState({}, '', '/');
+  setTimeout(function() {
+    if (typeof showToast === 'function') {
+      showToast('No se complet\u00f3 el pago. No se te cobr\u00f3 nada.', 4500);
+    }
+  }, 1200);
 }
 
 // Detect post-checkout redirect
@@ -934,10 +945,17 @@ const BillingPlans = {
     const upLabel = document.getElementById('proUpgradeLabel');
     if (upLabel) {
       upLabel.textContent = !plan || !total
-        ? 'Upgrade'
-        : (plan.is_subscription && plan.interval
-            ? ('Upgrade \u2014 ' + total + '/' + plan.interval)
-            : ('Upgrade \u2014 ' + total));
+        ? 'Pasarme a Pro'
+        : (plan.is_subscription && plan.interval === 'year'
+            ? ('Pro anual \u2014 ' + total + '/a\u00f1o' + (perMo ? ' (' + perMo + '/mes)' : ''))
+            : ('Pro \u2014 ' + total + (plan.interval === 'month' ? '/mes' : '')));
+    }
+    const upMonthly = document.getElementById('proUpgradeMonthlyBtn');
+    if (upMonthly) {
+      const m = this.get('monthly');
+      const mAmt = m && m.price_cents ? this.money(m.price_cents) : '';
+      upMonthly.textContent = mAmt ? ('o mensual \u00b7 ' + mAmt) : 'o mensual';
+      upMonthly.hidden = !m || (plan && plan === m);
     }
 
     // Two different reasons a button cannot be pressed, and they say
@@ -1031,8 +1049,8 @@ onClick('heroStartBtn',    () => openAuthModal('register'));
 // holding a stale one. `variant_id` still rides along for a server running an
 // older build.
 async function startCheckout(planKey, btnId, idleLabel) {
-  // The landing's pricing buttons (pricing*) speak Spanish; the in-app ones don't.
-  const es = String(btnId || '').indexOf('pricing') === 0;
+  // The landing's pricing buttons and the home Pro card speak Spanish.
+  const es = /^(pricing|proUpgrade)/.test(String(btnId || ''));
   await BillingPlans.load();
   const plan = BillingPlans.get(planKey);
   if (!plan) {
@@ -1092,6 +1110,8 @@ onClick('pricingProBtn', () =>
 // three files for no behaviour change.
 onClick('pricingLevel1Btn', () =>
   startCheckout('starter', 'pricingLevel1Btn', 'Empezar por $1'));
+onClick('proUpgradeMonthlyBtn', () =>
+  startCheckout('monthly', 'proUpgradeMonthlyBtn', 'o mensual'));
 
 // ══════════════════════════════════════════════
 // UPGRADE SHEET — what a locked scene offers
@@ -1492,6 +1512,10 @@ function startDailyCountdown(initialSecs) {
     const h  = Math.floor(secs / 3600);
     const m  = Math.floor((secs % 3600) / 60);
     const s  = secs % 60;
+    setTextIfPresent(
+      'homeDailyCountdown',
+      h > 0 ? (h + ' h ' + m + ' min') : (m + ' min')
+    );
     setTextIfPresent(
       'dcCountdown',
       `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`
@@ -3800,23 +3824,56 @@ function renderHeroFeatured() {
   if (titleEl) titleEl.textContent = s.title.toUpperCase();
 
   const yearEl = document.getElementById('heroYear');
-  if (yearEl) yearEl.textContent = s.genre || '';
+  if (yearEl) {
+    const genre = GENRE_ES[s.genre] || s.genre || '';
+    const lvl = s.difficulty ? LEVEL_ES[s.difficulty] : '';
+    yearEl.textContent = [genre, lvl].filter(Boolean).join(' \u00b7 ');
+  }
 
   const quoteEl = document.getElementById('heroQuote');
   if (quoteEl) quoteEl.textContent = s.line || '';
+
+  // What this hero is: the next line of today's Daily Take.
+  const badgeEl = document.getElementById('heroBadge');
+  if (badgeEl) {
+    badgeEl.textContent = lines.total <= 1
+      ? 'RETO DEL D\u00cdA \u00b7 2\u00d7 XP'
+      : (lines.allDone
+          ? 'DAILY TAKE COMPLETO \u00b7 PR\u00c1CTICA LIBRE'
+          : ('DAILY TAKE \u00b7 L\u00cdNEA ' + (lines.doneCount + 1) + ' DE ' + lines.total + ' \u00b7 2\u00d7 XP'));
+    badgeEl.hidden = false;
+  }
+  setTextIfPresent('heroPracticeLabel', lines.allDone ? 'Practicar otra vez' : 'Practicar ahora');
+
+  if (window.HomeEnhancer) window.HomeEnhancer.afterDaily();
 }
 
-// Hero play button → open the next undone line of the Daily Take
+// Spanish labels for the home hero. Scene data stays in English.
+const GENRE_ES = {
+  Action: 'Acci\u00f3n', Adventure: 'Aventura', Comedy: 'Comedia', Crime: 'Crimen',
+  Drama: 'Drama', Family: 'Familia', Romance: 'Romance', 'Sci-Fi': 'Ciencia ficci\u00f3n',
+  Sports: 'Deportes', Suspense: 'Suspenso', Thriller: 'Thriller',
+};
+const LEVEL_ES = { Beginner: 'Nivel 1', Intermediate: 'Nivel 2', Advanced: 'Nivel 3' };
+
+// Hero play button and "Practicar ahora" → open the next undone line of the
+// Daily Take. "Otra escena" goes to the carousel.
 (function() {
-  const playBtn = document.getElementById('heroPlayBtn');
-  if (playBtn) {
-    playBtn.addEventListener('click', () => {
-      if (!dailyChallenge) return;
-      const sid = nextDailySceneId();
-      const s = scenes[sid] || dailyChallenge.scene;
-      if (s) openModal(sid, s);
-    });
+  function openNextDaily() {
+    if (!dailyChallenge) return;
+    const sid = nextDailySceneId();
+    const s = scenes[sid] || dailyChallenge.scene;
+    if (s) openModal(sid, s);
   }
+  ['heroPlayBtn', 'heroPracticeBtn'].forEach(function(id) {
+    const b = document.getElementById(id);
+    if (b) b.addEventListener('click', openNextDaily);
+  });
+  const other = document.getElementById('heroOtherBtn');
+  if (other) other.addEventListener('click', function() {
+    const target = document.getElementById('homeCarousel');
+    if (target) target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  });
 })();
 
 // Hook into loadDaily to also render the hero
@@ -3965,7 +4022,11 @@ function renderCarousel() {
     const titleEl = document.getElementById('coverflowTitle');
     const actorEl = document.getElementById('coverflowActor');
     if (titleEl && c) titleEl.textContent = c.scene.title || '';
-    if (actorEl && c) actorEl.textContent = (c.scene.actor || '') + (c.scene.difficulty ? ' · ' + c.scene.difficulty : '');
+    if (actorEl && c) {
+      // No actor on the original scenes, so this used to read "· Beginner".
+      const parts = [GENRE_ES[c.scene.genre] || c.scene.genre, LEVEL_ES[c.scene.difficulty]].filter(Boolean);
+      actorEl.textContent = parts.join(' \u00b7 ');
+    }
   }
 
   function cfRotate(dir) {
@@ -4023,47 +4084,46 @@ async function renderWeakWords() {
     const history = data.history || [];
     if (!history.length) return;
 
-    // Gather all words from all scenes the user has tried,
-    // looking at latest attempt per scene and comparing expected vs transcribed
-    const wordMisses = {};
-
+    // History has no per-word data, only a score per take. The old panel gave
+    // every word of a line its scene's score and averaged across scenes, so
+    // five words showed the same number with no hint of where they came from.
+    // Now: the scene whose latest take scored lowest (newest first from the
+    // server), its words, that one score, and a button straight back into it.
+    const latest = {};
     for (const entry of history) {
-      const scene = scenes[entry.scene_id];
-      if (!scene) continue;
-      const expected = (scene.line || '').toLowerCase().replace(/[^\w\s']/g, '').split(/\s+/).filter(Boolean);
-      // We don't have word-level data from history alone, so score each scene's words
-      // by comparing the scene's sync_score — lower score = weaker words
-      const score = entry.sync_score || 0;
-      for (const word of expected) {
-        if (word.length < 3) continue; // skip tiny words
-        if (!wordMisses[word]) wordMisses[word] = { total: 0, count: 0 };
-        wordMisses[word].total += score;
-        wordMisses[word].count += 1;
-      }
+      if (!entry || !scenes[entry.scene_id] || latest[entry.scene_id] !== undefined) continue;
+      latest[entry.scene_id] = Math.round(entry.sync_score || 0);
     }
+    const ranked = Object.keys(latest).sort(function(a, b) { return latest[a] - latest[b]; });
+    if (!ranked.length) return;
+    const sid = ranked[0];
+    const scene = scenes[sid];
+    const score = latest[sid];
 
-    // Sort by lowest average score
-    const sorted = Object.entries(wordMisses)
-      .map(([word, data]) => ({
-        word,
-        avg: Math.round(data.total / data.count),
-        count: data.count,
-      }))
-      .sort((a, b) => a.avg - b.avg)
+    const seen = {};
+    const words = (scene.line || '').toLowerCase().replace(/[^\w\s']/g, '').split(/\s+/)
+      .filter(function(w) { if (w.length < 3 || seen[w]) return false; seen[w] = 1; return true; })
       .slice(0, 5);
+    if (!words.length) return;
 
-    if (!sorted.length) return;
-
-    tbody.innerHTML = sorted.map(item => `
+    tbody.innerHTML = words.map(word => `
       <tr>
-        <td>${item.word}</td>
-        <td>${item.avg}/100
+        <td>${word}</td>
+        <td>${score}/100
           <span class="weak-word-bar">
-            <span class="weak-word-bar-fill" style="width:${item.avg}%"></span>
+            <span class="weak-word-bar-fill" style="width:${score}%"></span>
           </span>
         </td>
       </tr>
     `).join('');
+
+    setTextIfPresent('weakWordsFrom', 'De tu \u00faltima toma en ' + scene.title);
+    const cta = document.getElementById('weakWordsCta');
+    if (cta) {
+      cta.textContent = 'Repetir ' + scene.title;
+      cta.hidden = false;
+      cta.onclick = function() { openModal(sid, scene); };
+    }
   } catch { /* silent */ }
 }
 

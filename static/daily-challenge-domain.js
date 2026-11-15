@@ -63,10 +63,10 @@
 
     if (refs.labelEl) {
       refs.labelEl.textContent = lines.total <= 1
-        ? 'Daily Challenge'
+        ? 'Reto del d\u00eda'
         : (lines.allDone
-            ? 'Daily Take done'
-            : `Daily Take \u00b7 ${lines.doneCount} of ${lines.total}`);
+            ? 'Daily Take completo'
+            : `Daily Take \u00b7 ${lines.doneCount} de ${lines.total}`);
     }
   }
 

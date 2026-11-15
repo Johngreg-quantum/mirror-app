@@ -40,6 +40,7 @@
        by an <audio> element. -->
   <link rel="stylesheet" href="/static/app.css" />
   <link rel="stylesheet" href="/static/verbs.css" />
+  <link rel="stylesheet" href="/static/home.css" />
   <style>
     @property --ripple-offset {
       syntax: '<length>';
@@ -5918,25 +5919,28 @@
       <!-- Weak Words Panel (glass overlay) -->
       <div class="weak-words-panel" id="weakWordsPanel">
         <div class="weak-words-header">
-          <span class="weak-words-title">WEAK WORDS</span>
+          <span class="weak-words-title">PARA REPASAR</span>
           <button class="weak-words-arrow" id="weakWordsToggle">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
           </button>
         </div>
+        <p class="ww-from" id="weakWordsFrom" lang="es"></p>
         <table class="weak-words-table">
-          <thead><tr><th>Word</th><th>Last attempt</th></tr></thead>
+          <thead><tr><th>Palabra</th><th>Tu toma</th></tr></thead>
           <tbody id="weakWordsBody">
-            <tr><td colspan="2" class="weak-words-empty">No data yet</td></tr>
+            <tr><td colspan="2" class="weak-words-empty">Graba una escena y aquí verás qué repasar</td></tr>
           </tbody>
         </table>
+        <button type="button" class="ww-cta" id="weakWordsCta" hidden>Repetir escena</button>
       </div>
 
       <!-- Movie Info -->
       <div class="hero-featured-info">
+        <span class="hf-badge" id="heroBadge" hidden></span>
         <h1 class="hero-featured-title" id="heroTitle">—</h1>
         <p class="hero-featured-year" id="heroYear"></p>
         <div class="hero-featured-quote-wrap">
-          <span class="hero-featured-quote-label">Practice Quote:</span>
+          <span class="hero-featured-quote-label">Tu línea:</span>
           <p class="hero-featured-quote" id="heroQuote"></p>
         </div>
         <!-- Mini Audio Player -->
@@ -5947,6 +5951,14 @@
           <div class="hero-progress-track">
             <div class="hero-progress-fill" id="heroProgressFill"></div>
           </div>
+        </div>
+        <!-- The one thing to do next. Opens the same line as the play button. -->
+        <div class="hf-actions">
+          <button type="button" class="hf-cta" id="heroPracticeBtn">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>
+            <span id="heroPracticeLabel">Practicar ahora</span>
+          </button>
+          <button type="button" class="hf-alt" id="heroOtherBtn">Otra escena</button>
         </div>
       </div>
     </div>
@@ -5964,19 +5976,47 @@
       <div class="hero-chip hero-chip--streak" id="heroStreakChip">
         <span class="hero-chip-icon">&#128293;</span>
         <span class="hero-chip-streak-num" id="streakNumber">0</span>
-        <span>Day Streak</span>
+        <span>días de racha</span>
       </div>
     </div>
   </section>
 
   <div class="container">
-    <!-- Level bar (compact) -->
-    <div class="level-bar">
-      <div class="level-col">
-        <div class="level-lbl">Level</div>
-        <div class="level-num" id="levelNum">1</div>
+    <!-- Home order: Daily Take, level, shortcuts (static/home.js fills the
+         Daily Take card; the level bar keeps its ids for renderLevelBar). -->
+    <div class="home-row" lang="es">
+      <section class="home-card home-daily" id="homeDailyCard" aria-label="Daily Take de hoy">
+        <div class="home-card-head">
+          <p class="home-eyebrow">DAILY TAKE DE HOY</p>
+          <span class="home-x2">2× XP</span>
+        </div>
+        <div class="home-daily-posters" id="homeDailyPosters"></div>
+        <p class="home-daily-status"><b id="homeDailyCount">—</b> · termina en <span id="homeDailyCountdown">--:--:--</span></p>
+        <button type="button" class="home-btn-line" id="homeDailyBtn">Empezar el Daily Take</button>
+      </section>
+
+      <div class="level-bar home-card">
+        <div class="level-col">
+          <div class="level-lbl">Nivel</div>
+          <div class="level-num" id="levelNum">1</div>
+        </div>
+        <div class="level-details" id="levelDetails"></div>
       </div>
-      <div class="level-details" id="levelDetails"></div>
+
+      <section class="home-card home-links" aria-label="Atajos">
+        <button type="button" class="home-link" id="homeQuizLink">
+          <svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#c8a96e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 4h6v3H9zM9 5H6v16h12V5h-3"/><path d="M9 13l2 2 4-4"/></svg>
+          <span><b id="homeQuizTitle">Examen del nivel</b><small id="homeQuizSub">Apruébalo y se abre el siguiente</small></span>
+        </button>
+        <button type="button" class="home-link" onclick="if (window.VerbsController) VerbsController.open()">
+          <svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#c8a96e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h10M4 12h10M4 18h7"/><path d="M17 15l2 2 3-4"/></svg>
+          <span><b>50 verbos que necesitas</b><small id="homeVerbsSub">Pasado, ejemplos y práctica</small></span>
+        </button>
+        <button type="button" class="home-link" onclick="switchTab(document.querySelector('.bn-tab[data-panel=panelWords]'))">
+          <svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#c8a96e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6" width="13" height="15" rx="2"/><path d="M8 3h11a2 2 0 0 1 2 2v13"/></svg>
+          <span><b>Mis palabras</b><small>Tus tarjetas de vocabulario</small></span>
+        </button>
+      </section>
     </div>
 
     <!-- ═══ PRACTICE SPECIFIC SCENES — POSTER CAROUSEL ═══ -->
@@ -6588,6 +6628,7 @@
 <script src="/static/app-level-panel-orchestration.js"></script>
 <script src="/static/app.js"></script>
 <script src="/static/verbs.js"></script>
+<script src="/static/home.js"></script>
 
 <!-- lang="es" on the whole overlay: the quiz is Spanish throughout — questions,
      options, "¡Correcto!", and the results card nested inside this element.
@@ -6715,8 +6756,9 @@
 <div id="appShell" style="display:none; max-width:480px; margin:0 auto; padding:0 16px;">
   <div class="app-panel active" id="panelHome">
 
-  <!-- Top stats bar -->
-  <div style="display:flex; justify-content:space-between; align-items:center; padding:16px 4px 8px;">
+  <!-- Top stats bar: hidden, the hero chips show streak and XP. Kept for the
+       code that writes homeStreakVal / homeXpVal. -->
+  <div style="display:none; justify-content:space-between; align-items:center; padding:16px 4px 8px;">
     <div style="font-family:'Bebas Neue',sans-serif; font-size:22px; letter-spacing:0.15em; color:#c8a96e;">MIRROR</div>
     <div style="display:flex; gap:8px;">
       <div style="display:flex; align-items:center; gap:5px; background:rgba(255,255,255,0.04); border:0.5px solid rgba(200,169,110,0.2); border-radius:20px; padding:5px 12px;">
@@ -6733,7 +6775,7 @@
   </div>
 
   <!-- Daily challenge bar -->
-  <div id="homeDailyChallenge" style="background:rgba(200,169,110,0.06); border:0.5px solid rgba(200,169,110,0.25); border-radius:14px; padding:12px 16px; margin-bottom:16px; display:flex; align-items:center; justify-content:space-between; cursor:pointer;" onclick="switchTab(document.querySelector('[data-panel=panelMissions]'))">
+  <div id="homeDailyChallenge" style="background:rgba(200,169,110,0.06); border:0.5px solid rgba(200,169,110,0.25); border-radius:14px; padding:12px 16px; margin-bottom:16px; display:none; align-items:center; justify-content:space-between; cursor:pointer;" onclick="switchTab(document.querySelector('[data-panel=panelMissions]'))">
     <div>
       <div style="font-family:'DM Sans',sans-serif; font-size:9px; letter-spacing:2px; text-transform:uppercase; color:#c8a96e; margin-bottom:3px;">⚡ Today's Challenge</div>
       <div id="homeDailyTitle" style="font-family:'Georgia',serif; font-size:15px; color:#fff;">Complete a scene to start your streak</div>
@@ -6745,35 +6787,36 @@
   <div class="pro-upgrade-card pro-locked" id="proUpgradeCard">
     <div class="pro-upgrade-inner">
       <div class="pro-upgrade-eyebrow">Mirror Pro</div>
-      <div class="pro-upgrade-title">Unlock all <em id="proUpgradeCount">47 scenes</em></div>
+      <div class="pro-upgrade-title">Desbloquea las <em id="proUpgradeCount">47 escenas</em></div>
       <div class="pro-upgrade-features">
-        <span>Levels 1–3</span>
-        <span>Word-by-word Spanish</span>
-        <span>Cancel anytime</span>
+        <span>Niveles 1–3 con exámenes</span>
+        <span>Español palabra por palabra</span>
+        <span>Cancela cuando quieras</span>
       </div>
       <!-- Label is rendered from the active plan. It read "$3.99/mo" while
            starting a $47.88 annual checkout: the pill that chooses the plan is
            on the landing page, which is hidden once signed in, so yearly always
            won and nothing said so. -->
       <button class="pro-upgrade-btn" id="proUpgradeBtn" onclick="document.getElementById('pricingProBtn').click()">
-        <span id="proUpgradeLabel">Upgrade</span>
+        <span id="proUpgradeLabel">Pasarme a Pro</span>
       </button>
+      <button class="pro-upgrade-alt" id="proUpgradeMonthlyBtn" type="button">o mensual · $8.99</button>
       <!-- The other checkout entry point. Signed-in users never see the pricing
            section, so the disclosure has to be here too or half the buyers get
            it and half do not. -->
-      <p class="checkout-legal">
-        Renews automatically. Cancel anytime.
-        <a href="/refunds" target="_blank" rel="noopener">All sales final</a> ·
-        <a href="/terms" target="_blank" rel="noopener">Terms</a>
+      <p class="checkout-legal" lang="es">
+        Se renueva solo. Cancela cuando quieras.
+        <a href="/refunds" target="_blank" rel="noopener">Pagos finales</a> ·
+        <a href="/terms" target="_blank" rel="noopener">Términos</a>
       </p>
     </div>
   </div>
 
-  <!-- Level 1 — open coverflow -->
-  <div style="font-family:'DM Sans',sans-serif; font-size:9px; letter-spacing:2px; text-transform:uppercase; color:#555; margin-bottom:10px;">Level 1 · Beginner</div>
-  <div class="carousel-section" style="margin:0 -16px;">
+  <!-- All scenes — open coverflow. The "Level 1 · Beginner" caption sat
+       under the Pro card's edge and named the wrong level for anyone past it. -->
+  <div class="carousel-section" id="homeCarousel" style="margin:28px -16px 0;">
     <div class="carousel-header">
-      <p class="carousel-label">PRACTICE SPECIFIC SCENES</p>
+      <p class="carousel-label">ELIGE UNA ESCENA</p>
       <div class="carousel-arrows">
         <button class="carousel-arrow" id="carouselPrev">‹</button>
         <button class="carousel-arrow" id="carouselNext">›</button>
@@ -7181,7 +7224,7 @@ function enterAppMode() {
   // Until the scene config resolves, CLV_LEVELS is empty — show nothing rather
   // than a misleading "0 / 0". The caller re-runs once the config lands.
   if (bar) bar.style.width = pct + '%';
-  if (label) label.textContent = total > 0 ? (completed + ' / ' + total + ' scenes') : '';
+  if (label) label.textContent = total > 0 ? (completed + ' / ' + total + ' escenas del Nivel 1') : '';
   const completed2 = completed;
   const bar2 = document.getElementById('lvl1Bar');
   const lbl2 = document.getElementById('lvl1Label');

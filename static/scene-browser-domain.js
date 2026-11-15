@@ -30,7 +30,7 @@
     const nextLevel = userProgress.next_level;
 
     if (!nextLevel) {
-      refs.detailsEl.innerHTML = `<span class="level-maxed">&#127916; All scenes unlocked — you've reached the top level</span>`;
+      refs.detailsEl.innerHTML = `<span class="level-maxed">&#127916; Todas las escenas abiertas: llegaste al nivel m\u00e1s alto</span>`;
       return null;
     }
 
@@ -40,13 +40,13 @@
 
     refs.detailsEl.innerHTML = `
     <div class="level-next-text">
-      Score <strong>${nextLevel.required_score}%</strong> on a
-      <strong>${levelNames[userProgress.level]}</strong> scene to unlock
-      <strong>Level ${nextLevel.level}</strong>
+      Saca <strong>${nextLevel.required_score}%</strong> en una escena del
+      <strong>Nivel ${userProgress.level}</strong> para abrir el
+      <strong>Nivel ${nextLevel.level}</strong>
     </div>
     <div class="level-track"><div class="level-fill" id="lvlFill"></div></div>
     <div class="level-score-text">
-      Best: <strong>${nextLevel.best_score}%</strong> &nbsp;/&nbsp; ${nextLevel.required_score}% needed
+      Tu mejor: <strong>${nextLevel.best_score}%</strong> &nbsp;/&nbsp; meta ${nextLevel.required_score}%
     </div>`;
 
     return fillPercent;
